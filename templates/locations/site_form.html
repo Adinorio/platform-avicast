@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Site{% else %}Create New Site{% endif %} - AVICAST System
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="display-5">
+                        {% if form.instance.pk %}
+                            <i class="bi bi-pencil-square"></i> Edit Site
+                        {% else %}
+                            <i class="bi bi-plus-circle"></i> Create New Site
+                        {% endif %}
+                    </h1>
+                    <p class="lead text-muted">
+                        {% if form.instance.pk %}
+                            Update the observation site information
+                        {% else %}
+                            Add a new observation site for biodiversity monitoring
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{% url 'locations:site_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Sites
+                </a>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Site Name -->
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                <strong>Site Name *</strong>
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                                   id="{{ form.name.id_for_label }}" 
+                                   name="{{ form.name.name }}" 
+                                   value="{{ form.name.value|default:'' }}"
+                                   placeholder="Enter site name (e.g., Mount Makiling Forest Reserve)"
+                                   required>
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.name.help_text %}
+                                <div class="form-text">{{ form.name.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Location Description -->
+                        <div class="mb-3">
+                            <label for="{{ form.location_desc.id_for_label }}" class="form-label">
+                                <strong>Location Description</strong>
+                            </label>
+                            <textarea class="form-control {% if form.location_desc.errors %}is-invalid{% endif %}" 
+                                      id="{{ form.location_desc.id_for_label }}" 
+                                      name="{{ form.location_desc.name }}" 
+                                      rows="4"
+                                      placeholder="Describe the site location, accessibility, and notable features...">{{ form.location_desc.value|default:'' }}</textarea>
+                            {% if form.location_desc.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.location_desc.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.location_desc.help_text %}
+                                <div class="form-text">{{ form.location_desc.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Site Image -->
+                        <div class="mb-3">
+                            <label for="{{ form.image.id_for_label }}" class="form-label">
+                                <strong>Site Image</strong>
+                            </label>
+                            
+                            {% if form.instance.image %}
+                                <div class="mb-2">
+                                    <p class="text-muted">Current image:</p>
+                                    <img src="{{ form.instance.image.url }}" 
+                                         alt="Current site image" 
+                                         class="img-thumbnail" 
+                                         style="max-height: 200px;">
+                                </div>
+                            {% endif %}
+                            
+                            <input type="file" 
+                                   class="form-control {% if form.image.errors %}is-invalid{% endif %}" 
+                                   id="{{ form.image.id_for_label }}" 
+                                   name="{{ form.image.name }}"
+                                   accept="image/*">
+                            {% if form.image.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.image.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.image.help_text %}
+                                <div class="form-text">{{ form.image.help_text }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                <small>Recommended: JPG, PNG, or GIF files under 5MB</small>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center pt-3">
+                            <a href="{% url 'locations:site_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if form.instance.pk %}
+                                    <i class="bi bi-check-circle"></i> Update Site
+                                {% else %}
+                                    <i class="bi bi-plus-circle"></i> Create Site
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Information -->
+            <div class="card mt-4 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i> Tips for Site Information
+                    </h6>
+                    <ul class="mb-0">
+                        <li><strong>Site Name:</strong> Use descriptive, unique names that are easy to identify</li>
+                        <li><strong>Location Description:</strong> Include landmarks, coordinates, accessibility details, and habitat characteristics</li>
+                        <li><strong>Site Image:</strong> Choose clear photos that show the site's key features and habitat type</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

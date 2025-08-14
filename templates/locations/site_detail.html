@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ site.name }} - Site Details - AVICAST System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5">{{ site.name }}</h1>
+            <p class="lead text-muted">Observation Site Details</p>
+        </div>
+        <div>
+            <a href="{% url 'locations:site_list' %}" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left"></i> Back to Sites
+            </a>
+            {% if user.role == 'ADMIN' %}
+            <a href="{% url 'locations:site_update' site.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit Site
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Site Information -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt"></i> Site Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Site Image -->
+                    {% if site.image %}
+                    <div class="text-center mb-4">
+                        <img src="{{ site.image.url }}" 
+                             alt="{{ site.name }}" 
+                             class="img-fluid rounded" 
+                             style="max-height: 400px;">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Site Details -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Site Name</h6>
+                            <p class="mb-3">{{ site.name }}</p>
+                            
+                            <h6 class="text-muted">Site ID</h6>
+                            <p class="mb-3"><code>{{ site.id }}</code></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Status</h6>
+                            <p class="mb-3">
+                                {% if site.is_archived %}
+                                    <span class="badge bg-secondary">Archived</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </p>
+                            
+                            <h6 class="text-muted">Created</h6>
+                            <p class="mb-3">{{ site.id|slice:":8"|upper }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Location Description -->
+                    {% if site.location_desc %}
+                    <div class="mt-4">
+                        <h6 class="text-muted">Location Description</h6>
+                        <p class="mb-0">{{ site.location_desc }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar Information -->
+        <div class="col-md-4">
+            <!-- Quick Actions -->
+            {% if user.role == 'ADMIN' %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear"></i> Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'locations:site_update' site.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil"></i> Edit Site
+                        </a>
+                        
+                        {% if site.is_archived %}
+                        <form method="post" action="{% url 'locations:site_archive' site.pk %}" class="d-grid">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-arrow-clockwise"></i> Unarchive Site
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="{% url 'locations:site_archive' site.pk %}" class="d-grid">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-warning btn-sm">
+                                <i class="bi bi-archive"></i> Archive Site
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i> Delete Site
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Site Statistics -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Site Statistics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ site.species.count }}</h4>
+                            <small class="text-muted">Species Recorded</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ site.birdcensus_set.count }}</h4>
+                            <small class="text-muted">Census Records</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Data Section -->
+    {% if site.species.count > 0 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul"></i> Species Recorded at This Site
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for species in site.species.all %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                {% if species.image %}
+                                <img src="{{ species.image.url }}" class="card-img-top" alt="{{ species.name }}" style="height: 150px; object-fit: cover;">
+                                {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                    <i class="bi bi-bird text-muted" style="font-size: 2rem;"></i>
+                                </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ species.name }}</h6>
+                                    <p class="card-text small text-muted">{{ species.scientific_name }}</p>
+                                    <span class="badge bg-info">{{ species.get_iucn_status_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if user.role == 'ADMIN' %}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Site</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to permanently delete the site <strong>"{{ site.name }}"</strong>?</p>
+                <p class="text-muted">This will remove all associated data including census records and species observations.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'locations:site_delete' site.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

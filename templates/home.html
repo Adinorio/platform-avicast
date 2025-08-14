@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}AVICAST System - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        {% if user.is_authenticated %}
+            {% if user.role == 'SUPERADMIN' %}
+                <!-- Superadmin Dashboard - User Management Only -->
+                <div class="text-center">
+                    <h1 class="display-4 mb-4">Welcome to AVICAST System</h1>
+                    <p class="lead mb-4">Employee ID: {{ user.employee_id }} | Role: {{ user.get_role_display }}</p>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <h4 class="alert-heading">Superadmin Access</h4>
+                        <p>As a Superadmin, your primary responsibility is user account management. You have access to:</p>
+                        <ul class="text-start">
+                            <li>Create, edit, and delete user accounts</li>
+                            <li>Assign roles and permissions</li>
+                            <li>Manage system access</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'admin:index' %}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-people"></i> Access User Management
+                        </a>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            For data management, please create Admin users who will handle species, sites, and census data.
+                        </small>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Admin and Field Worker Dashboard -->
+                <div class="text-center">
+                    <h1 class="display-4 mb-4">Welcome to AVICAST System</h1>
+                    <p class="lead mb-4">Employee ID: {{ user.employee_id }} | Role: {{ user.get_role_display }}</p>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Species</h5>
+                                    <p class="card-text">Manage bird species data</p>
+                                    <a href="{% url 'fauna:species_list' %}" class="btn btn-primary">View Species</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Sites</h5>
+                                    <p class="card-text">Manage observation sites</p>
+                                    <a href="{% url 'locations:site_list' %}" class="btn btn-primary">View Sites</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Census</h5>
+                                    <p class="card-text">View and manage bird census data</p>
+                                    <a href="#" class="btn btn-primary">View Census</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Reports</h5>
+                                    <p class="card-text">Generate and view reports</p>
+                                    <a href="#" class="btn btn-primary">View Reports</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- Guest/Unauthenticated View -->
+            <div class="text-center">
+                <h1 class="display-4 mb-4">Welcome to AVICAST System</h1>
+                <p class="lead mb-4">Biodiversity Monitoring and Management System</p>
+                <p class="mb-4">Please log in to access the system.</p>
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Login</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

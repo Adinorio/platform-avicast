@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Site - {{ site.name }} - AVICAST System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 class="display-5 text-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Delete Site
+                </h1>
+                <p class="lead text-muted">Confirm permanent deletion of observation site</p>
+            </div>
+
+            <!-- Warning Card -->
+            <div class="card border-danger mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Warning: Irreversible Action
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle"></i> This action cannot be undone!
+                        </h6>
+                        <p class="mb-0">
+                            Deleting this site will permanently remove all associated data including:
+                        </p>
+                        <ul class="mb-0 mt-2">
+                            <li>Site information and images</li>
+                            <li>All bird census records</li>
+                            <li>Species observations linked to this site</li>
+                            <li>Historical data and trends</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Site Information -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt"></i> Site to be Deleted
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% if site.image %}
+                            <img src="{{ site.image.url }}" 
+                                 alt="{{ site.name }}" 
+                                 class="img-fluid rounded">
+                            {% else %}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h5>{{ site.name }}</h5>
+                            {% if site.location_desc %}
+                            <p class="text-muted">{{ site.location_desc }}</p>
+                            {% endif %}
+                            
+                            <div class="row mt-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Site ID</small>
+                                    <p class="mb-1"><code>{{ site.id }}</code></p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Species Recorded</small>
+                                    <p class="mb-1">{{ site.species.count }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Census Records</small>
+                                    <p class="mb-1">{{ site.birdcensus_set.count }}</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Status</small>
+                                    <p class="mb-1">
+                                        {% if site.is_archived %}
+                                            <span class="badge bg-secondary">Archived</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation Form -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="confirmation" class="form-label">
+                                <strong>Type "DELETE" to confirm</strong>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="confirmation" 
+                                   name="confirmation" 
+                                   placeholder="Type DELETE in all caps"
+                                   required>
+                            <div class="form-text">
+                                This is a safety measure to prevent accidental deletions.
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'locations:site_detail' site.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                                <i class="bi bi-trash"></i> Delete Site Permanently
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Alternative Actions -->
+            <div class="card mt-4 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-lightbulb"></i> Consider Alternatives
+                    </h6>
+                    <p class="card-text">
+                        Instead of deleting, you might want to:
+                    </p>
+                    <ul class="mb-0">
+                        <li><strong>Archive the site</strong> - Hide it from active lists while preserving data</li>
+                        <li><strong>Update the description</strong> - Mark it as inactive or under maintenance</li>
+                        <li><strong>Contact your administrator</strong> - Discuss data retention policies</li>
+                    </ul>
+                    <div class="mt-3">
+                        <a href="{% url 'locations:site_detail' site.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-arrow-left"></i> Back to Site Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enable delete button only when "DELETE" is typed
+document.getElementById('confirmation').addEventListener('input', function() {
+    const deleteBtn = document.getElementById('deleteBtn');
+    if (this.value === 'DELETE') {
+        deleteBtn.disabled = false;
+    } else {
+        deleteBtn.disabled = true;
+    }
+});
+</script>
+{% endblock %} 
