@@ -11,11 +11,9 @@
             <p class="lead text-muted">Manage and view observation sites for biodiversity monitoring</p>
         </div>
         <div class="col-md-4 text-end">
-            {% if user.role == 'ADMIN' %}
-            <a href="{% url 'locations:site_create' %}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Add New Site
+            <a href="{% url 'locations:site_create' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Add New Site
             </a>
-            {% endif %}
         </div>
     </div>
 
@@ -33,107 +31,113 @@
     </div>
     {% endif %}
 
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Search sites..." value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="site_type" class="form-select">
+                                <option value="">All Site Types</option>
+                                {% for value, label in site_types %}
+                                <option value="{{ value }}" {% if site_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                {% for value, label in site_statuses %}
+                                <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sites Grid -->
-    {% if sites %}
+    {% if page_obj %}
     <div class="row">
-        {% for site in sites %}
+        {% for site in page_obj %}
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100 shadow-sm">
-                {% if site.image %}
-                <img src="{{ site.image.url }}" class="card-img-top" alt="{{ site.name }}" style="height: 200px; object-fit: cover;">
-                {% else %}
                 <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                    <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
+                    <i class="fas fa-map-marker-alt text-muted" style="font-size: 3rem;"></i>
                 </div>
-                {% endif %}
                 
                 <div class="card-body">
                     <h5 class="card-title">{{ site.name }}</h5>
                     <p class="card-text text-muted">
-                        {% if site.location_desc %}
-                            {{ site.location_desc|truncatewords:20 }}
+                        {% if site.description %}
+                            {{ site.description|truncatewords:20 }}
                         {% else %}
                             <em>No description available</em>
                         {% endif %}
                     </p>
                     
+                    <div class="mb-3">
+                        <span class="badge bg-info me-1">{{ site.get_site_type_display }}</span>
+                        <span class="badge bg-{% if site.status == 'active' %}success{% elif site.status == 'monitoring' %}warning{% else %}secondary{% endif %}">
+                            {{ site.get_status_display }}
+                        </span>
+                    </div>
+                    
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="text-muted">
-                            {% if site.species.count > 0 %}
-                                {{ site.species.count }} species recorded
+                            {% if site.coordinates %}
+                                <i class="fas fa-location-dot"></i> {{ site.get_coordinates_display }}
                             {% else %}
-                                No species recorded yet
+                                <i class="fas fa-location-dot"></i> Coordinates not set
                             {% endif %}
                         </small>
                         
                         <div class="btn-group" role="group">
-                            <a href="{% url 'locations:site_detail' site.pk %}" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-eye"></i> View
+                            <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> View
                             </a>
                             
-                            {% if user.role == 'ADMIN' %}
-                            <a href="{% url 'locations:site_update' site.pk %}" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-pencil"></i> Edit
+                            <a href="{% url 'locations:site_update' site.id %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
                             </a>
-                            
-                            <button type="button" class="btn btn-outline-danger btn-sm" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#deleteModal{{ site.pk }}">
-                                <i class="bi bi-trash"></i> Archive
-                            </button>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Delete Modal for each site -->
-        {% if user.role == 'ADMIN' %}
-        <div class="modal fade" id="deleteModal{{ site.pk }}" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Archive Site</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Are you sure you want to archive the site <strong>"{{ site.name }}"</strong>?</p>
-                        <p class="text-muted">This will hide the site from the main list but preserve all data.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <form method="post" action="{% url 'locations:site_archive' site.pk %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Archive Site</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
         {% endfor %}
     </div>
     
     <!-- Pagination -->
-    {% if is_paginated %}
+    {% if page_obj.has_other_pages %}
     <nav aria-label="Sites pagination" class="mt-4">
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if site_type %}&site_type={{ site_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Previous</a>
             </li>
             {% endif %}
             
             {% for num in page_obj.paginator.page_range %}
             <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if site_type %}&site_type={{ site_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">{{ num }}</a>
             </li>
             {% endfor %}
             
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if site_type %}&site_type={{ site_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Next</a>
             </li>
             {% endif %}
         </ul>
@@ -143,14 +147,25 @@
     {% else %}
     <!-- Empty State -->
     <div class="text-center py-5">
-        <i class="bi bi-geo-alt text-muted" style="font-size: 4rem;"></i>
+        <i class="fas fa-map-marker-alt text-muted" style="font-size: 4rem;"></i>
         <h3 class="mt-3">No Sites Found</h3>
-        <p class="text-muted">No observation sites have been created yet.</p>
-        {% if user.role == 'ADMIN' %}
-        <a href="{% url 'locations:site_create' %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Create Your First Site
-        </a>
-        {% endif %}
+        <p class="text-muted">
+            {% if search_query or site_type or status %}
+                No sites match your current search criteria. Try adjusting your filters.
+            {% else %}
+                No observation sites have been created yet.
+            {% endif %}
+        </p>
+        <div class="d-flex gap-2 justify-content-center">
+            <a href="{% url 'locations:site_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create Your First Site
+            </a>
+            {% if search_query or site_type or status %}
+            <a href="{% url 'locations:site_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i> Clear Filters
+            </a>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 </div>

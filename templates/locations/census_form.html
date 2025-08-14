@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Census Observation - {{ site.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-binoculars text-success"></i>
+                        {{ action }} Census Observation
+                    </h2>
+                    <p class="text-muted mb-0">Site: {{ site.name }}</p>
+                </div>
+                <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Site
+                </a>
+            </div>
+
+            <!-- Census Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt text-primary"></i>
+                        Observation Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="censusForm">
+                        {% csrf_token %}
+                        
+                        <!-- Census Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ census_form.observation_date.id_for_label }}" class="form-label">
+                                        <strong>Observation Date *</strong>
+                                    </label>
+                                    {{ census_form.observation_date }}
+                                    {% if census_form.observation_date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ census_form.observation_date.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Select the date when this census was conducted</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ census_form.weather_conditions.id_for_label }}" class="form-label">
+                                        Weather Conditions
+                                    </label>
+                                    {{ census_form.weather_conditions }}
+                                    {% if census_form.weather_conditions.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ census_form.weather_conditions.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">e.g., Sunny, 25°C, Light breeze</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ census_form.notes.id_for_label }}" class="form-label">
+                                <strong>General Notes</strong>
+                            </label>
+                            {{ census_form.notes }}
+                            {% if census_form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ census_form.notes.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Any general observations or notes about this census session</div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Species Observations -->
+                        <div class="mb-4">
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-bird"></i>
+                                Species Observations
+                            </h5>
+                            
+                            {{ species_formset.management_form }}
+                            
+                            <div id="speciesForms">
+                                {% for form in species_formset %}
+                                <div class="species-form-row border rounded p-3 mb-3 bg-light">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="{{ form.species_name.id_for_label }}" class="form-label">
+                                                <strong>Species Name *</strong>
+                                            </label>
+                                            {{ form.species_name }}
+                                            {% if form.species_name.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.species_name.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="{{ form.count.id_for_label }}" class="form-label">
+                                                <strong>Count *</strong>
+                                            </label>
+                                            {{ form.count }}
+                                            {% if form.count.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.count.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.behavior_notes.id_for_label }}" class="form-label">
+                                                Behavior Notes
+                                            </label>
+                                            {{ form.behavior_notes }}
+                                            {% if form.behavior_notes.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.behavior_notes.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-1 d-flex align-items-end">
+                                            {% if species_formset.can_delete %}
+                                                <div class="form-check">
+                                                    {{ form.DELETE }}
+                                                    <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                                        <i class="fas fa-trash text-danger"></i>
+                                                    </label>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hidden fields -->
+                                    {{ form.id }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="button" class="btn btn-outline-success" id="addSpeciesForm">
+                                    <i class="fas fa-plus"></i> Add Another Species
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> {{ action }} Census
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle text-info"></i>
+                        Help & Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Species Naming:</h6>
+                            <ul class="small text-muted">
+                                <li>Use common names (e.g., "Mallard", "American Robin")</li>
+                                <li>Or scientific names (e.g., "Anas platyrhynchos")</li>
+                                <li>Be consistent with naming conventions</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Count Guidelines:</h6>
+                            <ul class="small text-muted">
+                                <li>Count individual birds, not groups</li>
+                                <li>If uncertain, provide best estimate</li>
+                                <li>Use 0 for species seen but not counted</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Add new species form
+    $('#addSpeciesForm').click(function() {
+        var formCount = parseInt($('#id_species_observations-TOTAL_FORMS').val());
+        var row = $('.species-form-row:first').clone(true);
+        
+        // Update form index
+        row.find(':input').each(function() {
+            var name = $(this).attr('name').replace('-0-', '-' + formCount + '-');
+            var id = 'id_' + name;
+            $(this).attr({'name': name, 'id': id}).val('').removeClass('is-invalid');
+        });
+        
+        // Clear form errors
+        row.find('.invalid-feedback').remove();
+        
+        // Add to form
+        $('#speciesForms').append(row);
+        $('#id_species_observations-TOTAL_FORMS').val(formCount + 1);
+    });
+    
+    // Handle form submission
+    $('#censusForm').submit(function() {
+        // Basic validation
+        var hasSpecies = false;
+        $('.species-form-row:not(:has(:checkbox:checked))').each(function() {
+            var speciesName = $(this).find('input[name*="species_name"]').val();
+            var count = $(this).find('input[name*="count"]').val();
+            
+            if (speciesName && count) {
+                hasSpecies = true;
+            }
+        });
+        
+        if (!hasSpecies) {
+            alert('Please add at least one species observation.');
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Auto-hide deleted forms
+    $('input[name*="DELETE"]').change(function() {
+        if ($(this).is(':checked')) {
+            $(this).closest('.species-form-row').fadeOut();
+        } else {
+            $(this).closest('.species-form-row').fadeIn();
+        }
+    });
+});
+</script>
+{% endblock %} 

@@ -1,211 +1,296 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ site.name }} - Site Details - AVICAST System{% endblock %}
+{% block title %}{{ site.name }} - Site Details{% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="display-5">{{ site.name }}</h1>
-            <p class="lead text-muted">Observation Site Details</p>
-        </div>
-        <div>
-            <a href="{% url 'locations:site_list' %}" class="btn btn-outline-secondary me-2">
-                <i class="bi bi-arrow-left"></i> Back to Sites
-            </a>
-            {% if user.role == 'ADMIN' %}
-            <a href="{% url 'locations:site_update' site.pk %}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> Edit Site
-            </a>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Main Site Information -->
-        <div class="col-md-8">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-geo-alt"></i> Site Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <!-- Site Image -->
-                    {% if site.image %}
-                    <div class="text-center mb-4">
-                        <img src="{{ site.image.url }}" 
-                             alt="{{ site.name }}" 
-                             class="img-fluid rounded" 
-                             style="max-height: 400px;">
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Site Details -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Site Name</h6>
-                            <p class="mb-3">{{ site.name }}</p>
-                            
-                            <h6 class="text-muted">Site ID</h6>
-                            <p class="mb-3"><code>{{ site.id }}</code></p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Status</h6>
-                            <p class="mb-3">
-                                {% if site.is_archived %}
-                                    <span class="badge bg-secondary">Archived</span>
-                                {% else %}
-                                    <span class="badge bg-success">Active</span>
-                                {% endif %}
-                            </p>
-                            
-                            <h6 class="text-muted">Created</h6>
-                            <p class="mb-3">{{ site.id|slice:":8"|upper }}</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Location Description -->
-                    {% if site.location_desc %}
-                    <div class="mt-4">
-                        <h6 class="text-muted">Location Description</h6>
-                        <p class="mb-0">{{ site.location_desc }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Sidebar Information -->
-        <div class="col-md-4">
-            <!-- Quick Actions -->
-            {% if user.role == 'ADMIN' %}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-gear"></i> Quick Actions
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'locations:site_update' site.pk %}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-pencil"></i> Edit Site
-                        </a>
-                        
-                        {% if site.is_archived %}
-                        <form method="post" action="{% url 'locations:site_archive' site.pk %}" class="d-grid">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-success btn-sm">
-                                <i class="bi bi-arrow-clockwise"></i> Unarchive Site
-                            </button>
-                        </form>
-                        {% else %}
-                        <form method="post" action="{% url 'locations:site_archive' site.pk %}" class="d-grid">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-warning btn-sm">
-                                <i class="bi bi-archive"></i> Archive Site
-                            </button>
-                        </form>
-                        {% endif %}
-                        
-                        <button type="button" class="btn btn-outline-danger btn-sm" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#deleteModal">
-                            <i class="bi bi-trash"></i> Delete Site
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- Site Statistics -->
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-graph-up"></i> Site Statistics
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-6">
-                            <h4 class="text-primary">{{ site.species.count }}</h4>
-                            <small class="text-muted">Species Recorded</small>
-                        </div>
-                        <div class="col-6">
-                            <h4 class="text-success">{{ site.birdcensus_set.count }}</h4>
-                            <small class="text-muted">Census Records</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Related Data Section -->
-    {% if site.species.count > 0 %}
-    <div class="row mt-4">
+<div class="container-fluid mt-4">
+    <!-- Site Header -->
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-list-ul"></i> Species Recorded at This Site
-                    </h5>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        <i class="fas fa-map-marker-alt text-primary"></i>
+                        {{ site.name }}
+                    </h2>
+                    <div class="btn-group">
+                        <a href="{% url 'locations:site_update' site.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit"></i> Edit Site
+                        </a>
+                        <a href="{% url 'locations:site_delete' site.id %}" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        {% for species in site.species.all %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100">
-                                {% if species.image %}
-                                <img src="{{ species.image.url }}" class="card-img-top" alt="{{ species.name }}" style="height: 150px; object-fit: cover;">
-                                {% else %}
-                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
-                                    <i class="bi bi-bird text-muted" style="font-size: 2rem;"></i>
+                        <div class="col-md-6">
+                            <h5>Site Information</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Type:</strong></td>
+                                    <td><span class="badge bg-info">{{ site.get_site_type_display }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td><span class="badge bg-{% if site.status == 'active' %}success{% elif site.status == 'monitoring' %}warning{% else %}secondary{% endif %}">{{ site.get_status_display }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Coordinates:</strong></td>
+                                    <td><code>{{ site.get_coordinates_display }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ site.created_at|date:"M d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Site Statistics</h5>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body p-2">
+                                            <h4 class="text-primary mb-0">{{ total_species_observed }}</h4>
+                                            <small>Species Observed</small>
+                                        </div>
+                                    </div>
                                 </div>
-                                {% endif %}
-                                <div class="card-body">
-                                    <h6 class="card-title">{{ species.name }}</h6>
-                                    <p class="card-text small text-muted">{{ species.scientific_name }}</p>
-                                    <span class="badge bg-info">{{ species.get_iucn_status_display }}</span>
+                                <div class="col-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body p-2">
+                                            <h4 class="text-success mb-0">{{ total_birds_observed }}</h4>
+                                            <small>Total Birds</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body p-2">
+                                            <h4 class="text-info mb-0">{{ recent_census|length }}</h4>
+                                            <small>Census Records</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        {% endfor %}
+                    </div>
+                    {% if site.description %}
+                    <div class="mt-3">
+                        <h6>Description:</h6>
+                        <p class="mb-0">{{ site.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Census Management Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-binoculars text-success"></i>
+                        Census Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'locations:census_create' site.id %}" class="btn btn-success btn-lg w-100 mb-2">
+                                <i class="fas fa-plus"></i><br>
+                                Add New Census
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'locations:census_import' site.id %}" class="btn btn-primary btn-lg w-100 mb-2">
+                                <i class="fas fa-upload"></i><br>
+                                Import Data
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'locations:census_export_csv' site.id %}" class="btn btn-info btn-lg w-100 mb-2">
+                                <i class="fas fa-download"></i><br>
+                                Export CSV
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'locations:census_export_excel' site.id %}" class="btn btn-warning btn-lg w-100 mb-2">
+                                <i class="fas fa-file-excel"></i><br>
+                                Export Excel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Census Summary by Year/Month -->
+    {% if census_summary %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-info"></i>
+                        Census Summary by Year and Month
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for year, months in census_summary.items %}
+                    <div class="year-section mb-4">
+                        <h6 class="text-primary border-bottom pb-2">
+                            <i class="fas fa-calendar-alt"></i>
+                            {{ year }}
+                        </h6>
+                        <div class="row">
+                            {% for month_num, month_data in months.items %}
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card border-left-primary h-100">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted">
+                                            {% if month_num == 1 %}January
+                                            {% elif month_num == 2 %}February
+                                            {% elif month_num == 3 %}March
+                                            {% elif month_num == 4 %}April
+                                            {% elif month_num == 5 %}May
+                                            {% elif month_num == 6 %}June
+                                            {% elif month_num == 7 %}July
+                                            {% elif month_num == 8 %}August
+                                            {% elif month_num == 9 %}September
+                                            {% elif month_num == 10 %}October
+                                            {% elif month_num == 11 %}November
+                                            {% elif month_num == 12 %}December
+                                            {% endif %}
+                                        </h6>
+                                        <div class="row text-center">
+                                            <div class="col-6">
+                                                <h5 class="text-primary mb-0">{{ month_data.total_species }}</h5>
+                                                <small>Species</small>
+                                            </div>
+                                            <div class="col-6">
+                                                <h5 class="text-success mb-0">{{ month_data.total_birds }}</h5>
+                                                <small>Birds</small>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                {{ month_data.observations|length }} census record{{ month_data.observations|length|pluralize }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Census Observations -->
+    {% if recent_census %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history text-secondary"></i>
+                        Recent Census Observations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Species Count</th>
+                                    <th>Total Birds</th>
+                                    <th>Weather</th>
+                                    <th>Observer</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for census in recent_census %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ census.observation_date|date:"M d, Y" }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ census.get_total_species_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ census.get_total_birds_count }}</span>
+                                    </td>
+                                    <td>
+                                        {% if census.weather_conditions %}
+                                            <small>{{ census.weather_conditions }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if census.observer %}
+                                            <small>{{ census.observer.username }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'locations:census_update' census.id %}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'locations:census_delete' census.id %}" class="btn btn-outline-danger btn-sm">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     {% endif %}
-</div>
 
-<!-- Delete Confirmation Modal -->
-{% if user.role == 'ADMIN' %}
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete Site</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <strong>Warning:</strong> This action cannot be undone.
+    <!-- No Census Data Message -->
+    {% if not census_summary and not recent_census %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-binoculars fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Census Data Yet</h5>
+                    <p class="text-muted">This site doesn't have any census observations yet.</p>
+                    <a href="{% url 'locations:census_create' site.id %}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add First Census
+                    </a>
                 </div>
-                <p>Are you sure you want to permanently delete the site <strong>"{{ site.name }}"</strong>?</p>
-                <p class="text-muted">This will remove all associated data including census records and species observations.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="post" action="{% url 'locations:site_delete' site.pk %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
-                </form>
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
-{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Add any JavaScript functionality here
+    console.log('Site detail page loaded');
+});
+</script>
 {% endblock %} 
