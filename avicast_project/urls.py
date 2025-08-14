@@ -37,4 +37,5 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
     path('fauna/', include('apps.fauna.urls', namespace='fauna')),
     path('locations/', include('apps.locations.urls', namespace='locations')),
+    path('analytics/', include('apps.analytics.urls', namespace='analytics')),
 ]

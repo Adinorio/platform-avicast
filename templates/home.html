@@ -24,7 +24,7 @@
                     
                     <div class="mt-4">
                         <a href="{% url 'admin:index' %}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-people"></i> Access User Management
+                            <i class="fas fa-users"></i> Access User Management
                         </a>
                     </div>
                     
@@ -40,40 +40,91 @@
                     <h1 class="display-4 mb-4">Welcome to AVICAST System</h1>
                     <p class="lead mb-4">Employee ID: {{ user.employee_id }} | Role: {{ user.get_role_display }}</p>
                     
+                    <!-- Main Feature Cards -->
                     <div class="row mt-5">
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="card h-100">
                                 <div class="card-body text-center">
-                                    <h5 class="card-title">Species</h5>
-                                    <p class="card-text">Manage bird species data</p>
-                                    <a href="{% url 'fauna:species_list' %}" class="btn btn-primary">View Species</a>
+                                    <h5 class="card-title">
+                                        <i class="fas fa-bird text-primary mb-2"></i>
+                                        Species
+                                    </h5>
+                                    <p class="card-text">View and manage bird species data</p>
+                                    <a href="{% url 'fauna:species_list' %}" class="btn btn-primary">
+                                        <i class="fas fa-eye"></i> View Species
+                                    </a>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="card h-100">
                                 <div class="card-body text-center">
-                                    <h5 class="card-title">Sites</h5>
-                                    <p class="card-text">Manage observation sites</p>
-                                    <a href="{% url 'locations:site_list' %}" class="btn btn-primary">View Sites</a>
+                                    <h5 class="card-title">
+                                        <i class="fas fa-map-marker-alt text-success mb-2"></i>
+                                        Sites
+                                    </h5>
+                                    <p class="card-text">Manage observation sites and locations</p>
+                                    <a href="{% url 'locations:site_list' %}" class="btn btn-primary">
+                                        <i class="fas fa-eye"></i> View Sites
+                                    </a>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="card h-100">
                                 <div class="card-body text-center">
-                                    <h5 class="card-title">Census</h5>
-                                    <p class="card-text">View and manage bird census data</p>
-                                    <a href="#" class="btn btn-primary">View Census</a>
+                                    <h5 class="card-title">
+                                        <i class="fas fa-chart-line text-info mb-2"></i>
+                                        Analytics & Reports
+                                    </h5>
+                                    <p class="card-text">View charts, generate reports, and analyze data</p>
+                                    <a href="{% url 'analytics:dashboard' %}" class="btn btn-primary">
+                                        <i class="fas fa-chart-line"></i> View Analytics
+                                    </a>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Reports</h5>
-                                    <p class="card-text">Generate and view reports</p>
-                                    <a href="#" class="btn btn-primary">View Reports</a>
+                    </div>
+                    
+                    <!-- System Overview Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-info-circle text-primary"></i>
+                                        How to Use the System
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <h6><i class="fas fa-bird text-primary"></i> Species Management</h6>
+                                            <ul class="text-start">
+                                                <li>View existing bird species in the database</li>
+                                                <li>Access species information and details</li>
+                                                <li>Reference species for census observations</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6><i class="fas fa-map-marker-alt text-success"></i> Site Management</h6>
+                                            <ul class="text-start">
+                                                <li>Create observation sites with coordinates</li>
+                                                <li>Manage site status and classifications</li>
+                                                <li>Organize sites by habitat type</li>
+                                                <li>Add census observations to specific sites</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6><i class="fas fa-chart-line text-info"></i> Analytics & Reports</h6>
+                                            <ul class="text-start">
+                                                <li>View interactive charts and trends</li>
+                                                <li>Generate comprehensive census reports</li>
+                                                <li>Analyze species diversity patterns</li>
+                                                <li>Export data in various formats</li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

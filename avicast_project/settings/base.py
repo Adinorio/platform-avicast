@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.users.apps.UsersConfig',
     'apps.fauna.apps.FaunaConfig',
     'apps.locations.apps.LocationsConfig',
+    'apps.analytics.apps.AnalyticsConfig',
 ]
 
 MIDDLEWARE = [
