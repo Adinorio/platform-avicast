@@ -5,122 +5,173 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <!-- Site Header -->
+    <!-- Page Header with Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'locations:site_list' %}">Sites</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ site.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Site Header Card -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h2 class="mb-0">
-                        <i class="fas fa-map-marker-alt text-primary"></i>
-                        {{ site.name }}
-                    </h2>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt me-3" style="font-size: 1.5rem;"></i>
+                        <div>
+                            <h2 class="mb-0 text-white">{{ site.name }}</h2>
+                            <small class="text-white-50">Site Details</small>
+                        </div>
+                    </div>
                     <div class="btn-group">
-                        <a href="{% url 'locations:site_update' site.id %}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-edit"></i> Edit Site
+                        <a href="{% url 'locations:site_update' site.id %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-edit me-1"></i> Edit Site
                         </a>
-                        <a href="{% url 'locations:site_delete' site.id %}" class="btn btn-outline-danger btn-sm">
-                            <i class="fas fa-trash"></i> Delete
+                        <a href="{% url 'locations:site_delete' site.id %}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-trash me-1"></i> Delete
                         </a>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <div class="row">
-                        <div class="col-md-6">
-                            <h5>Site Information</h5>
-                            <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Type:</strong></td>
-                                    <td><span class="badge bg-info">{{ site.get_site_type_display }}</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Status:</strong></td>
-                                    <td><span class="badge bg-{% if site.status == 'active' %}success{% elif site.status == 'monitoring' %}warning{% else %}secondary{% endif %}">{{ site.get_status_display }}</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Coordinates:</strong></td>
-                                    <td><code>{{ site.get_coordinates_display }}</code></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Created:</strong></td>
-                                    <td>{{ site.created_at|date:"M d, Y" }}</td>
-                                </tr>
-                            </table>
+                        <!-- Site Information -->
+                        <div class="col-lg-6 mb-4">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Site Information
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center p-3 bg-light rounded">
+                                        <i class="fas fa-tag text-info me-3"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Type</small>
+                                            <span class="badge bg-info fs-6">{{ site.get_site_type_display }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center p-3 bg-light rounded">
+                                        <i class="fas fa-circle text-success me-3"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Status</small>
+                                            <span class="badge bg-{% if site.status == 'active' %}success{% elif site.status == 'monitoring' %}warning{% else %}secondary{% endif %} fs-6">
+                                                {{ site.get_status_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center p-3 bg-light rounded">
+                                        <i class="fas fa-location-dot text-danger me-3"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Coordinates</small>
+                                            <span class="{% if site.coordinates %}text-success{% else %}text-danger{% endif %}">
+                                                {{ site.get_coordinates_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center p-3 bg-light rounded">
+                                        <i class="fas fa-calendar-plus text-primary me-3"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Created</small>
+                                            <span class="fw-bold">{{ site.created_at|date:"M d, Y" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if site.description %}
+                            <div class="mt-4">
+                                <h6 class="text-muted mb-2">
+                                    <i class="fas fa-align-left me-2"></i>Description
+                                </h6>
+                                <p class="mb-0 p-3 bg-light rounded">{{ site.description }}</p>
+                            </div>
+                            {% endif %}
                         </div>
-                        <div class="col-md-6">
-                            <h5>Site Statistics</h5>
-                            <div class="row text-center">
+
+                        <!-- Site Statistics -->
+                        <div class="col-lg-6">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-chart-bar me-2"></i>Site Statistics
+                            </h5>
+                            <div class="row g-3">
                                 <div class="col-4">
-                                    <div class="card bg-light">
-                                        <div class="card-body p-2">
-                                            <h4 class="text-primary mb-0">{{ total_species_observed }}</h4>
-                                            <small>Species Observed</small>
+                                    <div class="card text-center border-0 bg-gradient-primary text-white h-100">
+                                        <div class="card-body p-3">
+                                            <i class="fas fa-bird fa-2x mb-2 opacity-75"></i>
+                                            <h3 class="mb-1 fw-bold">{{ total_species_observed }}</h3>
+                                            <small class="opacity-75">Species Observed</small>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="card bg-light">
-                                        <div class="card-body p-2">
-                                            <h4 class="text-success mb-0">{{ total_birds_observed }}</h4>
-                                            <small>Total Birds</small>
+                                    <div class="card text-center border-0 bg-gradient-success text-white h-100">
+                                        <div class="card-body p-3">
+                                            <i class="fas fa-feather fa-2x mb-2 opacity-75"></i>
+                                            <h3 class="mb-1 fw-bold">{{ total_birds_observed }}</h3>
+                                            <small class="opacity-75">Total Birds</small>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="card bg-light">
-                                        <div class="card-body p-2">
-                                            <h4 class="text-info mb-0">{{ recent_census|length }}</h4>
-                                            <small>Census Records</small>
+                                    <div class="card text-center border-0 bg-gradient-info text-white h-100">
+                                        <div class="card-body p-3">
+                                            <i class="fas fa-clipboard-list fa-2x mb-2 opacity-75"></i>
+                                            <h3 class="mb-1 fw-bold">{{ recent_census|length }}</h3>
+                                            <small class="opacity-75">Census Records</small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {% if site.description %}
-                    <div class="mt-3">
-                        <h6>Description:</h6>
-                        <p class="mb-0">{{ site.description }}</p>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Census Management Actions -->
+    <!-- Quick Actions -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-binoculars text-success"></i>
-                        Census Management
+                        <i class="fas fa-rocket me-2"></i>Quick Actions
                     </h5>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <a href="{% url 'locations:census_create' site.id %}" class="btn btn-success btn-lg w-100 mb-2">
-                                <i class="fas fa-plus"></i><br>
-                                Add New Census
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'locations:census_create' site.id %}" class="btn btn-success btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-plus-circle fa-3x mb-3"></i>
+                                <span class="fw-bold">Add New Census</span>
+                                <small class="opacity-75">Record observations</small>
                             </a>
                         </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'locations:census_import' site.id %}" class="btn btn-primary btn-lg w-100 mb-2">
-                                <i class="fas fa-upload"></i><br>
-                                Import Data
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'locations:census_import' site.id %}" class="btn btn-primary btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-upload fa-3x mb-3"></i>
+                                <span class="fw-bold">Import Data</span>
+                                <small class="opacity-75">Bulk upload</small>
                             </a>
                         </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'locations:census_export_csv' site.id %}" class="btn btn-info btn-lg w-100 mb-2">
-                                <i class="fas fa-download"></i><br>
-                                Export CSV
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'locations:census_export_csv' site.id %}" class="btn btn-info btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-file-csv fa-3x mb-3"></i>
+                                <span class="fw-bold">Export CSV</span>
+                                <small class="opacity-75">Data analysis</small>
                             </a>
                         </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'locations:census_export_excel' site.id %}" class="btn btn-warning btn-lg w-100 mb-2">
-                                <i class="fas fa-file-excel"></i><br>
-                                Export Excel
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'locations:census_export_excel' site.id %}" class="btn btn-warning btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-file-excel fa-3x mb-3"></i>
+                                <span class="fw-bold">Export Excel</span>
+                                <small class="opacity-75">Spreadsheet format</small>
                             </a>
                         </div>
                     </div>
@@ -133,26 +184,25 @@
     {% if census_summary %}
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-line text-info"></i>
-                        Census Summary by Year and Month
+                        <i class="fas fa-chart-line me-2"></i>Census Summary by Year and Month
                     </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     {% for year, months in census_summary.items %}
                     <div class="year-section mb-4">
-                        <h6 class="text-primary border-bottom pb-2">
-                            <i class="fas fa-calendar-alt"></i>
-                            {{ year }}
-                        </h6>
-                        <div class="row">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-calendar-alt text-info me-2"></i>
+                            <h6 class="text-primary mb-0 fw-bold">{{ year }}</h6>
+                        </div>
+                        <div class="row g-3">
                             {% for month_num, month_data in months.items %}
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card border-left-primary h-100">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted">
+                            <div class="col-md-3 col-sm-6">
+                                <div class="card border-0 bg-light h-100">
+                                    <div class="card-body p-3 text-center">
+                                        <h6 class="card-title text-muted fw-bold mb-3">
                                             {% if month_num == 1 %}January
                                             {% elif month_num == 2 %}February
                                             {% elif month_num == 3 %}March
@@ -167,20 +217,24 @@
                                             {% elif month_num == 12 %}December
                                             {% endif %}
                                         </h6>
-                                        <div class="row text-center">
+                                        <div class="row text-center g-2">
                                             <div class="col-6">
-                                                <h5 class="text-primary mb-0">{{ month_data.total_species }}</h5>
-                                                <small>Species</small>
+                                                <div class="p-2 bg-primary text-white rounded">
+                                                    <h5 class="mb-0 fw-bold">{{ month_data.total_species }}</h5>
+                                                    <small class="opacity-75">Species</small>
+                                                </div>
                                             </div>
                                             <div class="col-6">
-                                                <h5 class="text-success mb-0">{{ month_data.total_birds }}</h5>
-                                                <small>Birds</small>
+                                                <div class="p-2 bg-success text-white rounded">
+                                                    <h5 class="mb-0 fw-bold">{{ month_data.total_birds }}</h5>
+                                                    <small class="opacity-75">Birds</small>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="mt-2">
-                                            <small class="text-muted">
+                                        <div class="mt-3">
+                                            <span class="badge bg-secondary">
                                                 {{ month_data.observations|length }} census record{{ month_data.observations|length|pluralize }}
-                                            </small>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -199,58 +253,63 @@
     {% if recent_census %}
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="fas fa-history text-secondary"></i>
-                        Recent Census Observations
+                        <i class="fas fa-history me-2"></i>Recent Census Observations
                     </h5>
+                    <a href="{% url 'locations:census_create' site.id %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add New
+                    </a>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Species Count</th>
-                                    <th>Total Birds</th>
-                                    <th>Weather</th>
-                                    <th>Observer</th>
-                                    <th>Actions</th>
+                                    <th class="px-4 py-3">Date</th>
+                                    <th class="px-4 py-3">Species Count</th>
+                                    <th class="px-4 py-3">Total Birds</th>
+                                    <th class="px-4 py-3">Weather</th>
+                                    <th class="px-4 py-3">Observer</th>
+                                    <th class="px-4 py-3 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for census in recent_census %}
                                 <tr>
-                                    <td>
-                                        <strong>{{ census.observation_date|date:"M d, Y" }}</strong>
+                                    <td class="px-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-calendar-day text-primary me-2"></i>
+                                            <strong>{{ census.observation_date|date:"M d, Y" }}</strong>
+                                        </div>
                                     </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ census.get_total_species_count }}</span>
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-info fs-6">{{ census.get_total_species_count }}</span>
                                     </td>
-                                    <td>
-                                        <span class="badge bg-success">{{ census.get_total_birds_count }}</span>
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-success fs-6">{{ census.get_total_birds_count }}</span>
                                     </td>
-                                    <td>
+                                    <td class="px-4 py-3">
                                         {% if census.weather_conditions %}
-                                            <small>{{ census.weather_conditions }}</small>
+                                            <span class="text-muted">{{ census.weather_conditions }}</span>
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="px-4 py-3">
                                         {% if census.observer %}
-                                            <small>{{ census.observer.username }}</small>
+                                            <span class="text-muted">{{ census.observer.username }}</span>
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="px-4 py-3 text-center">
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'locations:census_update' census.id %}" class="btn btn-outline-primary btn-sm">
+                                            <a href="{% url 'locations:census_update' census.id %}" class="btn btn-outline-primary btn-sm" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="{% url 'locations:census_delete' census.id %}" class="btn btn-outline-danger btn-sm">
+                                            <a href="{% url 'locations:census_delete' census.id %}" class="btn btn-outline-danger btn-sm" title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                         </div>
@@ -270,13 +329,15 @@
     {% if not census_summary and not recent_census %}
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card border-0 shadow-sm">
                 <div class="card-body text-center py-5">
-                    <i class="fas fa-binoculars fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">No Census Data Yet</h5>
-                    <p class="text-muted">This site doesn't have any census observations yet.</p>
-                    <a href="{% url 'locations:census_create' site.id %}" class="btn btn-success">
-                        <i class="fas fa-plus"></i> Add First Census
+                    <div class="mb-4">
+                        <i class="fas fa-binoculars text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No Census Data Yet</h4>
+                    <p class="text-muted mb-4">This site doesn't have any census observations yet. Start monitoring by adding your first census.</p>
+                    <a href="{% url 'locations:census_create' site.id %}" class="btn btn-success btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add First Census
                     </a>
                 </div>
             </div>
@@ -286,11 +347,90 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+}
+
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+}
+
+.year-section:not(:last-child) {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 2rem;
+}
+
+.breadcrumb {
+    background-color: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+}
+
+.breadcrumb-item a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-    // Add any JavaScript functionality here
-    console.log('Site detail page loaded');
+    // Add smooth scrolling for better UX
+    $('a[href^="#"]').on('click', function(event) {
+        var target = $(this.getAttribute('href'));
+        if (target.length) {
+            event.preventDefault();
+            $('html, body').stop().animate({
+                scrollTop: target.offset().top - 100
+            }, 1000);
+        }
+    });
+
+    // Add tooltips to action buttons
+    $('[title]').tooltip();
+
+    // Add loading states to action buttons
+    $('.btn').on('click', function() {
+        if (!$(this).hasClass('btn-outline-danger')) {
+            $(this).addClass('disabled');
+            $(this).html('<i class="fas fa-spinner fa-spin me-1"></i>Loading...');
+        }
+    });
+
+    console.log('Enhanced site detail page loaded');
 });
 </script>
 {% endblock %} 
