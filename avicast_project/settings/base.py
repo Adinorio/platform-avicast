@@ -48,6 +48,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third-party apps (temporarily disabled for debugging)
+    # 'corsheaders',
+    # 'axes',
+    
+    # Local apps
     'apps.users.apps.UsersConfig',
     'apps.fauna.apps.FaunaConfig',
     'apps.locations.apps.LocationsConfig',
@@ -55,6 +61,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # 'corsheaders.middleware.CorsMiddleware',  # Temporarily disabled
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -62,6 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'axes.middleware.AxesMiddleware',  # Temporarily disabled
     'apps.users.middleware.SuperadminRestrictionMiddleware',  # Custom middleware for role restrictions
 ]
 
