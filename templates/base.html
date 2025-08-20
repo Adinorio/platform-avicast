@@ -216,12 +216,12 @@
                 {% if user.role == 'ADMIN' %}
                 <!-- Admin-only features -->
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin:image_processing_imageupload_changelist' %}">
+                    <a class="nav-link" href="{% url 'image_processing:dashboard' %}">
                         <i class="fas fa-camera me-2"></i> Image Processing
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin:weather_weatherforecast_changelist' %}">
+                    <a class="nav-link" href="{% url 'weather:dashboard' %}">
                         <i class="fas fa-cloud-sun me-2"></i> Weather Forecasting
                     </a>
                 </li>
