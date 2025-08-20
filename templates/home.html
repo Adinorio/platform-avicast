@@ -177,8 +177,8 @@
                 </div>
                 {% endif %}
 
-                <!-- User Management (Admin Only) -->
-                {% if user.role == 'ADMIN' %}
+                <!-- User Management (Superadmin Only) -->
+                {% if user.role == 'SUPERADMIN' %}
                 <div class="col-lg-4 col-md-6">
                     <div class="card h-100 border-0 shadow-sm feature-card">
                         <div class="card-header bg-dark text-white text-center border-0" style="height: 120px;">
@@ -188,7 +188,7 @@
                         </div>
                         <div class="card-body p-4 text-center">
                             <h5 class="card-title text-dark fw-bold mb-3">User Management</h5>
-                            <p class="card-text text-muted mb-4">Manage user accounts and permissions (except superadmins)</p>
+                            <p class="card-text text-muted mb-4">Manage all user accounts and system permissions</p>
                             <a href="{% url 'admin:users_user_changelist' %}" class="btn btn-dark btn-lg w-100">
                                 <i class="fas fa-users me-2"></i>Manage Users
                             </a>
@@ -244,7 +244,7 @@
                         <h6 class="alert-heading">
                             <i class="fas fa-star me-2"></i>Admin Access Granted
                         </h6>
-                        <p class="mb-0">As an Admin, you have full access to all system features including user management (except superadmins), image processing, weather forecasting, and data management.</p>
+                        <p class="mb-0">As an Admin, you have full access to all system features including species management, site management, image processing, weather forecasting, and data management. User management is restricted to superadmins only.</p>
                     </div>
                 </div>
             </div>

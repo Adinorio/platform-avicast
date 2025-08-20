@@ -83,34 +83,24 @@ class CustomUserAdmin(BaseUserAdmin):
         if request.user.role == User.Role.SUPERADMIN:
             return qs
         elif request.user.role == User.Role.ADMIN:
-            # Admins can see all users except superadmins
-            return qs.exclude(role=User.Role.SUPERADMIN)
+            # Admins cannot see any users in user management
+            return qs.none()
         return qs.none()
     
     def has_add_permission(self, request):
-        # Both superadmin and admin can create users
-        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+        # Only superadmin can create users
+        return request.user.role == User.Role.SUPERADMIN
     
     def has_change_permission(self, request, obj=None):
-        if obj is None:
-            return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
-        # Superadmin can edit anyone
-        if request.user.role == User.Role.SUPERADMIN:
-            return True
-        # Admin can edit anyone except superadmins
-        if request.user.role == User.Role.ADMIN:
-            return obj.role != User.Role.SUPERADMIN
-        return False
+        # Only superadmin can edit users
+        return request.user.role == User.Role.SUPERADMIN
     
     def has_delete_permission(self, request, obj=None):
         if obj is None:
-            return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+            return request.user.role == User.Role.SUPERADMIN
         # Superadmin can delete anyone except themselves
         if request.user.role == User.Role.SUPERADMIN:
             return obj != request.user
-        # Admin can delete field workers and other admins (but not superadmins)
-        if request.user.role == User.Role.ADMIN:
-            return obj.role != User.Role.SUPERADMIN and obj != request.user
         return False
     
     def save_model(self, request, obj, form, change):
