@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'apps.fauna.apps.FaunaConfig',
     'apps.locations.apps.LocationsConfig',
     'apps.analytics.apps.AnalyticsConfig',
+    'apps.image_processing.apps.ImageProcessingConfig',
+    'apps.weather.apps.WeatherConfig',
 ]
 
 MIDDLEWARE = [
