@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import ImageUpload, ImageProcessingResult, ProcessingBatch
+from apps.users.models import User
 
 
 @admin.register(ImageUpload)
@@ -61,25 +62,25 @@ class ImageUploadAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.role == 'SUPERADMIN':
+        if request.user.role == User.Role.SUPERADMIN:
             return qs
-        elif request.user.role == 'ADMIN':
+        elif request.user.role == User.Role.ADMIN:
             return qs
         else:
             return qs.filter(uploaded_by=request.user)
     
     def has_add_permission(self, request):
-        return request.user.role in ['ADMIN', 'FIELD_WORKER']
+        return request.user.role in [User.Role.ADMIN, User.Role.FIELD_WORKER]
     
     def has_change_permission(self, request, obj=None):
         if obj is None:
-            return request.user.role in ['SUPERADMIN', 'ADMIN', 'FIELD_WORKER']
+            return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN, User.Role.FIELD_WORKER]
         if obj.uploaded_by == request.user:
             return True
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_delete_permission(self, request, obj=None):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
 
 
 @admin.register(ImageProcessingResult)
@@ -113,9 +114,9 @@ class ImageProcessingResultAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.role == 'SUPERADMIN':
+        if request.user.role == User.Role.SUPERADMIN:
             return qs
-        elif request.user.role == 'ADMIN':
+        elif request.user.role == User.Role.ADMIN:
             return qs
         else:
             return qs.filter(image_upload__uploaded_by=request.user)
@@ -125,13 +126,13 @@ class ImageProcessingResultAdmin(admin.ModelAdmin):
     
     def has_change_permission(self, request, obj=None):
         if obj is None:
-            return request.user.role in ['SUPERADMIN', 'ADMIN']
+            return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
         if obj.image_upload.uploaded_by == request.user:
             return True
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_delete_permission(self, request, obj=None):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
 
 
 @admin.register(ProcessingBatch)
@@ -184,22 +185,22 @@ class ProcessingBatchAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.role == 'SUPERADMIN':
+        if request.user.role == User.Role.SUPERADMIN:
             return qs
-        elif request.user.role == 'ADMIN':
+        elif request.user.role == User.Role.ADMIN:
             return qs
         else:
             return qs.filter(created_by=request.user)
     
     def has_add_permission(self, request):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_change_permission(self, request, obj=None):
         if obj is None:
-            return request.user.role in ['SUPERADMIN', 'ADMIN']
+            return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
         if obj.created_by == request.user:
             return True
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_delete_permission(self, request, obj=None):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]

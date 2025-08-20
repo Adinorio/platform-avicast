@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import WeatherForecast, FieldWorkSchedule, WeatherAlert
+from apps.users.models import User
 
 
 @admin.register(WeatherForecast)
@@ -68,21 +69,21 @@ class WeatherForecastAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.role == 'SUPERADMIN':
+        if request.user.role == User.Role.SUPERADMIN:
             return qs
-        elif request.user.role == 'ADMIN':
+        elif request.user.role == User.Role.ADMIN:
             return qs
         else:
             return qs  # Field workers can view all weather data
     
     def has_add_permission(self, request):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_change_permission(self, request, obj=None):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_delete_permission(self, request, obj=None):
-        return request.user.role == 'SUPERADMIN'
+        return request.user.role == User.Role.SUPERADMIN
 
 
 @admin.register(FieldWorkSchedule)
@@ -139,25 +140,25 @@ class FieldWorkScheduleAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.role == 'SUPERADMIN':
+        if request.user.role == User.Role.SUPERADMIN:
             return qs
-        elif request.user.role == 'ADMIN':
+        elif request.user.role == User.Role.ADMIN:
             return qs
         else:
             return qs.filter(assigned_personnel=request.user)
     
     def has_add_permission(self, request):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_change_permission(self, request, obj=None):
         if obj is None:
-            return request.user.role in ['SUPERADMIN', 'ADMIN']
+            return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
         if request.user in obj.assigned_personnel.all():
             return True
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_delete_permission(self, request, obj=None):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
 
 
 @admin.register(WeatherAlert)
@@ -206,18 +207,18 @@ class WeatherAlertAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.role == 'SUPERADMIN':
+        if request.user.role == User.Role.SUPERADMIN:
             return qs
-        elif request.user.role == 'ADMIN':
+        elif request.user.role == User.Role.ADMIN:
             return qs
         else:
             return qs  # Field workers can view all weather alerts
     
     def has_add_permission(self, request):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_change_permission(self, request, obj=None):
-        return request.user.role in ['SUPERADMIN', 'ADMIN']
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_delete_permission(self, request, obj=None):
-        return request.user.role == 'SUPERADMIN'
+        return request.user.role == User.Role.SUPERADMIN
