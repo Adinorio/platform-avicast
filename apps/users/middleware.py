@@ -15,7 +15,7 @@ class SuperadminRestrictionMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated and hasattr(request.user, 'role'):
-            if request.user.role == 'SUPERADMIN':
+            if request.user.role == User.Role.SUPERADMIN:
                 # List of URLs that Superadmin should not access
                 restricted_urls = [
                     '/fauna/',

@@ -90,12 +90,12 @@ class User(AbstractUser):
 
     def can_access_feature(self, feature_name):
         """Check if user can access specific features based on role"""
-        if self.role == 'SUPERADMIN':
+        if self.role == self.Role.SUPERADMIN:
             return feature_name in ['user_management']
-        elif self.role == 'ADMIN':
+        elif self.role == self.Role.ADMIN:
             return feature_name in ['species_management', 'site_management', 'census_management', 
                                   'image_processing', 'report_generation', 'user_management']
-        elif self.role == 'FIELD_WORKER':
+        elif self.role == self.Role.FIELD_WORKER:
             return feature_name in ['species_view', 'site_view', 'census_view', 'image_processing_view']
         return False
 
