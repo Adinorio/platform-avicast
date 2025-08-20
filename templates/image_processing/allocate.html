@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Allocate Data - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-map-marker-alt me-2"></i>Allocate Data
+            </h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4">Allocate Processing Results to Sites</h5>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Allocation System:</strong> Drag and drop approved processing results to specific sites, years, and months for data organization.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-list me-2"></i>Approved Results
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted text-center">No approved results available for allocation.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-map me-2"></i>Site Selection
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Site</label>
+                                        <select class="form-select" disabled>
+                                            <option>No sites available</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Year</label>
+                                        <select class="form-select" disabled>
+                                            <option>2025</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Month</label>
+                                        <select class="form-select" disabled>
+                                            <option>January</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted">Allocation system coming soon...</p>
+                        <a href="{% url 'image_processing:review' %}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Review
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
