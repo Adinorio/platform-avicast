@@ -27,6 +27,7 @@ def custom_login_redirect(request):
         if request.user.role == 'SUPERADMIN':
             return redirect('admin:index')
         else:
+            # Redirect ADMIN and FIELD_WORKER to home page
             return redirect('home')
     return auth_views.LoginView.as_view(template_name='registration/login.html')(request)
 

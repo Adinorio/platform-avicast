@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Q, Count, Sum, Avg
@@ -16,10 +16,32 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from io import BytesIO
 import os
+from functools import wraps
 
 from apps.locations.models import Site, CensusObservation, SpeciesObservation
 
+def role_required(allowed_roles):
+    """
+    Decorator to check if user has required role
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+            
+            if not hasattr(request.user, 'role'):
+                return HttpResponse("User role not defined", status=403)
+            
+            if request.user.role not in allowed_roles:
+                return HttpResponse("Access denied. Insufficient permissions.", status=403)
+            
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def analytics_dashboard(request):
     """Main analytics dashboard with overview charts"""
     
@@ -49,6 +71,7 @@ def analytics_dashboard(request):
     return render(request, 'analytics/dashboard.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def species_diversity_chart(request):
     """Generate species diversity chart for all sites"""
     
@@ -82,6 +105,7 @@ def species_diversity_chart(request):
     return JsonResponse({'chart': chart_json})
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def population_trends_chart(request):
     """Generate population trends chart over time"""
     
@@ -124,6 +148,7 @@ def population_trends_chart(request):
     return JsonResponse({'chart': chart_json})
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def seasonal_analysis_chart(request):
     """Generate seasonal analysis heatmap"""
     
@@ -165,6 +190,7 @@ def seasonal_analysis_chart(request):
     return JsonResponse({'chart': chart_json})
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def site_comparison_chart(request):
     """Generate site comparison radar chart"""
     
@@ -209,6 +235,7 @@ def site_comparison_chart(request):
     return JsonResponse({'chart': chart_json})
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def generate_census_report(request, site_id=None):
     """Generate comprehensive census report"""
     
@@ -289,6 +316,7 @@ def generate_census_report(request, site_id=None):
     return response
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def chart_gallery(request):
     """Display gallery of available charts"""
     

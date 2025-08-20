@@ -22,6 +22,7 @@ class SuperadminRestrictionMiddleware:
                     '/sites/',
                     '/census/',
                     '/reports/',
+                    '/analytics/',
                 ]
                 
                 # Check if current path is restricted

@@ -50,7 +50,8 @@ class User(AbstractUser):
     objects = CustomUserManager()
 
     def save(self, *args, **kwargs):
-        if not self.pk:
+        if not self.pk and not self.role:
+            # Only set default role if it's a new user AND no role is specified
             self.role = self.base_role
         super().save(*args, **kwargs)
 

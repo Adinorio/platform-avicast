@@ -11,13 +11,35 @@ from openpyxl import Workbook, load_workbook
 import csv
 import io
 from datetime import datetime
+from functools import wraps
 from .models import Site, CensusObservation, SpeciesObservation
 from .forms import (
     SiteForm, CensusObservationForm, SpeciesObservationForm, 
     SpeciesObservationFormSet, CensusImportForm
 )
 
+def role_required(allowed_roles):
+    """
+    Decorator to check if user has required role
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+            
+            if not hasattr(request.user, 'role'):
+                return HttpResponse("User role not defined", status=403)
+            
+            if request.user.role not in allowed_roles:
+                return HttpResponse("Access denied. Insufficient permissions.", status=403)
+            
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def site_list(request):
     """Display list of all sites with search and filtering"""
     sites = Site.objects.all()
@@ -57,6 +79,7 @@ def site_list(request):
     return render(request, 'locations/site_list.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def site_detail(request, site_id):
     """Display detailed site information with integrated census data"""
     site = get_object_or_404(Site, id=site_id)
@@ -86,6 +109,7 @@ def site_detail(request, site_id):
     return render(request, 'locations/site_detail.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def site_create(request):
     """Create a new site"""
     if request.method == 'POST':
@@ -103,6 +127,7 @@ def site_create(request):
     return render(request, 'locations/site_form.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def site_update(request, site_id):
     """Update an existing site"""
     site = get_object_or_404(Site, id=site_id)
@@ -120,6 +145,7 @@ def site_update(request, site_id):
     return render(request, 'locations/site_form.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def site_delete(request, site_id):
     """Delete a site"""
     site = get_object_or_404(Site, id=site_id)
@@ -134,6 +160,7 @@ def site_delete(request, site_id):
     return render(request, 'locations/site_confirm_delete.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def census_create(request, site_id):
     """Create a new census observation for a site"""
     site = get_object_or_404(Site, id=site_id)
@@ -167,6 +194,7 @@ def census_create(request, site_id):
     return render(request, 'locations/census_form.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def census_update(request, census_id):
     """Update an existing census observation"""
     census = get_object_or_404(CensusObservation, id=census_id)
@@ -195,6 +223,7 @@ def census_update(request, census_id):
     return render(request, 'locations/census_form.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def census_delete(request, census_id):
     """Delete a census observation"""
     census = get_object_or_404(CensusObservation, id=census_id)
@@ -209,6 +238,7 @@ def census_delete(request, census_id):
     return render(request, 'locations/census_confirm_delete.html', context)
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def census_import(request, site_id):
     """Import census data from CSV/Excel file"""
     site = get_object_or_404(Site, id=site_id)
@@ -294,6 +324,7 @@ def _process_excel_import(file, census):
     return success_count
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def census_export_csv(request, site_id):
     """Export census data as CSV"""
     site = get_object_or_404(Site, id=site_id)
@@ -320,6 +351,7 @@ def census_export_csv(request, site_id):
     return response
 
 @login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
 def census_export_excel(request, site_id):
     """Export census data as Excel"""
     site = get_object_or_404(Site, id=site_id)
