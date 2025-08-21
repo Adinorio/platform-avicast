@@ -34,6 +34,7 @@
                 </div>
                 <div class="card-body">
                     <form id="processForm">
+                        {% csrf_token %}
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="aiModel" class="form-label">Select AI Model</label>
@@ -248,11 +249,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Make AJAX request
-            fetch('{% url "image_processing:start_processing" %}', {
+            fetch(`/image-processing/process/{{ batch_id }}/start/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken.value
+                    'X-CSRFToken': csrfToken.value,
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
                     image_ids: imageIds,
