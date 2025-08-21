@@ -39,14 +39,14 @@ class FieldWorkRecommendation(models.TextChoices):
 
 class WeatherForecast(models.Model):
     """Model for storing weather forecast data"""
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
+
     # Location and timing
     site = models.ForeignKey('locations.Site', on_delete=models.CASCADE, related_name='weather_forecasts')
     forecast_date = models.DateField()
     forecast_time = models.TimeField()
-    
+
     # Weather data
     temperature = models.DecimalField(max_digits=4, decimal_places=1, help_text="Temperature in Celsius")
     humidity = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], help_text="Humidity percentage")
@@ -54,19 +54,20 @@ class WeatherForecast(models.Model):
     wind_direction = models.CharField(max_length=10, help_text="Wind direction (N, S, E, W, NE, etc.)")
     precipitation = models.DecimalField(max_digits=5, decimal_places=2, help_text="Precipitation in mm")
     pressure = models.DecimalField(max_digits=6, decimal_places=2, help_text="Atmospheric pressure in hPa")
-    
+
     # Condition classifications
     weather_condition = models.CharField(max_length=20, choices=WeatherCondition.choices)
     visibility = models.DecimalField(max_digits=4, decimal_places=1, help_text="Visibility in km")
-    
+
     # Tide information (for coastal sites)
     tide_condition = models.CharField(max_length=20, choices=TideCondition.choices, null=True, blank=True)
     tide_height = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True, help_text="Tide height in meters")
-    
-    # API source
+
+    # API source and data
     api_source = models.CharField(max_length=20, choices=WeatherAPI.choices)
     api_response_data = models.JSONField(default=dict, blank=True)  # Store raw API response
-    
+    last_updated = models.DateTimeField(auto_now=True)
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
