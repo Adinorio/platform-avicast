@@ -32,13 +32,37 @@ class ImageUpload(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     
-    # File handling
+    # File handling with improved storage
     image_file = models.ImageField(
         upload_to='bird_images/%Y/%m/%d/',
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif'])]
     )
     file_size = models.BigIntegerField(help_text="File size in bytes")
     file_type = models.CharField(max_length=20)
+
+    # Enhanced deduplication and optimization fields
+    file_hash = models.CharField(max_length=64, blank=True, help_text="SHA256 hash of file content")
+    original_filename = models.CharField(max_length=255)
+    is_compressed = models.BooleanField(default=False, help_text="Whether image has been optimized")
+    compressed_size = models.BigIntegerField(null=True, blank=True, help_text="Size after compression")
+    
+    # Archive storage field
+    archive_path = models.CharField(max_length=500, null=True, blank=True, help_text="Path to archived file")
+
+    # Storage tier management
+    storage_tier = models.CharField(
+        max_length=20,
+        choices=[
+            ('HOT', 'Hot Storage'),
+            ('WARM', 'Warm Storage'),
+            ('COLD', 'Cold Storage'),
+            ('ARCHIVE', 'Archive')
+        ],
+        default='HOT',
+        help_text="Storage tier for lifecycle management"
+    )
+    last_accessed = models.DateTimeField(auto_now=True, help_text="Last time file was accessed")
+    retention_days = models.IntegerField(default=365, help_text="Days to retain file")
     
     # Upload information
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='image_uploads')
@@ -51,7 +75,6 @@ class ImageUpload(models.Model):
     processing_duration = models.DurationField(null=True, blank=True)
     
     # Metadata
-    original_filename = models.CharField(max_length=255)
     image_width = models.IntegerField(null=True, blank=True)
     image_height = models.IntegerField(null=True, blank=True)
     
@@ -81,6 +104,28 @@ class ImageUpload(models.Model):
         """Mark image processing as failed"""
         self.upload_status = self.UploadStatus.FAILED
         self.save(update_fields=['upload_status'])
+
+    def calculate_file_hash(self):
+        """Calculate SHA256 hash of the image file"""
+        import hashlib
+        if self.image_file:
+            with self.image_file.open('rb') as f:
+                file_content = f.read()
+                return hashlib.sha256(file_content).hexdigest()
+        return None
+
+    def get_storage_info(self):
+        """Get storage information for this image"""
+        return {
+            'id': str(self.id),
+            'title': self.title,
+            'file_size': self.file_size,
+            'compressed_size': self.compressed_size,
+            'storage_tier': self.storage_tier,
+            'is_compressed': self.is_compressed,
+            'uploaded_at': self.uploaded_at,
+            'last_accessed': self.last_accessed
+        }
 
 class ImageProcessingResult(models.Model):
     """Model for storing image processing results"""
