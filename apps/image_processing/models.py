@@ -12,6 +12,12 @@ class BirdSpecies(models.TextChoices):
     WHISKERED_TERN = 'WHISKERED_TERN', 'Whiskered Tern'
     GREAT_KNOT = 'GREAT_KNOT', 'Great Knot'
 
+class AIModel(models.TextChoices):
+    """Available AI models for bird detection"""
+    YOLO_V5 = 'YOLO_V5', 'YOLOv5'
+    YOLO_V8 = 'YOLO_V8', 'YOLOv8'
+    YOLO_V9 = 'YOLO_V9', 'YOLOv9'
+
 class ImageUpload(models.Model):
     """Model for handling image uploads"""
     
@@ -99,6 +105,15 @@ class ImageProcessingResult(models.Model):
     confidence_score = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True)
     bounding_box = models.JSONField(default=dict, blank=True)  # Store coordinates
     processing_status = models.CharField(max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.PENDING)
+
+    # AI Model Configuration
+    ai_model = models.CharField(max_length=20, choices=AIModel.choices, default=AIModel.YOLO_V8)
+    model_version = models.CharField(max_length=50, blank=True)  # Specific model version
+    processing_device = models.CharField(max_length=20, default='cpu')  # cpu or cuda
+
+    # Processing metrics
+    inference_time = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)  # in seconds
+    model_confidence_threshold = models.DecimalField(max_digits=3, decimal_places=2, default=0.25)
     
     # Review and approval
     review_status = models.CharField(max_length=20, choices=ReviewStatus.choices, default=ReviewStatus.PENDING)
