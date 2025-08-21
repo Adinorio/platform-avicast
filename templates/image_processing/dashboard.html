@@ -144,19 +144,53 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>AI Processing System Ready!</strong><br>
-                    The AI processing system is now ready for use. Upload images and process them with YOLO models for bird species detection.
-                </div>
-                <div class="text-center">
-                    <a href="{% url 'image_processing:upload' %}" class="btn btn-outline-primary btn-sm me-2">
-                        <i class="fas fa-upload me-1"></i>Upload Images
-                    </a>
-                    <a href="{% url 'image_processing:process' %}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-cogs me-1"></i>Process Images
-                    </a>
-                </div>
+                {% if recent_results %}
+                    <div class="list-group list-group-flush">
+                        {% for result in recent_results %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ result.image_upload.title }}</h6>
+                                        <small class="text-muted">
+                                            {% if result.detected_species %}
+                                                Detected: <strong>{{ result.detected_species }}</strong>
+                                                ({{ result.confidence_score|floatformat:1 }}% confidence)
+                                            {% else %}
+                                                Processing completed - no species detected
+                                            {% endif %}
+                                        </small>
+                                        <br>
+                                        <small class="text-primary">{{ result.created_at|timesince }} ago</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{{ result.review_status|lower }} mb-1">{{ result.get_review_status_display }}</span>
+                                        {% if result.processing_status == 'COMPLETED' %}
+                                            <br>
+                                            <small class="text-success">{{ result.inference_time }}s</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'image_processing:review' %}" class="btn btn-outline-success btn-sm me-2">
+                            <i class="fas fa-search me-1"></i>Review All Results
+                        </a>
+                        <a href="{% url 'analytics:dashboard' %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-chart-bar me-1"></i>View Analytics
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle mb-2"></i>
+                        <h6>No Processing Results Yet</h6>
+                        <p class="mb-3">Upload and process some images to see AI detection results here.</p>
+                        <a href="{% url 'image_processing:upload' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-upload me-1"></i>Get Started
+                        </a>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -177,25 +211,113 @@
                             <a href="{% url 'image_processing:upload' %}" class="btn btn-outline-primary w-100">
                                 <i class="fas fa-upload me-2"></i>
                                 <div>Upload Images</div>
+                                <small class="text-muted">Upload bird images for processing</small>
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'image_processing:process' %}" class="btn btn-outline-success w-100">
-                                <i class="fas fa-cogs me-2"></i>
-                                <div>Process Images</div>
+                            {% if recent_uploads %}
+                                <a href="{% url 'image_processing:process_batch' recent_uploads.first.id %}" class="btn btn-outline-success w-100">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    <div>Process Images</div>
+                                    <small class="text-muted">Run AI detection on uploaded images</small>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'image_processing:upload' %}" class="btn btn-outline-success w-100">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    <div>Process Images</div>
+                                    <small class="text-muted">Upload images first to process</small>
+                                </a>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'locations:mobile_import_list' %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-list me-2"></i>
+                                <div>Mobile Imports</div>
+                                <small class="text-muted">Manage mobile app data imports</small>
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'image_processing:review' %}" class="btn btn-outline-warning w-100">
-                                <i class="fas fa-search me-2"></i>
-                                <div>Review Results</div>
+                            <a href="{% url 'analytics:dashboard' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                <div>View Analytics</div>
+                                <small class="text-muted">View processing statistics and reports</small>
                             </a>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Steps -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sitemap me-2"></i>Processing Workflow
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Step 1: Upload -->
                         <div class="col-md-3">
-                            <a href="{% url 'image_processing:allocate' %}" class="btn btn-outline-info w-100">
-                                <i class="fas fa-map-marker-alt me-2"></i>
-                                <div>Allocate to Sites</div>
-                            </a>
+                            <div class="text-center">
+                                <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-upload text-white fa-lg"></i>
+                                </div>
+                                <h6 class="text-primary">1. Upload Images</h6>
+                                <p class="text-muted small mb-3">Upload bird images with proper validation and duplicate handling</p>
+                                <a href="{% url 'image_processing:upload' %}" class="btn btn-primary btn-sm">Upload Now</a>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Process -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-cogs text-white fa-lg"></i>
+                                </div>
+                                <h6 class="text-success">2. Process with AI</h6>
+                                <p class="text-muted small mb-3">Run YOLO AI models for automatic bird species detection</p>
+                                {% if recent_uploads %}
+                                    <a href="{% url 'image_processing:process_batch' recent_uploads.first.id %}" class="btn btn-success btn-sm">Process Now</a>
+                                {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>Upload First</button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Review -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="bg-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-search text-white fa-lg"></i>
+                                </div>
+                                <h6 class="text-warning">3. Review Results</h6>
+                                <p class="text-muted small mb-3">Review AI results, approve, reject, or override classifications</p>
+                                {% if pending_review %}
+                                    <a href="{% url 'image_processing:review' %}" class="btn btn-warning btn-sm">Review ({{ pending_review }})</a>
+                                {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>No Pending Reviews</button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Allocate -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="bg-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-map-marker-alt text-white fa-lg"></i>
+                                </div>
+                                <h6 class="text-info">4. Allocate to Sites</h6>
+                                <p class="text-muted small mb-3">Allocate approved results to specific sites and census data</p>
+                                {% if approved_results %}
+                                    <a href="{% url 'image_processing:allocate' %}" class="btn btn-info btn-sm">Allocate ({{ approved_results }})</a>
+                                {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>No Approved Results</button>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
