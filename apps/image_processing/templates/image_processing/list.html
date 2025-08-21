@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Image List - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2>📸 Image Library</h2>
+            <p class="text-muted">Manage and view all uploaded bird survey images</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'image_processing:upload' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Upload New Image
+            </a>
+        </div>
+    </div>
+    
+    <!-- Storage Status -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Main Storage</h6>
+                    <h4>{{ storage_stats.main_storage.used_gb|floatformat:1 }} / {{ storage_stats.main_storage.total_gb|floatformat:1 }} GB</h4>
+                    <div class="progress bg-white bg-opacity-25">
+                        <div class="progress-bar bg-white" data-width="{{ storage_stats.main_storage.usage_percent|floatformat:1 }}"></div>
+                    </div>
+                    <small>{{ storage_stats.main_storage.usage_percent|floatformat:1 }}% used</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Archive Storage</h6>
+                    <h4>{{ storage_stats.archive_storage.used_gb|floatformat:1 }} / {{ storage_stats.archive_storage.total_gb|floatformat:1 }} GB</h4>
+                    <div class="progress bg-white bg-opacity-25">
+                        <div class="progress-bar bg-white" data-width="{{ storage_stats.archive_storage.usage_percent|floatformat:1 }}"></div>
+                    </div>
+                    <small>{{ storage_stats.archive_storage.usage_percent|floatformat:1 }}% used</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Compression Savings</h6>
+                    <h4>{{ storage_stats.avicast_usage.compression_savings_percent|floatformat:1 }}%</h4>
+                    <small>{{ storage_stats.avicast_usage.compression_savings_mb|floatformat:1 }} MB saved</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Images</h6>
+                    <h4>{{ total_images }}</h4>
+                    <small>{{ compressed_images }} compressed, {{ uncompressed_images }} uncompressed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" value="{{ search_query }}" 
+                           placeholder="Search images...">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="storage_tier">
+                        <option value="">All Tiers</option>
+                        <option value="HOT" {% if storage_tier == 'HOT' %}selected{% endif %}>Hot Storage</option>
+                        <option value="WARM" {% if storage_tier == 'WARM' %}selected{% endif %}>Warm Storage</option>
+                        <option value="COLD" {% if storage_tier == 'COLD' %}selected{% endif %}>Cold Storage</option>
+                        <option value="ARCHIVE" {% if storage_tier == 'ARCHIVE' %}selected{% endif %}>Archive</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="compression_status">
+                        <option value="">All Images</option>
+                        <option value="compressed" {% if compression_status == 'compressed' %}selected{% endif %}>Compressed</option>
+                        <option value="uncompressed" {% if compression_status == 'uncompressed' %}selected{% endif %}>Uncompressed</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{% url 'image_processing:list' %}" class="btn btn-outline-secondary w-100">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Image Grid -->
+    <div class="row">
+        {% for image in page_obj %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card h-100">
+                <!-- Image -->
+                <div class="position-relative">
+                    {% if image.image_file %}
+                    <img src="{{ image.image_file.url }}" class="card-img-top" alt="{{ image.title }}"
+                         style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                         style="height: 200px;">
+                        <i class="fas fa-image fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Storage Tier Badge -->
+                    <span class="position-absolute top-0 start-0 badge 
+                        {% if image.storage_tier == 'HOT' %}bg-danger{% elif image.storage_tier == 'WARM' %}bg-warning{% elif image.storage_tier == 'COLD' %}bg-info{% else %}bg-secondary{% endif %} m-2">
+                        {{ image.storage_tier }}
+                    </span>
+                    
+                    <!-- Compression Badge -->
+                    {% if image.is_compressed %}
+                    <span class="position-absolute top-0 end-0 badge bg-success m-2">
+                        <i class="fas fa-compress-alt"></i>
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body d-flex flex-column">
+                    <h6 class="card-title">{{ image.title|truncatechars:30 }}</h6>
+                    <p class="card-text small text-muted">{{ image.description|truncatechars:60 }}</p>
+                    
+                    <div class="mt-auto">
+                        <div class="row text-center small text-muted mb-2">
+                            <div class="col-6">
+                                <div>Size</div>
+                                <div class="fw-bold">{{ image.file_size|filesizeformat }}</div>
+                            </div>
+                            <div class="col-6">
+                                <div>Uploaded</div>
+                                <div class="fw-bold">{{ image.uploaded_at|date:"M d" }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-1">
+                            <a href="{% url 'image_processing:detail' image.pk %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                <h5>No images found</h5>
+                <p class="text-muted">
+                    {% if search_query or storage_tier or compression_status %}
+                    Try adjusting your search criteria or 
+                    {% endif %}
+                    <a href="{% url 'image_processing:upload' %}">upload your first image</a>
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Image pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if storage_tier %}&storage_tier={{ storage_tier }}{% endif %}{% if compression_status %}&compression_status={{ compression_status }}{% endif %}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if storage_tier %}&storage_tier={{ storage_tier }}{% endif %}{% if compression_status %}&compression_status={{ compression_status }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if storage_tier %}&storage_tier={{ storage_tier }}{% endif %}{% if compression_status %}&compression_status={{ compression_status }}{% endif %}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar widths from data attributes
+    const progressBars = document.querySelectorAll('[data-width]');
+    progressBars.forEach(function(bar) {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+});
+</script>
+{% endblock %}
