@@ -20,6 +20,8 @@ from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.conf.urls.static import static
 
 def custom_login_redirect(request):
     """Custom login view that redirects based on user role"""
@@ -36,9 +38,14 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
     path('login/', custom_login_redirect, name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
+    path('users/', include('apps.users.urls', namespace='users')),
     path('fauna/', include('apps.fauna.urls', namespace='fauna')),
     path('locations/', include('apps.locations.urls', namespace='locations')),
     path('analytics/', include('apps.analytics.urls', namespace='analytics')),
     path('image-processing/', include('apps.image_processing.urls', namespace='image_processing')),
     path('weather/', include('apps.weather.urls', namespace='weather')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
