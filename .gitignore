@@ -111,3 +111,12 @@ venv.bak/
 # OS-specific
 .DS_Store
 Thumbs.db
+# Temporary debugging scripts
+add_all_columns.py
+add_column.py
+check_ai_status.py
+check_table.py
+fix_db.py
+test_ai_deps.py
+apps/image_processing/views_new.py
+olve JavaScript syntax errors and improve error handling
