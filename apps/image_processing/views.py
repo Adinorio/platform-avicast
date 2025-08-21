@@ -16,8 +16,10 @@ from .forms import ImageUploadForm, ImageProcessingForm
 from .local_storage import LocalStorageManager
 from .image_optimizer import ImageOptimizer
 
-# Initialize storage manager
-storage_manager = LocalStorageManager()
+# Lazy storage manager initialization
+def get_storage_manager():
+    """Get storage manager instance when needed"""
+    return LocalStorageManager()
 
 @login_required
 def image_upload_view(request):
@@ -92,6 +94,7 @@ def process_image_with_storage(image_upload, file_content):
         image_upload.complete_processing()
         
         # Check storage usage and archive if needed
+        storage_manager = get_storage_manager()
         storage_manager.check_and_archive_if_needed()
         
     except Exception as e:
@@ -134,6 +137,7 @@ def image_list_view(request):
     page_obj = paginator.get_page(page_number)
     
     # Get storage statistics
+    storage_manager = get_storage_manager()
     storage_stats = storage_manager.get_storage_usage()
     
     context = {
@@ -184,6 +188,7 @@ def storage_status_view(request):
         return redirect('image_processing:list')
     
     # Get storage usage
+    storage_manager = get_storage_manager()
     storage_usage = storage_manager.get_storage_usage()
     
     # Get storage recommendations
@@ -214,6 +219,7 @@ def storage_cleanup_view(request):
         try:
             if action == 'cleanup':
                 # Perform actual cleanup
+                storage_manager = get_storage_manager()
                 result = storage_manager.cleanup_old_files(days)
                 messages.success(request, f"Storage cleanup completed! Archived {result['archived_count']} files, freed {result['freed_space_mb']} MB")
             elif action == 'optimize':
@@ -222,6 +228,7 @@ def storage_cleanup_view(request):
                 messages.success(request, "Image optimization completed!")
             elif action == 'archive':
                 # Archive old files
+                storage_manager = get_storage_manager()
                 result = storage_manager.archive_old_files(days)
                 messages.success(request, f"Archived {result['archived_count']} files")
             
@@ -299,6 +306,7 @@ def restore_archived_image(request, pk):
     
     if image.storage_tier == 'ARCHIVE':
         try:
+            storage_manager = get_storage_manager()
             success = storage_manager.restore_from_archive(str(image.pk))
             if success:
                 messages.success(request, "Image restored successfully!")
@@ -322,6 +330,7 @@ def api_upload_progress(request):
 @login_required
 def api_storage_stats(request):
     """API endpoint for storage statistics"""
+    storage_manager = get_storage_manager()
     stats = storage_manager.get_storage_usage()
     return JsonResponse(stats)
 

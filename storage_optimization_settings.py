@@ -38,11 +38,10 @@ USE_CLOUD_STORAGE = False  # ALWAYS False for CENRO local deployment
 CLOUD_STORAGE_PROVIDER = 'local'  # Local storage only
 
 # Local Storage Paths
-ARCHIVE_STORAGE_PATH = 'D:/avicast_archive'  # Secondary drive for archives
+ARCHIVE_STORAGE_PATH = 'media/archive'  # Local archive storage
 EXTERNAL_BACKUP_PATHS = [
-    'E:/',  # USB Drive 1
-    'F:/',  # USB Drive 2
-    'G:/',  # Network attached storage (if available)
+    'media/external_backup',  # Local external backup folder
+    'media/usb_backup',       # USB backup folder
 ]
 
 # Local Network Optimization

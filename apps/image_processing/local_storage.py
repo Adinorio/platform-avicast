@@ -21,19 +21,29 @@ class LocalStorageManager:
     def __init__(self):
         self.media_root = Path(settings.MEDIA_ROOT)
         self.max_storage_gb = getattr(settings, 'MAX_LOCAL_STORAGE_GB', 50)
-        self.archive_path = Path(getattr(settings, 'ARCHIVE_STORAGE_PATH', 'D:/avicast_archive'))
+        self.archive_path = Path(getattr(settings, 'ARCHIVE_STORAGE_PATH', 'media/archive'))
         self.warning_threshold = getattr(settings, 'STORAGE_WARNING_THRESHOLD', 0.8)
         
-        # Create archive directory if it doesn't exist
-        self.archive_path.mkdir(parents=True, exist_ok=True)
+        # Create archive directory if it doesn't exist (safely)
+        try:
+            self.archive_path.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            logger.warning(f"Could not create archive directory {self.archive_path}: {e}")
+            # Fallback to media subdirectory
+            self.archive_path = self.media_root / 'archive'
+            self.archive_path.mkdir(parents=True, exist_ok=True)
         
     def get_storage_usage(self) -> dict:
         """Get detailed storage usage for local system"""
         # Main storage usage
         main_total, main_used, main_free = shutil.disk_usage(self.media_root)
         
-        # Archive storage usage
-        archive_total, archive_used, archive_free = shutil.disk_usage(self.archive_path)
+        # Archive storage usage (safely)
+        try:
+            archive_total, archive_used, archive_free = shutil.disk_usage(self.archive_path)
+        except (OSError, FileNotFoundError):
+            # Archive path doesn't exist or not accessible
+            archive_total = archive_used = archive_free = 0
         
         # AVICAST specific usage
         from .models import ImageUpload
