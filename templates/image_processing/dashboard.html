@@ -1,58 +1,203 @@
 {% extends 'base.html' %}
 
-{% block title %}Image Processing Dashboard - AVICAST{% endblock %}
+{% block title %}AVICAST - Image Processing Dashboard{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
         <div class="col-12">
-            <h1 class="h3 mb-4">
-                <i class="fas fa-camera me-2"></i>Image Processing Dashboard
-            </h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary">
+                        <i class="fas fa-camera me-2"></i>Image Processing Dashboard
+                    </h2>
+                    <p class="text-muted">AI-powered bird species detection and census management</p>
+                </div>
+                <div>
+                    <a href="{% url 'image_processing:upload' %}" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload Images
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
-    
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-images text-primary fa-2x"></i>
+                    </div>
+                    <h4 class="text-primary">{{ total_uploads }}</h4>
+                    <p class="text-muted mb-0">Total Images</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle text-success fa-2x"></i>
+                    </div>
+                    <h4 class="text-success">{{ processed_uploads }}</h4>
+                    <p class="text-muted mb-0">Processed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-clock text-warning fa-2x"></i>
+                    </div>
+                    <h4 class="text-warning">{{ pending_review }}</h4>
+                    <p class="text-muted mb-0">Pending Review</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-thumbs-up text-info fa-2x"></i>
+                    </div>
+                    <h4 class="text-info">{{ approved_results }}</h4>
+                    <p class="text-muted mb-0">Approved</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Models Available -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 text-primary">
+                        <i class="fas fa-robot me-2"></i>Available AI Models
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for model_value, model_name in ai_models %}
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-brain fa-2x text-primary mb-2"></i>
+                                    <h6 class="card-title">{{ model_name }}</h6>
+                                    <p class="card-text text-muted small">YOLO model for bird detection</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
     <div class="row">
-        <div class="col-lg-3 col-md-6 mb-4">
+        <!-- Recent Uploads -->
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-upload fa-3x text-primary mb-3"></i>
-                    <h5 class="card-title">Upload Images</h5>
-                    <p class="card-text">Upload bird images for processing</p>
-                    <a href="{% url 'image_processing:upload' %}" class="btn btn-primary">Upload</a>
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-upload me-2"></i>Recent Uploads
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_uploads %}
+                        <div class="list-group list-group-flush">
+                            {% for upload in recent_uploads %}
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ upload.title }}</h6>
+                                            <small class="text-muted">Uploaded {{ upload.uploaded_at|timesince }} ago</small>
+                                            <br>
+                                            <small class="text-primary">by {{ upload.uploaded_by.employee_id }}</small>
+                                        </div>
+                                        <span class="badge bg-{{ upload.upload_status|lower }}">{{ upload.get_upload_status_display }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-4">No recent uploads</p>
+                    {% endif %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'image_processing:upload' %}" class="btn btn-outline-primary btn-sm">Upload More Images</a>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-cogs fa-3x text-success mb-3"></i>
-                    <h5 class="card-title">Process Data</h5>
-                    <p class="card-text">Generate AI processing results</p>
-                    <a href="{% url 'image_processing:process' %}" class="btn btn-success">Process</a>
+
+            <!-- Recent Results -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Recent Results
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>AI Processing System Ready!</strong><br>
+                    The AI processing system is now ready for use. Upload images and process them with YOLO models for bird species detection.
+                </div>
+                <div class="text-center">
+                    <a href="{% url 'image_processing:upload' %}" class="btn btn-outline-primary btn-sm me-2">
+                        <i class="fas fa-upload me-1"></i>Upload Images
+                    </a>
+                    <a href="{% url 'image_processing:process' %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-cogs me-1"></i>Process Images
+                    </a>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
+    </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-eye fa-3x text-warning mb-3"></i>
-                    <h5 class="card-title">Review Results</h5>
-                    <p class="card-text">Approve, reject, or override results</p>
-                    <a href="{% url 'image_processing:review' %}" class="btn btn-warning">Review</a>
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 text-primary">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-map-marker-alt fa-3x text-info mb-3"></i>
-                    <h5 class="card-title">Allocate Data</h5>
-                    <p class="card-text">Assign results to sites and dates</p>
-                    <a href="{% url 'image_processing:allocate' %}" class="btn btn-info">Allocate</a>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{% url 'image_processing:upload' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-upload me-2"></i>
+                                <div>Upload Images</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'image_processing:process' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-cogs me-2"></i>
+                                <div>Process Images</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'image_processing:review' %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-search me-2"></i>
+                                <div>Review Results</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'image_processing:allocate' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                <div>Allocate to Sites</div>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

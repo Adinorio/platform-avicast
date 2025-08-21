@@ -1,50 +1,378 @@
 {% extends 'base.html' %}
 
-{% block title %}Weather Dashboard - AVICAST{% endblock %}
+{% block title %}AVICAST - Weather Dashboard{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
         <div class="col-12">
-            <h1 class="h3 mb-4">
-                <i class="fas fa-cloud-sun me-2"></i>Weather Dashboard
-            </h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary">
+                        <i class="fas fa-cloud-sun me-2"></i>Weather Dashboard
+                    </h2>
+                    <p class="text-muted">Weather monitoring and field work optimization</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#fetchWeatherModal">
+                        <i class="fas fa-download me-2"></i>Fetch Weather Data
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-    
+
+    <!-- Weather API Selection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-server me-2"></i>Available Weather APIs
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for api_value, api_name in weather_apis %}
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cloud me-2x text-info mb-2"></i>
+                                    <h6 class="card-title">{{ api_name }}</h6>
+                                    <p class="card-text text-muted small">
+                                        {% if api_value == 'METEO' %}
+                                            Free weather API
+                                        {% elif api_value == 'OPENWEATHER' %}
+                                            Requires API key
+                                        {% else %}
+                                            Premium weather service
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sites Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map-marker-alt me-2"></i>Monitoring Sites
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if sites %}
+                    <div class="row">
+                        {% for site in sites %}
+                        <div class="col-md-4 col-lg-3 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ site.name }}</h6>
+                                    <p class="card-text small text-muted">{{ site.site_type|title }} Site</p>
+                                    {% if site.coordinates %}
+                                    <p class="card-text small">
+                                        <i class="fas fa-map-pin me-1"></i>
+                                        {{ site.coordinates }}
+                                    </p>
+                                    {% endif %}
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-primary btn-sm fetch-site-weather"
+                                                data-site-id="{{ site.id }}" data-site-name="{{ site.name }}">
+                                            <i class="fas fa-cloud-download-alt me-1"></i>Get Weather
+                                        </button>
+                                        <a href="{% url 'weather:site_forecast' site.id %}" class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-eye me-1"></i>Forecast
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Sites Available</h5>
+                        <p class="text-muted">Create sites in the Locations section to monitor weather data.</p>
+                        <a href="{% url 'locations:site_list' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create Sites
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Forecasts -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Recent Weather Forecasts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_forecasts %}
+                    <div class="list-group list-group-flush">
+                        {% for forecast in recent_forecasts %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ forecast.site.name }}</h6>
+                                    <p class="mb-2">
+                                        <span class="badge bg-{{ forecast.weather_condition|lower }}">{{ forecast.get_weather_condition_display }}</span>
+                                        <span class="badge bg-secondary">{{ forecast.api_source }}</span>
+                                    </p>
+                                    <div class="row text-muted small">
+                                        <div class="col-6">
+                                            <i class="fas fa-thermometer-half me-1"></i>{{ forecast.temperature }}°C
+                                        </div>
+                                        <div class="col-6">
+                                            <i class="fas fa-wind me-1"></i>{{ forecast.wind_speed }} km/h
+                                        </div>
+                                        <div class="col-6">
+                                            <i class="fas fa-tint me-1"></i>{{ forecast.humidity }}%
+                                        </div>
+                                        <div class="col-6">
+                                            <i class="fas fa-eye me-1"></i>{{ forecast.visibility }} km
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">
+                                        {{ forecast.forecast_date }}<br>
+                                        {{ forecast.forecast_time|time:"H:i" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Recent Forecasts</h5>
+                        <p class="text-muted">Fetch weather data for sites to see forecasts here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Active Alerts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if active_alerts %}
+                    <div class="list-group list-group-flush">
+                        {% for alert in active_alerts %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ alert.title }}</h6>
+                                    <p class="mb-1 small text-muted">{{ alert.get_alert_type_display }}</p>
+                                    <span class="badge bg-{{ alert.severity|lower }}">{{ alert.get_severity_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5 class="text-success">No Active Alerts</h5>
+                        <p class="text-muted">All weather conditions are normal.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Schedules -->
     <div class="row">
-        <div class="col-lg-4 col-md-6 mb-4">
+        <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-cloud-sun fa-3x text-primary mb-3"></i>
-                    <h5 class="card-title">Weather Forecast</h5>
-                    <p class="card-text">View weather predictions for field work</p>
-                    <a href="{% url 'weather:forecast' %}" class="btn btn-primary">View Forecast</a>
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Upcoming Field Work Schedules
+                    </h5>
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-calendar-alt fa-3x text-success mb-3"></i>
-                    <h5 class="card-title">Field Work Schedule</h5>
-                    <p class="card-text">Plan optimal field work dates</p>
-                    <a href="{% url 'weather:schedule' %}" class="btn btn-success">Schedule</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                    <h5 class="card-title">Weather Alerts</h5>
-                    <p class="card-text">Monitor weather warnings and alerts</p>
-                    <a href="{% url 'weather:alerts' %}" class="btn btn-warning">View Alerts</a>
+                <div class="card-body">
+                    {% if upcoming_schedules %}
+                    <div class="row">
+                        {% for schedule in upcoming_schedules %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ schedule.title }}</h6>
+                                    <p class="card-text">
+                                        <strong>Site:</strong> {{ schedule.site.name }}<br>
+                                        <strong>Date:</strong> {{ schedule.planned_date }}<br>
+                                        <strong>Time:</strong> {{ schedule.planned_start_time|time:"H:i" }} - {{ schedule.planned_end_time|time:"H:i" }}
+                                    </p>
+                                    {% if schedule.supervisor %}
+                                    <p class="card-text">
+                                        <strong>Supervisor:</strong> {{ schedule.supervisor.employee_id }}
+                                    </p>
+                                    {% endif %}
+                                    <span class="badge bg-{{ schedule.status|lower }}">{{ schedule.get_status_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Upcoming Schedules</h5>
+                        <p class="text-muted">Create field work schedules for weather optimization.</p>
+                        <a href="{% url 'weather:schedule' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create Schedule
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Fetch Weather Modal -->
+<div class="modal fade" id="fetchWeatherModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Fetch Weather Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="fetchWeatherForm">
+                    <div class="mb-3">
+                        <label for="siteSelect" class="form-label">Select Site</label>
+                        <select class="form-select" id="siteSelect" name="site_id" required>
+                            <option value="">Choose a site...</option>
+                            {% for site in sites %}
+                            <option value="{{ site.id }}">{{ site.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="apiSelect" class="form-label">Weather API</label>
+                        <select class="form-select" id="apiSelect" name="api_source">
+                            {% for api_value, api_name in weather_apis %}
+                            <option value="{{ api_value }}" {% if api_value == 'METEO' %}selected{% endif %}>{{ api_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="fetchWeatherBtn">Fetch Weather</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch weather button
+    document.getElementById('fetchWeatherBtn').addEventListener('click', function() {
+        const form = document.getElementById('fetchWeatherForm');
+        const formData = new FormData(form);
+
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Fetching...';
+        this.disabled = true;
+
+        fetch('{% url "weather:fetch_weather" %}', {
+            method: 'POST',
+            body: JSON.stringify({
+                site_id: formData.get('site_id'),
+                api_source: formData.get('api_source')
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while fetching weather data.');
+        })
+        .finally(() => {
+            this.innerHTML = 'Fetch Weather';
+            this.disabled = false;
+            document.querySelector('[data-bs-dismiss="modal"]').click();
+        });
+    });
+
+    // Site weather fetch buttons
+    document.querySelectorAll('.fetch-site-weather').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const siteId = this.dataset.siteId;
+            const siteName = this.dataset.siteName;
+
+            if (confirm(`Fetch weather data for ${siteName}?`)) {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+                this.disabled = true;
+
+                fetch('{% url "weather:fetch_weather" %}', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        site_id: siteId,
+                        api_source: 'METEO'
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while fetching weather data.');
+                })
+                .finally(() => {
+                    this.innerHTML = '<i class="fas fa-cloud-download-alt me-1"></i>Get Weather';
+                    this.disabled = false;
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}

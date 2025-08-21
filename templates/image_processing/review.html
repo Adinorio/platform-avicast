@@ -1,79 +1,310 @@
 {% extends 'base.html' %}
 
-{% block title %}Review Results - AVICAST{% endblock %}
+{% block title %}AVICAST - Review AI Results{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
         <div class="col-12">
-            <h1 class="h3 mb-4">
-                <i class="fas fa-eye me-2"></i>Review Results
-            </h1>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <h5 class="card-title mb-4">Review and Approve AI Processing Results</h5>
-                    
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Review Required:</strong> All AI processing results must be reviewed and approved before being allocated to sites.
-                    </div>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card bg-success text-white">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-check fa-2x mb-2"></i>
-                                    <h6>Approved</h6>
-                                    <p class="mb-0">0 results</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <div class="card bg-danger text-white">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-times fa-2x mb-2"></i>
-                                    <h6>Rejected</h6>
-                                    <p class="mb-0">0 results</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-white">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-sync-alt fa-2x mb-2"></i>
-                                    <h6>Overridden</h6>
-                                    <p class="mb-0">0 results</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <div class="card bg-info text-white">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-clock fa-2x mb-2"></i>
-                                    <h6>Pending</h6>
-                                    <p class="mb-0">0 results</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="text-center mt-4">
-                        <p class="text-muted">No processing results available for review.</p>
-                        <a href="{% url 'image_processing:process' %}" class="btn btn-primary">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Processing
-                        </a>
-                    </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary">
+                        <i class="fas fa-search me-2"></i>Review AI Results
+                    </h2>
+                    <p class="text-muted">Review and approve/reject AI processing results</p>
+                </div>
+                <div>
+                    <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Review Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="ALL">All Status</option>
+                                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                                <option value="APPROVED" {% if status_filter == 'APPROVED' %}selected{% endif %}>Approved</option>
+                                <option value="REJECTED" {% if status_filter == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                                <option value="OVERRIDDEN" {% if status_filter == 'OVERRIDDEN' %}selected{% endif %}>Overridden</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="model" class="form-label">AI Model</label>
+                            <select class="form-select" id="model" name="model">
+                                <option value="">All Models</option>
+                                <option value="YOLO_V5" {% if model_filter == 'YOLO_V5' %}selected{% endif %}>YOLOv5</option>
+                                <option value="YOLO_V8" {% if model_filter == 'YOLO_V8' %}selected{% endif %}>YOLOv8</option>
+                                <option value="YOLO_V9" {% if model_filter == 'YOLO_V9' %}selected{% endif %}>YOLOv9</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search"
+                                   value="{{ search_query }}" placeholder="Search by title or species...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Grid -->
+    {% if page_obj %}
+    <div class="row">
+        {% for result in page_obj %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="position-relative">
+                    {% if result.image_upload.image_file %}
+                    <img src="{{ result.image_upload.image_file.url }}" class="card-img-top"
+                         alt="{{ result.image_upload.title }}" style="height: 200px; object-fit: cover;">
+                    {% endif %}
+
+                    <!-- Status Badge -->
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-{% if result.review_status == 'APPROVED' %}success
+                                                {% elif result.review_status == 'REJECTED' %}danger
+                                                {% elif result.review_status == 'OVERRIDDEN' %}warning
+                                                {% else %}secondary{% endif %}">
+                            {{ result.get_review_status_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <h6 class="card-title">{{ result.image_upload.title }}</h6>
+
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>{{ result.image_upload.uploaded_by.employee_id }}<br>
+                            <i class="fas fa-calendar me-1"></i>{{ result.created_at|date:"M d, Y H:i" }}<br>
+                            <i class="fas fa-robot me-1"></i>{{ result.get_ai_model_display }}
+                        </small>
+                    </div>
+
+                    {% if result.detected_species %}
+                    <div class="alert alert-info py-2">
+                        <small>
+                            <strong>AI Detection:</strong> {{ result.detected_species }}<br>
+                            <strong>Confidence:</strong> {{ result.confidence_score|floatformat:1 }}%<br>
+                            {% if result.inference_time %}
+                            <strong>Processing Time:</strong> {{ result.inference_time }}s
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning py-2">
+                        <small><strong>No Detection</strong> - AI could not identify any supported bird species</small>
+                    </div>
+                    {% endif %}
+
+                    {% if result.review_status == 'PENDING' %}
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm flex-fill approve-btn"
+                                data-result-id="{{ result.id }}">
+                            <i class="fas fa-check me-1"></i>Approve
+                        </button>
+                        <button class="btn btn-danger btn-sm flex-fill reject-btn"
+                                data-result-id="{{ result.id }}">
+                            <i class="fas fa-times me-1"></i>Reject
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <small class="text-muted">
+                            Reviewed {{ result.reviewed_at|date:"M d, Y H:i" }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Results pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}{% if model_filter %}model={{ model_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page=1">
+                            First
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}{% if model_filter %}model={{ model_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}{% if model_filter %}model={{ model_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ num }}">
+                                {{ num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}{% if model_filter %}model={{ model_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}">
+                            Next
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}{% if model_filter %}model={{ model_filter }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                            Last
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- No Results -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <i class="fas fa-search fa-4x text-muted"></i>
+                    </div>
+                    <h4 class="text-muted">No Results Found</h4>
+                    <p class="text-muted mb-4">No AI processing results match your current filters.</p>
+                    <a href="{% url 'image_processing:dashboard' %}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Approve button handlers
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const resultId = this.dataset.resultId;
+            const card = this.closest('.card');
+
+            if (confirm('Are you sure you want to approve this result?')) {
+                // Disable buttons
+                this.disabled = true;
+                card.querySelector('.reject-btn').disabled = true;
+
+                // Show loading
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Approving...';
+
+                // Make AJAX request
+                fetch(`/image-processing/review/approve/${resultId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                        this.disabled = false;
+                        card.querySelector('.reject-btn').disabled = false;
+                        this.innerHTML = '<i class="fas fa-check me-1"></i>Approve';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while approving the result.');
+                    this.disabled = false;
+                    card.querySelector('.reject-btn').disabled = false;
+                    this.innerHTML = '<i class="fas fa-check me-1"></i>Approve';
+                });
+            }
+        });
+    });
+
+    // Reject button handlers
+    document.querySelectorAll('.reject-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const resultId = this.dataset.resultId;
+            const card = this.closest('.card');
+
+            const reason = prompt('Please provide a reason for rejection:');
+            if (reason !== null) {
+                // Disable buttons
+                this.disabled = true;
+                card.querySelector('.approve-btn').disabled = true;
+
+                // Show loading
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Rejecting...';
+
+                // Make AJAX request
+                fetch(`/image-processing/review/reject/${resultId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ notes: reason })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                        this.disabled = false;
+                        card.querySelector('.approve-btn').disabled = false;
+                        this.innerHTML = '<i class="fas fa-times me-1"></i>Reject';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while rejecting the result.');
+                    this.disabled = false;
+                    card.querySelector('.approve-btn').disabled = false;
+                    this.innerHTML = '<i class="fas fa-times me-1"></i>Reject';
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}
