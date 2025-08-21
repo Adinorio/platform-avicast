@@ -4,14 +4,21 @@ from . import views
 app_name = 'image_processing'
 
 urlpatterns = [
-    path('', views.dashboard, name='dashboard'),
-    path('upload/', views.upload_view, name='upload'),
-    path('process/', views.process_view, name='process'),
-    path('process/<uuid:batch_id>/', views.process_view, name='process_batch'),
-    path('process/start/', views.start_processing, name='start_processing'),
-    path('review/', views.review_view, name='review'),
-    path('review/approve/<int:result_id>/', views.approve_result, name='approve_result'),
-    path('review/reject/<int:result_id>/', views.reject_result, name='reject_result'),
-    path('allocate/', views.allocate_view, name='allocate'),
-    path('allocate/census/', views.allocate_to_census, name='allocate_to_census'),
+    # Main views
+    path('upload/', views.image_upload_view, name='upload'),
+    path('list/', views.image_list_view, name='list'),
+    path('detail/<uuid:pk>/', views.image_detail_view, name='detail'),
+    
+    # Storage management
+    path('storage/status/', views.storage_status_view, name='storage_status'),
+    path('storage/cleanup/', views.storage_cleanup_view, name='storage_cleanup'),
+    
+    # Image management
+    path('delete/<uuid:pk>/', views.image_delete_view, name='delete'),
+    path('restore/<uuid:pk>/', views.restore_archived_image, name='restore'),
+    
+    # API endpoints
+    path('api/upload-progress/', views.api_upload_progress, name='api_upload_progress'),
+    path('api/storage-stats/', views.api_storage_stats, name='api_storage_stats'),
+    path('api/search/', views.api_image_search, name='api_search'),
 ]
