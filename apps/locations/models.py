@@ -128,11 +128,95 @@ class SpeciesObservation(models.Model):
     behavior_notes = models.TextField(blank=True, help_text="Behavior, age, sex, etc.")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['species_name']
         verbose_name = 'Species Observation'
         verbose_name_plural = 'Species Observations'
-    
+
     def __str__(self):
         return f"{self.species_name} - {self.count} birds"
+
+class MobileDataImport(models.Model):
+    """Handle data imports from mobile applications"""
+    IMPORT_STATUS = [
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('processed', 'Processed'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    import_data = models.JSONField(help_text="Raw data from mobile app in JSON format")
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, help_text="Target site for data import")
+    submitted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_imports')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_imports')
+    status = models.CharField(max_length=20, choices=IMPORT_STATUS, default='pending')
+    review_notes = models.TextField(blank=True, help_text="Notes from reviewer")
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Mobile Data Import'
+        verbose_name_plural = 'Mobile Data Imports'
+
+    def __str__(self):
+        return f"Import for {self.site.name} by {self.submitted_by.get_full_name()} - {self.get_status_display()}"
+
+    def approve(self, reviewer):
+        """Approve the import request"""
+        self.status = 'approved'
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.save()
+
+    def reject(self, reviewer, notes=""):
+        """Reject the import request"""
+        self.status = 'rejected'
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.review_notes = notes
+        self.save()
+
+    def process_import(self):
+        """Process approved import and create census data"""
+        if self.status != 'approved':
+            raise ValueError("Can only process approved imports")
+
+        try:
+            # Parse import data
+            data = self.import_data
+
+            # Create census observation
+            census = CensusObservation.objects.create(
+                site=self.site,
+                observation_date=data.get('observation_date', timezone.now().date()),
+                observer=self.submitted_by,
+                weather_conditions=data.get('weather_conditions', ''),
+                notes=f"Imported from mobile app on {timezone.now()}"
+            )
+
+            # Create species observations
+            species_data = data.get('species_observations', [])
+            for species in species_data:
+                SpeciesObservation.objects.create(
+                    census=census,
+                    species_name=species['species_name'],
+                    count=species['count'],
+                    behavior_notes=species.get('behavior_notes', '')
+                )
+
+            self.status = 'processed'
+            self.processed_at = timezone.now()
+            self.save()
+
+            return census
+
+        except Exception as e:
+            # Log error and mark as rejected
+            self.status = 'rejected'
+            self.review_notes = f"Processing failed: {str(e)}"
+            self.save()
+            raise e

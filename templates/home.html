@@ -254,6 +254,24 @@
                 </div>
                 {% endif %}
 
+                <!-- Mobile Data Import -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow-sm feature-card">
+                        <div class="card-header bg-info text-white text-center border-0" style="height: 120px;">
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <i class="fas fa-mobile-alt fa-3x"></i>
+                            </div>
+                        </div>
+                        <div class="card-body p-4 text-center">
+                            <h5 class="card-title text-info fw-bold mb-3">Mobile Data Import</h5>
+                            <p class="card-text text-muted mb-4">Submit and manage mobile app data imports</p>
+                            <a href="{% url 'locations:mobile_import_list' %}" class="btn btn-info btn-lg w-100">
+                                <i class="fas fa-list me-2"></i>View Imports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Field Worker Request System -->
                 {% if user.role == 'FIELD_WORKER' %}
                 <div class="col-lg-4 col-md-6">

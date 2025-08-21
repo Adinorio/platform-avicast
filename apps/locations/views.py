@@ -10,11 +10,12 @@ from django.db.models import Q, Count, Sum
 from openpyxl import Workbook, load_workbook
 import csv
 import io
+import json
 from datetime import datetime
 from functools import wraps
-from .models import Site, CensusObservation, SpeciesObservation
+from .models import Site, CensusObservation, SpeciesObservation, MobileDataImport
 from .forms import (
-    SiteForm, CensusObservationForm, SpeciesObservationForm, 
+    SiteForm, CensusObservationForm, SpeciesObservationForm,
     SpeciesObservationFormSet, CensusImportForm
 )
 
@@ -389,13 +390,124 @@ def census_export_excel(request, site_id):
                     max_length = len(str(cell.value))
             except:
                 pass
-        adjusted_width = min(max_length + 2, 50)
-        sheet.column_dimensions[column_letter].width = adjusted_width
-    
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = f'attachment; filename="{site.name}_census_data.xlsx"'
-    
-    workbook.save(response)
-    return response
+
+    # Mobile Data Import Views
+@login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
+def mobile_import_list(request):
+    """List all mobile data import requests"""
+    if request.user.role == 'ADMIN':
+        imports = MobileDataImport.objects.all()
+    else:
+        imports = MobileDataImport.objects.filter(submitted_by=request.user)
+
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        imports = imports.filter(status=status_filter)
+
+    paginator = Paginator(imports, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+        'status_choices': MobileDataImport.IMPORT_STATUS,
+    }
+
+    return render(request, 'locations/mobile_import_list.html', context)
+
+@login_required
+@role_required(['ADMIN', 'FIELD_WORKER'])
+def submit_mobile_import(request):
+    """Submit a new mobile data import request"""
+    if request.method == 'POST':
+        try:
+            import_data = json.loads(request.body)
+            site_id = import_data.get('site_id')
+
+            site = get_object_or_404(Site, id=site_id)
+
+            # Create the import request
+            mobile_import = MobileDataImport.objects.create(
+                import_data=import_data,
+                site=site,
+                submitted_by=request.user,
+                status='pending'
+            )
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Import request submitted successfully',
+                'import_id': str(mobile_import.id)
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error submitting import: {str(e)}'
+            })
+
+    # GET request - show form
+    sites = Site.objects.all()
+    return render(request, 'locations/submit_mobile_import.html', {'sites': sites})
+
+@login_required
+@role_required(['ADMIN'])
+def review_mobile_import(request, import_id):
+    """Review and approve/reject mobile data import requests"""
+    mobile_import = get_object_or_404(MobileDataImport, id=import_id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        notes = request.POST.get('review_notes', '')
+
+        try:
+            if action == 'approve':
+                mobile_import.approve(request.user)
+                messages.success(request, 'Import request approved successfully.')
+            elif action == 'reject':
+                mobile_import.reject(request.user, notes)
+                messages.success(request, 'Import request rejected.')
+            elif action == 'process':
+                census = mobile_import.process_import()
+                messages.success(request, f'Import processed successfully. Census ID: {census.id}')
+
+            return redirect('locations:mobile_import_list')
+
+        except Exception as e:
+            messages.error(request, f'Error processing request: {str(e)}')
+
+    context = {
+        'mobile_import': mobile_import,
+        'import_data': json.dumps(mobile_import.import_data, indent=2),
+    }
+
+    return render(request, 'locations/review_mobile_import.html', context)
+
+@login_required
+@role_required(['ADMIN'])
+def bulk_import_actions(request):
+    """Handle bulk actions on mobile imports"""
+    if request.method == 'POST':
+        import_ids = request.POST.getlist('import_ids')
+        action = request.POST.get('bulk_action')
+
+        imports = MobileDataImport.objects.filter(id__in=import_ids)
+        processed = 0
+
+        for mobile_import in imports:
+            try:
+                if action == 'approve':
+                    mobile_import.approve(request.user)
+                    processed += 1
+                elif action == 'reject':
+                    mobile_import.reject(request.user, 'Bulk rejected')
+                    processed += 1
+            except:
+                continue
+
+        messages.success(request, f'{processed} imports processed successfully.')
+
+    return redirect('locations:mobile_import_list')

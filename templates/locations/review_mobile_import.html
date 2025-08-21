@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review Mobile Data Import - AVICAST System{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5">
+                        <i class="fas fa-search text-primary"></i>
+                        Review Import Request
+                    </h1>
+                    <p class="lead text-muted">Review and approve/reject mobile data import requests</p>
+                </div>
+                <div>
+                    <a href="{% url 'locations:mobile_import_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Import Details -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt"></i>
+                        Import Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Site</h6>
+                            <p class="mb-3">
+                                <strong>{{ mobile_import.site.name }}</strong><br>
+                                <small class="text-muted">{{ mobile_import.site.site_type }}</small>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Submitted By</h6>
+                            <p class="mb-3">
+                                <strong>{{ mobile_import.submitted_by.get_full_name }}</strong><br>
+                                <small class="text-muted">{{ mobile_import.submitted_by.employee_id }}</small>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Status</h6>
+                            <p class="mb-3">
+                                {% if mobile_import.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending Review</span>
+                                {% elif mobile_import.status == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif mobile_import.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% elif mobile_import.status == 'processed' %}
+                                    <span class="badge bg-info">Processed</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Submitted</h6>
+                            <p class="mb-3">{{ mobile_import.created_at|date:"F d, Y H:i" }}</p>
+                        </div>
+                    </div>
+
+                    {% if mobile_import.reviewed_by %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Reviewed By</h6>
+                            <p class="mb-3">
+                                <strong>{{ mobile_import.reviewed_by.get_full_name }}</strong><br>
+                                <small class="text-muted">{{ mobile_import.reviewed_by.employee_id }}</small>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Reviewed At</h6>
+                            <p class="mb-3">{{ mobile_import.reviewed_at|date:"F d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if mobile_import.review_notes %}
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-muted">Review Notes</h6>
+                            <p class="mb-3">{{ mobile_import.review_notes }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Import Data Preview -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-database"></i>
+                        Import Data Preview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code>{{ import_data|escape }}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Panel -->
+        <div class="col-lg-4">
+            <!-- Action Buttons -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs"></i>
+                        Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user.role == 'ADMIN' %}
+                        {% if mobile_import.status == 'pending' %}
+                        <form method="post" class="mb-3">
+                            {% csrf_token %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" name="action" value="approve" class="btn btn-success">
+                                    <i class="fas fa-check"></i>
+                                    Approve Import
+                                </button>
+                                <button type="submit" name="action" value="reject" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this import?');">
+                                    <i class="fas fa-times"></i>
+                                    Reject Import
+                                </button>
+                            </div>
+                        </form>
+                        {% elif mobile_import.status == 'approved' %}
+                        <form method="post" class="mb-3">
+                            {% csrf_token %}
+                            <div class="d-grid">
+                                <button type="submit" name="action" value="process" class="btn btn-primary">
+                                    <i class="fas fa-cog"></i>
+                                    Process Import
+                                </button>
+                            </div>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+
+                    <!-- Data Summary -->
+                    <div class="mt-4">
+                        <h6 class="text-muted mb-3">Data Summary</h6>
+                        {% if import_data %}
+                            {% load custom_filters %}
+                            <div class="small">
+                                <div class="mb-2">
+                                    <strong>Observation Date:</strong><br>
+                                    {{ import_data.observation_date|default:"Not specified" }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Weather:</strong><br>
+                                    {{ import_data.weather_conditions|default:"Not specified" }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Species Count:</strong><br>
+                                    {{ import_data.species_observations|length }} species
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Total Birds:</strong><br>
+                                    {% widthratio import_data.species_observations|sum_counts 1 1 %} birds
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Notes -->
+            {% if user.role == 'ADMIN' and mobile_import.status == 'pending' %}
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sticky-note"></i>
+                        Add Review Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea class="form-control" name="review_notes" rows="4"
+                                      placeholder="Add notes about your review decision..."></textarea>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="action" value="approve" class="btn btn-success">
+                                <i class="fas fa-check"></i>
+                                Approve with Notes
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                <i class="fas fa-times"></i>
+                                Reject with Notes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-scroll to bottom of data preview if it's long
+    const dataPreview = $('.card-body pre');
+    if (dataPreview[0].scrollHeight > 400) {
+        dataPreview.scrollTop(dataPreview[0].scrollHeight);
+    }
+});
+</script>
+{% endblock %}
