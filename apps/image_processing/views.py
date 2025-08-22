@@ -25,42 +25,158 @@ def get_storage_manager():
 def image_upload_view(request):
     """Handle image upload with automatic processing"""
     if request.method == 'POST':
+        print(f"POST request received with FILES: {request.FILES}")
+        print(f"POST data: {request.POST}")
+        
         form = ImageUploadForm(request.POST, request.FILES)
+        print(f"Form created, is_valid: {form.is_valid()}")
+        if not form.is_valid():
+            print(f"Form errors: {form.errors}")
+        
         if form.is_valid():
             try:
-                # Get uploaded file
-                image_file = request.FILES['image_file']
+                # Get uploaded files (now supports multiple)
+                image_files = request.FILES.getlist('image_file')
+                print(f"Processing {len(image_files)} image(s)")
                 
-                # Calculate file hash for deduplication
-                file_content = image_file.read()
-                file_hash = hashlib.sha256(file_content).hexdigest()
-                
-                # Check for duplicates
-                existing_image = ImageUpload.objects.filter(file_hash=file_hash).first()
-                if existing_image:
-                    messages.warning(request, f"Duplicate image detected! This image was already uploaded by {existing_image.uploaded_by.get_full_name() or existing_image.uploaded_by.username}")
+                if not image_files:
+                    messages.error(request, "No images selected for upload.")
                     return redirect('image_processing:upload')
                 
-                # Reset file pointer for saving
-                image_file.seek(0)
+                # Handle single file case (backward compatibility)
+                if len(image_files) == 1:
+                    image_files = [image_files[0]]
                 
-                # Create image upload record
-                image_upload = form.save(commit=False)
-                image_upload.uploaded_by = request.user
-                image_upload.file_size = image_file.size
-                image_upload.file_type = image_file.content_type
-                image_upload.file_hash = file_hash
-                image_upload.original_filename = image_file.name
-                image_upload.upload_status = ImageUpload.UploadStatus.UPLOADED
-                image_upload.save()
+                uploaded_images = []
                 
-                # Process image with local storage
-                process_image_with_storage(image_upload, file_content)
+                for i, image_file in enumerate(image_files, 1):
+                    print(f"Processing upload {i}/{len(image_files)}: {image_file.name}, size: {image_file.size}, type: {image_file.content_type}")
+                    
+                    # Calculate file hash for deduplication
+                    file_content = image_file.read()
+                    file_hash = hashlib.sha256(file_content).hexdigest()
+                    print(f"File hash calculated: {file_hash[:10]}...")
+                    
+                    # Check for duplicates - allow re-uploads with different metadata
+                    print(f"Checking for duplicates...")
+                    try:
+                        existing_images = ImageUpload.objects.filter(file_hash=file_hash)
+                        if existing_images.exists():
+                            print(f"Found {existing_images.count()} existing image(s) with same hash")
+                            
+                            # Check if this is a true duplicate (same user, same title, recent upload)
+                            recent_duplicate = existing_images.filter(
+                                uploaded_by=request.user,
+                                title__icontains=form.cleaned_data.get('title', ''),
+                                uploaded_at__gte=timezone.now() - timezone.timedelta(hours=24)
+                            ).first()
+                            
+                            if recent_duplicate:
+                                print(f"Recent duplicate detected: {recent_duplicate.pk}")
+                                messages.warning(request, f"You recently uploaded this exact image '{image_file.name}' with title '{recent_duplicate.title}'. Consider using the existing upload or provide different metadata.")
+                                # Redirect to dashboard instead of detail page
+                                return redirect('image_processing:dashboard')
+                            else:
+                                print(f"Allowing re-upload of same image with different metadata")
+                                # Generate unique filename to avoid conflicts
+                                base_name, ext = os.path.splitext(image_file.name)
+                                timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+                                unique_filename = f"{base_name}_{timestamp}{ext}"
+                                print(f"Generated unique filename: {unique_filename}")
+                                
+                                messages.info(request, f"Image '{image_file.name}' was previously uploaded, but you can upload it again with different title/description.")
+                                
+                                # Update the filename to avoid conflicts
+                                image_file.name = unique_filename
+                        
+                        print(f"Proceeding with upload...")
+                    except Exception as e:
+                        print(f"Error checking duplicates: {str(e)}")
+                        # Continue with upload if duplicate check fails
+                        print(f"Continuing with upload despite duplicate check error...")
+                    
+                    # Reset file pointer for saving
+                    print(f"Resetting file pointer...")
+                    image_file.seek(0)
+                    
+                    # Create image upload record
+                    print(f"Creating ImageUpload object for {image_file.name}...")
+                    image_upload = ImageUpload()
+                    image_upload.uploaded_by = request.user
+                    image_upload.file_size = image_file.size
+                    image_upload.file_type = image_file.content_type
+                    image_upload.file_hash = file_hash
+                    image_upload.original_filename = image_file.name
+                    image_upload.upload_status = ImageUpload.UploadStatus.UPLOADED
+                    
+                    # Use form data for title/description if provided
+                    if form.cleaned_data.get('title'):
+                        image_upload.title = form.cleaned_data.get('title')
+                    else:
+                        # Auto-generate title from filename
+                        base_name = os.path.splitext(image_file.name)[0]
+                        image_upload.title = base_name.replace('_', ' ').title()
+                    
+                    if form.cleaned_data.get('description'):
+                        image_upload.description = form.cleaned_data.get('description')
+                    
+                    # Save original file
+                    print(f"Saving original file...")
+                    image_upload.image_file.save(image_file.name, image_file, save=False)
+                    image_upload.save()
+                    print(f"Original file saved: {image_upload.image_file.path if hasattr(image_upload.image_file, 'path') else 'No path'}")
+                    
+                    # Process image with local storage
+                    print(f"Starting image processing for {image_file.name}...")
+                    try:
+                        process_image_with_storage(image_upload, file_content)
+                        print(f"Image processing completed successfully for {image_file.name}")
+                        uploaded_images.append(image_upload)
+                    except Exception as e:
+                        print(f"Image processing failed for {image_file.name}: {str(e)}")
+                        # Still add to uploaded_images but mark as failed
+                        uploaded_images.append(image_upload)
                 
-                messages.success(request, f"Image '{image_upload.title}' uploaded successfully!")
-                return redirect('image_processing:detail', pk=image_upload.pk)
-                
+                # Handle post-upload routing and feedback
+                if uploaded_images:
+                    successful_uploads = [img for img in uploaded_images if img.upload_status == ImageUpload.UploadStatus.PROCESSED]
+                    failed_uploads = [img for img in uploaded_images if img.upload_status == ImageUpload.UploadStatus.FAILED]
+                    
+                    # Store upload results in session for modal display
+                    request.session['upload_results'] = {
+                        'total': len(uploaded_images),
+                        'successful': len(successful_uploads),
+                        'failed': len(failed_uploads),
+                        'uploaded_ids': [str(img.pk) for img in uploaded_images]
+                    }
+                    
+                    # Redirect to dashboard with success message
+                    if len(uploaded_images) == 1:
+                        if successful_uploads:
+                            messages.success(request, f"Image '{uploaded_images[0].title}' uploaded and processed successfully!")
+                            return redirect('image_processing:detail', pk=uploaded_images[0].pk)
+                        else:
+                            messages.warning(request, f"Image '{uploaded_images[0].title}' uploaded but processing failed. Check details page.")
+                            return redirect('image_processing:detail', pk=uploaded_images[0].pk)
+                    else:
+                        if successful_uploads and failed_uploads:
+                            messages.warning(request, f"{len(successful_uploads)} images processed successfully, {len(failed_uploads)} failed. Check list for details.")
+                        elif successful_uploads:
+                            messages.success(request, f"{len(successful_uploads)} images uploaded and processed successfully!")
+                        else:
+                            messages.error(request, f"All {len(uploaded_images)} images uploaded but processing failed.")
+                        
+                        return redirect('image_processing:dashboard')
+                else:
+                    # This should not happen now since we redirect on duplicate, but just in case
+                    messages.error(request, "No images were uploaded successfully.")
+                    return redirect('image_processing:upload')
+                    
             except Exception as e:
+                import traceback
+                error_details = traceback.format_exc()
+                print(f"Upload error: {str(e)}")
+                print(f"Traceback: {error_details}")
                 messages.error(request, f"Upload failed: {str(e)}")
                 return redirect('image_processing:upload')
     else:
@@ -71,35 +187,53 @@ def image_upload_view(request):
 def process_image_with_storage(image_upload, file_content):
     """Process image with local storage optimization"""
     try:
+        print(f"Starting processing for image {image_upload.pk}")
+        
         # Start processing
+        print("Calling start_processing...")
         image_upload.start_processing()
+        print("start_processing completed")
         
         # Optimize image
+        print("Creating ImageOptimizer...")
         optimizer = ImageOptimizer()
+        print("Optimizing image...")
         optimized_content, new_size, format_used = optimizer.optimize_image(file_content)
+        print(f"Image optimized: {format_used}, new size: {new_size}")
         
         # Update image record with optimization info
+        print("Updating image record...")
         image_upload.compressed_size = new_size
         image_upload.is_compressed = True
         image_upload.upload_status = ImageUpload.UploadStatus.PROCESSED
         image_upload.save()
+        print("Image record updated")
         
         # Save optimized image
+        print("Saving optimized image...")
         from django.core.files.base import ContentFile
         optimized_file = ContentFile(optimized_content, f"optimized_{image_upload.original_filename}")
         image_upload.image_file.save(f"optimized_{image_upload.original_filename}", optimized_file, save=False)
         image_upload.save()
+        print("Optimized image saved")
         
         # Complete processing
+        print("Completing processing...")
         image_upload.complete_processing()
+        print("Processing completed successfully")
         
-        # Check storage usage and archive if needed
-        storage_manager = get_storage_manager()
-        storage_manager.check_and_archive_if_needed()
+        # Check storage usage (archive functionality can be added later)
+        # storage_manager = get_storage_manager()
+        # storage_manager.check_and_archive_if_needed()
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Image processing error: {str(e)}")
+        print(f"Traceback: {error_details}")
         image_upload.mark_failed()
-        raise e
+        # Don't re-raise the error - let the upload continue
+        print(f"Image processing failed for {image_upload.pk}, but upload will continue")
 
 @login_required
 def image_list_view(request):
@@ -173,7 +307,7 @@ def image_detail_view(request, pk):
     storage_info = image.get_storage_info()
     
     context = {
-        'image': image,
+        'image_upload': image,
         'processing_result': processing_result,
         'storage_info': storage_info,
     }
@@ -359,3 +493,124 @@ def api_image_search(request):
         return JsonResponse({'results': results})
     
     return JsonResponse({'results': []})
+
+@login_required
+def review_view(request):
+    """Display images ready for review"""
+    if not request.user.is_staff:
+        messages.error(request, "Access denied. Staff only.")
+        return redirect('image_processing:list')
+    
+    # Get processed images ready for review
+    images_to_review = ImageUpload.objects.filter(
+        upload_status=ImageUpload.UploadStatus.PROCESSED
+    ).order_by('-uploaded_at')
+    
+    context = {
+        'images_to_review': images_to_review,
+    }
+    return render(request, 'image_processing/review.html', context)
+
+@login_required
+def process_batch_view(request, pk):
+    """Process a batch of images"""
+    if not request.user.is_staff:
+        messages.error(request, "Access denied. Staff only.")
+        return redirect('image_processing:list')
+    
+    try:
+        # Get the image to process
+        image = get_object_or_404(ImageUpload, pk=pk)
+        
+        # Process the image
+        if image.upload_status == ImageUpload.UploadStatus.UPLOADED:
+            # Re-process the image
+            try:
+                with open(image.image_file.path, 'rb') as f:
+                    file_content = f.read()
+                process_image_with_storage(image, file_content)
+                messages.success(request, f"Image '{image.title}' processed successfully!")
+            except Exception as e:
+                messages.error(request, f"Processing failed: {str(e)}")
+        else:
+            messages.info(request, f"Image '{image.title}' is already processed.")
+        
+        return redirect('image_processing:detail', pk=pk)
+        
+    except Exception as e:
+        messages.error(request, f"Error processing image: {str(e)}")
+        return redirect('image_processing:detail', pk=pk)
+
+@login_required
+def allocate_view(request):
+    """Allocate approved results to users"""
+    if not request.user.is_staff:
+        messages.error(request, "Access denied. Staff only.")
+        return redirect('image_processing:list')
+    
+    # Get approved results
+    approved_results = ImageProcessingResult.objects.filter(
+        review_status=ImageProcessingResult.ReviewStatus.APPROVED
+    ).order_by('-created_at')
+    
+    context = {
+        'approved_results': approved_results,
+    }
+    return render(request, 'image_processing/allocate.html', context)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def clear_upload_results(request):
+    """Clear upload results from session after modal is shown"""
+    if 'upload_results' in request.session:
+        del request.session['upload_results']
+    return JsonResponse({'status': 'success'})
+
+@login_required
+def dashboard_view(request):
+    """Display image processing dashboard with statistics and overview"""
+    # Get user's images or all images if admin
+    if request.user.is_staff:
+        images = ImageUpload.objects.all()
+    else:
+        images = ImageUpload.objects.filter(uploaded_by=request.user)
+    
+    # Get statistics
+    total_uploads = images.count()
+    processed_uploads = images.filter(upload_status=ImageUpload.UploadStatus.PROCESSED).count()
+    pending_review = images.filter(upload_status=ImageUpload.UploadStatus.PROCESSED).count()  # Images ready for review
+    approved_results = ImageProcessingResult.objects.filter(review_status=ImageProcessingResult.ReviewStatus.APPROVED).count()
+    
+    # Get AI models available
+    ai_models = [
+        ('yolo_bird_detection', 'Bird Detection (YOLO)'),
+        ('species_classification', 'Species Classification'),
+        ('census_counting', 'Census Counting'),
+    ]
+    
+    # Get recent uploads (only successful ones)
+    recent_uploads = images.filter(
+        upload_status__in=[
+            ImageUpload.UploadStatus.PROCESSED,
+            ImageUpload.UploadStatus.UPLOADED
+        ]
+    ).exclude(
+        upload_status=ImageUpload.UploadStatus.UPLOADING  # Exclude stuck uploads
+    ).order_by('-uploaded_at')[:5]
+    
+    # Get storage statistics
+    storage_manager = get_storage_manager()
+    storage_stats = storage_manager.get_storage_usage()
+    
+    context = {
+        'total_uploads': total_uploads,
+        'processed_uploads': processed_uploads,
+        'pending_review': pending_review,
+        'approved_results': approved_results,
+        'ai_models': ai_models,
+        'recent_uploads': recent_uploads,
+        'storage_stats': storage_stats,
+    }
+    
+    return render(request, 'image_processing/dashboard.html', context)

@@ -2,16 +2,26 @@ from django import forms
 from django.core.validators import FileExtensionValidator
 from .models import ImageUpload, BirdSpecies, ImageProcessingResult
 
+class MultipleFileInput(forms.FileInput):
+    """Custom file input widget that supports multiple file selection"""
+    def render(self, name, value, attrs=None, renderer=None):
+        if attrs is None:
+            attrs = {}
+        attrs['multiple'] = 'multiple'
+        attrs['accept'] = 'image/*'
+        attrs['class'] = attrs.get('class', '') + ' form-control'
+        return super().render(name, value, attrs, renderer)
+
 class ImageUploadForm(forms.ModelForm):
     """Form for image uploads with enhanced validation"""
     
     image_file = forms.ImageField(
-        label='Select Image',
-        help_text='Supported formats: JPG, JPEG, PNG, GIF. Maximum size: 50MB',
+        label='Select Images',
+        help_text='Select multiple images for batch processing. Supported formats: JPG, JPEG, PNG, GIF. Maximum size: 50MB per image',
         validators=[
             FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif'])
         ],
-        widget=forms.FileInput(attrs={
+        widget=MultipleFileInput(attrs={
             'class': 'form-control',
             'accept': 'image/*',
             'data-max-size': '52428800'  # 50MB in bytes
@@ -20,9 +30,10 @@ class ImageUploadForm(forms.ModelForm):
     
     title = forms.CharField(
         max_length=200,
+        required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Enter image title'
+            'placeholder': 'Optional title for all images (e.g., "Morning Survey - Site A")'
         })
     )
     
@@ -31,7 +42,7 @@ class ImageUploadForm(forms.ModelForm):
         widget=forms.Textarea(attrs={
             'class': 'form-control',
             'rows': 3,
-            'placeholder': 'Optional description of the image'
+            'placeholder': 'Optional description for all images (e.g., "Clear weather, low tide conditions")'
         })
     )
     
@@ -44,29 +55,40 @@ class ImageUploadForm(forms.ModelForm):
         image_file = self.cleaned_data.get('image_file')
         
         if image_file:
+            print(f"Validating image file: {image_file.name}, size: {image_file.size}")
+            
             # Check file size (50MB limit)
             if image_file.size > 52428800:  # 50MB in bytes
+                print(f"File too large: {image_file.size} bytes")
                 raise forms.ValidationError("Image file size must be less than 50MB.")
             
             # Check if file is actually an image
             try:
                 from PIL import Image
+                print("PIL imported successfully")
                 with Image.open(image_file) as img:
+                    print(f"Image opened: {img.format}, size: {img.size}, mode: {img.mode}")
                     # Verify it's a valid image
                     img.verify()
-            except Exception:
-                raise forms.ValidationError("Invalid image file. Please upload a valid image.")
+                    print("Image verification passed")
+            except Exception as e:
+                print(f"Image validation failed: {str(e)}")
+                raise forms.ValidationError(f"Invalid image file. Please upload a valid image. Error: {str(e)}")
             
             # Reset file pointer
             image_file.seek(0)
+            print("Image file validation completed successfully")
         
         return image_file
     
     def clean_title(self):
         """Validate title"""
         title = self.cleaned_data.get('title')
-        if not title.strip():
-            raise forms.ValidationError("Title is required.")
+        print(f"Validating title: '{title}'")
+        if not title or not title.strip():
+            print("Title is empty, using auto-generated title")
+            return ""  # Allow empty titles for batch uploads
+        print(f"Title validation passed: '{title.strip()}'")
         return title.strip()
 
 class ImageProcessingForm(forms.ModelForm):
