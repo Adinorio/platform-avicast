@@ -28,7 +28,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-images me-2"></i>Image Upload
+                        <i class="fas fa-images me-2"></i>Batch Image Upload
                     </h5>
                 </div>
                 <div class="card-body p-4">
@@ -36,14 +36,50 @@
                         {% csrf_token %}
 
                         <div class="mb-4">
-                            <label for="images" class="form-label">
-                                <i class="fas fa-file-image me-2"></i>Select Images
+                            <label for="{{ form.image_file.id_for_label }}" class="form-label">
+                                <i class="fas fa-file-image me-2"></i>{{ form.image_file.label }}
                             </label>
-                            <input type="file" class="form-control" id="images" name="images" multiple
-                                   accept="image/*" required>
-                            <div class="form-text">
-                                Select multiple bird images for processing. Supported formats: JPG, PNG, GIF
+                            {{ form.image_file }}
+                            {% if form.image_file.help_text %}
+                            <div class="form-text">{{ form.image_file.help_text }}</div>
+                            {% endif %}
+                            {% if form.image_file.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.image_file.errors %}
+                                {{ error }}
+                                {% endfor %}
                             </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Title Field -->
+                        <div class="mb-4">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">
+                                <i class="fas fa-heading me-2"></i>{{ form.title.label }}
+                            </label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.title.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left me-2"></i>{{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.description.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <!-- Supported Species Info -->
@@ -74,7 +110,7 @@
 
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-upload me-2"></i>Upload and Process Images
+                                <i class="fas fa-upload me-2"></i>Upload and Process All Images
                             </button>
                         </div>
                     </form>
@@ -107,8 +143,20 @@
 <script>
 // Show upload progress when form is submitted
 document.querySelector('form').addEventListener('submit', function() {
-    document.getElementById('uploadProgress').style.display = 'block';
-    this.style.display = 'none';
+    const progressDiv = document.getElementById('uploadProgress');
+    const formDiv = document.querySelector('.card-body');
+    
+    // Show progress
+    progressDiv.style.display = 'block';
+    formDiv.style.display = 'none';
+    
+    // Update progress text
+    const progressText = progressDiv.querySelector('h5');
+    progressText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading and Processing Images...';
+    
+    // Show this is a background process
+    const progressDesc = progressDiv.querySelector('p');
+    progressDesc.innerHTML = 'Please wait while your images are being uploaded, processed, and optimized. This may take a few moments depending on image size and quantity.';
 });
 </script>
 {% endblock %}

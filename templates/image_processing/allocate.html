@@ -1,84 +1,84 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Allocate Data - AVICAST{% endblock %}
+{% block title %}Allocate Results - Image Processing{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <h1 class="h3 mb-4">
-                <i class="fas fa-map-marker-alt me-2"></i>Allocate Data
-            </h1>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <h5 class="card-title mb-4">Allocate Processing Results to Sites</h5>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Allocation System:</strong> Drag and drop approved processing results to specific sites, years, and months for data organization.
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-list me-2"></i>Approved Results
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted text-center">No approved results available for allocation.</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-map me-2"></i>Site Selection
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Select Site</label>
-                                        <select class="form-select" disabled>
-                                            <option>No sites available</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Select Year</label>
-                                        <select class="form-select" disabled>
-                                            <option>2025</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Select Month</label>
-                                        <select class="form-select" disabled>
-                                            <option>January</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="text-center mt-4">
-                        <p class="text-muted">Allocation system coming soon...</p>
-                        <a href="{% url 'image_processing:review' %}" class="btn btn-primary">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Review
-                        </a>
-                    </div>
-                </div>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-users me-2"></i>Allocate Results
+                </h1>
+                <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
             </div>
+
+            {% if approved_results %}
+                <div class="row">
+                    {% for result in approved_results %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Result #{{ result.pk }}</h5>
+                                <p class="card-text">
+                                    <strong>Image:</strong> {{ result.image_upload.title|default:result.image_upload.original_filename }}<br>
+                                    <strong>Model:</strong> {{ result.ai_model }}<br>
+                                    <strong>Confidence:</strong> {{ result.confidence_score|floatformat:2|default:"N/A" }}%
+                                </p>
+                                
+                                <div class="mb-3">
+                                    <strong>Detections:</strong>
+                                    <ul class="list-unstyled mt-2">
+                                        {% if result.detected_species %}
+                                        <li class="badge bg-info me-1">{{ result.detected_species }} ({{ result.confidence_score|floatformat:1|default:"N/A" }}%)</li>
+                                        {% else %}
+                                        <li class="text-muted">No detections</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary btn-sm" onclick="allocateToUser('{{ result.pk }}')">
+                                        <i class="fas fa-user-plus me-1"></i>Allocate to User
+                                    </button>
+                                    <button class="btn btn-info btn-sm" onclick="viewDetails('{{ result.pk }}')">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-footer text-muted">
+                                <small>Processed on {{ result.created_at|date:"M d, Y" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
+                    <h4>No Approved Results</h4>
+                    <p class="text-muted">There are no approved results to allocate at this time.</p>
+                    <a href="{% url 'image_processing:review' %}" class="btn btn-primary">
+                        <i class="fas fa-eye me-2"></i>Review Images
+                    </a>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<script>
+function allocateToUser(resultId) {
+    // TODO: Implement user allocation logic
+    alert('Allocation functionality coming soon!');
+}
+
+function viewDetails(resultId) {
+    // TODO: Implement result detail view
+    alert('Detail view coming soon!');
+}
+</script>
 {% endblock %}
