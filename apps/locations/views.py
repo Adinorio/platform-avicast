@@ -388,7 +388,7 @@ def census_export_excel(request, site_id):
             try:
                 if len(str(cell.value)) > max_length:
                     max_length = len(str(cell.value))
-            except:
+            except (AttributeError, TypeError):
                 pass
 
     # Mobile Data Import Views
@@ -505,7 +505,8 @@ def bulk_import_actions(request):
                 elif action == 'reject':
                     mobile_import.reject(request.user, 'Bulk rejected')
                     processed += 1
-            except:
+            except Exception as e:
+                logger.error(f"Failed to process import {mobile_import.id}: {e}")
                 continue
 
         messages.success(request, f'{processed} imports processed successfully.')

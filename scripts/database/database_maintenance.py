@@ -48,12 +48,12 @@ class DatabaseMaintenance:
                                 try:
                                     db_name = value.split('/')[-1]
                                     config['database_name'] = db_name
-                                except:
+                                except (ValueError, IndexError):
                                     pass
                         elif key == 'BACKUP_RETENTION_DAYS':
                             try:
                                 config['backup_retention_days'] = int(value)
-                            except:
+                            except (ValueError, TypeError):
                                 pass
         
         return config

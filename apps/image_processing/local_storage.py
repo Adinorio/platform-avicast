@@ -280,7 +280,7 @@ class LocalStorageManager:
                     total_savings += savings
             
             return round(total_savings / (1024**2), 2)  # Convert to MB
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return 0.0
     
     def _calculate_compression_percentage(self) -> float:
@@ -302,7 +302,7 @@ class LocalStorageManager:
                 return round(savings_percent, 1)
             else:
                 return 0.0
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return 0.0
 
 class LocalNetworkOptimizer:

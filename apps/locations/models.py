@@ -50,7 +50,7 @@ class Site(models.Model):
             try:
                 lat, lon = self.coordinates.split(',')
                 return f"{float(lat):.6f}, {float(lon):.6f}"
-            except:
+            except (ValueError, IndexError):
                 return self.coordinates
         return "Coordinates not set"
     
