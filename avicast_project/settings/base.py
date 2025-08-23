@@ -36,7 +36,7 @@ SECRET_KEY = env('SECRET_KEY', default=None)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 
 # Application definition
@@ -165,6 +165,4 @@ def get_login_redirect_url(user):
         return '/admin/'
     return '/'
 
-
-
-
+# Note: This function is currently unused but kept for future implementation
