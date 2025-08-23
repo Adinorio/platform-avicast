@@ -32,7 +32,7 @@ def create_default_superadmin():
                 username='010101',
                 employee_id='010101',
                 email='admin@avicast.local',
-                password='avicast123',
+                password='ChangeMe123!',  # Temporary password - MUST be changed on first login
                 role='SUPERADMIN',
                 is_staff=True,
                 is_superuser=True,
