@@ -28,11 +28,85 @@
         <!-- Image Display -->
         <div class="col-md-8">
             <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-image me-2"></i>Image with Detection Results
+                    </h5>
+                </div>
                 <div class="card-body">
                     {% if image_upload.image_file %}
-                        <img src="{{ image_upload.image_file.url }}" 
-                             class="img-fluid rounded" 
-                             alt="{{ image_upload.title|default:image_upload.original_filename }}">
+                        <div class="position-relative" style="display: inline-block;">
+                            <img src="{{ image_upload.image_file.url }}" 
+                                 class="img-fluid rounded detection-image" 
+                                 alt="{{ image_upload.title|default:image_upload.original_filename }}"
+                                 id="detectionImage">
+                            
+                            <!-- Display detection bounding boxes -->
+                            {% if image_upload.processing_result and image_upload.processing_result.bounding_box %}
+                                {% if image_upload.processing_result.bounding_box.all_detections %}
+                                    {% for detection in image_upload.processing_result.bounding_box.all_detections %}
+                                        <div class="bounding-box" 
+                                             data-x="{{ detection.bounding_box.x|floatformat:0 }}"
+                                             data-y="{{ detection.bounding_box.y|floatformat:0 }}"
+                                             data-width="{{ detection.bounding_box.width|floatformat:0 }}"
+                                             data-height="{{ detection.bounding_box.height|floatformat:0 }}">
+                                            <div class="detection-label">
+                                                {{ detection.species|default:"Bird" }} ({{ detection.confidence|floatformat:1 }}%)
+                                            </div>
+                                            <div class="detection-number">
+                                                #{{ forloop.counter }}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% elif image_upload.processing_result.bounding_box.best_detection %}
+                                    <!-- Fallback to old format -->
+                                    <div class="bounding-box fallback-box" 
+                                         data-x="{{ image_upload.processing_result.bounding_box.best_detection.x|floatformat:0 }}"
+                                         data-y="{{ image_upload.processing_result.bounding_box.best_detection.y|floatformat:0 }}"
+                                         data-width="{{ image_upload.processing_result.bounding_box.best_detection.width|floatformat:0 }}"
+                                         data-height="{{ image_upload.processing_result.bounding_box.best_detection.height|floatformat:0 }}">
+                                        <div class="detection-label">
+                                            {{ image_upload.processing_result.detected_species|default:"Bird" }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Detection Results Summary -->
+                        {% if image_upload.processing_result %}
+                            <div class="mt-3">
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-search me-2"></i>Detection Results
+                                    </h6>
+                                    <div class="row text-center">
+                                        <div class="col-md-3">
+                                            <strong>Species:</strong><br>
+                                            <span class="badge bg-primary fs-6">
+                                                {{ image_upload.processing_result.detected_species|default:"Unknown" }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Confidence:</strong><br>
+                                            <span class="badge bg-success fs-6">
+                                                {{ image_upload.processing_result.confidence_score|floatformat:1|default:"N/A" }}%
+                                            </span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Birds Detected:</strong><br>
+                                            <span class="badge bg-info fs-6">
+                                                {{ image_upload.processing_result.total_detections|default:"0" }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Model:</strong><br>
+                                            <small>{{ image_upload.processing_result.ai_model|default:"N/A" }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
                     {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-image fa-4x text-muted mb-3"></i>
@@ -122,4 +196,58 @@
         </div>
     </div>
 </div>
+
+<style>
+.bounding-box {
+    position: absolute;
+    border: 3px solid #ff0000;
+    background: rgba(255, 0, 0, 0.1);
+    pointer-events: none;
+}
+
+.detection-label {
+    position: absolute;
+    top: -30px;
+    left: 0;
+    background: #ff0000;
+    color: white;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.detection-number {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #000000;
+    color: white;
+    padding: 2px 6px;
+    font-size: 10px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const boundingBoxes = document.querySelectorAll('.bounding-box');
+    
+    boundingBoxes.forEach(function(box) {
+        const x = parseInt(box.dataset.x);
+        const y = parseInt(box.dataset.y);
+        const width = parseInt(box.dataset.width);
+        const height = parseInt(box.dataset.height);
+        
+        if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
+            box.style.left = x + 'px';
+            box.style.top = y + 'px';
+            box.style.width = width + 'px';
+            box.style.height = height + 'px';
+        }
+    });
+});
+</script>
+
 {% endblock %}
