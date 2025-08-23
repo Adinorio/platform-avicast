@@ -61,6 +61,12 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Django media and static files (should not be in version control)
+media/
+staticfiles/
+static/admin/
+static/rest_framework/
+
 # Scrapy stuff:
 .scrapy
 
@@ -95,15 +101,6 @@ dmypy.json
 # pytest
 .pytest_cache/
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
 # Editors
 .idea/
 .vscode/
@@ -111,6 +108,7 @@ venv.bak/
 # OS-specific
 .DS_Store
 Thumbs.db
+
 # Temporary debugging scripts
 add_all_columns.py
 add_column.py
