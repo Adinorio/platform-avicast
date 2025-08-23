@@ -28,4 +28,9 @@ urlpatterns = [
     path('api/storage-stats/', views.api_storage_stats, name='api_storage_stats'),
     path('api/search/', views.api_image_search, name='api_search'),
     path('api/clear-upload-results/', views.clear_upload_results, name='clear_upload_results'),
+    
+    # Review actions
+    path('api/approve-result/<uuid:result_id>/', views.approve_result, name='approve_result'),
+    path('api/reject-result/<uuid:result_id>/', views.reject_result, name='reject_result'),
+    path('api/override-result/<uuid:result_id>/', views.override_result, name='override_result'),
 ]

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Review Images - Image Processing{% endblock %}
+{% block title %}Review Processing Results - Image Processing{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,91 +9,313 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">
-                    <i class="fas fa-eye me-2"></i>Review Images
+                    <i class="fas fa-eye me-2"></i>Review Processing Results
                 </h1>
                 <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
                 </a>
             </div>
 
-            {% if images_to_review %}
-                <div class="row">
-                    {% for image in images_to_review %}
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card h-100">
-                            <div class="card-img-top-container" style="height: 200px; overflow: hidden;">
-                                {% if image.image_file %}
-                                    <img src="{{ image.image_file.url }}" class="card-img-top" alt="{{ image.title|default:image.original_filename }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                {% else %}
-                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light">
-                                        <i class="fas fa-image fa-3x text-muted"></i>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">{{ image.title|default:"Untitled" }}</h5>
-                                <p class="card-text text-muted">{{ image.description|default:"No description"|truncatechars:100 }}</p>
-                                
-                                <div class="row text-center mb-3">
-                                    <div class="col-6">
-                                        <small class="text-muted">File Size</small>
-                                        <div class="fw-bold">{{ image.file_size|filesizeformat }}</div>
-                                    </div>
-                                    <div class="col-6">
-                                        <small class="text-muted">Status</small>
-                                        <div class="fw-bold">
-                                            <span class="badge bg-success">Ready for Review</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="d-grid gap-2">
-                                    <a href="{% url 'image_processing:detail' image.pk %}" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-eye me-1"></i>Review Details
-                                    </a>
-                                    <button class="btn btn-success btn-sm" onclick="approveImage('{{ image.pk }}')">
-                                        <i class="fas fa-check me-1"></i>Approve
-                                    </button>
-                                    <button class="btn btn-warning btn-sm" onclick="requestRevision('{{ image.pk }}')">
-                                        <i class="fas fa-edit me-1"></i>Request Revision
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-footer text-muted">
-                                <small>Uploaded by {{ image.uploaded_by.get_full_name|default:image.uploaded_by.username }} on {{ image.uploaded_at|date:"M d, Y" }}</small>
-                            </div>
+            <!-- Status Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">{{ pending_count }}</h4>
+                            <p class="card-text">Pending Review</p>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                    <h4>No Images Pending Review</h4>
-                    <p class="text-muted">All processed images have been reviewed.</p>
-                    <a href="{% url 'image_processing:upload' %}" class="btn btn-primary">
-                        <i class="fas fa-upload me-2"></i>Upload New Images
-                    </a>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">{{ approved_count }}</h4>
+                            <p class="card-text">Approved</p>
+                        </div>
+                    </div>
                 </div>
-            {% endif %}
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">{{ rejected_count }}</h4>
+                            <p class="card-text">Rejected</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">{{ overridden_count }}</h4>
+                            <p class="card-text">Overridden</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <ul class="nav nav-tabs mb-4" id="reviewTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                        Pending Review <span class="badge bg-warning ms-1">{{ pending_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
+                        Approved <span class="badge bg-success ms-1">{{ approved_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
+                        Rejected <span class="badge bg-danger ms-1">{{ rejected_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="overridden-tab" data-bs-toggle="tab" data-bs-target="#overridden" type="button" role="tab">
+                        Overridden <span class="badge bg-info ms-1">{{ overridden_count }}</span>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="reviewTabsContent">
+                <!-- Pending Review Tab -->
+                <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                    {% if results_to_review %}
+                        <div class="row">
+                            {% for result in results_to_review %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100 border-warning">
+                                    <div class="card-img-top-container" style="height: 200px; overflow: hidden;">
+                                        {% if result.image_upload.image_file %}
+                                            <img src="{{ result.image_upload.image_file.url }}" class="card-img-top" alt="{{ result.image_upload.title|default:result.image_upload.original_filename }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        {% else %}
+                                            <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                                <i class="fas fa-image fa-3x text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ result.image_upload.title|default:"Untitled" }}</h5>
+                                        <p class="card-text text-muted">{{ result.image_upload.description|default:"No description"|truncatechars:100 }}</p>
+                                        
+                                        <!-- AI Detection Results -->
+                                        <div class="alert alert-info">
+                                            <strong>AI Detection:</strong><br>
+                                            <strong>Species:</strong> {{ result.detected_species|default:"Unknown" }}<br>
+                                            <strong>Confidence:</strong> {{ result.confidence_score|default:"N/A" }}%<br>
+                                            <strong>Model:</strong> {{ result.ai_model|default:"N/A" }}
+                                        </div>
+
+                                        <div class="d-grid gap-2">
+                                            <a href="{% url 'image_processing:detail' result.image_upload.pk %}" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </button>
+                                            <button class="btn btn-success btn-sm" onclick="approveResult('{{ result.pk }}')">
+                                                <i class="fas fa-check me-1"></i>Approve
+                                            </button>
+                                            <button class="btn btn-warning btn-sm" onclick="rejectResult('{{ result.pk }}')">
+                                                <i class="fas fa-times me-1"></i>Reject
+                                            </button>
+                                            <button class="btn btn-info btn-sm" onclick="showOverrideModal('{{ result.pk }}', '{{ result.detected_species|default:"" }}')">
+                                                <i class="fas fa-edit me-1"></i>Override
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-muted">
+                                        <small>Processed on {{ result.created_at|date:"M d, Y H:i" }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h4>No Results Pending Review</h4>
+                            <p class="text-muted">All processing results have been reviewed.</p>
+                            <a href="{% url 'image_processing:upload' %}" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload New Images
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Approved Tab -->
+                <div class="tab-pane fade" id="approved" role="tabpanel">
+                    <div class="text-center py-5">
+                        <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
+                        <h4>Approved Results</h4>
+                        <p class="text-muted">This tab will show all approved results. Currently showing {{ approved_count }} approved results.</p>
+                        <a href="{% url 'image_processing:allocate' %}" class="btn btn-success">
+                            <i class="fas fa-arrow-right me-2"></i>Go to Allocation
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Rejected Tab -->
+                <div class="tab-pane fade" id="rejected" role="tabpanel">
+                    <div class="text-center py-5">
+                        <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
+                        <h4>Rejected Results</h4>
+                        <p class="text-muted">This tab will show all rejected results. Currently showing {{ rejected_count }} rejected results.</p>
+                    </div>
+                </div>
+
+                <!-- Overridden Tab -->
+                <div class="tab-pane fade" id="overridden" role="tabpanel">
+                    <div class="text-center py-5">
+                        <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
+                        <h4>Overridden Results</h4>
+                        <p class="text-muted">This tab will show all overridden results. Currently showing {{ overridden_count }} overridden results.</p>
+                        <a href="{% url 'image_processing:allocate' %}" class="btn btn-success">
+                            <i class="fas fa-arrow-right me-2"></i>Go to Allocation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Override Modal -->
+<div class="modal fade" id="overrideModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Override AI Detection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="overrideForm">
+                    <div class="mb-3">
+                        <label for="species" class="form-label">Species Classification</label>
+                        <select class="form-select" id="species" name="species" required>
+                            <option value="">Select species...</option>
+                            <option value="CHINESE_EGRET">Chinese Egret</option>
+                            <option value="WHISKERED_TERN">Whiskered Tern</option>
+                            <option value="GREAT_KNOT">Great Knot</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason for Override</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Explain why you're overriding the AI result..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitOverride()">Override Result</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-function approveImage(imageId) {
-    if (confirm('Are you sure you want to approve this image?')) {
-        // TODO: Implement approval logic
-        alert('Image approved!');
+let currentResultId = null;
+
+function approveResult(resultId) {
+    if (confirm('Are you sure you want to approve this result?')) {
+        const notes = prompt('Add approval notes (optional):');
+        
+        fetch(`/image-processing/api/approve-result/${resultId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `notes=${encodeURIComponent(notes || '')}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                location.reload(); // Refresh to update counts
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error approving result');
+        });
     }
 }
 
-function requestRevision(imageId) {
-    const reason = prompt('Please provide a reason for requesting revision:');
+function rejectResult(resultId) {
+    const reason = prompt('Please provide a reason for rejection:');
     if (reason) {
-        // TODO: Implement revision request logic
-        alert('Revision requested: ' + reason);
+        fetch(`/image-processing/api/reject-result/${resultId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `notes=${encodeURIComponent(reason)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                location.reload(); // Refresh to update counts
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error rejecting result');
+        });
     }
 }
+
+function showOverrideModal(resultId, currentSpecies) {
+    currentResultId = resultId;
+    document.getElementById('species').value = '';
+    document.getElementById('reason').value = '';
+    
+    // Pre-select current species if available
+    if (currentSpecies) {
+        const option = document.querySelector(`#species option[value="${currentSpecies}"]`);
+        if (option) option.selected = true;
+    }
+    
+    new bootstrap.Modal(document.getElementById('overrideModal')).show();
+}
+
+function submitOverride() {
+    const species = document.getElementById('species').value;
+    const reason = document.getElementById('reason').value;
+    
+    if (!species) {
+        alert('Please select a species');
+        return;
+    }
+    
+    fetch(`/image-processing/api/override-result/${currentResultId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `species=${encodeURIComponent(species)}&reason=${encodeURIComponent(reason)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('overrideModal')).hide();
+            location.reload(); // Refresh to update counts
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error overriding result');
+    });
+}
 </script>
+
+<!-- Add CSRF token for AJAX calls -->
+{% csrf_token %}
 {% endblock %}

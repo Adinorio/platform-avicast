@@ -501,13 +501,30 @@ def review_view(request):
         messages.error(request, "Access denied. Staff only.")
         return redirect('image_processing:list')
     
-    # Get processed images ready for review
-    images_to_review = ImageUpload.objects.filter(
-        upload_status=ImageUpload.UploadStatus.PROCESSED
-    ).order_by('-uploaded_at')
+    # Get processing results ready for review (not just uploads)
+    results_to_review = ImageProcessingResult.objects.filter(
+        review_status=ImageProcessingResult.ReviewStatus.PENDING,
+        processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
+    ).select_related('image_upload', 'image_upload__uploaded_by').order_by('-created_at')
+    
+    # Get counts for different statuses
+    pending_count = results_to_review.count()
+    approved_count = ImageProcessingResult.objects.filter(
+        review_status=ImageProcessingResult.ReviewStatus.APPROVED
+    ).count()
+    rejected_count = ImageProcessingResult.objects.filter(
+        review_status=ImageProcessingResult.ReviewStatus.REJECTED
+    ).count()
+    overridden_count = ImageProcessingResult.objects.filter(
+        review_status=ImageProcessingResult.ReviewStatus.OVERRIDDEN
+    ).count()
     
     context = {
-        'images_to_review': images_to_review,
+        'results_to_review': results_to_review,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'overridden_count': overridden_count,
     }
     return render(request, 'image_processing/review.html', context)
 
@@ -566,6 +583,82 @@ def clear_upload_results(request):
     if 'upload_results' in request.session:
         del request.session['upload_results']
     return JsonResponse({'status': 'success'})
+
+@login_required
+@require_http_methods(["POST"])
+def approve_result(request, result_id):
+    """Approve a processing result"""
+    if not request.user.is_staff:
+        return JsonResponse({'status': 'error', 'message': 'Access denied'}, status=403)
+    
+    try:
+        result = get_object_or_404(ImageProcessingResult, pk=result_id)
+        notes = request.POST.get('notes', '')
+        
+        result.approve_result(request.user, notes)
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Result for "{result.image_upload.title}" approved successfully!'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error approving result: {str(e)}'
+        }, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def reject_result(request, result_id):
+    """Reject a processing result"""
+    if not request.user.is_staff:
+        return JsonResponse({'status': 'error', 'message': 'Access denied'}, status=403)
+    
+    try:
+        result = get_object_or_404(ImageProcessingResult, pk=result_id)
+        notes = request.POST.get('notes', '')
+        
+        result.reject_result(request.user, notes)
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Result for "{result.image_upload.title}" rejected.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error rejecting result: {str(e)}'
+        }, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def override_result(request, result_id):
+    """Override a processing result with manual classification"""
+    if not request.user.is_staff:
+        return JsonResponse({'status': 'error', 'message': 'Access denied'}, status=403)
+    
+    try:
+        result = get_object_or_404(ImageProcessingResult, pk=result_id)
+        new_species = request.POST.get('species')
+        reason = request.POST.get('reason', '')
+        
+        if not new_species:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Species is required for override'
+            }, status=400)
+        
+        result.override_result(request.user, new_species, reason)
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Result for "{result.image_upload.title}" overridden with species: {new_species}'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error overriding result: {str(e)}'
+        }, status=500)
 
 @login_required
 def dashboard_view(request):
