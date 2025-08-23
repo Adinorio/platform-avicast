@@ -1,10 +1,25 @@
 from ultralytics import YOLO
 import os
-print('Current working directory:', os.getcwd())
-print('Contents of dataset directory:', os.listdir('dataset'))
+import logging
 from roboflow import Roboflow
 import torch
-os.environ['ULTRALYTICS_DATASET_DIR'] = os.path.abspath('dataset')
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Check if dataset directory exists
+dataset_dir = os.path.abspath('dataset')
+if not os.path.exists(dataset_dir):
+    logger.error(f"Dataset directory not found: {dataset_dir}")
+    logger.info("Please ensure the dataset directory exists and contains the required files")
+    exit(1)
+
+logger.info(f'Current working directory: {os.getcwd()}')
+logger.info(f'Dataset directory: {dataset_dir}')
+logger.info(f'Contents of dataset directory: {os.listdir(dataset_dir)}')
+
+os.environ['ULTRALYTICS_DATASET_DIR'] = dataset_dir
 
 def train_model():
     # Initialize YOLO model with YOLOv8x
@@ -71,13 +86,17 @@ def deploy_to_roboflow(api_key, workspace_name, project_ids, model_name="chinese
             model_name=model_name,
             filename="best.pt"  # Use the best weights from training
         )
-        print(f"Model successfully deployed to Roboflow as '{model_name}'")
+        logger.info(f"Model successfully deployed to Roboflow as '{model_name}'")
     except Exception as e:
-        print(f"Error deploying model to Roboflow: {str(e)}")
+        logger.error(f"Error deploying model to Roboflow: {str(e)}")
 
 if __name__ == '__main__':
+    logger.info("🚀 Starting bird detection model training...")
+    
     # Train the model
     results = train_model()
+    
+    logger.info("✨ Training completed successfully!")
     
     # Deploy to Roboflow (uncomment and fill in your details)
     # deploy_to_roboflow(

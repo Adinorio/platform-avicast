@@ -1,5 +1,6 @@
 import os
 import hashlib
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -10,6 +11,8 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 from .models import ImageUpload, ImageProcessingResult, ProcessingBatch
 from .forms import ImageUploadForm, ImageProcessingForm
@@ -25,19 +28,19 @@ def get_storage_manager():
 def image_upload_view(request):
     """Handle image upload with automatic processing"""
     if request.method == 'POST':
-        print(f"POST request received with FILES: {request.FILES}")
-        print(f"POST data: {request.POST}")
+        logger.info(f"POST request received with FILES: {request.FILES}")
+        logger.info(f"POST data: {request.POST}")
         
         form = ImageUploadForm(request.POST, request.FILES)
-        print(f"Form created, is_valid: {form.is_valid()}")
+        logger.info(f"Form created, is_valid: {form.is_valid()}")
         if not form.is_valid():
-            print(f"Form errors: {form.errors}")
+            logger.warning(f"Form errors: {form.errors}")
         
         if form.is_valid():
             try:
                 # Get uploaded files (now supports multiple)
                 image_files = request.FILES.getlist('image_file')
-                print(f"Processing {len(image_files)} image(s)")
+                logger.info(f"Processing {len(image_files)} image(s)")
                 
                 if not image_files:
                     messages.error(request, "No images selected for upload.")
@@ -50,19 +53,19 @@ def image_upload_view(request):
                 uploaded_images = []
                 
                 for i, image_file in enumerate(image_files, 1):
-                    print(f"Processing upload {i}/{len(image_files)}: {image_file.name}, size: {image_file.size}, type: {image_file.content_type}")
+                    logger.info(f"Processing upload {i}/{len(image_files)}: {image_file.name}, size: {image_file.size}, type: {image_file.content_type}")
                     
                     # Calculate file hash for deduplication
                     file_content = image_file.read()
                     file_hash = hashlib.sha256(file_content).hexdigest()
-                    print(f"File hash calculated: {file_hash[:10]}...")
+                    logger.info(f"File hash calculated: {file_hash[:10]}...")
                     
                     # Check for duplicates - allow re-uploads with different metadata
-                    print(f"Checking for duplicates...")
+                    logger.info(f"Checking for duplicates...")
                     try:
                         existing_images = ImageUpload.objects.filter(file_hash=file_hash)
                         if existing_images.exists():
-                            print(f"Found {existing_images.count()} existing image(s) with same hash")
+                            logger.info(f"Found {existing_images.count()} existing image(s) with same hash")
                             
                             # Check if this is a true duplicate (same user, same title, recent upload)
                             recent_duplicate = existing_images.filter(
@@ -72,35 +75,35 @@ def image_upload_view(request):
                             ).first()
                             
                             if recent_duplicate:
-                                print(f"Recent duplicate detected: {recent_duplicate.pk}")
+                                logger.info(f"Recent duplicate detected: {recent_duplicate.pk}")
                                 messages.warning(request, f"You recently uploaded this exact image '{image_file.name}' with title '{recent_duplicate.title}'. Consider using the existing upload or provide different metadata.")
                                 # Redirect to dashboard instead of detail page
                                 return redirect('image_processing:dashboard')
                             else:
-                                print(f"Allowing re-upload of same image with different metadata")
+                                logger.info(f"Allowing re-upload of same image with different metadata")
                                 # Generate unique filename to avoid conflicts
                                 base_name, ext = os.path.splitext(image_file.name)
                                 timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
                                 unique_filename = f"{base_name}_{timestamp}{ext}"
-                                print(f"Generated unique filename: {unique_filename}")
+                                logger.info(f"Generated unique filename: {unique_filename}")
                                 
                                 messages.info(request, f"Image '{image_file.name}' was previously uploaded, but you can upload it again with different title/description.")
                                 
                                 # Update the filename to avoid conflicts
                                 image_file.name = unique_filename
                         
-                        print(f"Proceeding with upload...")
+                        logger.info(f"Proceeding with upload...")
                     except Exception as e:
-                        print(f"Error checking duplicates: {str(e)}")
+                        logger.error(f"Error checking duplicates: {str(e)}")
                         # Continue with upload if duplicate check fails
-                        print(f"Continuing with upload despite duplicate check error...")
+                        logger.warning(f"Continuing with upload despite duplicate check error...")
                     
                     # Reset file pointer for saving
-                    print(f"Resetting file pointer...")
+                    logger.info(f"Resetting file pointer...")
                     image_file.seek(0)
                     
                     # Create image upload record
-                    print(f"Creating ImageUpload object for {image_file.name}...")
+                    logger.info(f"Creating ImageUpload object for {image_file.name}...")
                     image_upload = ImageUpload()
                     image_upload.uploaded_by = request.user
                     image_upload.file_size = image_file.size
@@ -121,19 +124,19 @@ def image_upload_view(request):
                         image_upload.description = form.cleaned_data.get('description')
                     
                     # Save original file
-                    print(f"Saving original file...")
+                    logger.info(f"Saving original file...")
                     image_upload.image_file.save(image_file.name, image_file, save=False)
                     image_upload.save()
-                    print(f"Original file saved: {image_upload.image_file.path if hasattr(image_upload.image_file, 'path') else 'No path'}")
+                    logger.info(f"Original file saved: {image_upload.image_file.path if hasattr(image_upload.image_file, 'path') else 'No path'}")
                     
                     # Process image with local storage
-                    print(f"Starting image processing for {image_file.name}...")
+                    logger.info(f"Starting image processing for {image_file.name}...")
                     try:
                         process_image_with_storage(image_upload, file_content)
-                        print(f"Image processing completed successfully for {image_file.name}")
+                        logger.info(f"Image processing completed successfully for {image_file.name}")
                         uploaded_images.append(image_upload)
                     except Exception as e:
-                        print(f"Image processing failed for {image_file.name}: {str(e)}")
+                        logger.error(f"Image processing failed for {image_file.name}: {str(e)}")
                         # Still add to uploaded_images but mark as failed
                         uploaded_images.append(image_upload)
                 
@@ -175,8 +178,8 @@ def image_upload_view(request):
             except Exception as e:
                 import traceback
                 error_details = traceback.format_exc()
-                print(f"Upload error: {str(e)}")
-                print(f"Traceback: {error_details}")
+                logger.error(f"Upload error: {str(e)}")
+                logger.error(f"Traceback: {error_details}")
                 messages.error(request, f"Upload failed: {str(e)}")
                 return redirect('image_processing:upload')
     else:
@@ -187,48 +190,48 @@ def image_upload_view(request):
 def process_image_with_storage(image_upload, file_content):
     """Process image with local storage optimization and real bird detection"""
     try:
-        print(f"Starting processing for image {image_upload.pk}")
+        logger.info(f"Starting processing for image {image_upload.pk}")
         
         # Start processing
-        print("Calling start_processing...")
+        logger.info("Calling start_processing...")
         image_upload.start_processing()
-        print("start_processing completed")
+        logger.info("start_processing completed")
         
         # Optimize image
-        print("Creating ImageOptimizer...")
+        logger.info("Creating ImageOptimizer...")
         optimizer = ImageOptimizer()
-        print("Optimizing image...")
+        logger.info("Optimizing image...")
         optimized_content, new_size, format_used = optimizer.optimize_image(file_content)
-        print(f"Image optimized: {format_used}, new size: {new_size}")
+        logger.info(f"Image optimized: {format_used}, new size: {new_size}")
         
         # Update image record with optimization info
-        print("Updating image record...")
+        logger.info("Updating image record...")
         image_upload.compressed_size = new_size
         image_upload.is_compressed = True
         image_upload.upload_status = ImageUpload.UploadStatus.PROCESSED
         image_upload.save()
-        print("Image record updated")
+        logger.info("Image record updated")
         
         # Save optimized image
-        print("Saving optimized image...")
+        logger.info("Saving optimized image...")
         from django.core.files.base import ContentFile
         optimized_file = ContentFile(optimized_content, f"optimized_{image_upload.original_filename}")
         image_upload.image_file.save(f"optimized_{image_upload.original_filename}", optimized_file, save=False)
         image_upload.save()
-        print("Optimized image saved")
+        logger.info("Optimized image saved")
         
         # Run real bird detection
-        print("Running bird detection...")
+        logger.info("Running bird detection...")
         try:
             from .bird_detection_service import get_bird_detection_service
             
             detection_service = get_bird_detection_service()
             if detection_service.is_available():
-                print("Bird detection service available, running detection...")
+                logger.info("Bird detection service available, running detection...")
                 detection_result = detection_service.detect_birds(file_content, image_upload.original_filename)
                 
                 if detection_result['success']:
-                    print(f"Detection successful: {detection_result['total_detections']} birds found")
+                    logger.info(f"Detection successful: {detection_result['total_detections']} birds found")
                     
                     # Create processing result with real detection data
                     if not hasattr(image_upload, 'processing_result'):
@@ -248,12 +251,27 @@ def process_image_with_storage(image_upload, file_content):
                             confidence_score = 0.0
                             bounding_box = {}
                         
+                        # Store all detections in the bounding_box field for visualization
+                        all_detections = detection_result.get('detections', [])
+                        detection_data = {
+                            'best_detection': bounding_box,
+                            'all_detections': [
+                                {
+                                    'species': det['species'],
+                                    'confidence': det['confidence'],
+                                    'bounding_box': det['bounding_box']
+                                } for det in all_detections
+                            ],
+                            'total_count': len(all_detections)
+                        }
+                        
                         processing_result = ImageProcessingResult.objects.create(
                             id=uuid.uuid4(),
                             image_upload=image_upload,
                             detected_species=detected_species,
                             confidence_score=confidence_score,
-                            bounding_box=bounding_box,
+                            bounding_box=detection_data,  # Store comprehensive detection data
+                            total_detections=detection_result['total_detections'],
                             processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
                             ai_model='YOLO_V8',
                             model_version=detection_result['model_used'],
@@ -264,27 +282,28 @@ def process_image_with_storage(image_upload, file_content):
                             review_notes='',
                             is_overridden=False
                         )
-                        print(f"Processing result created with real detection: {processing_result.pk}")
-                        print(f"Species: {detected_species}, Confidence: {confidence_score}")
+                        logger.info(f"Processing result created with real detection: {processing_result.pk}")
+                        logger.info(f"Species: {detected_species}, Confidence: {confidence_score}")
+                        logger.info(f"Total detections: {detection_result['total_detections']}")
                     else:
-                        print("Processing result already exists")
+                        logger.info("Processing result already exists")
                 else:
-                    print(f"Detection failed: {detection_result.get('error', 'Unknown error')}")
+                    logger.error(f"Detection failed: {detection_result.get('error', 'Unknown error')}")
                     # Create a failed processing result
                     _create_failed_processing_result(image_upload, detection_result.get('error', 'Detection failed'))
             else:
-                print("Bird detection service not available, using fallback")
+                logger.warning("Bird detection service not available, using fallback")
                 _create_fallback_processing_result(image_upload)
                 
         except Exception as e:
-            print(f"Error during bird detection: {str(e)}")
+            logger.error(f"Error during bird detection: {str(e)}")
             # Create a failed processing result
             _create_failed_processing_result(image_upload, str(e))
         
         # Complete processing
-        print("Completing processing...")
+        logger.info("Completing processing...")
         image_upload.complete_processing()
-        print("Processing completed successfully")
+        logger.info("Processing completed successfully")
         
         # Check storage usage (archive functionality can be added later)
         # storage_manager = get_storage_manager()
@@ -293,11 +312,11 @@ def process_image_with_storage(image_upload, file_content):
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
-        print(f"Image processing error: {str(e)}")
-        print(f"Traceback: {error_details}")
+        logger.error(f"Image processing error: {str(e)}")
+        logger.error(f"Traceback: {error_details}")
         image_upload.mark_failed()
         # Don't re-raise the error - let the upload continue
-        print(f"Image processing failed for {image_upload.pk}, but upload will continue")
+        logger.error(f"Image processing failed for {image_upload.pk}, but upload will continue")
 
 @login_required
 def image_list_view(request):
@@ -464,7 +483,7 @@ def optimize_uncompressed_images():
                 image.save()
                 
         except Exception as e:
-            print(f"Failed to optimize image {image.id}: {e}")
+            logger.error(f"Failed to optimize image {image.id}: {e}")
 
 @login_required
 def image_delete_view(request, pk):
@@ -816,6 +835,7 @@ def _create_failed_processing_result(image_upload, error_message):
                 detected_species=None,
                 confidence_score=0.0,
                 bounding_box={},
+                total_detections=0,
                 processing_status=ImageProcessingResult.ProcessingStatus.FAILED,
                 ai_model='YOLO_V8',
                 model_version='unknown',
@@ -826,9 +846,9 @@ def _create_failed_processing_result(image_upload, error_message):
                 review_notes=f'Processing failed: {error_message}',
                 is_overridden=False
             )
-            print(f"Failed processing result created: {processing_result.pk}")
+            logger.info(f"Failed processing result created: {processing_result.pk}")
     except Exception as e:
-        print(f"Error creating failed processing result: {str(e)}")
+        logger.error(f"Error creating failed processing result: {str(e)}")
 
 def _create_fallback_processing_result(image_upload):
     """Create a fallback processing result when detection service is unavailable"""
@@ -843,6 +863,7 @@ def _create_fallback_processing_result(image_upload):
                 detected_species=None,
                 confidence_score=0.0,
                 bounding_box={},
+                total_detections=0,
                 processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
                 ai_model='YOLO_V8',
                 model_version='fallback',
@@ -853,6 +874,6 @@ def _create_fallback_processing_result(image_upload):
                 review_notes='Detection service unavailable - manual review required',
                 is_overridden=False
             )
-            print(f"Fallback processing result created: {processing_result.pk}")
+            logger.info(f"Fallback processing result created: {processing_result.pk}")
     except Exception as e:
-        print(f"Error creating fallback processing result: {str(e)}")
+        logger.error(f"Error creating fallback processing result: {str(e)}")

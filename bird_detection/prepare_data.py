@@ -1,7 +1,12 @@
 import os
+import logging
 os.environ['ULTRALYTICS_DATASET_DIR'] = os.path.abspath('dataset')
 import zipfile
 from ultralytics.data.utils import check_det_dataset
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def extract_roboflow_dataset(zip_path, extract_to='dataset'):
     """
@@ -11,7 +16,7 @@ def extract_roboflow_dataset(zip_path, extract_to='dataset'):
         os.makedirs(extract_to)
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_to)
-    print(f"Dataset extracted to {extract_to}")
+    logger.info(f"Dataset extracted to {extract_to}")
     return extract_to
 
 def fix_roboflow_structure():
@@ -35,7 +40,7 @@ def fix_roboflow_structure():
             data['test'] = data['test'].replace('../', '')
         with open(yaml_path, 'w') as f:
             yaml.dump(data, f)
-        print("Fixed data.yaml paths and renamed 'valid' to 'val'.")
+        logger.info("Fixed data.yaml paths and renamed 'valid' to 'val'.")
 
 def prepare_dataset():
     """
@@ -44,7 +49,7 @@ def prepare_dataset():
     base_dir = 'dataset'
     yaml_path = os.path.join(base_dir, 'data.yaml')
     check_det_dataset(yaml_path)
-    print(f"Dataset structure and data.yaml verified!")
+    logger.info(f"Dataset structure and data.yaml verified!")
 
 def verify_annotations():
     """
@@ -56,24 +61,24 @@ def verify_annotations():
         img_dir = os.path.join('dataset', split, 'images')
         label_dir = os.path.join('dataset', split, 'labels')
         if not os.path.exists(img_dir) or not os.path.exists(label_dir):
-            print(f"Warning: {img_dir} or {label_dir} does not exist.")
+            logger.warning(f"Warning: {img_dir} or {label_dir} does not exist.")
             continue
         for img_path in glob.glob(os.path.join(img_dir, '*')):
             if os.path.splitext(img_path)[1].lower() in ['.jpg', '.jpeg', '.png']:
                 label_path = os.path.join(label_dir, os.path.splitext(os.path.basename(img_path))[0] + '.txt')
                 if not os.path.exists(label_path):
-                    print(f"Warning: No label file found for {img_path}")
+                    logger.warning(f"Warning: No label file found for {img_path}")
                     continue
                 with open(label_path, 'r') as f:
                     for line_num, line in enumerate(f, 1):
                         try:
                             class_id, *coords = line.strip().split()
                             if len(coords) != 4:
-                                print(f"Warning: Invalid number of coordinates in {label_path}, line {line_num}")
+                                logger.warning(f"Warning: Invalid number of coordinates in {label_path}, line {line_num}")
                             if not all(0 <= float(x) <= 1 for x in coords):
-                                print(f"Warning: Coordinates out of range in {label_path}, line {line_num}")
+                                logger.warning(f"Warning: Coordinates out of range in {label_path}, line {line_num}")
                         except ValueError:
-                            print(f"Warning: Invalid label format in {label_path}, line {line_num}")
+                            logger.warning(f"Warning: Invalid label format in {label_path}, line {line_num}")
 
 if __name__ == '__main__':
     roboflow_zip = 'bird_detection/chinese_egret_dataset.zip'  # Your Roboflow export file
@@ -83,4 +88,4 @@ if __name__ == '__main__':
         prepare_dataset()
         verify_annotations()
     else:
-        print(f"Please place your Roboflow export file as '{roboflow_zip}' in the current directory") 
+        logger.warning(f"Please place your Roboflow export file as '{roboflow_zip}' in the current directory") 
