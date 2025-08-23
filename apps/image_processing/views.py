@@ -185,7 +185,7 @@ def image_upload_view(request):
     return render(request, 'image_processing/upload.html', {'form': form})
 
 def process_image_with_storage(image_upload, file_content):
-    """Process image with local storage optimization and create processing results"""
+    """Process image with local storage optimization and real bird detection"""
     try:
         print(f"Starting processing for image {image_upload.pk}")
         
@@ -217,40 +217,69 @@ def process_image_with_storage(image_upload, file_content):
         image_upload.save()
         print("Optimized image saved")
         
-        # Create processing result (mock AI detection for now)
-        print("Creating processing result...")
+        # Run real bird detection
+        print("Running bird detection...")
         try:
-            # Check if processing result already exists
-            if not hasattr(image_upload, 'processing_result'):
-                from .models import ImageProcessingResult
-                import uuid
+            from .bird_detection_service import get_bird_detection_service
+            
+            detection_service = get_bird_detection_service()
+            if detection_service.is_available():
+                print("Bird detection service available, running detection...")
+                detection_result = detection_service.detect_birds(file_content, image_upload.original_filename)
                 
-                # Mock AI detection results (replace with actual AI processing later)
-                mock_species = 'CHINESE_EGRET'  # This would come from AI model
-                mock_confidence = 0.85  # This would come from AI model
-                
-                processing_result = ImageProcessingResult.objects.create(
-                    id=uuid.uuid4(),
-                    image_upload=image_upload,
-                    detected_species=mock_species,
-                    confidence_score=mock_confidence,
-                    bounding_box={'x': 100, 'y': 100, 'width': 200, 'height': 150},  # Mock bounding box
-                    processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
-                    ai_model='YOLO_V8',
-                    model_version='v8.0',
-                    processing_device='cpu',
-                    inference_time=2.5,  # Mock inference time
-                    model_confidence_threshold=0.25,
-                    review_status=ImageProcessingResult.ReviewStatus.PENDING,  # Ready for review
-                    review_notes='',
-                    is_overridden=False
-                )
-                print(f"Processing result created: {processing_result.pk}")
+                if detection_result['success']:
+                    print(f"Detection successful: {detection_result['total_detections']} birds found")
+                    
+                    # Create processing result with real detection data
+                    if not hasattr(image_upload, 'processing_result'):
+                        from .models import ImageProcessingResult
+                        import uuid
+                        
+                        # Use the best detection result
+                        best_detection = detection_result['best_detection']
+                        
+                        if best_detection:
+                            detected_species = best_detection['species']
+                            confidence_score = best_detection['confidence']
+                            bounding_box = best_detection['bounding_box']
+                        else:
+                            # No birds detected
+                            detected_species = None
+                            confidence_score = 0.0
+                            bounding_box = {}
+                        
+                        processing_result = ImageProcessingResult.objects.create(
+                            id=uuid.uuid4(),
+                            image_upload=image_upload,
+                            detected_species=detected_species,
+                            confidence_score=confidence_score,
+                            bounding_box=bounding_box,
+                            processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
+                            ai_model='YOLO_V8',
+                            model_version=detection_result['model_used'],
+                            processing_device=detection_result['device_used'],
+                            inference_time=2.5,  # TODO: Measure actual inference time
+                            model_confidence_threshold=detection_result['confidence_threshold'],
+                            review_status=ImageProcessingResult.ReviewStatus.PENDING,  # Ready for review
+                            review_notes='',
+                            is_overridden=False
+                        )
+                        print(f"Processing result created with real detection: {processing_result.pk}")
+                        print(f"Species: {detected_species}, Confidence: {confidence_score}")
+                    else:
+                        print("Processing result already exists")
+                else:
+                    print(f"Detection failed: {detection_result.get('error', 'Unknown error')}")
+                    # Create a failed processing result
+                    _create_failed_processing_result(image_upload, detection_result.get('error', 'Detection failed'))
             else:
-                print("Processing result already exists")
+                print("Bird detection service not available, using fallback")
+                _create_fallback_processing_result(image_upload)
+                
         except Exception as e:
-            print(f"Error creating processing result: {str(e)}")
-            # Continue with processing even if result creation fails
+            print(f"Error during bird detection: {str(e)}")
+            # Create a failed processing result
+            _create_failed_processing_result(image_upload, str(e))
         
         # Complete processing
         print("Completing processing...")
@@ -773,3 +802,57 @@ def dashboard_view(request):
     }
     
     return render(request, 'image_processing/dashboard.html', context)
+
+def _create_failed_processing_result(image_upload, error_message):
+    """Create a failed processing result"""
+    try:
+        from .models import ImageProcessingResult
+        import uuid
+        
+        if not hasattr(image_upload, 'processing_result'):
+            processing_result = ImageProcessingResult.objects.create(
+                id=uuid.uuid4(),
+                image_upload=image_upload,
+                detected_species=None,
+                confidence_score=0.0,
+                bounding_box={},
+                processing_status=ImageProcessingResult.ProcessingStatus.FAILED,
+                ai_model='YOLO_V8',
+                model_version='unknown',
+                processing_device='cpu',
+                inference_time=0.0,
+                model_confidence_threshold=0.25,
+                review_status=ImageProcessingResult.ReviewStatus.PENDING,
+                review_notes=f'Processing failed: {error_message}',
+                is_overridden=False
+            )
+            print(f"Failed processing result created: {processing_result.pk}")
+    except Exception as e:
+        print(f"Error creating failed processing result: {str(e)}")
+
+def _create_fallback_processing_result(image_upload):
+    """Create a fallback processing result when detection service is unavailable"""
+    try:
+        from .models import ImageProcessingResult
+        import uuid
+        
+        if not hasattr(image_upload, 'processing_result'):
+            processing_result = ImageProcessingResult.objects.create(
+                id=uuid.uuid4(),
+                image_upload=image_upload,
+                detected_species=None,
+                confidence_score=0.0,
+                bounding_box={},
+                processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
+                ai_model='YOLO_V8',
+                model_version='fallback',
+                processing_device='cpu',
+                inference_time=0.0,
+                model_confidence_threshold=0.25,
+                review_status=ImageProcessingResult.ReviewStatus.PENDING,
+                review_notes='Detection service unavailable - manual review required',
+                is_overridden=False
+            )
+            print(f"Fallback processing result created: {processing_result.pk}")
+    except Exception as e:
+        print(f"Error creating fallback processing result: {str(e)}")
