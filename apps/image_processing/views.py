@@ -185,7 +185,7 @@ def image_upload_view(request):
     return render(request, 'image_processing/upload.html', {'form': form})
 
 def process_image_with_storage(image_upload, file_content):
-    """Process image with local storage optimization"""
+    """Process image with local storage optimization and create processing results"""
     try:
         print(f"Starting processing for image {image_upload.pk}")
         
@@ -216,6 +216,41 @@ def process_image_with_storage(image_upload, file_content):
         image_upload.image_file.save(f"optimized_{image_upload.original_filename}", optimized_file, save=False)
         image_upload.save()
         print("Optimized image saved")
+        
+        # Create processing result (mock AI detection for now)
+        print("Creating processing result...")
+        try:
+            # Check if processing result already exists
+            if not hasattr(image_upload, 'processing_result'):
+                from .models import ImageProcessingResult
+                import uuid
+                
+                # Mock AI detection results (replace with actual AI processing later)
+                mock_species = 'CHINESE_EGRET'  # This would come from AI model
+                mock_confidence = 0.85  # This would come from AI model
+                
+                processing_result = ImageProcessingResult.objects.create(
+                    id=uuid.uuid4(),
+                    image_upload=image_upload,
+                    detected_species=mock_species,
+                    confidence_score=mock_confidence,
+                    bounding_box={'x': 100, 'y': 100, 'width': 200, 'height': 150},  # Mock bounding box
+                    processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
+                    ai_model='YOLO_V8',
+                    model_version='v8.0',
+                    processing_device='cpu',
+                    inference_time=2.5,  # Mock inference time
+                    model_confidence_threshold=0.25,
+                    review_status=ImageProcessingResult.ReviewStatus.PENDING,  # Ready for review
+                    review_notes='',
+                    is_overridden=False
+                )
+                print(f"Processing result created: {processing_result.pk}")
+            else:
+                print("Processing result already exists")
+        except Exception as e:
+            print(f"Error creating processing result: {str(e)}")
+            # Continue with processing even if result creation fails
         
         # Complete processing
         print("Completing processing...")
@@ -560,18 +595,49 @@ def process_batch_view(request, pk):
 
 @login_required
 def allocate_view(request):
-    """Allocate approved results to users"""
+    """Allocate approved results to census data"""
     if not request.user.is_staff:
         messages.error(request, "Access denied. Staff only.")
         return redirect('image_processing:list')
     
-    # Get approved results
+    # Get approved results that can be allocated
     approved_results = ImageProcessingResult.objects.filter(
-        review_status=ImageProcessingResult.ReviewStatus.APPROVED
-    ).order_by('-created_at')
+        review_status__in=[
+            ImageProcessingResult.ReviewStatus.APPROVED,
+            ImageProcessingResult.ReviewStatus.OVERRIDDEN
+        ]
+    ).select_related('image_upload', 'image_upload__uploaded_by').order_by('-created_at')
+    
+    # Get sites for allocation (you'll need to implement this based on your sites system)
+    # For now, we'll use mock data
+    sites = [
+        {'id': 1, 'name': 'Site A - Coastal Wetland', 'location': 'Eastern Coast'},
+        {'id': 2, 'name': 'Site B - Inland Lake', 'location': 'Central Region'},
+        {'id': 3, 'name': 'Site C - River Delta', 'location': 'Western Delta'},
+    ]
+    
+    # Mock years and months for census data
+    years = [2024, 2025, 2026]
+    months = [
+        {'id': 1, 'name': 'January', 'abbr': 'Jan'},
+        {'id': 2, 'name': 'February', 'abbr': 'Feb'},
+        {'id': 3, 'name': 'March', 'abbr': 'Mar'},
+        {'id': 4, 'name': 'April', 'abbr': 'Apr'},
+        {'id': 5, 'name': 'May', 'abbr': 'May'},
+        {'id': 6, 'name': 'June', 'abbr': 'Jun'},
+        {'id': 7, 'name': 'July', 'abbr': 'Jul'},
+        {'id': 8, 'name': 'August', 'abbr': 'Aug'},
+        {'id': 9, 'name': 'September', 'abbr': 'Sep'},
+        {'id': 10, 'name': 'October', 'abbr': 'Oct'},
+        {'id': 11, 'name': 'November', 'abbr': 'Nov'},
+        {'id': 12, 'name': 'December', 'abbr': 'Dec'},
+    ]
     
     context = {
         'approved_results': approved_results,
+        'sites': sites,
+        'years': years,
+        'months': months,
     }
     return render(request, 'image_processing/allocate.html', context)
 
