@@ -149,6 +149,7 @@ class ImageProcessingResult(models.Model):
     detected_species = models.CharField(max_length=50, choices=BirdSpecies.choices, null=True, blank=True)
     confidence_score = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True)
     bounding_box = models.JSONField(default=dict, blank=True)  # Store coordinates
+    total_detections = models.IntegerField(default=0)  # Number of birds detected
     processing_status = models.CharField(max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.PENDING)
 
     # AI Model Configuration

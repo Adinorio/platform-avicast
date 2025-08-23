@@ -120,7 +120,11 @@ class BirdDetectionService:
                                 'x': int(x1),
                                 'y': int(y1),
                                 'width': int(x2 - x1),
-                                'height': int(y2 - y1)
+                                'height': int(y2 - y1),
+                                'x1': int(x1),
+                                'y1': int(y1),
+                                'x2': int(x2),
+                                'y2': int(y2)
                             },
                             'class_id': class_id
                         }
@@ -131,7 +135,7 @@ class BirdDetectionService:
             if detections:
                 best_detection = max(detections, key=lambda x: x['confidence'])
             
-            # Create result
+            # Create result with proper detection count
             result = {
                 'success': True,
                 'detections': detections,
