@@ -170,6 +170,7 @@ class ImageProcessingResult(models.Model):
     # Override information (when admin overrides AI result)
     is_overridden = models.BooleanField(default=False)
     overridden_species = models.CharField(max_length=50, choices=BirdSpecies.choices, null=True, blank=True)
+    overridden_count = models.IntegerField(null=True, blank=True)  # Manually overridden count
     overridden_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='results_overridden')
     overridden_at = models.DateTimeField(null=True, blank=True)
     override_reason = models.TextField(blank=True)
@@ -202,16 +203,26 @@ class ImageProcessingResult(models.Model):
         self.review_notes = notes
         self.save(update_fields=['review_status', 'reviewed_by', 'reviewed_at', 'review_notes'])
 
-    def override_result(self, overridden_by_user, new_species, reason=""):
-        """Override the AI result with manual classification"""
+    def override_result(self, overridden_by_user, new_species, reason="", new_count=None):
+        """Override the AI result with manual classification and/or count"""
         self.is_overridden = True
         self.overridden_species = new_species
         self.overridden_by = overridden_by_user
         self.overridden_at = timezone.now()
         self.override_reason = reason
         self.review_status = self.ReviewStatus.OVERRIDDEN
-        self.save(update_fields=['is_overridden', 'overridden_species', 'overridden_by', 
-                                'overridden_at', 'override_reason', 'review_status'])
+
+        # Update count if provided
+        if new_count is not None:
+            self.overridden_count = new_count
+
+        # Build update fields list
+        update_fields = ['is_overridden', 'overridden_species', 'overridden_by',
+                        'overridden_at', 'override_reason', 'review_status']
+        if new_count is not None:
+            update_fields.append('overridden_count')
+
+        self.save(update_fields=update_fields)
 
     @property
     def final_species(self):
@@ -219,6 +230,13 @@ class ImageProcessingResult(models.Model):
         if self.is_overridden and self.overridden_species:
             return self.overridden_species
         return self.detected_species
+
+    @property
+    def final_count(self):
+        """Get the final count (AI or overridden)"""
+        if self.is_overridden and self.overridden_count is not None:
+            return self.overridden_count
+        return self.total_detections
 
     @property
     def is_reviewed(self):
