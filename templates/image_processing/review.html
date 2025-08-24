@@ -124,25 +124,33 @@
                                             <!-- Display all detections with bounding boxes -->
                                             {% if result.bounding_box and result.bounding_box.all_detections %}
                                                 {% for detection in result.bounding_box.all_detections %}
-                                                    <div class="bounding-box" 
-                                                         data-x="{{ detection.bounding_box.x|floatformat:0 }}"
-                                                         data-y="{{ detection.bounding_box.y|floatformat:0 }}"
-                                                         data-width="{{ detection.bounding_box.width|floatformat:0 }}"
-                                                         data-height="{{ detection.bounding_box.height|floatformat:0 }}">
-                                                        <div class="detection-label">
-                                                            {{ detection.species|default:"Bird" }} ({{ detection.confidence|floatformat:1 }}%)
-                                                        </div>
-                                                    </div>
+                                                                                            <div class="bounding-box"
+                                             data-x="{{ detection.bounding_box.x|floatformat:0 }}"
+                                             data-y="{{ detection.bounding_box.y|floatformat:0 }}"
+                                             data-width="{{ detection.bounding_box.width|floatformat:0 }}"
+                                             data-height="{{ detection.bounding_box.height|floatformat:0 }}"
+                                             data-detection-id="detection-{{ forloop.counter }}">
+                                            <div class="detection-label">
+                                                {{ detection.species|default:"Bird" }} ({{ detection.confidence|floatformat:1 }}%)
+                                            </div>
+                                            <div class="detection-number" data-detection-id="detection-{{ forloop.counter }}">
+                                                #{{ forloop.counter }}
+                                            </div>
+                                        </div>
                                                 {% endfor %}
                                             {% elif result.bounding_box and result.bounding_box.best_detection %}
                                                 <!-- Fallback to old format for backward compatibility -->
-                                                <div class="bounding-box fallback-box" 
+                                                <div class="bounding-box fallback-box"
                                                      data-x="{{ result.bounding_box.best_detection.x|floatformat:0 }}"
                                                      data-y="{{ result.bounding_box.best_detection.y|floatformat:0 }}"
                                                      data-width="{{ result.bounding_box.best_detection.width|floatformat:0 }}"
-                                                     data-height="{{ result.bounding_box.best_detection.height|floatformat:0 }}">
+                                                     data-height="{{ result.bounding_box.best_detection.height|floatformat:0 }}"
+                                                     data-detection-id="detection-1">
                                                     <div class="detection-label">
                                                         {{ result.detected_species|default:"Bird" }}
+                                                    </div>
+                                                    <div class="detection-number" data-detection-id="detection-1">
+                                                        #1
                                                     </div>
                                                 </div>
                                             {% endif %}
@@ -273,6 +281,39 @@
                             <i class="fas fa-arrow-right me-2"></i>Go to Allocation
                         </a>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toggle Controls -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="fas fa-eye me-2"></i>Display Controls
+                    </h6>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="toggleBoundingBoxes" checked>
+                            <label class="form-check-label" for="toggleBoundingBoxes">
+                                <i class="fas fa-vector-square me-1"></i>Bounding Boxes
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="toggleNumbers" checked>
+                            <label class="form-check-label" for="toggleNumbers">
+                                <i class="fas fa-hashtag me-1"></i>Detection Numbers
+                            </label>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        💡 <strong>Tip:</strong> Hover over any bounding box or number to see detection labels.
+                        <br>• Toggle off boxes to see just numbers (identifiers)
+                        <br>• Numbers stay visible even when boxes are hidden
+                        <br>• Use toggles to customize your view
+                    </small>
                 </div>
             </div>
         </div>
@@ -422,29 +463,109 @@ function submitOverride() {
 {% csrf_token %}
 
 <style>
+.card-img-top-container {
+    position: relative;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.detection-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
 .bounding-box {
     position: absolute;
-    border: 2px solid #ff0000;
+    border: 3px solid #ff0000;
     background: rgba(255, 0, 0, 0.1);
-    pointer-events: none;
+    pointer-events: all;
+    box-sizing: border-box;
+    z-index: 10;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.bounding-box:hover {
+    border-color: #ff4444;
+    background: rgba(255, 0, 0, 0.15);
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
 }
 
 .detection-label {
     position: absolute;
-    top: -25px;
+    top: -30px;
     left: 0;
     background: #ff0000;
+    color: white;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 15;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Hover effects for labels - show on bounding box or number hover */
+.bounding-box:hover .detection-label,
+.detection-number:hover .detection-label {
+    opacity: 1;
+}
+
+/* Toggle states - use visibility to maintain position context */
+.bounding-box.hidden { visibility: hidden; }
+.bounding-box.hidden .detection-number { visibility: visible !important; }
+.detection-number.hidden { display: none; }
+
+.detection-number {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #000000;
     color: white;
     padding: 2px 6px;
     font-size: 10px;
     border-radius: 3px;
+    font-weight: bold;
+    z-index: 15;
+    border: 2px solid #ff0000;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    min-width: 20px;
+    text-align: center;
+}
+
+.bounding-box:hover .detection-label {
+    opacity: 1;
 }
 </style>
 
 <script>
-// Position bounding boxes after page loads
+// Position bounding boxes after page loads with proper scaling
 document.addEventListener('DOMContentLoaded', function() {
-    const boundingBoxes = document.querySelectorAll('.bounding-box');
+    positionAllBoundingBoxes();
+});
+
+function positionAllBoundingBoxes() {
+    // Find all detection images and their bounding boxes
+    const detectionImages = document.querySelectorAll('.detection-image');
+
+    detectionImages.forEach(function(img) {
+        const imgRect = img.getBoundingClientRect();
+        const originalWidth = img.naturalWidth;
+        const originalHeight = img.naturalHeight;
+        const displayedWidth = imgRect.width;
+        const displayedHeight = imgRect.height;
+
+        // Calculate scaling ratios
+        const scaleX = displayedWidth / originalWidth;
+        const scaleY = displayedHeight / originalHeight;
+
+        // Find bounding boxes within the same container
+        const container = img.closest('.card-img-top-container, .position-relative');
+        if (container) {
+            const boundingBoxes = container.querySelectorAll('.bounding-box');
     
     boundingBoxes.forEach(function(box) {
         const x = parseInt(box.dataset.x);
@@ -453,13 +574,283 @@ document.addEventListener('DOMContentLoaded', function() {
         const height = parseInt(box.dataset.height);
         
         if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
-            box.style.left = x + 'px';
-            box.style.top = y + 'px';
-            box.style.width = width + 'px';
-            box.style.height = height + 'px';
+                    // Scale the coordinates based on the displayed image size
+                    const scaledX = x * scaleX;
+                    const scaledY = y * scaleY;
+                    const scaledWidth = width * scaleX;
+                    const scaledHeight = height * scaleY;
+
+                    box.style.left = scaledX + 'px';
+                    box.style.top = scaledY + 'px';
+                    box.style.width = scaledWidth + 'px';
+                    box.style.height = scaledHeight + 'px';
+                }
+            });
         }
     });
+}
+
+// Re-position bounding boxes when images load
+document.addEventListener('load', function(event) {
+    if (event.target.classList.contains('detection-image')) {
+        setTimeout(() => {
+            positionAllBoundingBoxes();
+            setTimeout(preventNumberOverlaps, 50);
+        }, 100);
+    }
+}, true);
+
+function preventNumberOverlaps() {
+    const allContainers = document.querySelectorAll('.card-img-top-container, .position-relative');
+
+    allContainers.forEach(container => {
+        const numbers = container.querySelectorAll('.detection-number');
+        if (numbers.length <= 1) return; // No need to check if only one number
+
+        const numberData = [];
+
+        // Collect position data for all numbers in this container
+        numbers.forEach((number, index) => {
+            const rect = number.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            numberData.push({
+                element: number,
+                index: index,
+                x: rect.left - containerRect.left,
+                y: rect.top - containerRect.top,
+                width: rect.width,
+                height: rect.height
+            });
+        });
+
+        // Check for overlaps and reposition
+        numberData.forEach((number, index) => {
+            let overlaps = false;
+            let attempts = 0;
+            const maxAttempts = 4;
+
+            while (attempts < maxAttempts) {
+                overlaps = false;
+
+                // Check overlap with other numbers
+                for (let i = 0; i < numberData.length; i++) {
+                    if (i === index) continue;
+
+                    if (rectsOverlap(number, numberData[i])) {
+                        overlaps = true;
+                        break;
+                    }
+                }
+
+                if (!overlaps) break;
+
+                // Try different positions
+                attempts++;
+                switch (attempts) {
+                    case 1: // Move to top-left
+                        number.element.style.top = '5px';
+                        number.element.style.right = 'auto';
+                        number.element.style.left = '5px';
+                        break;
+                    case 2: // Move to bottom-right
+                        number.element.style.top = 'auto';
+                        number.element.style.right = '5px';
+                        number.element.style.bottom = '5px';
+                        number.element.style.left = 'auto';
+                        break;
+                    case 3: // Move to bottom-left
+                        number.element.style.top = 'auto';
+                        number.element.style.right = 'auto';
+                        number.element.style.bottom = '5px';
+                        number.element.style.left = '5px';
+                        break;
+                    case 4: // Move outside box (top)
+                        number.element.style.top = '-25px';
+                        number.element.style.right = '5px';
+                        number.element.style.bottom = 'auto';
+                        number.element.style.left = 'auto';
+                        number.element.style.background = '#ff0000';
+                        number.element.style.border = '2px solid #000000';
+                        break;
+                }
+
+                // Update position data for next iteration
+                const rect = number.element.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                number.x = rect.left - containerRect.left;
+                number.y = rect.top - containerRect.top;
+            }
+        });
+    });
+}
+
+function rectsOverlap(rect1, rect2) {
+    const padding = 8; // Add more padding for numbers
+    return !(rect1.x + rect1.width + padding < rect2.x ||
+             rect2.x + rect2.width + padding < rect1.x ||
+             rect1.y + rect1.height + padding < rect2.y ||
+             rect2.y + rect2.height + padding < rect2.y);
+}
+
+// Toggle functionality
+function setupToggles() {
+    const toggleBoundingBoxes = document.getElementById('toggleBoundingBoxes');
+    const toggleNumbers = document.getElementById('toggleNumbers');
+
+    console.log('Setting up toggles...');
+
+    // Bounding boxes toggle
+    toggleBoundingBoxes.addEventListener('change', function() {
+        console.log('Bounding boxes toggle clicked:', this.checked);
+        const boxes = document.querySelectorAll('.bounding-box');
+        console.log('Found bounding boxes:', boxes.length);
+
+        boxes.forEach((box, index) => {
+            if (this.checked) {
+                box.style.visibility = 'visible';
+                box.classList.remove('hidden');
+                console.log(`Box ${index}: shown`);
+            } else {
+                box.style.visibility = 'hidden';
+                box.classList.add('hidden');
+                console.log(`Box ${index}: hidden (numbers stay positioned)`);
+            }
+        });
+    });
+
+    // Numbers toggle
+    toggleNumbers.addEventListener('change', function() {
+        console.log('Numbers toggle clicked:', this.checked);
+        const numbers = document.querySelectorAll('.detection-number');
+        console.log('Found detection numbers:', numbers.length);
+
+        numbers.forEach((number, index) => {
+            if (this.checked) {
+                number.style.display = 'block';
+                number.classList.remove('hidden');
+                console.log(`Number ${index}: shown`);
+            } else {
+                number.style.display = 'none';
+                number.classList.add('hidden');
+                console.log(`Number ${index}: hidden`);
+            }
+        });
+    });
+}
+
+// Enhanced hover functionality for labels
+function setupLabelHover() {
+    const boundingBoxes = document.querySelectorAll('.bounding-box');
+    const detectionNumbers = document.querySelectorAll('.detection-number');
+
+    console.log('Setting up hover functionality...');
+    console.log('Found bounding boxes:', boundingBoxes.length);
+    console.log('Found detection numbers:', detectionNumbers.length);
+
+    // Function to show label for a specific element
+    function showLabel(targetElement) {
+        // Hide all labels first
+        document.querySelectorAll('.detection-label').forEach(label => {
+            label.style.opacity = '0';
+        });
+
+        // Show the label within the same bounding box
+        const parentBox = targetElement.closest('.bounding-box');
+        if (parentBox) {
+            const label = parentBox.querySelector('.detection-label');
+            if (label) {
+                label.style.opacity = '1';
+            }
+        }
+    }
+
+    // Function to hide all labels
+    function hideLabels() {
+        document.querySelectorAll('.detection-label').forEach(label => {
+            label.style.opacity = '0';
+        });
+    }
+
+    // Add hover listeners to bounding boxes
+    boundingBoxes.forEach(box => {
+        box.addEventListener('mouseenter', (e) => {
+            console.log('Hovering over bounding box');
+            showLabel(e.target);
+        });
+        box.addEventListener('mouseleave', hideLabels);
+    });
+
+    // Add hover listeners to detection numbers
+    detectionNumbers.forEach(number => {
+        number.addEventListener('mouseenter', (e) => {
+            console.log('Hovering over detection number');
+            showLabel(e.target);
+        });
+        number.addEventListener('mouseleave', hideLabels);
+    });
+}
+
+// Initialize everything when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== PAGE LOADED - Starting Setup ===');
+
+    // Wait a bit to ensure all elements are rendered
+    setTimeout(() => {
+        setupToggles();
+        setupLabelHover();
+
+        console.log('=== SETUP COMPLETE ===');
+        console.log('Testing element selection...');
+
+        // Test if elements exist
+        const boxes = document.querySelectorAll('.bounding-box');
+        const numbers = document.querySelectorAll('.detection-number');
+        const labels = document.querySelectorAll('.detection-label');
+
+        console.log('Bounding boxes found:', boxes.length);
+        console.log('Detection numbers found:', numbers.length);
+        console.log('Detection labels found:', labels.length);
+
+        // Show some sample elements
+        if (boxes.length > 0) {
+            console.log('First bounding box:', boxes[0]);
+            console.log('First bounding box classes:', boxes[0].classList);
+        }
+
+    }, 500); // Wait 500ms for elements to be ready
 });
+
+// Manual test function that can be called from browser console
+window.testDetectionElements = function() {
+    console.log('=== MANUAL TEST ===');
+
+    const boxes = document.querySelectorAll('.bounding-box');
+    const numbers = document.querySelectorAll('.detection-number');
+    const labels = document.querySelectorAll('.detection-label');
+
+    console.log('Bounding boxes:', boxes.length);
+    console.log('Detection numbers:', numbers.length);
+    console.log('Detection labels:', labels.length);
+
+    // Test hiding boxes
+    console.log('Testing: Hide all bounding boxes');
+    boxes.forEach(box => {
+        box.style.display = 'none';
+        console.log('Hidden box:', box);
+    });
+
+    // Test showing boxes after 2 seconds
+    setTimeout(() => {
+        console.log('Testing: Show all bounding boxes');
+        boxes.forEach(box => {
+            box.style.display = 'block';
+            console.log('Shown box:', box);
+        });
+    }, 2000);
+};
+
+
 </script>
 
 {% endblock %}
