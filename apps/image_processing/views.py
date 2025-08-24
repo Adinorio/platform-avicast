@@ -583,27 +583,42 @@ def review_view(request):
     if not request.user.is_staff:
         messages.error(request, "Access denied. Staff only.")
         return redirect('image_processing:list')
-    
+
     # Get processing results ready for review (not just uploads)
     results_to_review = ImageProcessingResult.objects.filter(
         review_status=ImageProcessingResult.ReviewStatus.PENDING,
         processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
     ).select_related('image_upload', 'image_upload__uploaded_by').order_by('-created_at')
-    
+
+    # Get approved results
+    approved_results = ImageProcessingResult.objects.filter(
+        review_status=ImageProcessingResult.ReviewStatus.APPROVED,
+        processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
+    ).select_related('image_upload', 'image_upload__uploaded_by').order_by('-reviewed_at')
+
+    # Get rejected results
+    rejected_results = ImageProcessingResult.objects.filter(
+        review_status=ImageProcessingResult.ReviewStatus.REJECTED,
+        processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
+    ).select_related('image_upload', 'image_upload__uploaded_by').order_by('-reviewed_at')
+
+    # Get overridden results
+    overridden_results = ImageProcessingResult.objects.filter(
+        review_status=ImageProcessingResult.ReviewStatus.OVERRIDDEN,
+        processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
+    ).select_related('image_upload', 'image_upload__uploaded_by').order_by('-overridden_at')
+
     # Get counts for different statuses
     pending_count = results_to_review.count()
-    approved_count = ImageProcessingResult.objects.filter(
-        review_status=ImageProcessingResult.ReviewStatus.APPROVED
-    ).count()
-    rejected_count = ImageProcessingResult.objects.filter(
-        review_status=ImageProcessingResult.ReviewStatus.REJECTED
-    ).count()
-    overridden_count = ImageProcessingResult.objects.filter(
-        review_status=ImageProcessingResult.ReviewStatus.OVERRIDDEN
-    ).count()
-    
+    approved_count = approved_results.count()
+    rejected_count = rejected_results.count()
+    overridden_count = overridden_results.count()
+
     context = {
         'results_to_review': results_to_review,
+        'approved_results': approved_results,
+        'rejected_results': rejected_results,
+        'overridden_results': overridden_results,
         'pending_count': pending_count,
         'approved_count': approved_count,
         'rejected_count': rejected_count,
@@ -747,26 +762,55 @@ def reject_result(request, result_id):
 @login_required
 @require_http_methods(["POST"])
 def override_result(request, result_id):
-    """Override a processing result with manual classification"""
+    """Override a processing result with manual classification and/or count"""
     if not request.user.is_staff:
         return JsonResponse({'status': 'error', 'message': 'Access denied'}, status=403)
     
     try:
         result = get_object_or_404(ImageProcessingResult, pk=result_id)
         new_species = request.POST.get('species')
+        new_count_str = request.POST.get('count')
         reason = request.POST.get('reason', '')
         
-        if not new_species:
+        # Validate that at least one field is being overridden
+        if not new_species and not new_count_str:
             return JsonResponse({
                 'status': 'error',
-                'message': 'Species is required for override'
+                'message': 'At least species or count must be provided for override'
             }, status=400)
         
-        result.override_result(request.user, new_species, reason)
+        # Parse count if provided
+        new_count = None
+        if new_count_str:
+            try:
+                new_count = int(new_count_str)
+                if new_count < 0:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Count must be a non-negative number'
+                    }, status=400)
+            except ValueError:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Count must be a valid number'
+                }, status=400)
+
+        # Use original species if not provided
+        if not new_species:
+            new_species = result.final_species
+
+        result.override_result(request.user, new_species, reason, new_count)
+
+        # Build success message
+        changes = []
+        if new_count is not None:
+            changes.append(f'count: {new_count}')
+        if new_species:
+            changes.append(f'species: {new_species}')
         
         return JsonResponse({
             'status': 'success',
-            'message': f'Result for "{result.image_upload.title}" overridden with species: {new_species}'
+            'message': f'Result for "{result.image_upload.title}" overridden with {" and ".join(changes)}'
         })
     except Exception as e:
         return JsonResponse({
