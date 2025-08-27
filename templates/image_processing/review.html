@@ -64,9 +64,9 @@
                         <span class="h4 text-primary">
                             {% for result in results_to_review %}
                                 {% if forloop.first %}
-                                    {% with total_birds=result.total_detections %}{% endwith %}
+                                    {% with total_birds=result.final_count %}{% endwith %}
                                 {% else %}
-                                    {% with total_birds=total_birds|add:result.total_detections %}{% endwith %}
+                                    {% with total_birds=total_birds|add:result.final_count %}{% endwith %}
                                 {% endif %}
                             {% endfor %}
                             {{ total_birds|default:"0" }}
@@ -170,7 +170,7 @@
                                             <div class="row text-center mt-2">
                                                 <div class="col-6">
                                                     <strong>Species:</strong><br>
-                                                    <span class="badge bg-primary">{{ result.detected_species|default:"Unknown" }}</span>
+                                                    <span class="badge bg-primary">{{ result.final_species|default:"Unknown" }}</span>
                                                 </div>
                                                 <div class="col-6">
                                                     <strong>Confidence:</strong><br>
@@ -180,7 +180,7 @@
                                             <div class="row text-center mt-2">
                                                 <div class="col-6">
                                                     <strong>Birds Detected:</strong><br>
-                                                    <span class="badge bg-info">{{ result.total_detections|default:"0" }}</span>
+                                                    <span class="badge bg-info">{{ result.final_count|default:"0" }}</span>
                                                 </div>
                                                 <div class="col-6">
                                                     <strong>Model:</strong><br>
@@ -226,7 +226,7 @@
                                             <button class="btn btn-warning btn-sm" data-result-id="{{ result.pk }}" onclick="rejectResult(this.dataset.resultId)">
                                                 <i class="fas fa-times me-1"></i>Reject
                                             </button>
-                                            <button class="btn btn-info btn-sm" data-result-id="{{ result.pk }}" data-species="{{ result.detected_species|default:""|escapejs }}" onclick="showOverrideModal(this.dataset.resultId, this.dataset.species)">
+                                            <button class="btn btn-info btn-sm override-btn" data-result-id="{{ result.pk }}" data-species="{{ result.detected_species|default_if_none:'' }}" data-count="{{ result.total_detections }}">
                                                 <i class="fas fa-edit me-1"></i>Override
                                             </button>
                                         </div>
@@ -252,72 +252,396 @@
 
                 <!-- Approved Tab -->
                 <div class="tab-pane fade" id="approved" role="tabpanel">
-                    <div class="text-center py-5">
-                        <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
-                        <h4>Approved Results</h4>
-                        <p class="text-muted">This tab will show all approved results. Currently showing {{ approved_count }} approved results.</p>
+                    {% if approved_results %}
+                        <div class="row">
+                            {% for result in approved_results %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100 border-success">
+                                    <div class="card-img-top-container" style="height: 200px; overflow: hidden; position: relative;">
+                                        {% if result.image_upload.image_file %}
+                                            <img src="{{ result.image_upload.image_file.url }}"
+                                                 class="card-img-top detection-image"
+                                                 alt="{{ result.image_upload.title|default:result.image_upload.original_filename }}"
+                                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                                 data-result-id="{{ result.pk }}"
+                                                 data-bounding-box="{{ result.bounding_box|safe }}">
+
+                                            <!-- Display all detections with bounding boxes -->
+                                            {% if result.bounding_box and result.bounding_box.all_detections %}
+                                                {% for detection in result.bounding_box.all_detections %}
+                                                <div class="bounding-box"
+                                                     data-x="{{ detection.bounding_box.x|floatformat:0 }}"
+                                                     data-y="{{ detection.bounding_box.y|floatformat:0 }}"
+                                                     data-width="{{ detection.bounding_box.width|floatformat:0 }}"
+                                                     data-height="{{ detection.bounding_box.height|floatformat:0 }}"
+                                                     data-detection-id="detection-{{ forloop.counter }}">
+                                                    <div class="detection-label">
+                                                        {{ detection.species|default:"Bird" }} ({{ detection.confidence|floatformat:1 }}%)
+                                                    </div>
+                                                    <div class="detection-number" data-detection-id="detection-{{ forloop.counter }}">
+                                                        #{{ forloop.counter }}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% elif result.bounding_box and result.bounding_box.best_detection %}
+                                                <!-- Fallback to old format for backward compatibility -->
+                                                <div class="bounding-box fallback-box"
+                                                     data-x="{{ result.bounding_box.best_detection.x|floatformat:0 }}"
+                                                     data-y="{{ result.bounding_box.best_detection.y|floatformat:0 }}"
+                                                     data-width="{{ result.bounding_box.best_detection.width|floatformat:0 }}"
+                                                     data-height="{{ result.bounding_box.best_detection.height|floatformat:0 }}"
+                                                     data-detection-id="detection-1">
+                                                    <div class="detection-label">
+                                                        {{ result.detected_species|default:"Bird" }}
+                                                    </div>
+                                                    <div class="detection-number" data-detection-id="detection-1">
+                                                        #1
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                                <i class="fas fa-image fa-3x text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ result.image_upload.title|default:"Untitled" }}</h5>
+                                        <p class="card-text text-muted">{{ result.image_upload.description|default:"No description"|truncatechars:100 }}</p>
+
+                                        <!-- AI Detection Results -->
+                                        <div class="alert alert-success">
+                                            <strong>AI Detection Results:</strong><br>
+                                            <div class="row text-center mt-2">
+                                                <div class="col-6">
+                                                    <strong>Species:</strong><br>
+                                                    <span class="badge bg-success">{{ result.final_species|default:"Unknown" }}</span>
+                                                </div>
+                                                <div class="col-6">
+                                                    <strong>Confidence:</strong><br>
+                                                    <span class="badge bg-info">{{ result.confidence_score|floatformat:1|default:"N/A" }}%</span>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center mt-2">
+                                                <div class="col-6">
+                                                    <strong>Birds Detected:</strong><br>
+                                                    <span class="badge bg-warning">{{ result.final_count|default:"0" }}</span>
+                                                </div>
+                                                <div class="col-6">
+                                                    <strong>Status:</strong><br>
+                                                    <span class="badge bg-success">Approved</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-grid gap-2">
+                                            <a href="{% url 'image_processing:detail' result.image_upload.pk %}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </a>
+                                            <button class="btn btn-outline-info btn-sm override-btn" data-result-id="{{ result.pk }}" data-species="{{ result.final_species|default_if_none:'' }}" data-count="{{ result.final_count }}">
+                                                <i class="fas fa-edit me-1"></i>Re-override
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-muted">
+                                        <small>Approved on {{ result.reviewed_at|date:"M d, Y H:i" }}
+                                        {% if result.reviewed_by %}
+                                            by {{ result.reviewed_by.employee_id }}
+                                        {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center mt-3">
                         <a href="{% url 'image_processing:allocate' %}" class="btn btn-success">
-                            <i class="fas fa-arrow-right me-2"></i>Go to Allocation
+                                <i class="fas fa-arrow-right me-2"></i>Go to Allocation ({{ approved_count }} results ready)
                         </a>
                     </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h4>No Approved Results</h4>
+                            <p class="text-muted">No results have been approved yet. Review pending results first.</p>
+                            <a href="#pending" class="btn btn-primary" data-bs-toggle="tab" data-bs-target="#pending">
+                                <i class="fas fa-eye me-2"></i>Review Pending Results
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
 
                 <!-- Rejected Tab -->
                 <div class="tab-pane fade" id="rejected" role="tabpanel">
+                    {% if rejected_results %}
+                        <div class="row">
+                            {% for result in rejected_results %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100 border-danger">
+                                    <div class="card-img-top-container" style="height: 200px; overflow: hidden; position: relative;">
+                                        {% if result.image_upload.image_file %}
+                                            <img src="{{ result.image_upload.image_file.url }}"
+                                                 class="card-img-top detection-image"
+                                                 alt="{{ result.image_upload.title|default:result.image_upload.original_filename }}"
+                                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                                 data-result-id="{{ result.pk }}"
+                                                 data-bounding-box="{{ result.bounding_box|safe }}">
+
+                                            <!-- Display all detections with bounding boxes -->
+                                            {% if result.bounding_box and result.bounding_box.all_detections %}
+                                                {% for detection in result.bounding_box.all_detections %}
+                                                <div class="bounding-box"
+                                                     data-x="{{ detection.bounding_box.x|floatformat:0 }}"
+                                                     data-y="{{ detection.bounding_box.y|floatformat:0 }}"
+                                                     data-width="{{ detection.bounding_box.width|floatformat:0 }}"
+                                                     data-height="{{ detection.bounding_box.height|floatformat:0 }}"
+                                                     data-detection-id="detection-{{ forloop.counter }}">
+                                                    <div class="detection-label">
+                                                        {{ detection.species|default:"Bird" }} ({{ detection.confidence|floatformat:1 }}%)
+                                                    </div>
+                                                    <div class="detection-number" data-detection-id="detection-{{ forloop.counter }}">
+                                                        #{{ forloop.counter }}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% elif result.bounding_box and result.bounding_box.best_detection %}
+                                                <!-- Fallback to old format for backward compatibility -->
+                                                <div class="bounding-box fallback-box"
+                                                     data-x="{{ result.bounding_box.best_detection.x|floatformat:0 }}"
+                                                     data-y="{{ result.bounding_box.best_detection.y|floatformat:0 }}"
+                                                     data-width="{{ result.bounding_box.best_detection.width|floatformat:0 }}"
+                                                     data-height="{{ result.bounding_box.best_detection.height|floatformat:0 }}"
+                                                     data-detection-id="detection-1">
+                                                    <div class="detection-label">
+                                                        {{ result.detected_species|default:"Bird" }}
+                                                    </div>
+                                                    <div class="detection-number" data-detection-id="detection-1">
+                                                        #1
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                                <i class="fas fa-image fa-3x text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ result.image_upload.title|default:"Untitled" }}</h5>
+                                        <p class="card-text text-muted">{{ result.image_upload.description|default:"No description"|truncatechars:100 }}</p>
+
+                                        <!-- AI Detection Results -->
+                                        <div class="alert alert-danger">
+                                            <strong>AI Detection Results:</strong><br>
+                                            <div class="row text-center mt-2">
+                                                <div class="col-6">
+                                                    <strong>Species:</strong><br>
+                                                    <span class="badge bg-danger">{{ result.final_species|default:"Unknown" }}</span>
+                                                </div>
+                                                <div class="col-6">
+                                                    <strong>Confidence:</strong><br>
+                                                    <span class="badge bg-info">{{ result.confidence_score|floatformat:1|default:"N/A" }}%</span>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center mt-2">
+                                                <div class="col-6">
+                                                    <strong>Birds Detected:</strong><br>
+                                                    <span class="badge bg-warning">{{ result.final_count|default:"0" }}</span>
+                                                </div>
+                                                <div class="col-6">
+                                                    <strong>Status:</strong><br>
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                </div>
+                                            </div>
+                                            {% if result.review_notes %}
+                                            <div class="mt-2">
+                                                <strong>Rejection Notes:</strong><br>
+                                                <small class="text-muted">{{ result.review_notes }}</small>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="d-grid gap-2">
+                                            <a href="{% url 'image_processing:detail' result.image_upload.pk %}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </a>
+                                            <button class="btn btn-success btn-sm" onclick="approveResult('{{ result.pk }}')">
+                                                <i class="fas fa-check me-1"></i>Approve Instead
+                                            </button>
+                                            <button class="btn btn-info btn-sm override-btn" data-result-id="{{ result.pk }}" data-species="{{ result.detected_species|default_if_none:'' }}" data-count="{{ result.total_detections }}">
+                                                <i class="fas fa-edit me-1"></i>Override
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-muted">
+                                        <small>Rejected on {{ result.reviewed_at|date:"M d, Y H:i" }}
+                                        {% if result.reviewed_by %}
+                                            by {{ result.reviewed_by.employee_id }}
+                                        {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
                     <div class="text-center py-5">
-                        <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
-                        <h4>Rejected Results</h4>
-                        <p class="text-muted">This tab will show all rejected results. Currently showing {{ rejected_count }} rejected results.</p>
+                            <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                            <h4>No Rejected Results</h4>
+                            <p class="text-muted">No results have been rejected yet. All results are either pending review or approved.</p>
                     </div>
+                    {% endif %}
                 </div>
 
                 <!-- Overridden Tab -->
                 <div class="tab-pane fade" id="overridden" role="tabpanel">
-                    <div class="text-center py-5">
-                        <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
-                        <h4>Overridden Results</h4>
-                        <p class="text-muted">This tab will show all overridden results. Currently showing {{ overridden_count }} overridden results.</p>
+                    {% if overridden_results %}
+                        <div class="row">
+                            {% for result in overridden_results %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100 border-info">
+                                    <div class="card-img-top-container" style="height: 200px; overflow: hidden; position: relative;">
+                                        {% if result.image_upload.image_file %}
+                                            <img src="{{ result.image_upload.image_file.url }}"
+                                                 class="card-img-top detection-image"
+                                                 alt="{{ result.image_upload.title|default:result.image_upload.original_filename }}"
+                                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                                 data-result-id="{{ result.pk }}"
+                                                 data-bounding-box="{{ result.bounding_box|safe }}">
+
+                                            <!-- Display all detections with bounding boxes -->
+                                            {% if result.bounding_box and result.bounding_box.all_detections %}
+                                                {% for detection in result.bounding_box.all_detections %}
+                                                <div class="bounding-box"
+                                                     data-x="{{ detection.bounding_box.x|floatformat:0 }}"
+                                                     data-y="{{ detection.bounding_box.y|floatformat:0 }}"
+                                                     data-width="{{ detection.bounding_box.width|floatformat:0 }}"
+                                                     data-height="{{ detection.bounding_box.height|floatformat:0 }}"
+                                                     data-detection-id="detection-{{ forloop.counter }}">
+                                                    <div class="detection-label">
+                                                        {{ detection.species|default:"Bird" }} ({{ detection.confidence|floatformat:1 }}%)
+                                                    </div>
+                                                    <div class="detection-number" data-detection-id="detection-{{ forloop.counter }}">
+                                                        #{{ forloop.counter }}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% elif result.bounding_box and result.bounding_box.best_detection %}
+                                                <!-- Fallback to old format for backward compatibility -->
+                                                <div class="bounding-box fallback-box"
+                                                     data-x="{{ result.bounding_box.best_detection.x|floatformat:0 }}"
+                                                     data-y="{{ result.bounding_box.best_detection.y|floatformat:0 }}"
+                                                     data-width="{{ result.bounding_box.best_detection.width|floatformat:0 }}"
+                                                     data-height="{{ result.bounding_box.best_detection.height|floatformat:0 }}"
+                                                     data-detection-id="detection-1">
+                                                    <div class="detection-label">
+                                                        {{ result.detected_species|default:"Bird" }}
+                                                    </div>
+                                                    <div class="detection-number" data-detection-id="detection-1">
+                                                        #1
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                                <i class="fas fa-image fa-3x text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ result.image_upload.title|default:"Untitled" }}</h5>
+                                        <p class="card-text text-muted">{{ result.image_upload.description|default:"No description"|truncatechars:100 }}</p>
+
+                                        <!-- AI Detection Results -->
+                                        <div class="alert alert-info">
+                                            <strong>Original AI Result:</strong><br>
+                                            <div class="row text-center mt-2">
+                                                <div class="col-6">
+                                                    <strong>Species:</strong><br>
+                                                    <span class="badge bg-secondary">{{ result.final_species|default:"Unknown" }}</span>
+                                                </div>
+                                                <div class="col-6">
+                                                    <strong>Confidence:</strong><br>
+                                                    <span class="badge bg-info">{{ result.confidence_score|floatformat:1|default:"N/A" }}%</span>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center mt-2">
+                                                <div class="col-6">
+                                                    <strong>Birds Detected:</strong><br>
+                                                    <span class="badge bg-warning">{{ result.final_count|default:"0" }}</span>
+                                                </div>
+                                                <div class="col-6">
+                                                    <strong>Status:</strong><br>
+                                                    <span class="badge bg-info">Overridden</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Override Information -->
+                                        <div class="alert alert-success">
+                                            <strong>Manual Override:</strong><br>
+                                            <div class="row text-center mt-2">
+                                                <div class="col-6">
+                                                    <strong>New Species:</strong><br>
+                                                    <span class="badge bg-success">{{ result.overridden_species|default:"Unknown" }}</span>
+                                                </div>
+                                                <div class="col-6">
+                                                    <strong>Override By:</strong><br>
+                                                    <span class="badge bg-primary">
+                                                        {% if result.overridden_by %}
+                                                            {{ result.overridden_by.employee_id }}
+                                                        {% else %}
+                                                            Unknown
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {% if result.override_reason %}
+                                            <div class="mt-2">
+                                                <strong>Override Reason:</strong><br>
+                                                <small class="text-muted">{{ result.override_reason }}</small>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="d-grid gap-2">
+                                            <a href="{% url 'image_processing:detail' result.image_upload.pk %}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </a>
+                                            <button class="btn btn-outline-info btn-sm override-btn" data-result-id="{{ result.pk }}" data-species="{{ result.overridden_species|default_if_none:'' }}" data-count="{{ result.final_count }}">
+                                                <i class="fas fa-edit me-1"></i>Re-override
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-muted">
+                                        <small>Overridden on {{ result.overridden_at|date:"M d, Y H:i" }}
+                                        {% if result.overridden_by %}
+                                            by {{ result.overridden_by.employee_id }}
+                                        {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center mt-3">
                         <a href="{% url 'image_processing:allocate' %}" class="btn btn-success">
-                            <i class="fas fa-arrow-right me-2"></i>Go to Allocation
+                                <i class="fas fa-arrow-right me-2"></i>Go to Allocation ({{ overridden_count }} results ready)
                         </a>
                     </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-edit fa-3x text-info mb-3"></i>
+                            <h4>No Overridden Results</h4>
+                            <p class="text-muted">No results have been overridden yet. Override results from the pending or approved tabs.</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Toggle Controls -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h6 class="card-title mb-3">
-                        <i class="fas fa-eye me-2"></i>Display Controls
-                    </h6>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="toggleBoundingBoxes" checked>
-                            <label class="form-check-label" for="toggleBoundingBoxes">
-                                <i class="fas fa-vector-square me-1"></i>Bounding Boxes
-                            </label>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="toggleNumbers" checked>
-                            <label class="form-check-label" for="toggleNumbers">
-                                <i class="fas fa-hashtag me-1"></i>Detection Numbers
-                            </label>
-                        </div>
-                    </div>
-                    <small class="text-muted mt-2 d-block">
-                        💡 <strong>Tip:</strong> Hover over any bounding box or number to see detection labels.
-                        <br>• Toggle off boxes to see just numbers (identifiers)
-                        <br>• Numbers stay visible even when boxes are hidden
-                        <br>• Use toggles to customize your view
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <!-- Override Modal -->
@@ -330,18 +654,30 @@
             </div>
             <div class="modal-body">
                 <form id="overrideForm">
-                    <div class="mb-3">
-                        <label for="species" class="form-label">Species Classification</label>
-                        <select class="form-select" id="species" name="species" required>
-                            <option value="">Select species...</option>
-                            <option value="CHINESE_EGRET">Chinese Egret</option>
-                            <option value="WHISKERED_TERN">Whiskered Tern</option>
-                            <option value="GREAT_KNOT">Great Knot</option>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="species" class="form-label">Species Classification</label>
+                                <select class="form-select" id="species" name="species">
+                                    <option value="">Keep current...</option>
+                                    <option value="CHINESE_EGRET">Chinese Egret</option>
+                                    <option value="WHISKERED_TERN">Whiskered Tern</option>
+                                    <option value="GREAT_KNOT">Great Knot</option>
+                                </select>
+                                <div class="form-text">Leave empty to keep current species</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="count" class="form-label">Bird Count</label>
+                                <input type="number" class="form-control" id="count" name="count" min="0" placeholder="e.g. 3">
+                                <div class="form-text">Leave empty to keep AI count</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="reason" class="form-label">Reason for Override</label>
-                        <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Explain why you're overriding the AI result..."></textarea>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Explain why you're overriding the AI result...">Change count based on manual verification</textarea>
                     </div>
                 </form>
             </div>
@@ -411,36 +747,64 @@ function rejectResult(resultId) {
     }
 }
 
-function showOverrideModal(resultId, currentSpecies) {
+// Handle override button clicks
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.override-btn')) {
+            const btn = e.target.closest('.override-btn');
+            const resultId = btn.dataset.resultId;
+            const currentSpecies = btn.dataset.species;
+            const currentCount = parseInt(btn.dataset.count) || 0;
+
+            showOverrideModal(resultId, currentSpecies, currentCount);
+        }
+    });
+});
+
+function showOverrideModal(resultId, currentSpecies, currentCount) {
     currentResultId = resultId;
     document.getElementById('species').value = '';
-    document.getElementById('reason').value = '';
-    
+    document.getElementById('count').value = '';
+    document.getElementById('reason').value = 'Change count based on manual verification';
+
     // Pre-select current species if available
     if (currentSpecies) {
         const option = document.querySelector(`#species option[value="${currentSpecies}"]`);
         if (option) option.selected = true;
     }
-    
+
+    // Pre-fill current count if available
+    if (currentCount !== undefined && currentCount !== null) {
+        document.getElementById('count').value = currentCount;
+    }
+
     new bootstrap.Modal(document.getElementById('overrideModal')).show();
 }
 
 function submitOverride() {
     const species = document.getElementById('species').value;
+    const count = document.getElementById('count').value;
     const reason = document.getElementById('reason').value;
-    
-    if (!species) {
-        alert('Please select a species');
+
+    // Validate that at least one field is filled
+    if (!species && !count) {
+        alert('Please select a species and/or enter a count');
         return;
     }
-    
+
+    // Build form data
+    const formData = new URLSearchParams();
+    if (species) formData.append('species', species);
+    if (count) formData.append('count', count);
+    formData.append('reason', reason);
+
     fetch(`/image-processing/api/override-result/${currentResultId}/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `species=${encodeURIComponent(species)}&reason=${encodeURIComponent(reason)}`
+        body: formData.toString()
     })
     .then(response => response.json())
     .then(data => {
@@ -513,11 +877,6 @@ function submitOverride() {
 .detection-number:hover .detection-label {
     opacity: 1;
 }
-
-/* Toggle states - use visibility to maintain position context */
-.bounding-box.hidden { visibility: hidden; }
-.bounding-box.hidden .detection-number { visibility: visible !important; }
-.detection-number.hidden { display: none; }
 
 .detection-number {
     position: absolute;
@@ -693,51 +1052,7 @@ function rectsOverlap(rect1, rect2) {
              rect2.y + rect2.height + padding < rect2.y);
 }
 
-// Toggle functionality
-function setupToggles() {
-    const toggleBoundingBoxes = document.getElementById('toggleBoundingBoxes');
-    const toggleNumbers = document.getElementById('toggleNumbers');
 
-    console.log('Setting up toggles...');
-
-    // Bounding boxes toggle
-    toggleBoundingBoxes.addEventListener('change', function() {
-        console.log('Bounding boxes toggle clicked:', this.checked);
-        const boxes = document.querySelectorAll('.bounding-box');
-        console.log('Found bounding boxes:', boxes.length);
-
-        boxes.forEach((box, index) => {
-            if (this.checked) {
-                box.style.visibility = 'visible';
-                box.classList.remove('hidden');
-                console.log(`Box ${index}: shown`);
-            } else {
-                box.style.visibility = 'hidden';
-                box.classList.add('hidden');
-                console.log(`Box ${index}: hidden (numbers stay positioned)`);
-            }
-        });
-    });
-
-    // Numbers toggle
-    toggleNumbers.addEventListener('change', function() {
-        console.log('Numbers toggle clicked:', this.checked);
-        const numbers = document.querySelectorAll('.detection-number');
-        console.log('Found detection numbers:', numbers.length);
-
-        numbers.forEach((number, index) => {
-            if (this.checked) {
-                number.style.display = 'block';
-                number.classList.remove('hidden');
-                console.log(`Number ${index}: shown`);
-            } else {
-                number.style.display = 'none';
-                number.classList.add('hidden');
-                console.log(`Number ${index}: hidden`);
-            }
-        });
-    });
-}
 
 // Enhanced hover functionality for labels
 function setupLabelHover() {
@@ -797,7 +1112,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Wait a bit to ensure all elements are rendered
     setTimeout(() => {
-        setupToggles();
         setupLabelHover();
 
         console.log('=== SETUP COMPLETE ===');

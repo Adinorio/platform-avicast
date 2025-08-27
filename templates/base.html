@@ -288,6 +288,33 @@
             </div>
         </div>
         
+        <!-- Messages -->
+        {% if messages %}
+        <div class="container-fluid mt-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
+                <div class="message-content">{{ message|safe }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Toast Notifications -->
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+            <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="fas fa-info-circle me-2 text-primary" id="toast-icon"></i>
+                    <strong class="me-auto" id="toast-title">Notification</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id="toast-message">
+                    Message will appear here.
+                </div>
+            </div>
+        </div>
+
         <!-- Page Content -->
         <div class="content-wrapper">
             {% block content %}
@@ -298,6 +325,80 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        // Toast notification functionality
+        function showToast(message, type = 'info', title = null) {
+            const toastEl = document.getElementById('liveToast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+
+            // Set message
+            toastMessage.textContent = message;
+
+            // Set title
+            if (title) {
+                toastTitle.textContent = title;
+            } else {
+                switch(type) {
+                    case 'success': toastTitle.textContent = 'Success'; break;
+                    case 'error': toastTitle.textContent = 'Error'; break;
+                    case 'warning': toastTitle.textContent = 'Warning'; break;
+                    default: toastTitle.textContent = 'Info';
+                }
+            }
+
+            // Set icon and style
+            toastIcon.className = 'fas me-2';
+            switch(type) {
+                case 'success':
+                    toastIcon.classList.add('fa-check-circle', 'text-success');
+                    toastEl.classList.add('bg-success', 'text-white');
+                    break;
+                case 'error':
+                    toastIcon.classList.add('fa-exclamation-triangle', 'text-danger');
+                    toastEl.classList.add('bg-danger', 'text-white');
+                    break;
+                case 'warning':
+                    toastIcon.classList.add('fa-exclamation-circle', 'text-warning');
+                    toastEl.classList.add('bg-warning', 'text-dark');
+                    break;
+                default:
+                    toastIcon.classList.add('fa-info-circle', 'text-info');
+                    toastEl.classList.add('bg-info', 'text-white');
+            }
+
+            // Show toast
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+
+            // Auto-remove styling after hide
+            toastEl.addEventListener('hidden.bs.toast', function() {
+                toastEl.className = 'toast';
+            });
+        }
+
+        // Check for messages on page load and show as toasts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show Django messages as toasts if they exist
+            const messageCount = document.querySelectorAll('.alert').length;
+            if (messageCount > 0) {
+                // Find the last message and show it as toast
+                setTimeout(() => {
+                    const alerts = document.querySelectorAll('.alert');
+                    if (alerts.length > 0) {
+                        const lastAlert = alerts[alerts.length - 1];
+                        const message = lastAlert.querySelector('.message-content').textContent.trim();
+                        let type = 'info';
+                        if (lastAlert.classList.contains('alert-success')) type = 'success';
+                        else if (lastAlert.classList.contains('alert-danger')) type = 'error';
+                        else if (lastAlert.classList.contains('alert-warning')) type = 'warning';
+
+                        showToast(message, type);
+                    }
+                }, 1000);
+            }
+        });
+
         // Sidebar toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');

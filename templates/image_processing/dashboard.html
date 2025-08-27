@@ -49,11 +49,11 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body text-center">
-                    <div class="bg-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="fas fa-eye text-white fa-lg"></i>
+                    <div class="bg-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-clock text-white fa-lg"></i>
                     </div>
-                    <h3 class="text-warning mb-1">{{ pending_review }}</h3>
-                    <p class="text-muted mb-0">Pending Review</p>
+                    <h3 class="text-info mb-1">{{ uploaded_images }}</h3>
+                    <p class="text-muted mb-0">Ready to Process</p>
                 </div>
             </div>
         </div>
@@ -94,50 +94,50 @@
                             </div>
                         </div>
 
-                        <!-- Step 2: Process -->
+                        <!-- Step 2: Review & Select -->
                         <div class="col-md-3">
                             <div class="text-center">
-                                <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                                    <i class="fas fa-cogs text-white fa-lg"></i>
+                                <div class="bg-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-list text-white fa-lg"></i>
                                 </div>
-                                <h6 class="text-success">2. Process with AI</h6>
-                                <p class="text-muted small mb-3">Run YOLO AI models for automatic bird species detection</p>
-                                {% if recent_uploads %}
-                                    <a href="{% url 'image_processing:process_batch' recent_uploads.first.id %}" class="btn btn-success btn-sm">Process Now</a>
+                                <h6 class="text-info">2. Review & Select</h6>
+                                <p class="text-muted small mb-3">Review uploaded images and select which ones to process</p>
+                                {% if total_uploads %}
+                                    <a href="{% url 'image_processing:list' %}" class="btn btn-info btn-sm">Review Images</a>
                                 {% else %}
                                     <button class="btn btn-outline-secondary btn-sm" disabled>Upload First</button>
                                 {% endif %}
                             </div>
                         </div>
 
-                        <!-- Step 3: Review -->
+                        <!-- Step 3: Process with AI -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-cogs text-white fa-lg"></i>
+                                </div>
+                                <h6 class="text-success">3. Process with AI</h6>
+                                <p class="text-muted small mb-3">Run YOLO AI models for automatic bird species detection on selected images</p>
+                                {% if uploaded_images %}
+                                    <a href="{% url 'image_processing:list' %}" class="btn btn-success btn-sm">Process ({{ uploaded_images }})</a>
+                                {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>Upload First</button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Review Results -->
                         <div class="col-md-3">
                             <div class="text-center">
                                 <div class="bg-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
                                     <i class="fas fa-search text-white fa-lg"></i>
                                 </div>
-                                <h6 class="text-warning">3. Review Results</h6>
+                                <h6 class="text-warning">4. Review Results</h6>
                                 <p class="text-muted small mb-3">Review AI results, approve, reject, or override classifications</p>
                                 {% if pending_review %}
                                     <a href="{% url 'image_processing:review' %}" class="btn btn-warning btn-sm">Review ({{ pending_review }})</a>
                                 {% else %}
                                     <button class="btn btn-outline-secondary btn-sm" disabled>No Pending Reviews</button>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Step 4: Allocate -->
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <div class="bg-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                                    <i class="fas fa-map-marker-alt text-white fa-lg"></i>
-                                </div>
-                                <h6 class="text-info">4. Allocate to Sites</h6>
-                                <p class="text-muted small mb-3">Allocate approved results to specific sites and census data</p>
-                                {% if approved_results %}
-                                    <a href="{% url 'image_processing:allocate' %}" class="btn btn-info btn-sm">Allocate ({{ approved_results }})</a>
-                                {% else %}
-                                    <button class="btn btn-outline-secondary btn-sm" disabled>No Approved Results</button>
                                 {% endif %}
                             </div>
                         </div>
@@ -274,42 +274,19 @@
             </div>
             <div class="modal-body">
                 <div class="row text-center mb-4">
-                    <div class="col-md-4">
+                    <div class="col-md-12">
                         <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
                             <i class="fas fa-images text-white fa-lg"></i>
                         </div>
                         <h4 class="text-primary">{{ request.session.upload_results.total }}</h4>
-                        <p class="text-muted mb-0">Total Images</p>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                            <i class="fas fa-check-circle text-white fa-lg"></i>
-                        </div>
-                        <h4 class="text-success">{{ request.session.upload_results.successful }}</h4>
-                        <p class="text-muted mb-0">Successfully Processed</p>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="bg-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                            <i class="fas fa-exclamation-triangle text-white fa-lg"></i>
-                        </div>
-                        <h4 class="text-warning">{{ request.session.upload_results.failed }}</h4>
-                        <p class="text-muted mb-0">Failed</p>
+                        <p class="text-muted mb-0">Images Uploaded Successfully</p>
                     </div>
                 </div>
-                
-                {% if request.session.upload_results.successful > 0 %}
+
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle me-2"></i>
-                    <strong>Great job!</strong> Your images have been uploaded and processed successfully.
+                    <strong>Upload Complete!</strong> Your images have been uploaded successfully and are ready for processing.
                 </div>
-                {% endif %}
-                
-                {% if request.session.upload_results.failed > 0 %}
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Note:</strong> Some images failed to process. You can review them in the image list.
-                </div>
-                {% endif %}
                 
                 <div class="text-center">
                     <p class="text-muted">What would you like to do next?</p>
@@ -317,16 +294,11 @@
             </div>
             <div class="modal-footer justify-content-center">
                 <a href="{% url 'image_processing:upload' %}" class="btn btn-primary me-2">
-                    <i class="fas fa-plus me-2"></i>Add More Images
+                    <i class="fas fa-plus me-2"></i>Upload More Images
                 </a>
-                <a href="{% url 'image_processing:list' %}" class="btn btn-outline-success me-2">
-                    <i class="fas fa-list me-2"></i>View All Images
+                <a href="{% url 'image_processing:list' %}" class="btn btn-success me-2">
+                    <i class="fas fa-list me-2"></i>Review & Process Images
                 </a>
-                {% if request.session.upload_results.successful > 0 %}
-                <a href="{% url 'image_processing:review' %}" class="btn btn-warning">
-                    <i class="fas fa-eye me-2"></i>Review Results
-                </a>
-                {% endif %}
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Close
                 </button>

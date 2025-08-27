@@ -26,11 +26,11 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-images me-2"></i>Batch Image Upload
-                    </h5>
-                </div>
+                                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-upload me-2"></i>Upload Images for Processing
+                        </h5>
+                    </div>
                 <div class="card-body p-4">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
@@ -110,7 +110,7 @@
 
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-upload me-2"></i>Upload and Process All Images
+                                <i class="fas fa-upload me-2"></i>Upload Images
                             </button>
                         </div>
                     </form>
@@ -142,21 +142,29 @@
 {% block extra_js %}
 <script>
 // Show upload progress when form is submitted
-document.querySelector('form').addEventListener('submit', function() {
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent default form submission
+
     const progressDiv = document.getElementById('uploadProgress');
     const formDiv = document.querySelector('.card-body');
-    
+
     // Show progress
     progressDiv.style.display = 'block';
     formDiv.style.display = 'none';
-    
+
     // Update progress text
     const progressText = progressDiv.querySelector('h5');
-    progressText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading and Processing Images...';
-    
+    progressText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading Images...';
+
     // Show this is a background process
     const progressDesc = progressDiv.querySelector('p');
-    progressDesc.innerHTML = 'Please wait while your images are being uploaded, processed, and optimized. This may take a few moments depending on image size and quantity.';
+    progressDesc.innerHTML = 'Please wait while your images are being uploaded. You can process them manually after upload is complete.';
+
+    // Submit the form after a short delay
+    setTimeout(() => {
+        console.log('Submitting form...');
+        this.submit();
+    }, 100);
 });
 </script>
 {% endblock %}
