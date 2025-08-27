@@ -1,0 +1,29 @@
+# Image Processing and AI Dependencies
+# These packages are required for bird detection and image processing functionality
+
+# Core AI/ML Framework
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+
+# YOLO Object Detection
+ultralytics>=8.0.0
+
+# Computer Vision
+opencv-python>=4.7.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+
+# Progress Bars and Utilities
+tqdm>=4.65.0
+
+# Configuration and Data
+PyYAML>=6.0
+
+# Roboflow integration (for dataset management)
+roboflow>=1.1.53
+
+# Note: For GPU acceleration, use:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# For CPU-only (current): torch is already configured for CPU
