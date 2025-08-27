@@ -27,6 +27,9 @@ urlpatterns = [
     path('api/upload-progress/', views.api_upload_progress, name='api_upload_progress'),
     path('api/storage-stats/', views.api_storage_stats, name='api_storage_stats'),
     path('api/search/', views.api_image_search, name='api_search'),
+    path('api/batch-process/', views.api_batch_process, name='api_batch_process'),
+    path('api/progress/<uuid:image_id>/', views.api_progress, name='api_progress'),
+    path('api/get-progress/', views.api_get_progress, name='api_get_progress'),
     path('api/clear-upload-results/', views.clear_upload_results, name='clear_upload_results'),
     
     # Review actions

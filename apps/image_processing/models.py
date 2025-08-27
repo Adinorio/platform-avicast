@@ -28,6 +28,13 @@ class ImageUpload(models.Model):
         PROCESSED = 'PROCESSED', 'Processed'
         FAILED = 'FAILED', 'Failed'
 
+    class ProcessingStep(models.TextChoices):
+        READING_FILE = 'READING_FILE', 'Reading image file'
+        OPTIMIZING = 'OPTIMIZING', 'Optimizing image'
+        DETECTING = 'DETECTING', 'Detecting birds'
+        SAVING = 'SAVING', 'Saving results'
+        COMPLETE = 'COMPLETE', 'Processing complete'
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -73,6 +80,8 @@ class ImageUpload(models.Model):
     processing_started_at = models.DateTimeField(null=True, blank=True)
     processing_completed_at = models.DateTimeField(null=True, blank=True)
     processing_duration = models.DurationField(null=True, blank=True)
+    processing_step = models.CharField(max_length=20, choices=ProcessingStep.choices, blank=True, default='')
+    processing_progress = models.IntegerField(default=0, help_text="Progress percentage (0-100)")
     
     # Metadata
     image_width = models.IntegerField(null=True, blank=True)

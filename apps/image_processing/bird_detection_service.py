@@ -38,7 +38,7 @@ class BirdDetectionService:
         self.model = None
         self.model_path = None
         self.device = 'cuda' if torch and torch.cuda.is_available() else 'cpu'
-        self.confidence_threshold = 0.25
+        self.confidence_threshold = 0.5
         self.initialize_model()
     
     def initialize_model(self):

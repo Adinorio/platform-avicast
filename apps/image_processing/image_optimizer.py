@@ -11,7 +11,7 @@ class ImageOptimizer:
     """Handles image optimization and compression for local storage"""
     
     def __init__(self):
-        self.max_dimensions = getattr(settings, 'MAX_IMAGE_DIMENSIONS', (2048, 1536))
+        self.max_dimensions = getattr(settings, 'MAX_IMAGE_DIMENSIONS', (1024, 768))  # Reduced for faster processing
         self.image_quality = getattr(settings, 'IMAGE_QUALITY', {
             'JPEG': 85,
             'PNG': 95,
