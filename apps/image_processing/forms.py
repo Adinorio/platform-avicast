@@ -1,6 +1,6 @@
 from django import forms
 from django.core.validators import FileExtensionValidator
-from .models import ImageUpload, BirdSpecies, ImageProcessingResult
+from .models import ImageUpload, BirdSpecies, ImageProcessingResult, ProcessingBatch, AIModel
 
 class MultipleFileInput(forms.FileInput):
     """Custom file input widget that supports multiple file selection"""
@@ -91,21 +91,96 @@ class ImageUploadForm(forms.ModelForm):
         print(f"Title validation passed: '{title.strip()}'")
         return title.strip()
 
-class ImageProcessingForm(forms.ModelForm):
-    """Form for image processing configuration"""
+class BatchProcessingForm(forms.ModelForm):
+    """Form for batch processing images"""
     
     class Meta:
-        model = ImageProcessingResult
-        fields = ['ai_model', 'model_confidence_threshold']
+        model = ProcessingBatch
+        fields = ['name', 'description']
         widgets = {
-            'ai_model': forms.Select(attrs={'class': 'form-control'}),
-            'model_confidence_threshold': forms.NumberInput(attrs={
+            'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'min': '0.1',
-                'max': '1.0',
-                'step': '0.05'
+                'placeholder': 'Enter batch name...'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Describe the batch (optional)...'
             })
         }
+
+class ModelSelectionForm(forms.Form):
+    """Form for selecting AI model version"""
+    
+    ai_model = forms.ChoiceField(
+        choices=AIModel.choices,
+        initial=AIModel.YOLO_V8,
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'ai-model-select'
+        }),
+        help_text="Choose the YOLO version for bird detection"
+    )
+    
+    confidence_threshold = forms.FloatField(
+        min_value=0.1,
+        max_value=1.0,
+        initial=0.5,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': 0.05,
+            'min': 0.1,
+            'max': 1.0
+        }),
+        help_text="Detection confidence threshold (0.1 - 1.0)"
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add descriptions for each model
+        model_descriptions = {
+            AIModel.YOLO_V5: 'Fast and lightweight, good for real-time processing',
+            AIModel.YOLO_V8: 'Balanced performance and accuracy (recommended)',
+            AIModel.YOLO_V9: 'Latest and most advanced, highest accuracy'
+        }
+        
+        # Update choices with descriptions
+        self.fields['ai_model'].choices = [
+            (choice[0], f"{choice[1]} - {model_descriptions.get(choice[0], '')}")
+            for choice in AIModel.choices
+        ]
+
+class ImageProcessingForm(forms.Form):
+    """Form for processing individual images"""
+    
+    ai_model = forms.ChoiceField(
+        choices=AIModel.choices,
+        initial=AIModel.YOLO_V8,
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        help_text="Select YOLO version for detection"
+    )
+    
+    confidence_threshold = forms.FloatField(
+        min_value=0.1,
+        max_value=1.0,
+        initial=0.5,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': 0.05
+        }),
+        help_text="Detection confidence threshold"
+    )
+    
+    force_reprocess = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        }),
+        help_text="Force reprocessing even if already processed"
+    )
 
 class ImageSearchForm(forms.Form):
     """Form for searching images"""

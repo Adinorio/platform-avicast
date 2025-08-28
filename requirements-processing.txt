@@ -24,6 +24,9 @@ PyYAML>=6.0
 # Roboflow integration (for dataset management)
 roboflow>=1.1.53
 
+# HTTP requests for model downloading
+requests>=2.31.0
+
 # Note: For GPU acceleration, use:
 # pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 # For CPU-only (current): torch is already configured for CPU

@@ -36,4 +36,8 @@ urlpatterns = [
     path('api/approve-result/<uuid:result_id>/', views.approve_result, name='approve_result'),
     path('api/reject-result/<uuid:result_id>/', views.reject_result, name='reject_result'),
     path('api/override-result/<uuid:result_id>/', views.override_result, name='override_result'),
+    
+    # AI Model management
+    path('models/', views.model_selection_view, name='model_selection'),
+    path('models/benchmark/', views.benchmark_models_view, name='benchmark_models'),
 ]

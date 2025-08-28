@@ -1253,3 +1253,96 @@ def _create_fallback_processing_result(image_upload):
             logger.info(f"Fallback processing result created: {processing_result.pk}")
     except Exception as e:
         logger.error(f"Error creating fallback processing result: {str(e)}")
+
+@login_required
+def model_selection_view(request):
+    """View for selecting and managing AI models"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to manage AI models.")
+        return redirect('image_processing:list')
+    
+    from .forms import ModelSelectionForm
+    from .bird_detection_service import get_bird_detection_service
+    
+    detection_service = get_bird_detection_service()
+    
+    if request.method == 'POST':
+        form = ModelSelectionForm(request.POST)
+        if form.is_valid():
+            ai_model = form.cleaned_data['ai_model']
+            confidence_threshold = form.cleaned_data['confidence_threshold']
+            
+            # Switch to selected model
+            if detection_service.switch_model(ai_model):
+                messages.success(request, f"Successfully switched to {ai_model}")
+            else:
+                messages.error(request, f"Failed to switch to {ai_model}")
+            
+            # Update confidence threshold
+            detection_service.confidence_threshold = confidence_threshold
+            
+            return redirect('image_processing:model_selection')
+    else:
+        # Pre-populate form with current settings
+        initial_data = {
+            'ai_model': detection_service.current_version,
+            'confidence_threshold': detection_service.confidence_threshold
+        }
+        form = ModelSelectionForm(initial=initial_data)
+    
+    # Get model information
+    model_info = detection_service.get_model_info()
+    available_models = detection_service.get_available_models()
+    
+    context = {
+        'form': form,
+        'model_info': model_info,
+        'available_models': available_models,
+        'current_model': detection_service.current_version,
+    }
+    
+    return render(request, 'image_processing/model_selection.html', context)
+
+@login_required
+def benchmark_models_view(request):
+    """View for benchmarking different YOLO models"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to benchmark models.")
+        return redirect('image_processing:list')
+    
+    from .bird_detection_service import get_bird_detection_service
+    
+    detection_service = get_bird_detection_service()
+    
+    if request.method == 'POST':
+        # Get test image from request
+        test_image = request.FILES.get('test_image')
+        if test_image:
+            try:
+                # Read image content
+                image_content = test_image.read()
+                
+                # Run benchmark
+                benchmark_results = detection_service.benchmark_models(image_content)
+                
+                messages.success(request, "Benchmark completed successfully!")
+                
+                context = {
+                    'benchmark_results': benchmark_results,
+                    'test_image_name': test_image.name,
+                    'test_image_size': len(image_content)
+                }
+                
+                return render(request, 'image_processing/benchmark_results.html', context)
+                
+            except Exception as e:
+                messages.error(request, f"Benchmark failed: {str(e)}")
+        else:
+            messages.error(request, "Please select a test image for benchmarking.")
+    
+    context = {
+        'available_models': detection_service.get_available_models(),
+        'total_models': len(detection_service.models)
+    }
+    
+    return render(request, 'image_processing/benchmark_models.html', context)

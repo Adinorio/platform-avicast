@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Model Selection - AVICAST{% endblock %}
+
+{% block extra_css %}
+<style>
+    .model-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .model-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    }
+    
+    .model-card.current {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+    }
+    
+    .model-card.available {
+        border-color: #17a2b8;
+        background: linear-gradient(135deg, #f8fcff 0%, #e8f8fc 100%);
+    }
+    
+    .model-card.unavailable {
+        border-color: #dc3545;
+        background: linear-gradient(135deg, #fff8f8 0%, #fce8e8 100%);
+        opacity: 0.7;
+    }
+    
+    .model-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .status-current {
+        background: #28a745;
+        color: white;
+    }
+    
+    .status-available {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .status-unavailable {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .model-info {
+        margin-top: 1rem;
+    }
+    
+    .model-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .metric-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .metric-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'image_processing:list' %}">Image Library</a></li>
+                    <li class="breadcrumb-item active">AI Model Selection</li>
+                </ol>
+            </nav>
+            <h2>🤖 AI Model Selection & Management</h2>
+            <p class="text-muted">Choose and configure YOLO models for bird detection</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'image_processing:list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Library
+            </a>
+            <a href="{% url 'image_processing:benchmark_models' %}" class="btn btn-info">
+                <i class="fas fa-chart-line me-2"></i>Benchmark Models
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Model Selection Form -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>Model Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.ai_model.id_for_label }}" class="form-label">
+                                <strong>YOLO Model Version</strong>
+                            </label>
+                            {{ form.ai_model }}
+                            {% if form.ai_model.help_text %}
+                                <div class="form-text">{{ form.ai_model.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.confidence_threshold.id_for_label }}" class="form-label">
+                                <strong>Confidence Threshold</strong>
+                            </label>
+                            {{ form.confidence_threshold }}
+                            {% if form.confidence_threshold.help_text %}
+                                <div class="form-text">{{ form.confidence_threshold.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save me-2"></i>Update Configuration
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Current Model Info -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Current Settings
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h5 text-primary">{{ current_model|default:"None" }}</div>
+                            <small class="text-muted">Active Model</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h5 text-info">{{ model_info.confidence_threshold|default:"0.5" }}</div>
+                            <small class="text-muted">Confidence</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Status -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Available Models
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for version, info in available_models.items %}
+                        <div class="col-md-6 mb-3">
+                            <div class="model-card position-relative {% if info.is_current %}current{% elif info.available %}available{% else %}unavailable{% endif %}">
+                                <span class="model-status {% if info.is_current %}status-current{% elif info.available %}status-available{% else %}status-unavailable{% endif %}">
+                                    {% if info.is_current %}Current{% elif info.available %}Available{% else %}Unavailable{% endif %}
+                                </span>
+                                
+                                <h6 class="mb-2">{{ version|title }}</h6>
+                                <p class="text-muted small mb-2">{{ info.description }}</p>
+                                
+                                <div class="model-info">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge {% if info.available %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if info.available %}✓ Available{% else %}✗ Unavailable{% endif %}
+                                        </span>
+                                        
+                                        {% if info.is_current %}
+                                        <span class="badge bg-primary">Active</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Information -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-server me-2"></i>System Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="model-metrics">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ model_info.total_models|default:"0" }}</div>
+                            <div class="metric-label">Total Models</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">{{ model_info.device|default:"CPU" }}</div>
+                            <div class="metric-label">Processing Device</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">{{ model_info.confidence_threshold|default:"0.5" }}</div>
+                            <div class="metric-label">Confidence Threshold</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add model selection change handler
+    const modelSelect = document.getElementById('ai-model-select');
+    if (modelSelect) {
+        modelSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const description = selectedOption.text.split(' - ')[1] || '';
+            
+            // Update form help text or show model description
+            console.log(`Selected model: ${this.value} - ${description}`);
+        });
+    }
+});
+</script>
+{% endblock %}
