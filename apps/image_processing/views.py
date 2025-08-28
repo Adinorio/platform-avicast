@@ -1,5 +1,6 @@
 import os
 import hashlib
+import io
 import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -231,30 +232,38 @@ def process_image_with_storage(image_upload, file_content):
         # Gradual progress for initialization and file reading
         gradual_progress(0, 20, ImageUpload.ProcessingStep.READING_FILE, 1.5, "Reading image file")
 
-        # Step 2: Optimize image (20-50%)
-        logger.info("Step 2: Creating ImageOptimizer...")
-        update_progress(ImageUpload.ProcessingStep.OPTIMIZING, 20, "Starting optimization...")
+        # Step 2: Dual optimization - storage and AI versions (20-50%)
+        logger.info("Step 2: Creating dual optimizations...")
+        update_progress(ImageUpload.ProcessingStep.OPTIMIZING, 20, "Creating storage and AI versions...")
         
         optimizer = ImageOptimizer()
-        logger.info("Optimizing image...")
-        
-        # Gradual progress for optimization
-        gradual_progress(20, 50, ImageUpload.ProcessingStep.OPTIMIZING, 2.0, "Optimizing image")
-        
-        optimized_content, new_size, format_used = optimizer.optimize_image(file_content)
-        logger.info(f"Image optimized: {format_used}, new size: {new_size}")
-        
-        # Step 3: Save optimized image (50-70%)
-        logger.info("Step 3: Saving optimized image...")
-        update_progress(ImageUpload.ProcessingStep.SAVING, 50, "Saving optimized file...")
+        logger.info("Optimizing image for both storage and AI processing...")
+
+        # Create AI-optimized version (640x640 for YOLO) - NOTE: This is NOT used for detection!
+        # The AI model processes the original file_content, not this optimized version
+        gradual_progress(20, 35, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, "Creating AI-optimized version (not used for detection)")
+        ai_content, original_size, ai_size, ai_dimensions = optimizer.optimize_for_ai(file_content)
+        logger.info(f"AI optimization complete: {original_size} -> {ai_size} bytes, AI dimensions: {ai_dimensions}")
+        logger.info(f"NOTE: AI model will process ORIGINAL image, not this 640x640 version")
+
+        # Create storage-optimized version (max 1024x768, compressed) - for reference only
+        gradual_progress(35, 50, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, "Creating storage reference version")
+        storage_content, storage_size, format_used = optimizer.optimize_image(file_content)
+        logger.info(f"Storage reference version created: {format_used}, {original_size} -> {storage_size} bytes (not saved)")
+
+        # Step 3: Save ORIGINAL image (not optimized) to maintain coordinate system consistency (50-70%)
+        logger.info("Step 3: Saving ORIGINAL image to maintain coordinate system...")
+        update_progress(ImageUpload.ProcessingStep.SAVING, 50, "Saving original image...")
         
         from django.core.files.base import ContentFile
-        optimized_file = ContentFile(optimized_content, f"optimized_{image_upload.original_filename}")
-        image_upload.image_file.save(f"optimized_{image_upload.original_filename}", optimized_file, save=False)
-        image_upload.compressed_size = new_size
-        image_upload.is_compressed = True
+        # CRITICAL FIX: Save the ORIGINAL image, not the optimized version
+        # This ensures the stored image dimensions match the AI processing dimensions
+        original_file = ContentFile(file_content, image_upload.original_filename)
+        image_upload.image_file.save(image_upload.original_filename, original_file, save=False)
+        image_upload.compressed_size = len(file_content)  # Use original size
+        image_upload.is_compressed = False  # Mark as not compressed since we're keeping original
         image_upload.save()
-        logger.info("Optimized image saved")
+        logger.info("ORIGINAL image saved to maintain coordinate system consistency")
         
         # Gradual progress for saving
         gradual_progress(50, 70, ImageUpload.ProcessingStep.SAVING, 1.0, "Saving results")
@@ -271,14 +280,17 @@ def process_image_with_storage(image_upload, file_content):
                 logger.info("Bird detection service available, running detection...")
                 
                 # Gradual progress for AI model loading
-                gradual_progress(70, 80, ImageUpload.ProcessingStep.DETECTING, 1.5, "Loading AI model")
+                gradual_progress(70, 80, ImageUpload.ProcessingStep.DETECTING, 1.5, "Loading YOLO model")
                 
                 # Gradual progress for image analysis
-                gradual_progress(80, 90, ImageUpload.ProcessingStep.DETECTING, 2.0, "Analyzing image")
+                gradual_progress(80, 90, ImageUpload.ProcessingStep.DETECTING, 2.0, "Analyzing with AI (original image)")
                 
                 # Gradual progress for bird detection
                 gradual_progress(90, 95, ImageUpload.ProcessingStep.DETECTING, 2.5, "Detecting birds")
                 
+                # CRITICAL: Use file_content (original image) for detection, NOT the 640x640 optimized version
+                # This ensures coordinates are in the correct coordinate system
+                # The original image will be saved to maintain coordinate system consistency
                 detection_result = detection_service.detect_birds(file_content, image_upload.original_filename)
                 
                 if detection_result['success']:
@@ -304,6 +316,13 @@ def process_image_with_storage(image_upload, file_content):
                         
                         # Store all detections in the bounding_box field for visualization
                         all_detections = detection_result.get('detections', [])
+                        
+                        # CRITICAL FIX: Use the actual dimensions that the AI model processed
+                        # Since we're using file_content (original image), the AI processed the original dimensions
+                        from PIL import Image
+                        original_image = Image.open(io.BytesIO(file_content))
+                        actual_ai_dimensions = original_image.size
+                        
                         detection_data = {
                             'best_detection': bounding_box,
                             'all_detections': [
@@ -313,15 +332,17 @@ def process_image_with_storage(image_upload, file_content):
                                     'bounding_box': det['bounding_box']
                                 } for det in all_detections
                             ],
-                            'total_count': len(all_detections)
+                            'total_count': len(all_detections),
+                            'ai_dimensions': actual_ai_dimensions  # Store ACTUAL AI processing dimensions
                         }
+                        logger.info(f"CRITICAL FIX: Stored ACTUAL AI dimensions: {actual_ai_dimensions} (not the 640x640 optimization)")
                         
                         processing_result = ImageProcessingResult.objects.create(
                             id=uuid.uuid4(),
                             image_upload=image_upload,
                             detected_species=detected_species,
                             confidence_score=confidence_score,
-                            bounding_box=detection_data,  # Store comprehensive detection data
+                            bounding_box=detection_data,  # Store comprehensive detection data including ai_dimensions
                             total_detections=detection_result['total_detections'],
                             processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
                             ai_model='YOLO_V8',
@@ -340,16 +361,22 @@ def process_image_with_storage(image_upload, file_content):
                         logger.info("Processing result already exists")
                 else:
                     logger.error(f"Detection failed: {detection_result.get('error', 'Unknown error')}")
-                    # Create a failed processing result
-                    _create_failed_processing_result(image_upload, detection_result.get('error', 'Detection failed'))
+                    # Create a failed processing result with correct dimensions
+                    from PIL import Image
+                    original_image = Image.open(io.BytesIO(file_content))
+                    actual_ai_dimensions = original_image.size
+                    _create_failed_processing_result(image_upload, detection_result.get('error', 'Detection failed'), actual_ai_dimensions)
             else:
                 logger.warning("Bird detection service not available, using fallback")
                 _create_fallback_processing_result(image_upload)
                 
         except Exception as e:
             logger.error(f"Error during bird detection: {str(e)}")
-            # Create a failed processing result
-            _create_failed_processing_result(image_upload, str(e))
+            # Create a failed processing result with correct dimensions
+            from PIL import Image
+            original_image = Image.open(io.BytesIO(file_content))
+            actual_ai_dimensions = original_image.size
+            _create_failed_processing_result(image_upload, str(e), actual_ai_dimensions)
         
         # Complete processing
         logger.info("Completing processing...")
@@ -461,6 +488,100 @@ def image_detail_view(request, pk):
     except ImageProcessingResult.DoesNotExist:
         processing_result = None
     
+    # Generate image with bounding boxes if processing result exists
+    processed_image_url = None
+    if processing_result and processing_result.bounding_box and image.image_file:
+        try:
+            from .visualization_utils import draw_detections_on_image
+
+            # Read the original image
+            with image.image_file.open('rb') as f:
+                image_content = f.read()
+
+            # Get the actual dimensions that the AI model processed
+            # Since we're using file_content (original image), the AI processed the original dimensions
+            from PIL import Image
+            original_image = Image.open(io.BytesIO(image_content))
+            ai_dimensions = original_image.size  # Use actual original image dimensions
+            logger.info(f"AI processed original image dimensions: {ai_dimensions}")
+            
+            # CRITICAL FIX: Always use the actual image dimensions for visualization
+            # The AI model always processes the original image, regardless of what's stored
+            # This fixes the issue where old processed images had wrong ai_dimensions (640x640)
+            # stored but the AI actually processed the original image dimensions
+            if processing_result.bounding_box.get('ai_dimensions'):
+                stored_ai_dims = processing_result.bounding_box['ai_dimensions']
+                logger.info(f"Stored AI dimensions: {stored_ai_dims}, Actual image dimensions: {ai_dimensions}")
+                
+                if stored_ai_dims != ai_dimensions:
+                    logger.warning(f"AI dimensions mismatch detected! Stored: {stored_ai_dims}, Actual: {ai_dimensions}")
+                    logger.info(f"Using ACTUAL image dimensions for visualization (AI always processes original image)")
+                    # Keep ai_dimensions as the actual image dimensions (correct)
+                else:
+                    logger.info(f"AI dimensions match - using actual image dimensions: {ai_dimensions}")
+            else:
+                logger.info(f"No stored AI dimensions found - using actual image dimensions: {ai_dimensions}")
+
+            # Prepare detections for visualization
+            detections = []
+            if processing_result.bounding_box.get('all_detections'):
+                logger.info(f"Processing {len(processing_result.bounding_box['all_detections'])} detections for visualization")
+                for i, detection in enumerate(processing_result.bounding_box['all_detections'], 1):
+                    bbox = detection.get('bounding_box', {})
+                    logger.info(f"Detection {i}: species={detection.get('species')}, bbox={bbox}")
+                    detections.append({
+                        'species': detection.get('species', 'Bird'),
+                        'confidence': detection.get('confidence', 0.0),
+                        'bounding_box': bbox
+                    })
+
+            # Get the actual image dimensions for debugging
+            display_width, display_height = original_image.size
+            logger.info(f"Display image size: {display_width}x{display_height}")
+
+            # Draw detections on image using actual AI dimensions
+            # ai_dimensions now contains the ACTUAL image dimensions (not stored wrong dimensions)
+            processed_image_bytes = draw_detections_on_image(
+                image_content,
+                detections,
+                output_format='bytes',
+                ai_processing_size=ai_dimensions  # Use actual AI processing dimensions for accurate scaling
+            )
+
+            # Save processed image temporarily
+            from django.core.files.base import ContentFile
+            from django.core.files.storage import default_storage
+            import uuid
+            import os
+
+            # Ensure temp directory exists
+            temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
+            os.makedirs(temp_dir, exist_ok=True)
+
+            # Create a temporary filename
+            temp_filename = f"processed_{uuid.uuid4().hex[:8]}.jpg"
+            temp_path = f"temp/{temp_filename}"
+
+            # Save to temporary storage
+            processed_image_url = default_storage.save(
+                temp_path,
+                ContentFile(processed_image_bytes)
+            )
+
+            # Store the temp file path in session for cleanup
+            if not hasattr(request, 'session'):
+                request.session = {}
+            temp_files = request.session.get('temp_processed_images', [])
+            temp_files.append(processed_image_url)
+            # Keep only last 10 temp files
+            if len(temp_files) > 10:
+                temp_files = temp_files[-10:]
+            request.session['temp_processed_images'] = temp_files
+
+        except Exception as e:
+            logger.error(f"Error generating processed image: {e}")
+            processed_image_url = None
+    
     # Get storage information
     storage_info = image.get_storage_info()
     
@@ -468,6 +589,7 @@ def image_detail_view(request, pk):
         'image_upload': image,
         'processing_result': processing_result,
         'storage_info': storage_info,
+        'processed_image_url': processed_image_url,
     }
     
     return render(request, 'image_processing/detail.html', context)
@@ -1066,7 +1188,7 @@ def dashboard_view(request):
     
     return render(request, 'image_processing/dashboard.html', context)
 
-def _create_failed_processing_result(image_upload, error_message):
+def _create_failed_processing_result(image_upload, error_message, ai_dimensions=(640, 640)):
     """Create a failed processing result"""
     try:
         from .models import ImageProcessingResult
@@ -1078,7 +1200,12 @@ def _create_failed_processing_result(image_upload, error_message):
                 image_upload=image_upload,
                 detected_species=None,
                 confidence_score=0.0,
-                bounding_box={},
+                bounding_box={
+                    'best_detection': {},
+                    'all_detections': [],
+                    'total_count': 0,
+                    'ai_dimensions': ai_dimensions  # Use actual AI dimensions for failed results
+                },
                 total_detections=0,
                 processing_status=ImageProcessingResult.ProcessingStatus.FAILED,
                 ai_model='YOLO_V8',
@@ -1106,7 +1233,12 @@ def _create_fallback_processing_result(image_upload):
                 image_upload=image_upload,
                 detected_species=None,
                 confidence_score=0.0,
-                bounding_box={},
+                bounding_box={
+                    'best_detection': {},
+                    'all_detections': [],
+                    'total_count': 0,
+                    'ai_dimensions': (640, 640)  # Default fallback dimensions
+                },
                 total_detections=0,
                 processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
                 ai_model='YOLO_V8',

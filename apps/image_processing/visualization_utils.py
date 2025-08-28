@@ -13,8 +13,61 @@ import base64
 
 logger = logging.getLogger(__name__)
 
+def scale_bounding_box_coordinates(bbox: Dict, from_width: int, from_height: int,
+                                  to_width: int, to_height: int) -> Dict:
+    """
+    Scale bounding box coordinates from one image size to another
+
+    Args:
+        bbox: Bounding box dictionary with x1,y1,x2,y2 or x,y,width,height format
+        from_width: Source image width
+        from_height: Source image height
+        to_width: Target image width
+        to_height: Target image height
+
+    Returns:
+        Scaled bounding box dictionary in x,y,width,height format
+    """
+    if not bbox:
+        return bbox
+
+    # Calculate scaling factors
+    scale_x = to_width / from_width
+    scale_y = to_height / from_height
+
+    logger.info(f"Scaling factors: {scale_x:.3f} x {scale_y:.3f} (from {from_width}x{from_height} to {to_width}x{to_height})")
+
+    # Handle x1,y1,x2,y2 format (from YOLO)
+    if 'x1' in bbox and 'y1' in bbox and 'x2' in bbox and 'y2' in bbox:
+        x1 = bbox['x1'] * scale_x
+        y1 = bbox['y1'] * scale_y
+        x2 = bbox['x2'] * scale_x
+        y2 = bbox['y2'] * scale_y
+
+        result = {
+            'x': int(x1),
+            'y': int(y1),
+            'width': int(x2 - x1),
+            'height': int(y2 - y1)
+        }
+        logger.info(f"Converted x1y1x2y2 {bbox} to xywh {result}")
+        return result
+
+    # Handle x,y,width,height format (already scaled or different format)
+    elif 'x' in bbox and 'y' in bbox and 'width' in bbox and 'height' in bbox:
+        result = {
+            'x': int(bbox['x'] * scale_x),
+            'y': int(bbox['y'] * scale_y),
+            'width': int(bbox['width'] * scale_x),
+            'height': int(bbox['height'] * scale_y)
+        }
+        logger.info(f"Scaled xywh {bbox} to {result}")
+        return result
+
+    return bbox
+
 def draw_detections_on_image(image_content: bytes, detections: List[Dict], 
-                           output_format: str = 'pil') -> bytes:
+                           output_format: str = 'pil', ai_processing_size: tuple = (640, 640)) -> bytes:
     """
     Draw bounding boxes and labels on an image
     
@@ -29,6 +82,9 @@ def draw_detections_on_image(image_content: bytes, detections: List[Dict],
     try:
         # Convert bytes to PIL Image
         image = Image.open(io.BytesIO(image_content))
+
+        # Get display image dimensions
+        display_width, display_height = image.size
         
         # Create a copy for drawing
         draw_image = image.copy()
@@ -49,14 +105,107 @@ def draw_detections_on_image(image_content: bytes, detections: List[Dict],
             species = detection.get('species', 'Bird')
             confidence = detection.get('confidence', 0.0)
             
-            if not bbox or 'x' not in bbox:
+            if not bbox:
                 continue
+
+            # Scale bounding box coordinates from AI processing size to display size
+            logger.info(f"Original bbox: {bbox}, AI size: {ai_processing_size}, Display size: {display_width}x{display_height}")
+
+            # If AI processed the same dimensions as display, no scaling needed
+            if ai_processing_size == (display_width, display_height):
+                logger.info("AI processed same dimensions as display - no scaling needed")
+                scaled_bbox = bbox
+            else:
+                logger.info(f"Scaling coordinates from {ai_processing_size} to {display_width}x{display_height}")
+                scaled_bbox = scale_bounding_box_coordinates(
+                    bbox,
+                    ai_processing_size[0], ai_processing_size[1],  # From AI processing size
+                    display_width, display_height  # To display size
+                )
+
+            logger.info(f"Scaled bbox: {scaled_bbox}")
+
+            if not scaled_bbox or 'x' not in scaled_bbox:
+                logger.warning(f"Invalid scaled bbox: {scaled_bbox}")
+                continue
+            
+            # Sanity check: filter out obviously wrong coordinates
+            x = scaled_bbox.get('x', 0)
+            y = scaled_bbox.get('y', 0)
+            width = scaled_bbox.get('width', 0)
+            height = scaled_bbox.get('height', 0)
+            
+            # If coordinates are way outside reasonable bounds, skip this detection
+            if (x < -1000 or y < -1000 or 
+                x > display_width + 1000 or y > display_height + 1000 or
+                width > display_width * 2 or height > display_height * 2):
+                logger.warning(f"Skipping detection with obviously wrong coordinates: ({x}, {y}) {width}x{height}")
+                continue
+            
+            # Additional safety check: ensure coordinates don't exceed image boundaries by too much
+            if x + width > display_width + 50 or y + height > display_height + 50:
+                logger.warning(f"Detection extends too far beyond image boundaries: ({x}, {y}) {width}x{height} for {display_width}x{display_height}")
+                # Try to adjust the bounding box to fit within the image
+                if x + width > display_width:
+                    width = max(1, display_width - x)
+                    logger.info(f"Adjusted width to {width}")
+                if y + height > display_height:
+                    height = max(1, display_height - y)
+                    logger.info(f"Adjusted height to {height}")
+
+            # Extract scaled coordinates
+            x = scaled_bbox.get('x', 0)
+            y = scaled_bbox.get('y', 0)
+            width = scaled_bbox.get('width', 0)
+            height = scaled_bbox.get('height', 0)
+
+            # Validate coordinates are within image bounds and have positive dimensions
+            if width <= 0 or height <= 0:
+                logger.warning(f"Invalid bounding box dimensions: {width}x{height}")
+                continue
+            
+            # Calculate actual boundaries
+            right_edge = x + width
+            bottom_edge = y + height
+            
+            # Log detailed coordinate analysis
+            logger.info(f"Bbox analysis: x={x}, y={y}, w={width}, h={height}")
+            logger.info(f"Bbox boundaries: right={right_edge}, bottom={bottom_edge}")
+            logger.info(f"Image boundaries: width={display_width}, height={display_height}")
+            
+            # Check if coordinates are out of bounds
+            out_of_bounds = False
+            if x < 0:
+                logger.warning(f"X coordinate {x} < 0")
+                out_of_bounds = True
+            if y < 0:
+                logger.warning(f"Y coordinate {y} < 0")
+                out_of_bounds = True
+            if right_edge > display_width:
+                logger.warning(f"Right edge {right_edge} > image width {display_width}")
+                out_of_bounds = True
+            if bottom_edge > display_height:
+                logger.warning(f"Bottom edge {bottom_edge} > image height {display_height}")
+                out_of_bounds = True
                 
-            # Extract coordinates
-            x = bbox.get('x', 0)
-            y = bbox.get('y', 0)
-            width = bbox.get('width', 0)
-            height = bbox.get('height', 0)
+            if out_of_bounds:
+                logger.warning(f"Bounding box coordinates out of bounds: ({x}, {y}) {width}x{height} for image {display_width}x{display_height}")
+                # Clamp coordinates to image bounds
+                x = max(0, min(x, display_width - width))
+                y = max(0, min(y, display_height - height))
+                logger.info(f"Clamped coordinates to: ({x}, {y})")
+                
+                            # Final safety check: ensure the adjusted coordinates are valid
+            if x < 0 or y < 0 or x + width > display_width or y + height > display_height:
+                logger.error(f"Coordinates still out of bounds after clamping: ({x}, {y}) {width}x{height}")
+                # Last resort: force coordinates to be within bounds
+                x = max(0, min(x, display_width - 1))
+                y = max(0, min(y, display_height - 1))
+                width = max(1, min(width, display_width - x))
+                height = max(1, min(height, display_height - y))
+                logger.info(f"Force-adjusted coordinates to: ({x}, {y}) {width}x{height}")
+
+            logger.info(f"Drawing bbox at ({x}, {y}) with size {width}x{height}")
             
             # Draw bounding box
             box_color = (255, 0, 0)  # Red
