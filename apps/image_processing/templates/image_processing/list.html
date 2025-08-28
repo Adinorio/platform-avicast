@@ -544,7 +544,84 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-            // Process images function
+            // Global variable to store polling intervals
+    let progressPollingIntervals = {};
+
+    // Function to poll progress for processing images
+    function pollProgress(imageIds) {
+        if (imageIds.length === 0) return;
+
+        fetch('{% url "image_processing:api_get_progress" %}?image_ids[]=' + imageIds.join('&image_ids[]='), {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                data.images.forEach(image => {
+                    updateProgressDisplay(image);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error polling progress:', error);
+        });
+    }
+
+    // Function to update progress display for a single image
+    function updateProgressDisplay(image) {
+        const progressBar = document.querySelector(`.custom-progress-bar[data-image-id="${image.id}"]`);
+        const progressText = document.querySelector(`.progress-text[data-image-id="${image.id}"]`);
+        const card = document.querySelector(`[data-image-id="${image.id}"]`).closest('.card');
+        const progressLabel = card ? card.querySelector('.progress-label') : null;
+
+        if (progressBar && progressText) {
+            const newProgress = image.progress || 0;
+
+            // Get current progress from data attribute or style
+            let currentProgress = 0;
+            if (progressBar.getAttribute('data-progress')) {
+                currentProgress = parseFloat(progressBar.getAttribute('data-progress'));
+            } else if (progressBar.style.width) {
+                currentProgress = parseFloat(progressBar.style.width);
+            }
+
+            // Only update if progress has changed
+            if (newProgress !== currentProgress) {
+                // Update progress bar width with smooth transition
+                progressBar.style.width = newProgress + '%';
+                progressBar.setAttribute('data-progress', newProgress);
+                progressText.textContent = newProgress + '%';
+
+                console.log(`Updated progress for image ${image.id}: ${currentProgress}% -> ${newProgress}%`);
+            }
+
+            // Update progress label based on step
+            if (progressLabel && image.step_display) {
+                progressLabel.innerHTML = `<i class="fas fa-cogs me-1"></i>${image.step_display}...`;
+            }
+
+            // If processing is complete, stop polling for this image
+            if (image.status === 'PROCESSED' || image.status === 'FAILED') {
+                if (progressPollingIntervals[image.id]) {
+                    clearInterval(progressPollingIntervals[image.id]);
+                    delete progressPollingIntervals[image.id];
+                }
+
+                if (image.status === 'PROCESSED') {
+                    progressLabel.innerHTML = '<i class="fas fa-check me-1"></i>Processing Complete!';
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                } else if (image.status === 'FAILED') {
+                    progressLabel.innerHTML = '<i class="fas fa-times me-1"></i>Processing Failed';
+                }
+            }
+        }
+    }
+
+    // Process images function
     function processImages(imageIds) {
         console.log('Starting processing for images:', imageIds);
 
@@ -596,6 +673,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Start progress polling for these images
+        imageIds.forEach(id => {
+            // Poll immediately to get current status
+            pollProgress([id]);
+
+            // Set up polling interval (every 2 seconds)
+            progressPollingIntervals[id] = setInterval(() => {
+                pollProgress([id]);
+            }, 2000);
+        });
+
         // Make API call to process images
         fetch('{% url "image_processing:api_batch_process" %}', {
             method: 'POST',
@@ -610,30 +698,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 console.log('Backend processing completed:', data);
 
-                // Animate progress to 100% briefly before refresh
+                // Stop polling for all processed images
                 imageIds.forEach(id => {
-                    const progressBar = document.querySelector(`.custom-progress-bar[data-image-id="${id}"]`);
-                    const progressText = document.querySelector(`.progress-text[data-image-id="${id}"]`);
-                    const card = document.querySelector(`[data-image-id="${id}"]`).closest('.card');
-                    const progressLabel = card ? card.querySelector('.progress-label') : null;
-
-                    if (progressBar && progressText) {
-                        progressBar.style.width = '100%';
-                        progressText.textContent = '100%';
-                        if (progressLabel) {
-                            progressLabel.innerHTML = '<i class="fas fa-check me-1"></i>Processing Complete!';
-                        }
+                    if (progressPollingIntervals[id]) {
+                        clearInterval(progressPollingIntervals[id]);
+                        delete progressPollingIntervals[id];
                     }
                 });
+
+                // Get final progress status
+                pollProgress(imageIds);
 
                 // Brief delay to show completion, then refresh
                 setTimeout(() => {
                     location.reload();
-                }, 800);
+                }, 1500);
             } else {
                 alert('Error processing images: ' + (data.error || 'Unknown error'));
-                // Hide progress bar and reset button states
+
+                // Stop polling and reset UI
                 imageIds.forEach(id => {
+                    if (progressPollingIntervals[id]) {
+                        clearInterval(progressPollingIntervals[id]);
+                        delete progressPollingIntervals[id];
+                    }
+
                     const card = document.querySelector(`[data-image-id="${id}"]`).closest('.card');
                     const buttonContainer = card.querySelector('.d-grid.gap-1');
 
@@ -653,8 +742,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             alert('Error processing images. Please try again.');
-            // Reset button states
+
+            // Stop polling and reset button states
             imageIds.forEach(id => {
+                if (progressPollingIntervals[id]) {
+                    clearInterval(progressPollingIntervals[id]);
+                    delete progressPollingIntervals[id];
+                }
+
                 const checkbox = document.querySelector(`[data-image-id="${id}"]`);
                 if (checkbox) {
                     const card = checkbox.closest('.card');
@@ -711,18 +806,44 @@ document.addEventListener('DOMContentLoaded', function() {
             const progress = bar.getAttribute('data-progress');
             if (progress) {
                 bar.style.width = progress + '%';
-                bar.textContent = progress + '%';
+                // Update the progress text element, not the bar itself
+                const progressText = bar.querySelector('.progress-text');
+                if (progressText) {
+                    progressText.textContent = progress + '%';
+                }
             }
         });
+    }
+
+    // Function to start polling for images that are currently processing
+    function startPollingForProcessingImages() {
+        const processingImages = document.querySelectorAll('[data-status="PROCESSING"]');
+        const processingImageIds = Array.from(processingImages).map(img => img.getAttribute('data-image-id')).filter(id => id);
+
+        if (processingImageIds.length > 0) {
+            console.log('Starting polling for existing processing images:', processingImageIds);
+
+            processingImageIds.forEach(id => {
+                // Poll immediately to get current status
+                pollProgress([id]);
+
+                // Set up polling interval (every 2 seconds)
+                progressPollingIntervals[id] = setInterval(() => {
+                    pollProgress([id]);
+                }, 2000);
+            });
+        }
     }
 
     // Simple page initialization
     console.log('Page loaded, checking for processing images...'); // Debug logging
     initializeProgressBars();
+    startPollingForProcessingImages();
 
-    // Initialize progress bars on page load
+    // Initialize progress bars and polling on page load
     document.addEventListener('DOMContentLoaded', function() {
         initializeProgressBars();
+        startPollingForProcessingImages();
     });
 
     // Test function for debugging

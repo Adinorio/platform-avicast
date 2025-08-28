@@ -11,7 +11,8 @@ class ImageOptimizer:
     """Handles image optimization and compression for local storage"""
     
     def __init__(self):
-        self.max_dimensions = getattr(settings, 'MAX_IMAGE_DIMENSIONS', (1024, 768))  # Reduced for faster processing
+        self.max_dimensions = getattr(settings, 'MAX_IMAGE_DIMENSIONS', (1024, 768))  # Storage version
+        self.ai_dimensions = getattr(settings, 'AI_MODEL_DIMENSIONS', (640, 640))  # AI processing version
         self.image_quality = getattr(settings, 'IMAGE_QUALITY', {
             'JPEG': 85,
             'PNG': 95,
@@ -19,6 +20,57 @@ class ImageOptimizer:
         })
         self.default_format = getattr(settings, 'DEFAULT_IMAGE_FORMAT', 'WEBP')
         self.enable_webp = getattr(settings, 'ENABLE_WEBP', True)
+    
+    def optimize_for_ai(self, image_content):
+        """
+        Optimize image specifically for AI processing (640x640 for YOLO models)
+
+        Args:
+            image_content: Raw image bytes
+
+        Returns:
+            tuple: (ai_optimized_content, original_size, ai_size, ai_dimensions)
+        """
+        try:
+            # Open image from bytes
+            image = Image.open(io.BytesIO(image_content))
+            original_size = len(image_content)
+            original_width, original_height = image.size
+
+            logger.info(f"AI optimization input: {original_width}x{original_height}, {original_size} bytes")
+
+            # Convert to RGB for AI processing
+            if image.mode != 'RGB':
+                logger.info(f"Converting image mode from {image.mode} to RGB")
+                if image.mode in ['RGBA', 'LA', 'P']:
+                    background = Image.new('RGB', image.size, (255, 255, 255))
+                    if image.mode == 'P':
+                        image = image.convert('RGBA')
+                    background.paste(image, mask=image.split()[-1] if image.mode == 'RGBA' else None)
+                    image = background
+                else:
+                    image = image.convert('RGB')
+
+            # Resize for AI model (640x640) - maintain aspect ratio
+            logger.info(f"Resizing to AI dimensions: {self.ai_dimensions}")
+            image = self._resize_image(image, self.ai_dimensions)
+            ai_width, ai_height = image.size  # Get actual dimensions after aspect ratio resize
+
+            # Save as JPEG for AI processing (consistent format)
+            output_buffer = io.BytesIO()
+            image.save(output_buffer, format='JPEG', quality=95, optimize=True)  # High quality for AI
+            output_buffer.seek(0)
+            ai_content = output_buffer.getvalue()
+            ai_size = len(ai_content)
+
+            logger.info(f"AI optimization complete: {original_width}x{original_height} -> {ai_width}x{ai_height}, Bytes: {original_size} -> {ai_size}")
+
+            return ai_content, original_size, ai_size, (ai_width, ai_height)
+
+        except Exception as e:
+            logger.error(f"AI optimization failed: {str(e)}")
+            # Return original content if optimization fails
+            return image_content, len(image_content), len(image_content), (0, 0)
     
     def optimize_image(self, image_content, target_format=None, max_dimensions=None, quality=None):
         """
@@ -218,6 +270,7 @@ class ImageOptimizer:
             image.thumbnail(size, Image.Resampling.LANCZOS)
             
             # Save as JPEG
+
             output_buffer = io.BytesIO()
             image.save(output_buffer, format='JPEG', quality=85, optimize=True)
             output_buffer.seek(0)
@@ -252,3 +305,230 @@ class ImageOptimizer:
         except Exception as e:
             logger.error(f"Failed to get image info: {str(e)}")
             return None
+
+    def get_optimization_stats(self, original_size, optimized_size):
+
+        """Calculate optimization statistics"""
+
+        if original_size == 0:
+
+            return {'compression_ratio': 0, 'space_saved_percent': 0, 'space_saved_bytes': 0}
+
+        
+
+        compression_ratio = optimized_size / original_size
+
+        space_saved_bytes = original_size - optimized_size
+
+        space_saved_percent = (space_saved_bytes / original_size) * 100
+
+        
+
+        return {
+
+            'compression_ratio': round(compression_ratio, 3),
+
+            'space_saved_percent': round(space_saved_percent, 1),
+
+            'space_saved_bytes': space_saved_bytes,
+
+            'original_size': original_size,
+
+            'optimized_size': optimized_size
+
+        }
+
+    
+
+    def batch_optimize(self, image_paths, output_directory, target_format=None):
+
+        """Optimize multiple images in batch"""
+
+        results = []
+
+        
+
+        for image_path in image_paths:
+
+            try:
+
+                # Read image
+
+                with open(image_path, 'rb') as f:
+
+                    image_content = f.read()
+
+                
+
+                # Optimize
+
+                optimized_content, new_size, format_used = self.optimize_image(
+
+                    image_content, target_format
+
+                )
+
+                
+
+                # Save optimized image
+
+                filename = os.path.basename(image_path)
+
+                name, ext = os.path.splitext(filename)
+
+                new_filename = f"{name}_optimized.{format_used.lower()}"
+
+                output_path = os.path.join(output_directory, new_filename)
+
+                
+
+                with open(output_path, 'wb') as f:
+
+                    f.write(optimized_content)
+
+                
+
+                # Calculate stats
+
+                original_size = len(image_content)
+
+                stats = self.get_optimization_stats(original_size, new_size)
+
+                
+
+                results.append({
+
+                    'original_path': image_path,
+
+                    'optimized_path': output_path,
+
+                    'format': format_used,
+
+                    'stats': stats
+
+                })
+
+                
+
+            except Exception as e:
+
+                logger.error(f"Failed to optimize {image_path}: {str(e)}")
+
+                results.append({
+
+                    'original_path': image_path,
+
+                    'error': str(e)
+
+                })
+
+        
+
+        return results
+
+    
+
+    def create_thumbnail(self, image_content, size=(150, 150)):
+
+        """Create a thumbnail from image content"""
+
+        try:
+
+            image = Image.open(io.BytesIO(image_content))
+
+            
+
+            # Convert to RGB if necessary
+
+            if image.mode in ['RGBA', 'LA', 'P']:
+
+                background = Image.new('RGB', image.size, (255, 255, 255))
+
+                if image.mode == 'P':
+
+                    image = image.convert('RGBA')
+
+                background.paste(image, mask=image.split()[-1] if image.mode == 'RGBA' else None)
+
+                image = background
+
+            
+
+            # Create thumbnail
+
+            image.thumbnail(size, Image.Resampling.LANCZOS)
+
+            
+
+            # Save as JPEG
+
+            output_buffer = io.BytesIO()
+
+            image.save(output_buffer, format='JPEG', quality=85, optimize=True)
+
+            output_buffer.seek(0)
+
+            
+
+            return output_buffer.getvalue()
+
+            
+
+        except Exception as e:
+
+            logger.error(f"Thumbnail creation failed: {str(e)}")
+
+            return None
+
+    
+
+    def validate_image(self, image_content):
+
+        """Validate image content"""
+
+        try:
+
+            image = Image.open(io.BytesIO(image_content))
+
+            image.verify()
+
+            return True, None
+
+        except Exception as e:
+
+            return False, str(e)
+
+    
+
+    def get_image_info(self, image_content):
+
+        """Get basic image information"""
+
+        try:
+
+            image = Image.open(io.BytesIO(image_content))
+
+            return {
+
+                'format': image.format,
+
+                'mode': image.mode,
+
+                'size': image.size,
+
+                'width': image.width,
+
+                'height': image.height,
+
+                'info': image.info
+
+            }
+
+        except Exception as e:
+
+            logger.error(f"Failed to get image info: {str(e)}")
+
+            return None
+
+
+str
