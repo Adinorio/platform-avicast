@@ -54,6 +54,7 @@ class AIModel(models.TextChoices):
     YOLO_V5 = 'YOLO_V5', 'YOLOv5'
     YOLO_V8 = 'YOLO_V8', 'YOLOv8'
     YOLO_V9 = 'YOLO_V9', 'YOLOv9'
+    CHINESE_EGRET_V1 = 'CHINESE_EGRET_V1', '🏆 Chinese Egret Specialist (99.46% mAP)'
 
 class ImageUpload(StatusManagedModel):
     """Model for handling image uploads"""

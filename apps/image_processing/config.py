@@ -66,7 +66,13 @@ BIRD_SPECIES = {
 AI_MODELS = {
     'YOLO_V5': {'version': 'v5', 'display': 'YOLOv5'},
     'YOLO_V8': {'version': 'v8', 'display': 'YOLOv8'},
-    'YOLO_V9': {'version': 'v9', 'display': 'YOLOv9'}
+    'YOLO_V9': {'version': 'v9', 'display': 'YOLOv9'},
+    'CHINESE_EGRET_V1': {
+        'version': 'chinese_egret_v1', 
+        'display': '🏆 Chinese Egret Specialist (99.46% mAP)',
+        'specialty': 'Chinese Egret Detection',
+        'performance': {'mAP': 99.46, 'precision': 97.35, 'recall': 99.12}
+    }
 }
 
 STORAGE_TIERS = [
