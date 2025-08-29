@@ -116,12 +116,12 @@ class ModelSelectionForm(forms.Form):
     
     ai_model = forms.ChoiceField(
         choices=AIModel.choices,
-        initial=AIModel.YOLO_V8,
+        initial=AIModel.CHINESE_EGRET_V1,  # Default to the best performing model
         widget=forms.Select(attrs={
             'class': 'form-select',
             'id': 'ai-model-select'
         }),
-        help_text="Choose the YOLO version for bird detection"
+        help_text="🏆 Chinese Egret Specialist recommended for optimal performance (99.46% accuracy)"
     )
     
     confidence_threshold = forms.FloatField(
@@ -142,8 +142,9 @@ class ModelSelectionForm(forms.Form):
         # Add descriptions for each model
         model_descriptions = {
             AIModel.YOLO_V5: 'Fast and lightweight, good for real-time processing',
-            AIModel.YOLO_V8: 'Balanced performance and accuracy (recommended)',
-            AIModel.YOLO_V9: 'Latest and most advanced, highest accuracy'
+            AIModel.YOLO_V8: 'Balanced performance and accuracy',
+            AIModel.YOLO_V9: 'Latest and most advanced',
+            AIModel.CHINESE_EGRET_V1: '🏆 ULTRA HIGH PERFORMANCE - 99.46% accuracy, specially trained for Chinese Egrets (RECOMMENDED)'
         }
         
         # Update choices with descriptions
