@@ -118,3 +118,96 @@ fix_db.py
 test_ai_deps.py
 apps/image_processing/views_new.py
 olve JavaScript syntax errors and improve error handling
+
+# ===== MACHINE LEARNING / AI PROJECT EXCLUSIONS =====
+
+# YOLO and other ML model files (very large)
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.h5
+*.pb
+*.savedmodel
+*.weights
+
+# Dataset files and folders
+dataset/
+datasets/
+data/
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Training outputs and logs
+runs/
+wandb/
+mlruns/
+logs/
+checkpoints/
+weights/
+*.ckpt
+
+# Bird detection specific
+bird_detection/*.zip
+bird_detection/datasets/
+bird_detection/weights/
+
+# Model training artifacts
+models/trained/
+models/checkpoints/
+models/weights/
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+*.flv
+*.webm
+*.m4v
+*.3gp
+
+# Image datasets (if large)
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tiff
+*.tif
+*.gif
+*.webp
+
+# Audio files
+*.wav
+*.mp3
+*.flac
+*.aac
+*.ogg
+*.wma
+
+# Database files (if large)
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache and temporary files
+.cache/
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Large log files
+*.log
+logs/
+*.out
+
+# Environment and configuration files
+.env.local
+.env.production
+.env.staging
+config/local.py
+config/production.py
