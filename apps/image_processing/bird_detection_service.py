@@ -31,6 +31,35 @@ except ImportError as e:
 
 logger = logging.getLogger(__name__)
 
+# Import configuration at module level
+try:
+    from .config import IMAGE_CONFIG
+except ImportError:
+    # Fallback for when config is not available
+    IMAGE_CONFIG = {
+        'MIN_IMAGE_DIMENSIONS': (50, 50),
+        'MAX_IMAGE_DIMENSIONS': (4000, 4000),
+        'DEFAULT_CONFIDENCE_THRESHOLD': 0.5,
+        'VARIANCE_THRESHOLDS': {'VERY_LOW': 100, 'LOW': 500},
+    }
+
+class DetectionError:
+    """Structured error information for user feedback"""
+
+    def __init__(self, error_type: str, message: str, details: str = "", suggestions: List[str] = None):
+        self.error_type = error_type
+        self.message = message
+        self.details = details
+        self.suggestions = suggestions or []
+
+    def to_dict(self) -> Dict:
+        return {
+            'error_type': self.error_type,
+            'message': self.message,
+            'details': self.details,
+            'suggestions': self.suggestions
+        }
+
 class BirdDetectionService:
     """Enhanced service for detecting birds using multiple YOLO versions"""
     
@@ -39,7 +68,8 @@ class BirdDetectionService:
         self.current_model = None
         self.current_version = preferred_version
         self.device = 'cuda' if torch and torch.cuda.is_available() else 'cpu'
-        self.confidence_threshold = 0.5
+        # Use module-level configuration
+        self.confidence_threshold = IMAGE_CONFIG['DEFAULT_CONFIDENCE_THRESHOLD']
         
         # YOLO version configurations
         self.version_configs = {
@@ -171,13 +201,83 @@ class BirdDetectionService:
             used_version = self.current_version
         else:
             logger.error("No detection model available")
-            return self._create_error_result("No detection model available")
+            error = DetectionError(
+                error_type="NO_MODEL_AVAILABLE",
+                message="No detection model available",
+                details="All YOLO models failed to load or are not available",
+                suggestions=[
+                    "Check if YOLO model files exist in the models/ directory",
+                    "Verify that ultralytics package is installed",
+                    "Check system requirements (CUDA, PyTorch)",
+                    "Restart the application to retry model loading"
+                ]
+            )
+            return self._create_error_result(error)
         
         try:
             logger.info(f"Processing image: {image_filename or 'unknown'} with {used_version}")
-            
+
+            # Validate image content
+            if not image_content or len(image_content) == 0:
+                error = DetectionError(
+                    error_type="EMPTY_IMAGE",
+                    message="Image file is empty or corrupted",
+                    details="The uploaded image contains no data",
+                    suggestions=[
+                        "Re-upload the image file",
+                        "Check if the original file is corrupted",
+                        "Try a different image format (JPG, PNG)",
+                        "Ensure the file size is greater than 0 bytes"
+                    ]
+                )
+                return self._create_error_result(error)
+
             # Convert bytes to PIL Image
-            image = Image.open(io.BytesIO(image_content))
+            try:
+                image = Image.open(io.BytesIO(image_content))
+            except Exception as e:
+                error = DetectionError(
+                    error_type="INVALID_IMAGE_FORMAT",
+                    message="Image format not supported or corrupted",
+                    details=f"Failed to open image: {str(e)}",
+                    suggestions=[
+                        "Use supported formats: JPG, JPEG, PNG, GIF",
+                        "Check if the file is actually an image",
+                        "Try converting the image to a different format",
+                        "Re-upload the original image file"
+                    ]
+                )
+                return self._create_error_result(error)
+
+            # Validate image dimensions
+            width, height = image.size
+            min_dims = IMAGE_CONFIG['MIN_IMAGE_DIMENSIONS']
+            if width < min_dims[0] or height < min_dims[1]:
+                error = DetectionError(
+                    error_type="IMAGE_TOO_SMALL",
+                    message="Image is too small for reliable detection",
+                    details=f"Image dimensions: {width}x{height} pixels (minimum: {min_dims[0]}x{min_dims[1]})",
+                    suggestions=[
+                        f"Use images with dimensions at least {min_dims[0]}x{min_dims[1]} pixels",
+                        "Higher resolution images provide better detection accuracy",
+                        "Consider resizing small images before upload"
+                    ]
+                )
+                return self._create_error_result(error)
+
+            max_dims = IMAGE_CONFIG['MAX_IMAGE_DIMENSIONS']
+            if width > max_dims[0] or height > max_dims[1]:
+                error = DetectionError(
+                    error_type="IMAGE_TOO_LARGE",
+                    message="Image is too large and may cause memory issues",
+                    details=f"Image dimensions: {width}x{height} pixels (maximum: {max_dims[0]}x{max_dims[1]})",
+                    suggestions=[
+                        f"Resize the image to under {max_dims[0]}x{max_dims[1]} pixels",
+                        "Use image compression tools to reduce file size",
+                        "Consider using a smaller image for faster processing"
+                    ]
+                )
+                return self._create_error_result(error)
             
             # Run detection
             results = detection_model(image, conf=self.confidence_threshold, device=self.device)
@@ -215,7 +315,33 @@ class BirdDetectionService:
             best_detection = None
             if detections:
                 best_detection = max(detections, key=lambda x: x['confidence'])
-            
+
+            # Check if no detections were found
+            if not detections:
+                # Analyze why no detections
+                analysis = self._analyze_no_detections(image, used_version)
+
+                result = {
+                    'success': True,
+                    'detections': [],
+                    'best_detection': None,
+                    'total_detections': 0,
+                    'model_used': f"{used_version}_{Path(detection_model.ckpt_path).name if hasattr(detection_model, 'ckpt_path') else 'unknown'}",
+                    'model_version': used_version,
+                    'device_used': self.device,
+                    'confidence_threshold': self.confidence_threshold,
+                    'no_detection_analysis': analysis,
+                    'image_analysis': {
+                        'dimensions': f"{width}x{height}",
+                        'file_size_bytes': len(image_content),
+                        'format': image.format,
+                        'mode': image.mode
+                    }
+                }
+
+                logger.info(f"No detections found with {used_version}. Analysis: {analysis['reason']}")
+                return result
+
             # Create result with proper detection count and model info
             result = {
                 'success': True,
@@ -225,29 +351,225 @@ class BirdDetectionService:
                 'model_used': f"{used_version}_{Path(detection_model.ckpt_path).name if hasattr(detection_model, 'ckpt_path') else 'unknown'}",
                 'model_version': used_version,
                 'device_used': self.device,
-                'confidence_threshold': self.confidence_threshold
+                'confidence_threshold': self.confidence_threshold,
+                'image_analysis': {
+                    'dimensions': f"{width}x{height}",
+                    'file_size_bytes': len(image_content),
+                    'format': image.format,
+                    'mode': image.mode
+                }
             }
-            
+
             logger.info(f"Detection completed with {used_version}: {len(detections)} birds found")
             return result
             
         except Exception as e:
             logger.error(f"Error during detection with {used_version}: {e}")
-            return self._create_error_result(str(e))
+            error = DetectionError(
+                error_type="DETECTION_FAILED",
+                message="Bird detection failed unexpectedly",
+                details=f"Error during detection with {used_version}: {str(e)}",
+                suggestions=[
+                    "Check if the image file is corrupted",
+                    "Try uploading a different image",
+                    "Verify the model is properly loaded",
+                    "Check system resources (memory, GPU)",
+                    "Contact support if the issue persists"
+                ]
+            )
+            return self._create_error_result(error)
     
-    def _create_error_result(self, error_message: str) -> Dict:
-        """Create an error result dictionary"""
+    def _create_error_result(self, error: DetectionError) -> Dict:
+        """Create an error result dictionary with structured error information"""
         return {
             'success': False,
-            'error': error_message,
+            'error': error.to_dict(),
             'detections': [],
             'best_detection': None,
             'total_detections': 0,
             'model_used': 'unknown',
             'model_version': self.current_version,
             'device_used': self.device,
-            'confidence_threshold': self.confidence_threshold
+            'confidence_threshold': self.confidence_threshold,
+            'image_analysis': None
         }
+
+    def _analyze_no_detections(self, image: Image.Image, model_version: str) -> Dict:
+        """Analyze why no detections were found and provide user guidance"""
+        width, height = image.size
+
+        # Check image characteristics
+        analysis = {
+            'reason': 'unknown',
+            'details': '',
+            'user_guidance': [],
+            'technical_details': {}
+        }
+
+        # Check if image is mostly empty/blank
+        try:
+            # Convert to grayscale and check variance
+            gray = image.convert('L')
+            if np is not None:
+                gray_array = np.array(gray)
+                variance = np.var(gray_array)
+
+                variance_thresholds = IMAGE_CONFIG['VARIANCE_THRESHOLDS']
+                if variance < variance_thresholds['VERY_LOW']:  # Very low variance indicates mostly uniform image
+                    analysis['reason'] = 'IMAGE_TOO_UNIFORM'
+                    analysis['details'] = 'Image appears to be mostly blank or uniform in color'
+                    analysis['user_guidance'] = [
+                        "The image appears to be mostly blank or uniform in color",
+                        "Bird detection requires images with visible objects and contrast",
+                        "Try uploading an image that clearly shows birds or wildlife",
+                        "Ensure the image has good lighting and contrast"
+                    ]
+                elif variance < variance_thresholds['LOW']:  # Low variance
+                    analysis['reason'] = 'LOW_CONTRAST'
+                    analysis['details'] = 'Image has low contrast which may affect detection'
+                    analysis['user_guidance'] = [
+                        "The image has low contrast which may affect bird detection",
+                        "Try using images with better lighting and contrast",
+                        "Avoid images that are too dark, too bright, or washed out",
+                        "Consider adjusting image brightness and contrast before upload"
+                    ]
+                else:
+                    analysis['reason'] = 'NO_BIRDS_DETECTED'
+                    analysis['details'] = 'No birds were detected in the image'
+                    analysis['user_guidance'] = [
+                        "No birds were detected in this image",
+                        "The image may not contain any birds",
+                        "Birds may be too small, blurry, or obscured",
+                        "Try uploading an image with clear, visible birds",
+                        "Ensure birds are the main subject of the image"
+                    ]
+
+                analysis['technical_details'] = {
+                    'image_variance': float(variance),
+                    'image_dimensions': f"{width}x{height}",
+                    'model_version': model_version,
+                    'confidence_threshold': self.confidence_threshold
+                }
+            else:
+                # NumPy not available, basic analysis
+                analysis['reason'] = 'NO_BIRDS_DETECTED'
+                analysis['details'] = 'No birds were detected in the image'
+                analysis['user_guidance'] = [
+                    "No birds were detected in this image",
+                    "Try uploading an image with clear, visible birds",
+                    "Ensure birds are the main subject of the image"
+                ]
+                analysis['technical_details'] = {
+                    'image_dimensions': f"{width}x{height}",
+                    'model_version': model_version,
+                    'confidence_threshold': self.confidence_threshold
+                }
+
+        except Exception as e:
+            analysis['reason'] = 'ANALYSIS_FAILED'
+            analysis['details'] = f'Could not analyze image: {str(e)}'
+            analysis['user_guidance'] = [
+                "Unable to analyze the image automatically",
+                "Try uploading a different image",
+                "Ensure the image format is supported"
+            ]
+
+        return analysis
+    
+    def get_detection_health_status(self) -> Dict:
+        """Get comprehensive health status of the detection system"""
+        health_status = {
+            'overall_status': 'HEALTHY',
+            'models_loaded': len(self.models),
+            'current_model': self.current_version,
+            'device': self.device,
+            'confidence_threshold': self.confidence_threshold,
+            'issues': [],
+            'recommendations': []
+        }
+        
+        # Check model availability
+        if not self.models:
+            health_status['overall_status'] = 'CRITICAL'
+            health_status['issues'].append({
+                'type': 'NO_MODELS',
+                'severity': 'CRITICAL',
+                'message': 'No YOLO models are loaded',
+                'impact': 'Bird detection will not work'
+            })
+            health_status['recommendations'].append('Check model files in models/ directory')
+        
+        # Check device availability
+        if self.device == 'cpu' and torch and torch.cuda.is_available():
+            health_status['issues'].append({
+                'type': 'GPU_NOT_USED',
+                'severity': 'WARNING',
+                'message': 'GPU available but using CPU',
+                'impact': 'Slower detection performance'
+            })
+            health_status['recommendations'].append('Check CUDA installation and PyTorch GPU support')
+        
+        # Check model versions
+        expected_models = ['YOLO_V5', 'YOLO_V8', 'YOLO_V9']
+        missing_models = [model for model in expected_models if model not in self.models]
+        if missing_models:
+            health_status['issues'].append({
+                'type': 'MISSING_MODELS',
+                'severity': 'WARNING',
+                'message': f'Missing models: {", ".join(missing_models)}',
+                'impact': 'Limited model selection options'
+            })
+            health_status['recommendations'].append(f'Download missing models: {", ".join(missing_models)}')
+        
+        # Determine overall status
+        if any(issue['severity'] == 'CRITICAL' for issue in health_status['issues']):
+            health_status['overall_status'] = 'CRITICAL'
+        elif any(issue['severity'] == 'WARNING' for issue in health_status['issues']):
+            health_status['overall_status'] = 'WARNING'
+        
+        return health_status
+    
+    def get_user_friendly_error_summary(self, detection_result: Dict) -> Dict:
+        """Convert technical detection results into user-friendly error summaries"""
+        if detection_result.get('success', True):
+            if detection_result.get('total_detections', 0) == 0:
+                # No detections case
+                analysis = detection_result.get('no_detection_analysis', {})
+                return {
+                    'type': 'NO_DETECTIONS',
+                    'title': 'No Birds Detected',
+                    'message': analysis.get('details', 'No birds were detected in this image'),
+                    'severity': 'INFO',
+                    'user_guidance': analysis.get('user_guidance', []),
+                    'technical_details': analysis.get('technical_details', {}),
+                    'icon': '🐦❌'
+                }
+            else:
+                # Successful detections
+                return {
+                    'type': 'SUCCESS',
+                    'title': f'{detection_result["total_detections"]} Bird(s) Detected',
+                    'message': 'Bird detection completed successfully',
+                    'severity': 'SUCCESS',
+                    'user_guidance': [],
+                    'technical_details': detection_result.get('image_analysis', {}),
+                    'icon': '✅🐦'
+                }
+        else:
+            # Error case
+            error = detection_result.get('error', {})
+            return {
+                'type': 'ERROR',
+                'title': 'Detection Failed',
+                'message': error.get('message', 'An error occurred during detection'),
+                'severity': 'ERROR',
+                'user_guidance': error.get('suggestions', []),
+                'technical_details': {
+                    'error_type': error.get('error_type', 'UNKNOWN'),
+                    'details': error.get('details', '')
+                },
+                'icon': '❌'
+            }
     
     def get_model_info(self) -> Dict:
         """Get comprehensive information about all models"""
