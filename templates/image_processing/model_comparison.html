@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Model Comparison - Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .model-card {
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .model-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .winner-badge {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .metric-highlight {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #dee2e6;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    
+    .performance-table {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .radar-chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">📊 Model Comparison</h1>
+            <p class="text-muted mb-0">Side-by-side analysis of YOLO model performance</p>
+        </div>
+        <div>
+            <a href="{% url 'image_processing:analytics_dashboard' %}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Back to Analytics
+            </a>
+            <a href="{% url 'image_processing:create_evaluation_run' %}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>New Evaluation
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_models }}</div>
+                <small>Models Compared</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ best_overall_model.f1_score|floatformat:3|default:"N/A" }}</div>
+                <small>Best F1-Score</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ most_accurate_model.map_50|floatformat:3|default:"N/A" }}</div>
+                <small>Best mAP@0.5</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ fastest_model.avg_inference_time_ms|floatformat:1|default:"N/A" }}</div>
+                <small>Fastest (ms)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Cards -->
+    <div class="row mb-4">
+        {% for model_data in comparison_data %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card model-card h-100">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ model_data.model_name }}</h5>
+                        {% if forloop.first %}
+                        <div class="text-center mt-2">
+                            <span class="winner-badge">🏆 Top Performer</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="metric-highlight">
+                                <div class="metric-value">{{ model_data.map_50|floatformat:3|default:"N/A" }}</div>
+                                <small class="text-muted">mAP@0.5</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-highlight">
+                                <div class="metric-value">{{ model_data.precision|floatformat:3|default:"N/A" }}</div>
+                                <small class="text-muted">Precision</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-highlight">
+                                <div class="metric-value">{{ model_data.recall|floatformat:3|default:"N/A" }}</div>
+                                <small class="text-muted">Recall</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-highlight">
+                                <div class="metric-value">{{ model_data.f1_score|floatformat:3|default:"N/A" }}</div>
+                                <small class="text-muted">F1-Score</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted">True Positives:</small><br>
+                            <strong>{{ model_data.true_positives|default:"N/A" }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">False Positives:</small><br>
+                            <strong>{{ model_data.false_positives|default:"N/A" }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">False Negatives:</small><br>
+                            <strong>{{ model_data.false_negatives|default:"N/A" }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Total Images:</small><br>
+                            <strong>{{ model_data.images_processed|default:"N/A" }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Performance Metrics Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="performance-table">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-table me-2"></i>Detailed Performance Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Metric</th>
+                                    {% for model_data in comparison_data %}
+                                    <th class="text-center">{{ model_data.model_name }}</th>
+                                    {% endfor %}
+                                    <th class="text-center">Winner</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>mAP@0.5</strong></td>
+                                    {% for model_data in comparison_data %}
+                                    <td class="text-center">{{ model_data.map_50|floatformat:3|default:"N/A" }}</td>
+                                    {% endfor %}
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ most_accurate_model.model_name }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>mAP@0.5:0.95</strong></td>
+                                    {% for model_data in comparison_data %}
+                                    <td class="text-center">{{ model_data.map_50_95|floatformat:3|default:"N/A" }}</td>
+                                    {% endfor %}
+                                    <td class="text-center">
+                                        <span class="badge bg-success">N/A</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Precision</strong></td>
+                                    {% for model_data in comparison_data %}
+                                    <td class="text-center">{{ model_data.precision|floatformat:3|default:"N/A" }}</td>
+                                    {% endfor %}
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ best_overall_model.model_name }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Recall</strong></td>
+                                    {% for model_data in comparison_data %}
+                                    <td class="text-center">{{ model_data.recall|floatformat:3|default:"N/A" }}</td>
+                                    {% endfor %}
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ best_overall_model.model_name }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>F1-Score</strong></td>
+                                    {% for model_data in comparison_data %}
+                                    <td class="text-center">{{ model_data.f1_score|floatformat:3|default:"N/A" }}</td>
+                                    {% endfor %}
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ best_overall_model.model_name }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Inference Time (ms)</strong></td>
+                                    {% for model_data in comparison_data %}
+                                    <td class="text-center">{{ model_data.avg_inference_time_ms|floatformat:1|default:"N/A" }}</td>
+                                    {% endfor %}
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ fastest_model.model_name }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Model Size (MB)</strong></td>
+                                    {% for model_data in comparison_data %}
+                                    <td class="text-center">{{ model_data.model_size_mb|default:"N/A" }}</td>
+                                    {% endfor %}
+                                    <td class="text-center">
+                                        <span class="badge bg-success">N/A</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Radar Chart -->
+    {% if radar_chart_data %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="radar-chart-container">
+                <h5 class="mb-3"><i class="fas fa-chart-radar me-2"></i>Performance Radar Chart</h5>
+                <canvas id="performanceRadarChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Evaluation Run Info -->
+    {% if recent_run %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Evaluation Run Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Run Name:</strong> {{ recent_run.name }}</p>
+                            <p><strong>Created:</strong> {{ recent_run.created_at|date:"F j, Y, g:i a" }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-success">{{ recent_run.status }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Total Images:</strong> {{ recent_run.total_images_evaluated }}</p>
+                            <p><strong>Overall Precision:</strong> {{ recent_run.overall_precision|floatformat:3|default:"N/A" }}</p>
+                            <p><strong>Overall Recall:</strong> {{ recent_run.overall_recall|floatformat:3|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js for radar chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radarData = {{ radar_chart_data|safe }};
+    
+    if (radarData && radarData.datasets && radarData.datasets.length > 0) {
+        const ctx = document.getElementById('performanceRadarChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'radar',
+            data: radarData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 1,
+                        ticks: {
+                            stepSize: 0.2
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Model Performance Comparison'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
