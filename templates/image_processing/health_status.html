@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}System Health Status - Image Processing{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>System Health Status
+                </h1>
+                <div>
+                    <button class="btn btn-outline-primary me-2" onclick="refreshHealth()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                    <small class="text-muted">Last updated: {{ last_updated }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Status Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h3 class="mb-2">
+                                <span class="badge fs-4 {% if health_status.overall_status == 'HEALTHY' %}bg-success{% elif health_status.overall_status == 'WARNING' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ health_status.overall_status }}
+                                </span>
+                            </h3>
+                            <p class="mb-0">Overall Status</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="mb-2 text-primary">{{ health_status.models_loaded }}</h3>
+                            <p class="mb-0">Models Loaded</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="mb-2 text-info">{{ model_info.total_models }}</h3>
+                            <p class="mb-0">Total Models</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="mb-2 {% if model_info.available %}text-success{% else %}text-danger{% endif %}">
+                                {% if model_info.available %}✅{% else %}❌{% endif %}
+                            </h3>
+                            <p class="mb-0">Service Available</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Issues and Recommendations -->
+    {% if health_status.issues or health_status.recommendations %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>System Status Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if health_status.issues %}
+                    <div class="mb-3">
+                        <h6 class="text-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i>Issues Detected
+                        </h6>
+                        <div class="list-group list-group-flush">
+                            {% for issue in health_status.issues %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        {% if issue.severity == 'CRITICAL' %}
+                                            <i class="fas fa-times-circle text-danger fs-5"></i>
+                                        {% elif issue.severity == 'WARNING' %}
+                                            <i class="fas fa-exclamation-triangle text-warning fs-5"></i>
+                                        {% else %}
+                                            <i class="fas fa-info-circle text-info fs-5"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <strong>{{ issue.type|title }}</strong>
+                                        <p class="mb-1">{{ issue.message }}</p>
+                                        <small class="text-muted">{{ issue.impact }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if health_status.recommendations %}
+                    <div>
+                        <h6 class="text-success">
+                            <i class="fas fa-lightbulb me-2"></i>Recommendations
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            {% for rec in health_status.recommendations %}
+                            <li class="list-group-item px-0">
+                                <i class="fas fa-check-circle text-success me-2"></i>{{ rec }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Model Details -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Current Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Current Model:</dt>
+                        <dd class="col-sm-6">
+                            <span class="badge bg-primary">{{ model_info.current_version }}</span>
+                        </dd>
+
+                        <dt class="col-sm-6">Device:</dt>
+                        <dd class="col-sm-6">
+                            {% if health_status.device == 'cuda' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-microchip me-1"></i>GPU (CUDA)
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-desktop me-1"></i>CPU
+                                </span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Confidence Threshold:</dt>
+                        <dd class="col-sm-6">{{ health_status.confidence_threshold }}</dd>
+
+                        <dt class="col-sm-6">Models Available:</dt>
+                        <dd class="col-sm-6">{{ model_info.total_models }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Available Models
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for model_name, model_info in available_models.items %}
+                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ model_name }}</strong>
+                                {% if model_info.is_current %}
+                                    <span class="badge bg-success ms-2">Current</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">{{ model_info.description }}</small>
+                            </div>
+                            <div>
+                                {% if model_info.available %}
+                                    <i class="fas fa-check-circle text-success fs-5"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger fs-5"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Performance Insights
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <h4 class="text-primary mb-1">{{ health_status.models_loaded }}</h4>
+                                <p class="mb-0 small">Active Models</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <h4 class="text-success mb-1">
+                                    {% if health_status.device == 'cuda' %}GPU{% else %}CPU{% endif %}
+                                </h4>
+                                <p class="mb-0 small">Processing Unit</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <h4 class="text-info mb-1">{{ health_status.confidence_threshold|floatformat:1 }}</h4>
+                                <p class="mb-0 small">Confidence Threshold</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Quick Actions</h6>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-primary">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                        <a href="{% url 'image_processing:model_selection' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-cogs me-2"></i>Model Management
+                        </a>
+                        <a href="{% url 'image_processing:benchmark_models' %}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar me-2"></i>Benchmark Models
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="refreshHealth()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshHealth() {
+    // Add loading state
+    const refreshBtn = event.target.closest('button');
+    if (refreshBtn) {
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+        refreshBtn.disabled = true;
+
+        // Reload the page to get fresh data
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
+}
+
+// Auto-refresh every 30 seconds for critical monitoring
+setInterval(() => {
+    // Only auto-refresh if page is visible and no critical issues
+    if (!document.hidden && document.querySelector('.bg-danger') === null) {
+        // Optional: Add a subtle refresh indicator
+        const refreshBtn = document.querySelector('button[onclick="refreshHealth()"]');
+        if (refreshBtn) {
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Auto-refreshing...';
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+    }
+}, 30000); // 30 seconds
+
+// Show page visibility status
+document.addEventListener('visibilitychange', () => {
+    console.log('Page visibility changed:', document.hidden ? 'hidden' : 'visible');
+});
+</script>
+
+<style>
+.badge {
+    font-size: 0.875em;
+}
+
+.list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+}
+
+.list-group-item:last-child {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+</style>
+
+{% endblock %}

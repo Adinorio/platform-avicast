@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Debug Form{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Debug Form Test</h1>
+    
+    <form id="testForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="testName" class="form-label">Test Name</label>
+            <input type="text" class="form-control" id="testName" value="Test Evaluation">
+        </div>
+        <div class="mb-3">
+            <label for="testDescription" class="form-label">Description</label>
+            <input type="text" class="form-control" id="testDescription" value="Test description">
+        </div>
+        <div class="mb-3">
+            <label for="testModels" class="form-label">Models</label>
+            <select class="form-select" id="testModels" multiple>
+                <option value="yolov5s" selected>YOLOv5s</option>
+                <option value="yolov8l" selected>YOLOv8l</option>
+                <option value="yolov9c" selected>YOLOv9c</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Test Submit</button>
+    </form>
+    
+    <div id="result" class="mt-3"></div>
+</div>
+
+<script>
+document.getElementById('testForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const models = Array.from(document.getElementById('testModels').selectedOptions).map(opt => opt.value);
+    
+    const formData = {
+        name: document.getElementById('testName').value,
+        description: document.getElementById('testDescription').value,
+        iou_threshold: 0.5,
+        confidence_threshold: 0.25,
+        models: models,
+        species: ['CHINESE_EGRET', 'WHISKERED_TERN', 'GREAT_KNOT']
+    };
+    
+    console.log('Submitting:', formData);
+    
+    fetch('{% url "image_processing:create_evaluation_run" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('result').innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+    });
+});
+</script>
+{% endblock %}
