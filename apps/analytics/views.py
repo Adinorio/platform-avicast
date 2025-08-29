@@ -59,6 +59,44 @@ def analytics_dashboard(request):
         species_count=Count('census_observations__species_observations__species_name', distinct=True)
     ).order_by('-species_count')[:5]
     
+    # Get AI model information
+    import os
+    models_dir = 'models'
+    yolov5_models = []
+    yolov8_models = []
+    yolov9_models = []
+    
+    if os.path.exists(models_dir):
+        for filename in os.listdir(models_dir):
+            if filename.endswith('.pt'):
+                file_path = os.path.join(models_dir, filename)
+                file_size = os.path.getsize(file_path)
+                size_mb = f"{file_size / (1024 * 1024):.1f}MB"
+                
+                if filename.startswith('yolov5'):
+                    yolov5_models.append({
+                        'name': filename.replace('.pt', ''),
+                        'size': size_mb,
+                        'filename': filename
+                    })
+                elif filename.startswith('yolov8'):
+                    yolov8_models.append({
+                        'name': filename.replace('.pt', ''),
+                        'size': size_mb,
+                        'filename': filename
+                    })
+                elif filename.startswith('yolov9'):
+                    yolov9_models.append({
+                        'name': filename.replace('.pt', ''),
+                        'size': size_mb,
+                        'filename': filename
+                    })
+    
+    # Sort models by name
+    yolov5_models.sort(key=lambda x: x['name'])
+    yolov8_models.sort(key=lambda x: x['name'])
+    yolov9_models.sort(key=lambda x: x['name'])
+    
     context = {
         'total_sites': total_sites,
         'total_census': total_census,
@@ -66,6 +104,9 @@ def analytics_dashboard(request):
         'total_birds': total_birds,
         'recent_census': recent_census,
         'top_sites': top_sites,
+        'yolov5_models': yolov5_models,
+        'yolov8_models': yolov8_models,
+        'yolov9_models': yolov9_models,
     }
     
     return render(request, 'analytics/dashboard.html', context)

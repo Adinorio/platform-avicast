@@ -214,6 +214,35 @@
                                                     </small>
                                                 </div>
                                             {% endif %}
+
+                                            <!-- User Feedback Section -->
+                                            {% if result.bounding_box.user_feedback %}
+                                                {% with feedback=result.bounding_box.user_feedback %}
+                                                    <div class="mt-2">
+                                                        <div class="alert alert-{{ feedback.severity|lower|default:'info' }} alert-sm">
+                                                            <div class="d-flex align-items-start">
+                                                                <div class="me-2">
+                                                                    <span>{{ feedback.icon|default:"ℹ️" }}</span>
+                                                                </div>
+                                                                <div class="flex-grow-1">
+                                                                    <small>
+                                                                        <strong>{{ feedback.title|default:"Detection Info" }}:</strong>
+                                                                        {{ feedback.message|default:"" }}
+                                                                        {% if feedback.user_guidance %}
+                                                                            <br><strong>Suggestions:</strong>
+                                                                            <ul class="mb-0 mt-1 small">
+                                                                                {% for suggestion in feedback.user_guidance %}
+                                                                                    <li>{{ suggestion }}</li>
+                                                                                {% endfor %}
+                                                                            </ul>
+                                                                        {% endif %}
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endwith %}
+                                            {% endif %}
                                         </div>
 
                                         <div class="d-grid gap-2">

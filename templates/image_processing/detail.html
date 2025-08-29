@@ -81,6 +81,36 @@
                         <!-- Detection Results Summary -->
                         {% if image_upload.processing_result %}
                             <div class="mt-3">
+                                <!-- User Feedback Section -->
+                                {% if image_upload.processing_result.bounding_box.user_feedback %}
+                                    {% with feedback=image_upload.processing_result.bounding_box.user_feedback %}
+                                        <div class="alert alert-{{ feedback.severity|lower|default:'info' }} mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <span style="font-size: 1.5rem;">{{ feedback.icon|default:"ℹ️" }}</span>
+                                                </div>
+                                                <div>
+                                                    <h6 class="alert-heading mb-1">
+                                                        {{ feedback.title|default:"Detection Information" }}
+                                                    </h6>
+                                                    <p class="mb-2">{{ feedback.message|default:"" }}</p>
+                                                    {% if feedback.user_guidance %}
+                                                        <div class="small">
+                                                            <strong>Suggestions:</strong>
+                                                            <ul class="mb-0 mt-1">
+                                                                {% for suggestion in feedback.user_guidance %}
+                                                                    <li>{{ suggestion }}</li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endwith %}
+                                {% endif %}
+
+                                <!-- Technical Results -->
                                 <div class="alert alert-info">
                                     <h6 class="alert-heading">
                                         <i class="fas fa-search me-2"></i>Detection Results
@@ -109,6 +139,19 @@
                                             <small>{{ image_upload.processing_result.ai_model|default:"N/A" }}</small>
                                         </div>
                                     </div>
+
+                                    <!-- Additional Technical Details -->
+                                    {% if image_upload.processing_result.bounding_box.user_feedback.technical_details %}
+                                        <hr>
+                                        <div class="small text-muted">
+                                            <strong>Technical Details:</strong>
+                                            <ul class="mb-0 mt-2">
+                                                {% for key, value in image_upload.processing_result.bounding_box.user_feedback.technical_details.items %}
+                                                    <li><strong>{{ key|title }}:</strong> {{ value }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endif %}
