@@ -76,17 +76,33 @@ class BirdDetectionService:
             'YOLO_V5': {
                 'base_model': 'yolov5s.pt',
                 'custom_model': 'chinese_egret_model_v5.pt',
-                'description': 'YOLOv5 - Fast and lightweight'
+                'description': 'YOLOv5 - Fast and lightweight',
+                'performance': {'mAP': 0.65, 'fps': 90}
             },
             'YOLO_V8': {
                 'base_model': 'yolov8s.pt',
                 'custom_model': 'chinese_egret_model_v8.pt',
-                'description': 'YOLOv8 - Balanced performance and accuracy'
+                'description': 'YOLOv8 - Balanced performance and accuracy',
+                'performance': {'mAP': 0.70, 'fps': 75}
             },
             'YOLO_V9': {
                 'base_model': 'yolov9c.pt',
                 'custom_model': 'chinese_egret_model_v9.pt',
-                'description': 'YOLOv9 - Latest and most advanced'
+                'description': 'YOLOv9 - Latest and most advanced',
+                'performance': {'mAP': 0.75, 'fps': 65}
+            },
+            'CHINESE_EGRET_V1': {
+                'base_model': 'chinese_egret_best.pt',
+                'custom_model': 'chinese_egret_best.pt',
+                'description': '🏆 Chinese Egret Specialist - Ultra High Performance (99.46% mAP)',
+                'performance': {'mAP': 0.9946, 'fps': 75},
+                'model_path': 'models/chinese_egret_v1/chinese_egret_best.pt',
+                'onnx_path': 'models/chinese_egret_v1/chinese_egret_best.onnx',
+                'trained_classes': ['chinese_egret'],
+                'training_images': 1198,
+                'validation_accuracy': {'precision': 0.9735, 'recall': 0.9912},
+                'specialty': 'Chinese Egret Detection',
+                'recommended': True
             }
         }
         
@@ -125,6 +141,17 @@ class BirdDetectionService:
     def _load_model(self, version: str, config: Dict) -> Optional[YOLO]:
         """Load a specific YOLO model version"""
         try:
+            # Special handling for the new Chinese Egret model
+            if version == 'CHINESE_EGRET_V1':
+                model_path = project_root / config['model_path']
+                if model_path.exists():
+                    logger.info(f"🏆 Loading Chinese Egret Specialist model from: {model_path}")
+                    logger.info(f"🎯 Performance: {config['performance']['mAP']:.1%} mAP, {config['performance']['fps']} FPS")
+                    return YOLO(str(model_path))
+                else:
+                    logger.error(f"❌ Chinese Egret model not found at: {model_path}")
+                    return None
+            
             # Priority 1: Custom trained model for bird detection
             custom_model_paths = [
                 project_root / 'bird_detection' / config['custom_model'],
@@ -573,13 +600,29 @@ class BirdDetectionService:
     
     def get_model_info(self) -> Dict:
         """Get comprehensive information about all models"""
+        current_config = self.version_configs.get(self.current_version, {})
+        
+        # Highlight Chinese Egret model performance
+        chinese_egret_available = 'CHINESE_EGRET_V1' in self.models
+        chinese_egret_performance = None
+        if chinese_egret_available:
+            chinese_egret_performance = self.version_configs['CHINESE_EGRET_V1']['performance']
+        
         return {
             'current_version': self.current_version,
+            'current_description': current_config.get('description', 'Unknown model'),
+            'current_performance': current_config.get('performance', {}),
             'device': self.device,
             'confidence_threshold': self.confidence_threshold,
             'available_models': self.get_available_models(),
             'total_models': len(self.models),
-            'available': len(self.models) > 0
+            'available': len(self.models) > 0,
+            'chinese_egret_specialist': {
+                'available': chinese_egret_available,
+                'performance': chinese_egret_performance,
+                'recommended': chinese_egret_available,
+                'status': '🏆 Ultra High Performance' if chinese_egret_available else '❌ Not Available'
+            }
         }
     
     def is_available(self) -> bool:
