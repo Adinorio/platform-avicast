@@ -3,22 +3,59 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
+from .config import BIRD_SPECIES, AI_MODELS, STORAGE_TIERS, IMAGE_CONFIG
 
 User = get_user_model()
 
+
+class StatusManagedModel(models.Model):
+    """Base class for models with status management functionality"""
+
+    class Meta:
+        abstract = True
+
+    def start_processing(self):
+        """Standard start processing logic"""
+        raise NotImplementedError("Subclasses must implement start_processing")
+
+    def complete_processing(self):
+        """Standard completion logic"""
+        raise NotImplementedError("Subclasses must implement complete_processing")
+
+    def mark_failed(self):
+        """Standard failure marking logic"""
+        raise NotImplementedError("Subclasses must implement mark_failed")
+
+# Use configuration for dynamic choices
+def get_species_choices():
+    return [(key, species['name']) for key, species in BIRD_SPECIES.items()]
+
+def get_model_choices():
+    return [(key, model['display']) for key, model in AI_MODELS.items()]
+
 class BirdSpecies(models.TextChoices):
-    """Limited to 3 bird species as per requirements"""
+    """Bird species choices loaded from configuration"""
+    @classmethod
+    def choices(cls):
+        return get_species_choices()
+
+    # Define the actual choices as class attributes for Django compatibility
     CHINESE_EGRET = 'CHINESE_EGRET', 'Chinese Egret'
     WHISKERED_TERN = 'WHISKERED_TERN', 'Whiskered Tern'
     GREAT_KNOT = 'GREAT_KNOT', 'Great Knot'
 
 class AIModel(models.TextChoices):
-    """Available AI models for bird detection"""
+    """AI model choices loaded from configuration"""
+    @classmethod
+    def choices(cls):
+        return get_model_choices()
+
+    # Define the actual choices as class attributes for Django compatibility
     YOLO_V5 = 'YOLO_V5', 'YOLOv5'
     YOLO_V8 = 'YOLO_V8', 'YOLOv8'
     YOLO_V9 = 'YOLO_V9', 'YOLOv9'
 
-class ImageUpload(models.Model):
+class ImageUpload(StatusManagedModel):
     """Model for handling image uploads"""
     
     class UploadStatus(models.TextChoices):
@@ -41,8 +78,8 @@ class ImageUpload(models.Model):
     
     # File handling with improved storage
     image_file = models.ImageField(
-        upload_to='bird_images/%Y/%m/%d/',
-        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif'])]
+        upload_to=IMAGE_CONFIG['UPLOAD_PATH_PATTERN'],
+        validators=[FileExtensionValidator(allowed_extensions=IMAGE_CONFIG['ALLOWED_EXTENSIONS'])]
     )
     file_size = models.BigIntegerField(help_text="File size in bytes")
     file_type = models.CharField(max_length=20)
@@ -59,17 +96,15 @@ class ImageUpload(models.Model):
     # Storage tier management
     storage_tier = models.CharField(
         max_length=20,
-        choices=[
-            ('HOT', 'Hot Storage'),
-            ('WARM', 'Warm Storage'),
-            ('COLD', 'Cold Storage'),
-            ('ARCHIVE', 'Archive')
-        ],
+        choices=STORAGE_TIERS,
         default='HOT',
         help_text="Storage tier for lifecycle management"
     )
     last_accessed = models.DateTimeField(auto_now=True, help_text="Last time file was accessed")
-    retention_days = models.IntegerField(default=365, help_text="Days to retain file")
+    retention_days = models.IntegerField(
+        default=IMAGE_CONFIG['DEFAULT_RETENTION_DAYS'],
+        help_text="Days to retain file"
+    )
     
     # Upload information
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='image_uploads')
@@ -168,7 +203,11 @@ class ImageProcessingResult(models.Model):
 
     # Processing metrics
     inference_time = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)  # in seconds
-    model_confidence_threshold = models.DecimalField(max_digits=3, decimal_places=2, default=0.25)
+    model_confidence_threshold = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        default=IMAGE_CONFIG['DEFAULT_CONFIDENCE_THRESHOLD']
+    )
     
     # Review and approval
     review_status = models.CharField(max_length=20, choices=ReviewStatus.choices, default=ReviewStatus.PENDING)
@@ -196,21 +235,21 @@ class ImageProcessingResult(models.Model):
     def __str__(self):
         return f"{self.image_upload.title} - {self.detected_species or 'Unknown'}"
 
-    def approve_result(self, reviewed_by_user, notes=""):
-        """Approve the processing result"""
-        self.review_status = self.ReviewStatus.APPROVED
+    def _update_review_status(self, status, reviewed_by_user, notes=""):
+        """Helper method for review status updates"""
+        self.review_status = status
         self.reviewed_by = reviewed_by_user
         self.reviewed_at = timezone.now()
         self.review_notes = notes
         self.save(update_fields=['review_status', 'reviewed_by', 'reviewed_at', 'review_notes'])
 
+    def approve_result(self, reviewed_by_user, notes=""):
+        """Approve the processing result"""
+        self._update_review_status(self.ReviewStatus.APPROVED, reviewed_by_user, notes)
+
     def reject_result(self, reviewed_by_user, notes=""):
         """Reject the processing result"""
-        self.review_status = self.ReviewStatus.REJECTED
-        self.reviewed_by = reviewed_by_user
-        self.reviewed_at = timezone.now()
-        self.review_notes = notes
-        self.save(update_fields=['review_status', 'reviewed_by', 'reviewed_at', 'review_notes'])
+        self._update_review_status(self.ReviewStatus.REJECTED, reviewed_by_user, notes)
 
     def override_result(self, overridden_by_user, new_species, reason="", new_count=None):
         """Override the AI result with manual classification and/or count"""
@@ -258,7 +297,7 @@ class ImageProcessingResult(models.Model):
         return (self.review_status in [self.ReviewStatus.APPROVED, self.ReviewStatus.OVERRIDDEN] 
                 and self.final_species is not None)
 
-class ProcessingBatch(models.Model):
+class ProcessingBatch(StatusManagedModel):
     """Model for handling batch processing of multiple images"""
     
     class BatchStatus(models.TextChoices):
@@ -306,6 +345,11 @@ class ProcessingBatch(models.Model):
         self.status = self.BatchStatus.COMPLETED
         self.completed_at = timezone.now()
         self.save(update_fields=['status', 'completed_at'])
+
+    def mark_failed(self):
+        """Mark batch processing as failed"""
+        self.status = self.BatchStatus.FAILED
+        self.save(update_fields=['status'])
 
     def update_progress(self, processed_count, failed_count):
         """Update processing progress"""

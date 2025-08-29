@@ -43,27 +43,14 @@ class Command(BaseCommand):
         )
         
         # Create models directory if it doesn't exist
+        # Import configuration
+        from apps.image_processing.config import YOLO_MODEL_CONFIG
+
         models_dir = Path(settings.BASE_DIR) / 'models'
         models_dir.mkdir(exist_ok=True)
-        
-        # YOLO model URLs and filenames
-        yolo_models = {
-            'v5': {
-                'url': 'https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov5s.pt',
-                'filename': 'yolov5s.pt',
-                'size_mb': 14.1
-            },
-            'v8': {
-                'url': 'https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s.pt',
-                'filename': 'yolov8s.pt',
-                'size_mb': 22.6
-            },
-            'v9': {
-                'url': 'https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov9c.pt',
-                'filename': 'yolov9c.pt',
-                'size_mb': 20.1
-            }
-        }
+
+        # Use configuration for YOLO model details
+        yolo_models = YOLO_MODEL_CONFIG
         
         downloaded_count = 0
         skipped_count = 0
@@ -119,7 +106,9 @@ class Command(BaseCommand):
                     self.stdout.write(
                         self.style.SUCCESS(f'✅ YOLO{version.upper()} downloaded successfully!')
                     )
-                    self.stdout.write(f'  File size: {actual_size / (1024*1024):.1f} MB')
+                    # Import utility function
+                    from apps.image_processing.config import calculate_file_size_mb
+                    self.stdout.write(f'  File size: {calculate_file_size_mb(actual_size):.1f} MB')
                     downloaded_count += 1
                 else:
                     raise Exception("Downloaded file is empty")

@@ -6,18 +6,20 @@ Usage: python manage.py cleanup_storage --days=30 --dry-run
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from datetime import timedelta
-from apps.image_processing.cloud_storage import get_storage_backend
-from apps.image_processing.image_optimizer import StorageManager
+from apps.image_processing.local_storage import LocalStorageManager
 
 class Command(BaseCommand):
     help = 'Cleanup old image files and optimize storage usage'
 
     def add_arguments(self, parser):
+        # Import configuration
+        from apps.image_processing.config import IMAGE_CONFIG
+
         parser.add_argument(
             '--days',
             type=int,
-            default=30,
-            help='Files older than this many days will be archived (default: 30)'
+            default=IMAGE_CONFIG['CLEANUP_DEFAULT_DAYS'],
+            help=f'Files older than this many days will be archived (default: {IMAGE_CONFIG["CLEANUP_DEFAULT_DAYS"]})'
         )
         parser.add_argument(
             '--dry-run',
@@ -46,15 +48,18 @@ class Command(BaseCommand):
         )
 
         # Get current storage usage
-        storage_backend = get_storage_backend()
-        if hasattr(storage_backend, 'check_storage_usage'):
-            usage_info = storage_backend.check_storage_usage()
-            self.stdout.write(f"📊 Current storage usage: {usage_info['avicast_usage_mb']:.2f} MB")
+        storage_backend = LocalStorageManager()
+        # Import utility function
+        from apps.image_processing.config import calculate_file_size_mb
+
+        if hasattr(storage_backend, 'get_storage_usage'):
+            usage_info = storage_backend.get_storage_usage()
+            self.stdout.write(f"📊 Current storage usage: {calculate_file_size_mb(usage_info['used_space']):.2f} MB")
             self.stdout.write(f"📈 Usage percentage: {usage_info['usage_percentage']:.1f}%")
-            
-            if usage_info['near_limit'] or force:
+
+            if usage_info['usage_percentage'] > 80 or force:  # Use 80% as threshold
                 self.stdout.write(
-                    self.style.WARNING("⚠️  Near storage limit, proceeding with cleanup...")
+                    self.style.WARNING("⚠️  High storage usage, proceeding with cleanup...")
                 )
             elif not force:
                 self.stdout.write(
@@ -74,12 +79,12 @@ class Command(BaseCommand):
             )
             total_size = sum(f.file_size for f in old_files)
             self.stdout.write(f"📁 Would archive {old_files.count()} files")
-            self.stdout.write(f"💾 Would free {total_size / (1024*1024):.2f} MB")
+            self.stdout.write(f"💾 Would free {calculate_file_size_mb(total_size):.2f} MB")
         else:
-            deleted_count, freed_space = storage_backend.cleanup_old_files(days)
+            archive_result = storage_backend.archive_old_files(days_old=days)
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"✅ Archived {deleted_count} files, freed {freed_space / (1024*1024):.2f} MB"
+                    f"✅ Archived {archive_result.get('archived_count', 0)} files, freed {calculate_file_size_mb(archive_result.get('freed_space', 0)):.2f} MB"
                 )
             )
 
@@ -89,11 +94,11 @@ class Command(BaseCommand):
             self._optimize_uncompressed_images(dry_run)
 
         # Show final storage statistics
-        if hasattr(storage_backend, 'check_storage_usage'):
-            final_usage = storage_backend.check_storage_usage()
+        if hasattr(storage_backend, 'get_storage_usage'):
+            final_usage = storage_backend.get_storage_usage()
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"📊 Final storage usage: {final_usage['avicast_usage_mb']:.2f} MB "
+                    f"📊 Final storage usage: {calculate_file_size_mb(final_usage['used_space']):.2f} MB "
                     f"({final_usage['usage_percentage']:.1f}%)"
                 )
             )
@@ -122,7 +127,8 @@ class Command(BaseCommand):
                         original_size = image_obj.file_size
                         
                         # Optimize
-                        optimized_content, new_size, format_used = ImageOptimizer.optimize_image(f)
+                        optimizer = ImageOptimizer()
+                        optimized_content, original_size, new_size, format_used = optimizer.optimize_image(f)
                         
                         # Save optimized version
                         from django.core.files.base import ContentFile
@@ -151,6 +157,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"✅ Optimized {optimized_count} images, saved {space_saved / (1024*1024):.2f} MB"
+                f"✅ Optimized {optimized_count} images, saved {calculate_file_size_mb(space_saved):.2f} MB"
             )
         )

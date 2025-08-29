@@ -1,6 +1,8 @@
 from django import forms
 from django.core.validators import FileExtensionValidator
 from .models import ImageUpload, BirdSpecies, ImageProcessingResult, ProcessingBatch, AIModel
+from .config import IMAGE_CONFIG
+from .utils import validate_file_extension
 
 class MultipleFileInput(forms.FileInput):
     """Custom file input widget that supports multiple file selection"""
@@ -17,14 +19,14 @@ class ImageUploadForm(forms.ModelForm):
     
     image_file = forms.ImageField(
         label='Select Images',
-        help_text='Select multiple images for batch processing. Supported formats: JPG, JPEG, PNG, GIF. Maximum size: 50MB per image',
+        help_text=f'Select multiple images for batch processing. Supported formats: {", ".join(IMAGE_CONFIG["ALLOWED_EXTENSIONS"]).upper()}. Maximum size: {IMAGE_CONFIG["MAX_FILE_SIZE_MB"]}MB per image',
         validators=[
-            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif'])
+            FileExtensionValidator(allowed_extensions=IMAGE_CONFIG['ALLOWED_EXTENSIONS'])
         ],
         widget=MultipleFileInput(attrs={
             'class': 'form-control',
             'accept': 'image/*',
-            'data-max-size': '52428800'  # 50MB in bytes
+            'data-max-size': str(IMAGE_CONFIG['MAX_FILE_SIZE_BYTES'])
         })
     )
     
@@ -57,10 +59,10 @@ class ImageUploadForm(forms.ModelForm):
         if image_file:
             print(f"Validating image file: {image_file.name}, size: {image_file.size}")
             
-            # Check file size (50MB limit)
-            if image_file.size > 52428800:  # 50MB in bytes
+            # Check file size
+            if image_file.size > IMAGE_CONFIG['MAX_FILE_SIZE_BYTES']:
                 print(f"File too large: {image_file.size} bytes")
-                raise forms.ValidationError("Image file size must be less than 50MB.")
+                raise forms.ValidationError(f"Image file size must be less than {IMAGE_CONFIG['MAX_FILE_SIZE_MB']}MB.")
             
             # Check if file is actually an image
             try:

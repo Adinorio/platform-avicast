@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import ImageUpload, ImageProcessingResult, ProcessingBatch
 from apps.users.models import User
+from .analytics_models import ModelEvaluationRun, ModelPerformanceMetrics, SpeciesPerformanceMetrics, ImageEvaluationResult
 
 
 @admin.register(ImageUpload)
@@ -200,6 +201,217 @@ class ProcessingBatchAdmin(admin.ModelAdmin):
             return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
         if obj.created_by == request.user:
             return True
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+
+# Analytics Models Admin
+
+@admin.register(ModelEvaluationRun)
+class ModelEvaluationRunAdmin(admin.ModelAdmin):
+    list_display = ('name', 'status', 'created_by', 'created_at', 'total_images_evaluated', 'overall_precision')
+    list_filter = ('status', 'created_at', 'created_by__role')
+    search_fields = ('name', 'description', 'created_by__employee_id')
+    readonly_fields = ('created_by', 'created_at', 'total_images_evaluated', 'overall_precision', 'overall_recall', 'overall_f1_score')
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Run Information', {
+            'fields': ('name', 'description', 'status')
+        }),
+        ('Evaluation Parameters', {
+            'fields': ('iou_threshold', 'confidence_threshold', 'models_evaluated', 'species_filter'),
+            'classes': ('collapse',)
+        }),
+        ('Date Filters', {
+            'fields': ('date_range_start', 'date_range_end'),
+            'classes': ('collapse',)
+        }),
+        ('Results', {
+            'fields': ('total_images_evaluated', 'total_ground_truth_objects', 'total_predicted_objects', 'overall_precision', 'overall_recall', 'overall_f1_score', 'overall_map_50', 'overall_map_50_95'),
+            'classes': ('collapse',)
+        }),
+        ('User Information', {
+            'fields': ('created_by', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.role == User.Role.SUPERADMIN:
+            return qs
+        elif request.user.role == User.Role.ADMIN:
+            return qs
+        else:
+            return qs.filter(created_by=request.user)
+    
+    def has_add_permission(self, request):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+    
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+        if obj.created_by == request.user:
+            return True
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+
+
+@admin.register(ModelPerformanceMetrics)
+class ModelPerformanceMetricsAdmin(admin.ModelAdmin):
+    list_display = ('evaluation_run', 'model_name', 'model_version', 'precision', 'recall', 'f1_score', 'map_50', 'map_50_95')
+    list_filter = ('model_name', 'model_version', 'created_at')
+    search_fields = ('evaluation_run__name', 'model_name', 'model_version')
+    readonly_fields = ('evaluation_run', 'created_at')
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Model Information', {
+            'fields': ('evaluation_run', 'model_name', 'model_version')
+        }),
+        ('Performance Metrics', {
+            'fields': ('precision', 'recall', 'f1_score', 'map_50', 'map_50_95')
+        }),
+        ('Dataset Metrics', {
+            'fields': ('images_processed', 'ground_truth_objects', 'predicted_objects'),
+            'classes': ('collapse',)
+        }),
+        ('Confusion Matrix', {
+            'fields': ('true_positives', 'false_positives', 'false_negatives'),
+            'classes': ('collapse',)
+        }),
+        ('Model Characteristics', {
+            'fields': ('avg_inference_time_ms', 'avg_confidence_score', 'model_parameters_millions', 'model_size_mb'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.role == User.Role.SUPERADMIN:
+            return qs
+        elif request.user.role == User.Role.ADMIN:
+            return qs
+        else:
+            return qs.filter(evaluation_run__created_by=request.user)
+    
+    def has_add_permission(self, request):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+    
+    def has_change_permission(self, request, obj=None):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+
+
+@admin.register(SpeciesPerformanceMetrics)
+class SpeciesPerformanceMetricsAdmin(admin.ModelAdmin):
+    list_display = ('model_metrics', 'species_name', 'precision', 'recall', 'f1_score', 'average_precision')
+    list_filter = ('species_name', 'model_metrics__model_name', 'created_at')
+    search_fields = ('species_name', 'model_metrics__evaluation_run__name')
+    readonly_fields = ('model_metrics', 'created_at')
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Species Information', {
+            'fields': ('model_metrics', 'species_name', 'species_class_id')
+        }),
+        ('Performance Metrics', {
+            'fields': ('precision', 'recall', 'f1_score', 'average_precision')
+        }),
+        ('Counts', {
+            'fields': ('ground_truth_count', 'detected_count'),
+            'classes': ('collapse',)
+        }),
+        ('Confusion Matrix', {
+            'fields': ('true_positives', 'false_positives', 'false_negatives'),
+            'classes': ('collapse',)
+        }),
+        ('Characteristics', {
+            'fields': ('avg_confidence',),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.role == User.Role.SUPERADMIN:
+            return qs
+        elif request.user.role == User.Role.ADMIN:
+            return qs
+        else:
+            return qs.filter(model_metrics__evaluation_run__created_by=request.user)
+    
+    def has_add_permission(self, request):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+    
+    def has_change_permission(self, request, obj=None):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+
+
+@admin.register(ImageEvaluationResult)
+class ImageEvaluationResultAdmin(admin.ModelAdmin):
+    list_display = ('evaluation_run', 'image_filename', 'model_used', 'ground_truth_count', 'predicted_count', 'avg_iou')
+    list_filter = ('model_used', 'evaluation_run__status', 'created_at')
+    search_fields = ('image_filename', 'model_used', 'evaluation_run__name')
+    readonly_fields = ('evaluation_run', 'created_at')
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Image Information', {
+            'fields': ('evaluation_run', 'image_upload', 'image_filename', 'model_used')
+        }),
+        ('Ground Truth', {
+            'fields': ('ground_truth_boxes', 'ground_truth_count'),
+            'classes': ('collapse',)
+        }),
+        ('Predictions', {
+            'fields': ('predicted_boxes', 'predicted_count'),
+            'classes': ('collapse',)
+        }),
+        ('Matching Results', {
+            'fields': ('matches', 'unmatched_predictions', 'unmatched_ground_truth'),
+            'classes': ('collapse',)
+        }),
+        ('Image Metrics', {
+            'fields': ('image_precision', 'image_recall', 'image_f1', 'avg_iou', 'inference_time_ms'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.role == User.Role.SUPERADMIN:
+            return qs
+        elif request.user.role == User.Role.ADMIN:
+            return qs
+        else:
+            return qs.filter(evaluation_run__created_by=request.user)
+    
+    def has_add_permission(self, request):
+        return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
+    
+    def has_change_permission(self, request, obj=None):
         return request.user.role in [User.Role.SUPERADMIN, User.Role.ADMIN]
     
     def has_delete_permission(self, request, obj=None):

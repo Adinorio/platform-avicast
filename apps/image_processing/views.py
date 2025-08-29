@@ -20,6 +20,9 @@ from .models import ImageUpload, ImageProcessingResult, ProcessingBatch
 from .forms import ImageUploadForm, ImageProcessingForm
 from .local_storage import LocalStorageManager
 from .image_optimizer import ImageOptimizer
+from .bird_detection_service import get_bird_detection_service
+from .config import IMAGE_CONFIG
+from .utils import generate_unique_filename, create_auto_title, calculate_file_hash
 
 # Lazy storage manager initialization
 def get_storage_manager():
@@ -30,16 +33,19 @@ def get_storage_manager():
 def image_upload_view(request):
     """Handle image upload - separate from processing"""
     if request.method == 'POST':
-        logger.info(f"POST request received with FILES: {request.FILES}")
-        logger.info(f"POST data: {request.POST}")
-        logger.info(f"User: {request.user}, Authenticated: {request.user.is_authenticated}")
+        if settings.DEBUG:
+            logger.info(f"POST request received with FILES: {request.FILES}")
+            logger.info(f"POST data: {request.POST}")
+            logger.info(f"User: {request.user}, Authenticated: {request.user.is_authenticated}")
 
         form = ImageUploadForm(request.POST, request.FILES)
-        logger.info(f"Form created, is_valid: {form.is_valid()}")
+        if settings.DEBUG:
+            logger.info(f"Form created, is_valid: {form.is_valid()}")
         if not form.is_valid():
-            logger.warning(f"FORM VALIDATION FAILED - Form errors: {form.errors}")
-            logger.warning(f"POST data: {request.POST}")
-            logger.warning(f"FILES data: {list(request.FILES.keys())}")
+            if settings.DEBUG:
+                logger.warning(f"FORM VALIDATION FAILED - Form errors: {form.errors}")
+                logger.warning(f"POST data: {request.POST}")
+                logger.warning(f"FILES data: {list(request.FILES.keys())}")
 
         if form.is_valid():
             try:
@@ -58,26 +64,31 @@ def image_upload_view(request):
                 uploaded_images = []
 
                 for i, image_file in enumerate(image_files, 1):
-                    logger.info(f"Processing upload {i}/{len(image_files)}: {image_file.name}, size: {image_file.size}, type: {image_file.content_type}")
+                    if settings.DEBUG:
+                        logger.info(f"Processing upload {i}/{len(image_files)}: {image_file.name}, size: {image_file.size}, type: {image_file.content_type}")
 
                     # Calculate file hash for deduplication
                     file_content = image_file.read()
-                    file_hash = hashlib.sha256(file_content).hexdigest()
-                    logger.info(f"File hash calculated: {file_hash[:10]}...")
+                    file_hash = calculate_file_hash(file_content)
+                    if settings.DEBUG:
+                        logger.info(f"File hash calculated: {file_hash[:10]}...")
 
                     # Check for duplicates - allow re-uploads with different metadata
-                    logger.info(f"Checking for duplicates for file: {image_file.name}")
+                    if settings.DEBUG:
+                        logger.info(f"Checking for duplicates for file: {image_file.name}")
                     try:
                         existing_images = ImageUpload.objects.filter(file_hash=file_hash)
-                        logger.info(f"Query result: {existing_images.count()} existing images with same hash")
+                        if settings.DEBUG:
+                            logger.info(f"Query result: {existing_images.count()} existing images with same hash")
                         if existing_images.exists():
-                            logger.info(f"Found {existing_images.count()} existing image(s) with same hash")
+                            if settings.DEBUG:
+                                logger.info(f"Found {existing_images.count()} existing image(s) with same hash")
 
                             # Check if this is a true duplicate (same user, same title, recent upload)
                             recent_duplicate = existing_images.filter(
                                 uploaded_by=request.user,
                                 title__icontains=form.cleaned_data.get('title', ''),
-                                uploaded_at__gte=timezone.now() - timezone.timedelta(hours=24)
+                                uploaded_at__gte=timezone.now() - timezone.timedelta(hours=IMAGE_CONFIG['DUPLICATE_CHECK_HOURS'])
                             ).first()
 
                             if recent_duplicate:
@@ -103,9 +114,7 @@ def image_upload_view(request):
                             else:
                                 logger.info(f"Allowing re-upload of same image with different metadata")
                                 # Generate unique filename to avoid conflicts
-                                base_name, ext = os.path.splitext(image_file.name)
-                                timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
-                                unique_filename = f"{base_name}_{timestamp}{ext}"
+                                unique_filename = generate_unique_filename(image_file.name)
                                 logger.info(f"Generated unique filename: {unique_filename}")
 
                                 messages.info(request, f"Image '{image_file.name}' was previously uploaded, but you can upload it again with different title/description.")
@@ -138,8 +147,7 @@ def image_upload_view(request):
                         image_upload.title = form.cleaned_data.get('title')
                     else:
                         # Auto-generate title from filename
-                        base_name = os.path.splitext(image_file.name)[0]
-                        image_upload.title = base_name.replace('_', ' ').title()
+                        image_upload.title = create_auto_title(image_file.name)
 
                     if form.cleaned_data.get('description'):
                         image_upload.description = form.cleaned_data.get('description')
@@ -216,7 +224,7 @@ def process_image_with_storage(image_upload, file_content):
             current_description = f"{description_prefix}... {current_progress}%"
             update_progress(step_name, current_progress, current_description)
             # Small delay to allow frontend to catch up
-            time.sleep(0.1)  # 100ms per step for smooth updates
+            time.sleep(IMAGE_CONFIG['PROGRESS_UPDATE_DELAY'])
     
     try:
         start_time = time.time()
@@ -239,15 +247,17 @@ def process_image_with_storage(image_upload, file_content):
         optimizer = ImageOptimizer()
         logger.info("Optimizing image for both storage and AI processing...")
 
-        # Create AI-optimized version (640x640 for YOLO) - NOTE: This is NOT used for detection!
+        # Create AI-optimized version for YOLO - NOTE: This is NOT used for detection!
         # The AI model processes the original file_content, not this optimized version
-        gradual_progress(20, 35, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, "Creating AI-optimized version (not used for detection)")
+        ai_dims = IMAGE_CONFIG['AI_DIMENSIONS']
+        gradual_progress(20, 35, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, f"Creating AI-optimized version ({ai_dims[0]}x{ai_dims[1]}) (not used for detection)")
         ai_content, original_size, ai_size, ai_dimensions = optimizer.optimize_for_ai(file_content)
         logger.info(f"AI optimization complete: {original_size} -> {ai_size} bytes, AI dimensions: {ai_dimensions}")
         logger.info(f"NOTE: AI model will process ORIGINAL image, not this 640x640 version")
 
-        # Create storage-optimized version (max 1024x768, compressed) - for reference only
-        gradual_progress(35, 50, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, "Creating storage reference version")
+        # Create storage-optimized version - for reference only
+        storage_dims = IMAGE_CONFIG['STORAGE_DIMENSIONS']
+        gradual_progress(35, 50, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, f"Creating storage reference version (max {storage_dims[0]}x{storage_dims[1]})")
         storage_content, storage_size, format_used = optimizer.optimize_image(file_content)
         logger.info(f"Storage reference version created: {format_used}, {original_size} -> {storage_size} bytes (not saved)")
 
@@ -292,18 +302,21 @@ def process_image_with_storage(image_upload, file_content):
                 # This ensures coordinates are in the correct coordinate system
                 # The original image will be saved to maintain coordinate system consistency
                 detection_result = detection_service.detect_birds(file_content, image_upload.original_filename)
-                
+
+                # Get user-friendly summary for better feedback
+                user_summary = detection_service.get_user_friendly_error_summary(detection_result)
+
                 if detection_result['success']:
                     logger.info(f"Detection successful: {detection_result['total_detections']} birds found")
-                    
+
                     # Create processing result with real detection data
                     if not hasattr(image_upload, 'processing_result'):
                         from .models import ImageProcessingResult
                         import uuid
-                        
+
                         # Use the best detection result
                         best_detection = detection_result['best_detection']
-                        
+
                         if best_detection:
                             detected_species = best_detection['species']
                             confidence_score = best_detection['confidence']
@@ -313,16 +326,16 @@ def process_image_with_storage(image_upload, file_content):
                             detected_species = None
                             confidence_score = 0.0
                             bounding_box = {}
-                        
+
                         # Store all detections in the bounding_box field for visualization
                         all_detections = detection_result.get('detections', [])
-                        
+
                         # CRITICAL FIX: Use the actual dimensions that the AI model processed
                         # Since we're using file_content (original image), the AI processed the original dimensions
                         from PIL import Image
                         original_image = Image.open(io.BytesIO(file_content))
                         actual_ai_dimensions = original_image.size
-                        
+
                         detection_data = {
                             'best_detection': bounding_box,
                             'all_detections': [
@@ -333,10 +346,11 @@ def process_image_with_storage(image_upload, file_content):
                                 } for det in all_detections
                             ],
                             'total_count': len(all_detections),
-                            'ai_dimensions': actual_ai_dimensions  # Store ACTUAL AI processing dimensions
+                            'ai_dimensions': actual_ai_dimensions,  # Store ACTUAL AI processing dimensions
+                            'user_feedback': user_summary  # Store user-friendly feedback
                         }
                         logger.info(f"CRITICAL FIX: Stored ACTUAL AI dimensions: {actual_ai_dimensions} (not the 640x640 optimization)")
-                        
+
                         processing_result = ImageProcessingResult.objects.create(
                             id=uuid.uuid4(),
                             image_upload=image_upload,
@@ -348,7 +362,7 @@ def process_image_with_storage(image_upload, file_content):
                             ai_model='YOLO_V8',
                             model_version=detection_result['model_used'],
                             processing_device=detection_result['device_used'],
-                            inference_time=2.5,  # TODO: Measure actual inference time
+                            inference_time=detection_result.get('inference_time', 0.0),
                             model_confidence_threshold=detection_result['confidence_threshold'],
                             review_status=ImageProcessingResult.ReviewStatus.PENDING,  # Ready for review
                             review_notes='',
@@ -360,12 +374,15 @@ def process_image_with_storage(image_upload, file_content):
                     else:
                         logger.info("Processing result already exists")
                 else:
-                    logger.error(f"Detection failed: {detection_result.get('error', 'Unknown error')}")
-                    # Create a failed processing result with correct dimensions
+                    logger.error(f"Detection failed: {user_summary['message']}")
+                    # Create a failed processing result with user-friendly error message
                     from PIL import Image
                     original_image = Image.open(io.BytesIO(file_content))
                     actual_ai_dimensions = original_image.size
-                    _create_failed_processing_result(image_upload, detection_result.get('error', 'Detection failed'), actual_ai_dimensions)
+                    error_message = f"{user_summary['title']}: {user_summary['message']}"
+                    if user_summary['user_guidance']:
+                        error_message += " | " + " | ".join(user_summary['user_guidance'][:2])  # Include first 2 suggestions
+                    _create_failed_processing_result(image_upload, error_message, actual_ai_dimensions)
             else:
                 logger.warning("Bird detection service not available, using fallback")
                 _create_fallback_processing_result(image_upload)
@@ -1159,6 +1176,39 @@ def dashboard_view(request):
         ('species_classification', 'Species Classification'),
         ('census_counting', 'Census Counting'),
     ]
+
+    # Get AI model information from models directory
+    import os
+    models_dir = 'models'
+    yolov5_models = []
+    yolov8_models = []
+    yolov9_models = []
+    
+    if os.path.exists(models_dir):
+        for filename in os.listdir(models_dir):
+            if filename.endswith('.pt'):
+                file_path = os.path.join(models_dir, filename)
+                file_size = os.path.getsize(file_path)
+                size_mb = f"{file_size / (1024 * 1024):.1f}MB"
+                
+                model_info = {
+                    'name': filename.replace('.pt', ''),
+                    'size': size_mb,
+                    'filename': filename,
+                    'status': 'Ready'
+                }
+                
+                if filename.startswith('yolov5'):
+                    yolov5_models.append(model_info)
+                elif filename.startswith('yolov8'):
+                    yolov8_models.append(model_info)
+                elif filename.startswith('yolov9'):
+                    yolov9_models.append(model_info)
+    
+    # Sort models by name
+    yolov5_models.sort(key=lambda x: x['name'])
+    yolov8_models.sort(key=lambda x: x['name'])
+    yolov9_models.sort(key=lambda x: x['name'])
     
     # Get recent uploads (all recent uploads)
     recent_uploads = images.filter(
@@ -1182,6 +1232,9 @@ def dashboard_view(request):
         'pending_review': pending_review,
         'approved_results': approved_results,
         'ai_models': ai_models,
+        'yolov5_models': yolov5_models,
+        'yolov8_models': yolov8_models,
+        'yolov9_models': yolov9_models,
         'recent_uploads': recent_uploads,
         'storage_stats': storage_stats,
     }
@@ -1346,3 +1399,38 @@ def benchmark_models_view(request):
     }
     
     return render(request, 'image_processing/benchmark_models.html', context)
+
+@login_required
+def debug_form_view(request):
+    """Debug form view for testing evaluation run creation"""
+    if not request.user.can_access_feature('image_processing'):
+        messages.error(request, "You don't have permission to access image processing.")
+        return redirect('home')
+
+@login_required
+def health_status_view(request):
+    """Real-time health status monitoring for the detection service"""
+    if not request.user.can_access_feature('image_processing'):
+        messages.error(request, "You don't have permission to access health monitoring.")
+        return redirect('home')
+
+    from .bird_detection_service import get_bird_detection_service
+    detection_service = get_bird_detection_service()
+
+    # Get comprehensive health status
+    health_status = detection_service.get_detection_health_status()
+    model_info = detection_service.get_model_info()
+    available_models = detection_service.get_available_models()
+
+    # Add timestamp for monitoring
+    import datetime
+    health_status['timestamp'] = datetime.datetime.now().isoformat()
+
+    context = {
+        'health_status': health_status,
+        'model_info': model_info,
+        'available_models': available_models,
+        'last_updated': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
+    }
+
+    return render(request, 'image_processing/health_status.html', context)

@@ -7,17 +7,28 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import configuration at module level
+try:
+    from .config import IMAGE_CONFIG
+except ImportError:
+    # Fallback configuration
+    IMAGE_CONFIG = {
+        'STORAGE_DIMENSIONS': (1024, 768),
+        'AI_DIMENSIONS': (640, 640),
+        'QUALITY_SETTINGS': {'JPEG': 85, 'PNG': 95, 'WEBP': 80},
+        'AI_PROCESSING_QUALITY': 95,
+        'THUMBNAIL_QUALITY': 85,
+        'THUMBNAIL_SIZE': (150, 150),
+    }
+
 class ImageOptimizer:
     """Handles image optimization and compression for local storage"""
     
     def __init__(self):
-        self.max_dimensions = getattr(settings, 'MAX_IMAGE_DIMENSIONS', (1024, 768))  # Storage version
-        self.ai_dimensions = getattr(settings, 'AI_MODEL_DIMENSIONS', (640, 640))  # AI processing version
-        self.image_quality = getattr(settings, 'IMAGE_QUALITY', {
-            'JPEG': 85,
-            'PNG': 95,
-            'WEBP': 80
-        })
+        # Use module-level configuration
+        self.max_dimensions = IMAGE_CONFIG['STORAGE_DIMENSIONS']
+        self.ai_dimensions = IMAGE_CONFIG['AI_DIMENSIONS']
+        self.image_quality = IMAGE_CONFIG['QUALITY_SETTINGS']
         self.default_format = getattr(settings, 'DEFAULT_IMAGE_FORMAT', 'WEBP')
         self.enable_webp = getattr(settings, 'ENABLE_WEBP', True)
     
@@ -58,7 +69,7 @@ class ImageOptimizer:
 
             # Save as JPEG for AI processing (consistent format)
             output_buffer = io.BytesIO()
-            image.save(output_buffer, format='JPEG', quality=95, optimize=True)  # High quality for AI
+            image.save(output_buffer, format='JPEG', quality=IMAGE_CONFIG['AI_PROCESSING_QUALITY'], optimize=True)
             output_buffer.seek(0)
             ai_content = output_buffer.getvalue()
             ai_size = len(ai_content)

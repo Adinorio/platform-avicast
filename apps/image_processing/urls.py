@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, analytics_views
 
 app_name = 'image_processing'
 
@@ -40,4 +40,21 @@ urlpatterns = [
     # AI Model management
     path('models/', views.model_selection_view, name='model_selection'),
     path('models/benchmark/', views.benchmark_models_view, name='benchmark_models'),
+    
+    # Model Performance Analytics (MLOps)
+    path('analytics/', analytics_views.analytics_dashboard, name='analytics_dashboard'),
+    path('analytics/runs/', analytics_views.evaluation_runs_list, name='evaluation_runs_list'),
+    path('analytics/results/<uuid:run_id>/', analytics_views.evaluation_results, name='evaluation_results'),
+    path('analytics/comparison/', analytics_views.model_comparison, name='model_comparison'),
+    
+    # Analytics API endpoints
+    path('api/evaluation/create/', analytics_views.create_evaluation_run, name='create_evaluation_run'),
+    path('api/evaluation/status/<uuid:run_id>/', analytics_views.api_evaluation_status, name='api_evaluation_status'),
+    path('api/evaluation/delete/<uuid:run_id>/', analytics_views.delete_evaluation_run, name='delete_evaluation_run'),
+    
+    # Debug
+    path('debug-form/', views.debug_form_view, name='debug_form'),
+
+    # Health Monitoring
+    path('health/', views.health_status_view, name='health_status'),
 ]

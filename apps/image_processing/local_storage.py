@@ -15,14 +15,25 @@ import json
 
 logger = logging.getLogger(__name__)
 
+# Import configuration at module level
+try:
+    from .config import IMAGE_CONFIG
+except ImportError:
+    # Fallback configuration
+    IMAGE_CONFIG = {
+        'MAX_LOCAL_STORAGE_GB': 50,
+        'STORAGE_WARNING_THRESHOLD': 0.8,
+    }
+
 class LocalStorageManager:
     """Manages local storage optimization for WiFi-only systems"""
     
     def __init__(self):
         self.media_root = Path(settings.MEDIA_ROOT)
-        self.max_storage_gb = getattr(settings, 'MAX_LOCAL_STORAGE_GB', 50)
+        # Use module-level configuration
+        self.max_storage_gb = IMAGE_CONFIG['MAX_LOCAL_STORAGE_GB']
         self.archive_path = Path(getattr(settings, 'ARCHIVE_STORAGE_PATH', 'media/archive'))
-        self.warning_threshold = getattr(settings, 'STORAGE_WARNING_THRESHOLD', 0.8)
+        self.warning_threshold = IMAGE_CONFIG['STORAGE_WARNING_THRESHOLD']
         
         # Create archive directory if it doesn't exist (safely)
         try:

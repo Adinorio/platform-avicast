@@ -91,12 +91,29 @@ class User(AbstractUser):
     def can_access_feature(self, feature_name):
         """Check if user can access specific features based on role"""
         if self.role == self.Role.SUPERADMIN:
-            return feature_name in ['user_management']
+            # Superadmin has access to everything
+            return True
         elif self.role == self.Role.ADMIN:
-            return feature_name in ['species_management', 'site_management', 'census_management', 
-                                  'image_processing', 'report_generation', 'user_management']
+            # Admin has access to everything EXCEPT superadmin user management
+            if feature_name == 'superadmin_user_management':
+                return False
+            return True
         elif self.role == self.Role.FIELD_WORKER:
+            # Field workers have limited view access
             return feature_name in ['species_view', 'site_view', 'census_view', 'image_processing_view']
+        return False
+    
+    def can_manage_user(self, target_user):
+        """Check if user can manage another user based on roles"""
+        if self.role == self.Role.SUPERADMIN:
+            # Superadmin can manage everyone
+            return True
+        elif self.role == self.Role.ADMIN:
+            # Admin can manage everyone EXCEPT superadmins
+            return target_user.role != self.Role.SUPERADMIN
+        elif self.role == self.Role.FIELD_WORKER:
+            # Field workers cannot manage users
+            return False
         return False
 
     def update_activity(self):
