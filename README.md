@@ -19,6 +19,29 @@ A comprehensive wildlife monitoring and analytics platform designed for local de
 - **Memory**: Minimum 4GB RAM (8GB recommended)
 - **Storage**: 2GB free space minimum
 
+## ⚠️ Important: Large Files Not Included
+
+This repository is configured to **NOT** include large files that should not be pushed to GitHub:
+
+### **Excluded Files & Folders:**
+- **ML Models**: All `.pt` files (YOLO models) - these are very large (18MB to 131MB each)
+- **Datasets**: `dataset/` folder with training images and labels
+- **Training Outputs**: `runs/` folder with model training results
+- **Compressed Files**: `.zip`, `.tar.gz`, `.rar` files
+- **Media Files**: Large image, video, and audio files
+- **Database Files**: `.sqlite3`, `.db` files
+
+### **Why These Are Excluded:**
+- **Repository Size**: These files would make the repo extremely large (potentially GBs)
+- **Git Performance**: Large files slow down Git operations
+- **GitHub Limits**: GitHub has file size limits and repository size recommendations
+- **Collaboration**: Large files make cloning and pulling very slow
+
+### **How to Get These Files:**
+- **Models**: Download YOLO models from official sources or your training runs
+- **Datasets**: Download from your data sources or recreate from scripts
+- **Training Outputs**: These are generated during training runs
+
 ## 🛠️ Quick Setup
 
 ### **Option 1: Automated Setup (Recommended)**
