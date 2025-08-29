@@ -135,6 +135,8 @@ olve JavaScript syntax errors and improve error handling
 dataset/
 datasets/
 data/
+chinese_egret_training/
+annotated_datasets/
 *.zip
 *.tar.gz
 *.rar
@@ -211,3 +213,56 @@ logs/
 .env.staging
 config/local.py
 config/production.py
+
+# ===== CHINESE EGRET MODEL INTEGRATION - LARGE FILES TO IGNORE =====
+
+# Model files (VERY LARGE - DO NOT COMMIT)
+models/*.pt
+models/*.onnx
+models/*.tflite
+models/*.pb
+models/*.h5
+models/*.weights
+models/chinese_egret_v1/*.pt
+models/chinese_egret_v1/*.onnx
+models/chinese_egret_v1/*.tflite
+models/chinese_egret_v1/*.pb
+
+# Base YOLO models (already downloaded - DO NOT COMMIT)
+models/yolov5*.pt
+models/yolov8*.pt
+models/yolov9*.pt
+models/yolo11*.pt
+
+# Chinese Egret Training Pipeline - ALL TRAINING ARTIFACTS
+chinese_egret_pipeline/
+bird_dataset_v1/
+prepared_data/
+
+# Training outputs and temporary files
+validation_results/
+export_results/
+inference_results/
+monitoring_plots/
+monitoring_results/
+
+# ===== UTILITY SCRIPTS - KEEP OR IGNORE =====
+
+# Keep these utility scripts (useful for deployment)
+# verify_model_integration.py
+# switch_model_direct.py
+# monitor_model_usage.py
+
+# Ignore these temporary scripts (only for development)
+fix_permissions.py
+
+# ===== DOCUMENTATION - DECIDE PER FILE =====
+
+# Keep these important documentation files:
+# CHINESE_EGRET_FINAL_SUCCESS_REPORT.md
+# CHINESE_EGRET_MODEL_INTEGRATION_GUIDE.md
+# INTEGRATION_COMPLETE_SUMMARY.md
+# MODEL_INTEGRATION_STATUS.md
+
+# Can ignore these if they're auto-generated:
+# CHINESE_EGRET_PIPELINE_SUMMARY.md
