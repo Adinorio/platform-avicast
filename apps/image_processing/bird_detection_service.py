@@ -141,6 +141,16 @@ class BirdDetectionService:
     def _load_model(self, version: str, config: Dict) -> Optional[YOLO]:
         """Load a specific YOLO model version"""
         try:
+            # Env override: AVICAST_MODEL_WEIGHTS (absolute or relative to project root)
+            env_path = os.getenv('AVICAST_MODEL_WEIGHTS')
+            if env_path:
+                override_path = Path(env_path)
+                if not override_path.is_absolute():
+                    override_path = project_root / override_path
+                if override_path.exists():
+                    logger.info(f"Loading {version} model from env override: {override_path}")
+                    return YOLO(str(override_path))
+
             # Special handling for the new Chinese Egret model
             if version == 'CHINESE_EGRET_V1':
                 model_path = project_root / config['model_path']
@@ -151,6 +161,15 @@ class BirdDetectionService:
                 else:
                     logger.error(f"❌ Chinese Egret model not found at: {model_path}")
                     return None
+            
+            # Auto-discover: newest best.pt under training/runs/**/weights/best.pt
+            training_runs = project_root / 'training' / 'runs'
+            if training_runs.exists():
+                best_candidates = list(training_runs.rglob('weights/best.pt'))
+                if best_candidates:
+                    latest_best = max(best_candidates, key=lambda p: p.stat().st_mtime)
+                    logger.info(f"Auto-discovered latest training model: {latest_best}")
+                    return YOLO(str(latest_best))
             
             # Priority 1: Custom trained model for bird detection
             custom_model_paths = [

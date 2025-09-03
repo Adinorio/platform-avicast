@@ -235,7 +235,7 @@ models/yolov9*.pt
 models/yolo11*.pt
 
 # Chinese Egret Training Pipeline - ALL TRAINING ARTIFACTS
-chinese_egret_pipeline/
+# (pipeline removed; keep dataset ignores if generated at root)
 bird_dataset_v1/
 prepared_data/
 
@@ -266,3 +266,16 @@ fix_permissions.py
 
 # Can ignore these if they're auto-generated:
 # CHINESE_EGRET_PIPELINE_SUMMARY.md
+
+# Project-specific ignores
+training/
+# training_data/
+
+# Ignore contents of training_data, but not the directory itself
+training_data/*
+!training_data/README.md
+!training_data/scripts/
+# To keep the scripts directory, but ignore its contents you would add:
+# !training_data/scripts/*
+# If you want to keep a specific script you could add:
+# !training_data/scripts/your_script.py

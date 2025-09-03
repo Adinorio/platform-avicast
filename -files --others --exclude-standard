@@ -1,4 +1,0 @@
-warning: in the working copy of 'apps/image_processing/image_optimizer.py', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'apps/image_processing/templates/image_processing/list.html', LF will be replaced by CRLF the next time Git touches it
-apps/image_processing/image_optimizer.py
-apps/image_processing/templates/image_processing/list.html
