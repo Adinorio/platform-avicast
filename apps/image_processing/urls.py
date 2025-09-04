@@ -41,16 +41,26 @@ urlpatterns = [
     path('models/', views.model_selection_view, name='model_selection'),
     path('models/benchmark/', views.benchmark_models_view, name='benchmark_models'),
     
+    # Ground truth annotation
+    path('annotate/<uuid:pk>/', views.annotation_view, name='annotate'),
+    path('api/save-annotations/<uuid:pk>/', views.save_annotations, name='save_annotations'),
+    path('species-management/', views.species_management_view, name='species_management'),
+    path('api/species-management/', views.api_species_management, name='api_species_management'),
+    
     # Model Performance Analytics (MLOps)
     path('analytics/', analytics_views.analytics_dashboard, name='analytics_dashboard'),
+    path('analytics/select-images/', analytics_views.image_selection_view, name='image_selection'),
     path('analytics/runs/', analytics_views.evaluation_runs_list, name='evaluation_runs_list'),
     path('analytics/results/<uuid:run_id>/', analytics_views.evaluation_results, name='evaluation_results'),
     path('analytics/comparison/', analytics_views.model_comparison, name='model_comparison'),
+    path('analytics/reviewed/', analytics_views.reviewed_analytics_view, name='reviewed_analytics'),
     
     # Analytics API endpoints
     path('api/evaluation/create/', analytics_views.create_evaluation_run, name='create_evaluation_run'),
     path('api/evaluation/status/<uuid:run_id>/', analytics_views.api_evaluation_status, name='api_evaluation_status'),
     path('api/evaluation/delete/<uuid:run_id>/', analytics_views.delete_evaluation_run, name='delete_evaluation_run'),
+    path('api/evaluation/kfold/', analytics_views.api_kfold_evaluation, name='api_kfold_evaluation'),
+    path('api/analytics/reviewed-summary/', analytics_views.api_reviewed_summary, name='api_reviewed_summary'),
     
     # Debug
     path('debug-form/', views.debug_form_view, name='debug_form'),

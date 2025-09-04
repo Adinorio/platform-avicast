@@ -240,34 +240,13 @@ def process_image_with_storage(image_upload, file_content):
         # Gradual progress for initialization and file reading
         gradual_progress(0, 20, ImageUpload.ProcessingStep.READING_FILE, 1.5, "Reading image file")
 
-        # Step 2: Dual optimization - storage and AI versions (20-50%)
-        logger.info("Step 2: Creating dual optimizations...")
-        update_progress(ImageUpload.ProcessingStep.OPTIMIZING, 20, "Creating storage and AI versions...")
-        
-        optimizer = ImageOptimizer()
-        logger.info("Optimizing image for both storage and AI processing...")
-
-        # Create AI-optimized version for YOLO - NOTE: This is NOT used for detection!
-        # The AI model processes the original file_content, not this optimized version
-        ai_dims = IMAGE_CONFIG['AI_DIMENSIONS']
-        gradual_progress(20, 35, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, f"Creating AI-optimized version ({ai_dims[0]}x{ai_dims[1]}) (not used for detection)")
-        ai_content, original_size, ai_size, ai_dimensions = optimizer.optimize_for_ai(file_content)
-        logger.info(f"AI optimization complete: {original_size} -> {ai_size} bytes, AI dimensions: {ai_dimensions}")
-        logger.info(f"NOTE: AI model will process ORIGINAL image, not this 640x640 version")
-
-        # Create storage-optimized version - for reference only
-        storage_dims = IMAGE_CONFIG['STORAGE_DIMENSIONS']
-        gradual_progress(35, 50, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, f"Creating storage reference version (max {storage_dims[0]}x{storage_dims[1]})")
-        storage_content, storage_size, format_used = optimizer.optimize_image(file_content)
-        logger.info(f"Storage reference version created: {format_used}, {original_size} -> {storage_size} bytes (not saved)")
-
-        # Step 3: Save ORIGINAL image (not optimized) to maintain coordinate system consistency (50-70%)
-        logger.info("Step 3: Saving ORIGINAL image to maintain coordinate system...")
-        update_progress(ImageUpload.ProcessingStep.SAVING, 50, "Saving original image...")
+        # Step 2: Save ORIGINAL image to maintain coordinate system consistency (20-50%)
+        logger.info("Step 2: Saving ORIGINAL image to maintain coordinate system...")
+        update_progress(ImageUpload.ProcessingStep.SAVING, 20, "Preparing to save original image...")
         
         from django.core.files.base import ContentFile
-        # CRITICAL FIX: Save the ORIGINAL image, not the optimized version
-        # This ensures the stored image dimensions match the AI processing dimensions
+        # CRITICAL: Save the ORIGINAL image to ensure the stored image dimensions
+        # match the AI processing dimensions for accurate bounding box visualization.
         original_file = ContentFile(file_content, image_upload.original_filename)
         image_upload.image_file.save(image_upload.original_filename, original_file, save=False)
         image_upload.compressed_size = len(file_content)  # Use original size
@@ -276,11 +255,11 @@ def process_image_with_storage(image_upload, file_content):
         logger.info("ORIGINAL image saved to maintain coordinate system consistency")
         
         # Gradual progress for saving
-        gradual_progress(50, 70, ImageUpload.ProcessingStep.SAVING, 1.0, "Saving results")
+        gradual_progress(20, 50, ImageUpload.ProcessingStep.SAVING, 1.0, "Saving results")
 
-        # Step 4: Run bird detection (70-95%)
-        logger.info("Step 4: Running bird detection...")
-        update_progress(ImageUpload.ProcessingStep.DETECTING, 70, "Initializing AI model...")
+        # Step 3: Run bird detection (50-95%)
+        logger.info("Step 3: Running bird detection...")
+        update_progress(ImageUpload.ProcessingStep.DETECTING, 50, "Initializing AI model...")
         
         try:
             from .bird_detection_service import get_bird_detection_service
@@ -290,17 +269,16 @@ def process_image_with_storage(image_upload, file_content):
                 logger.info("Bird detection service available, running detection...")
                 
                 # Gradual progress for AI model loading
-                gradual_progress(70, 80, ImageUpload.ProcessingStep.DETECTING, 1.5, "Loading YOLO model")
+                gradual_progress(50, 70, ImageUpload.ProcessingStep.DETECTING, 1.5, "Loading YOLO model")
                 
                 # Gradual progress for image analysis
-                gradual_progress(80, 90, ImageUpload.ProcessingStep.DETECTING, 2.0, "Analyzing with AI (original image)")
+                gradual_progress(70, 85, ImageUpload.ProcessingStep.DETECTING, 2.0, "Analyzing with AI (original image)")
                 
                 # Gradual progress for bird detection
-                gradual_progress(90, 95, ImageUpload.ProcessingStep.DETECTING, 2.5, "Detecting birds")
+                gradual_progress(85, 95, ImageUpload.ProcessingStep.DETECTING, 2.5, "Detecting birds")
                 
-                # CRITICAL: Use file_content (original image) for detection, NOT the 640x640 optimized version
-                # This ensures coordinates are in the correct coordinate system
-                # The original image will be saved to maintain coordinate system consistency
+                # CRITICAL: Use file_content (original image) for detection.
+                # This ensures coordinates are in the correct coordinate system.
                 detection_result = detection_service.detect_birds(file_content, image_upload.original_filename)
 
                 # Get user-friendly summary for better feedback
@@ -347,7 +325,8 @@ def process_image_with_storage(image_upload, file_content):
                             ],
                             'total_count': len(all_detections),
                             'ai_dimensions': actual_ai_dimensions,  # Store ACTUAL AI processing dimensions
-                            'user_feedback': user_summary  # Store user-friendly feedback
+                            'user_feedback': user_summary,  # Store user-friendly feedback
+                            'no_detection_analysis': detection_result.get('no_detection_analysis', {}) # Make sure this is passed through
                         }
                         logger.info(f"CRITICAL FIX: Stored ACTUAL AI dimensions: {actual_ai_dimensions} (not the 640x640 optimization)")
 
@@ -359,7 +338,7 @@ def process_image_with_storage(image_upload, file_content):
                             bounding_box=detection_data,  # Store comprehensive detection data including ai_dimensions
                             total_detections=detection_result['total_detections'],
                             processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
-                            ai_model='YOLO_V8',
+                            ai_model=detection_result.get('model_version', 'UNKNOWN').split('_')[0] if detection_result.get('model_version') else 'UNKNOWN',
                             model_version=detection_result['model_used'],
                             processing_device=detection_result['device_used'],
                             inference_time=detection_result.get('inference_time', 0.0),
@@ -529,8 +508,12 @@ def image_detail_view(request, pk):
             if processing_result.bounding_box.get('ai_dimensions'):
                 stored_ai_dims = processing_result.bounding_box['ai_dimensions']
                 logger.info(f"Stored AI dimensions: {stored_ai_dims}, Actual image dimensions: {ai_dimensions}")
-                
-                if stored_ai_dims != ai_dimensions:
+
+                # Convert both to tuples for consistent comparison
+                stored_dims_tuple = tuple(stored_ai_dims) if isinstance(stored_ai_dims, list) else stored_ai_dims
+                actual_dims_tuple = tuple(ai_dimensions) if isinstance(ai_dimensions, list) else ai_dimensions
+
+                if stored_dims_tuple != actual_dims_tuple:
                     logger.warning(f"AI dimensions mismatch detected! Stored: {stored_ai_dims}, Actual: {ai_dimensions}")
                     logger.info(f"Using ACTUAL image dimensions for visualization (AI always processes original image)")
                     # Keep ai_dimensions as the actual image dimensions (correct)
@@ -575,8 +558,8 @@ def image_detail_view(request, pk):
             temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
             os.makedirs(temp_dir, exist_ok=True)
 
-            # Create a temporary filename
-            temp_filename = f"processed_{uuid.uuid4().hex[:8]}.jpg"
+            # Create a temporary filename with PNG extension to handle RGBA images
+            temp_filename = f"processed_{uuid.uuid4().hex[:8]}.png"
             temp_path = f"temp/{temp_filename}"
 
             # Save to temporary storage
@@ -993,6 +976,134 @@ def process_batch_view(request, pk):
         return redirect('image_processing:detail', pk=pk)
 
 @login_required
+def annotation_view(request, pk):
+    """Ground truth annotation interface"""
+    image = get_object_or_404(ImageUpload, pk=pk)
+    
+    # Get processing result if available
+    try:
+        processing_result = ImageProcessingResult.objects.get(image_upload=image)
+    except ImageProcessingResult.DoesNotExist:
+        processing_result = None
+    
+    context = {
+        'image_upload': image,
+        'processing_result': processing_result,
+    }
+    
+    return render(request, 'image_processing/annotate.html', context)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def save_annotations(request, pk):
+    """Save ground truth annotations for an image"""
+    import json
+    try:
+        image = get_object_or_404(ImageUpload, pk=pk)
+        data = json.loads(request.body)
+        annotations = data.get('annotations', [])
+        custom_species = data.get('custom_species', [])
+        
+        if not annotations:
+            return JsonResponse({'success': False, 'error': 'No annotations provided'})
+        
+        # Create ground truth file content (YOLO format)
+        yolo_content = []
+        for ann in annotations:
+            line = f"{ann['class_id']} {ann['center_x']:.6f} {ann['center_y']:.6f} {ann['width']:.6f} {ann['height']:.6f}"
+            yolo_content.append(line)
+        
+        # Save annotations to a file or database
+        # For now, we'll store in the image's metadata
+        import os
+        from django.conf import settings
+        
+        # Create annotations directory if it doesn't exist
+        annotations_dir = os.path.join(settings.MEDIA_ROOT, 'annotations')
+        os.makedirs(annotations_dir, exist_ok=True)
+        
+        # Save YOLO format file
+        base_name = os.path.splitext(image.original_filename)[0]
+        annotation_file = os.path.join(annotations_dir, f"{base_name}.txt")
+        
+        with open(annotation_file, 'w') as f:
+            f.write('\n'.join(yolo_content))
+        
+        # Also store in ImageUpload metadata for easy access
+        # Initialize metadata if it doesn't exist
+        if image.metadata is None:
+            image.metadata = {}
+        
+        image.metadata['ground_truth_annotations'] = annotations
+        image.metadata['custom_species'] = custom_species
+        image.metadata['ground_truth_file'] = f"annotations/{base_name}.txt"
+        image.metadata['annotation_created_by'] = request.user.username
+        image.metadata['annotation_created_at'] = timezone.now().isoformat()
+        image.save()
+        
+        logger.info(f"Ground truth annotations saved for image {image.pk}: {len(annotations)} annotations")
+        
+        return JsonResponse({
+            'success': True, 
+            'message': f'Saved {len(annotations)} annotations',
+            'annotation_file': f"annotations/{base_name}.txt"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error saving annotations for image {pk}: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def species_management_view(request):
+    """Species management interface"""
+    context = {}
+    return render(request, 'image_processing/species_management.html', context)
+
+@csrf_exempt
+@require_http_methods(["GET", "POST", "PUT", "DELETE"])
+@login_required
+def api_species_management(request):
+    """API for managing custom species"""
+    import json
+    
+    if request.method == 'GET':
+        # Get all custom species from all users' images
+        all_species = set()
+        
+        # Collect species from all image metadata
+        images_with_species = ImageUpload.objects.filter(
+            metadata__custom_species__isnull=False
+        ).exclude(metadata__custom_species=[])
+        
+        for image in images_with_species:
+            if 'custom_species' in image.metadata:
+                for species in image.metadata['custom_species']:
+                    species_key = (species['name'], species.get('scientific_name', ''))
+                    all_species.add(species_key)
+        
+        # Convert to list format
+        species_list = [
+            {
+                'name': name,
+                'scientific_name': scientific_name if scientific_name else None,
+                'usage_count': 1  # Could calculate actual usage
+            }
+            for name, scientific_name in all_species
+        ]
+        
+        return JsonResponse({'species': species_list})
+    
+    elif request.method == 'POST':
+        # Add new global species
+        data = json.loads(request.body)
+        # Implementation for adding global species
+        return JsonResponse({'success': True})
+    
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@login_required
 def allocate_view(request):
     """Allocate approved results to census data"""
     if not request.user.is_staff:
@@ -1261,7 +1372,7 @@ def _create_failed_processing_result(image_upload, error_message, ai_dimensions=
                 },
                 total_detections=0,
                 processing_status=ImageProcessingResult.ProcessingStatus.FAILED,
-                ai_model='YOLO_V8',
+                ai_model='UNKNOWN',
                 model_version='unknown',
                 processing_device='cpu',
                 inference_time=0.0,
@@ -1294,7 +1405,7 @@ def _create_fallback_processing_result(image_upload):
                 },
                 total_detections=0,
                 processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED,
-                ai_model='YOLO_V8',
+                ai_model='UNKNOWN',
                 model_version='fallback',
                 processing_device='cpu',
                 inference_time=0.0,

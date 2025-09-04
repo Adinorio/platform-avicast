@@ -43,6 +43,21 @@ except ImportError:
         'VARIANCE_THRESHOLDS': {'VERY_LOW': 100, 'LOW': 500},
     }
 
+# Import model configurations
+try:
+    from .config import YOLO_VERSION_CONFIGS
+except ImportError:
+    # Fallback for when config is not available
+    YOLO_VERSION_CONFIGS = {
+        'YOLO_V8': {
+            'base_model': 'yolov8s.pt',
+            'custom_model': 'chinese_egret_model_v8.pt',
+            'description': 'YOLOv8 - Default fallback model',
+            'performance': {'mAP': 0.70, 'fps': 75}
+        }
+    }
+
+
 class DetectionError:
     """Structured error information for user feedback"""
 
@@ -71,40 +86,8 @@ class BirdDetectionService:
         # Use module-level configuration
         self.confidence_threshold = IMAGE_CONFIG['DEFAULT_CONFIDENCE_THRESHOLD']
         
-        # YOLO version configurations
-        self.version_configs = {
-            'YOLO_V5': {
-                'base_model': 'yolov5s.pt',
-                'custom_model': 'chinese_egret_model_v5.pt',
-                'description': 'YOLOv5 - Fast and lightweight',
-                'performance': {'mAP': 0.65, 'fps': 90}
-            },
-            'YOLO_V8': {
-                'base_model': 'yolov8s.pt',
-                'custom_model': 'chinese_egret_model_v8.pt',
-                'description': 'YOLOv8 - Balanced performance and accuracy',
-                'performance': {'mAP': 0.70, 'fps': 75}
-            },
-            'YOLO_V9': {
-                'base_model': 'yolov9c.pt',
-                'custom_model': 'chinese_egret_model_v9.pt',
-                'description': 'YOLOv9 - Latest and most advanced',
-                'performance': {'mAP': 0.75, 'fps': 65}
-            },
-            'CHINESE_EGRET_V1': {
-                'base_model': 'chinese_egret_best.pt',
-                'custom_model': 'chinese_egret_best.pt',
-                'description': '🏆 Chinese Egret Specialist - Ultra High Performance (99.46% mAP)',
-                'performance': {'mAP': 0.9946, 'fps': 75},
-                'model_path': 'models/chinese_egret_v1/chinese_egret_best.pt',
-                'onnx_path': 'models/chinese_egret_v1/chinese_egret_best.onnx',
-                'trained_classes': ['chinese_egret'],
-                'training_images': 1198,
-                'validation_accuracy': {'precision': 0.9735, 'recall': 0.9912},
-                'specialty': 'Chinese Egret Detection',
-                'recommended': True
-            }
-        }
+        # YOLO version configurations are now loaded from config.py
+        self.version_configs = YOLO_VERSION_CONFIGS
         
         self.initialize_models()
     
@@ -452,7 +435,26 @@ class BirdDetectionService:
             'technical_details': {}
         }
 
-        # Check if image is mostly empty/blank
+        # 1. Check for specialist model mismatch first, as it's a very specific reason.
+        model_config = self.version_configs.get(model_version, {})
+        trained_classes = model_config.get('trained_classes')
+        is_specialist = 'specialty' in model_config
+
+        if is_specialist and trained_classes:
+            analysis['reason'] = 'SPECIALIST_MODEL_MISMATCH'
+            analysis['details'] = f'The current model ("{model_config.get("description")}") is a specialist trained ONLY for: {", ".join(trained_classes)}.'
+            analysis['user_guidance'] = [
+                f"This model will not detect other species. Please use an image containing a '{', '.join(trained_classes)}'.",
+                "To detect a wider range of species, please switch to a general-purpose model (like YOLOv8) from the 'Model Selection' page."
+            ]
+            analysis['technical_details'] = {
+                'image_dimensions': f"{width}x{height}",
+                'model_version': model_version,
+                'confidence_threshold': self.confidence_threshold
+            }
+            return analysis # Return early as this is the most likely cause.
+
+        # 2. Check image characteristics if not a specialist mismatch
         try:
             # Convert to grayscale and check variance
             gray = image.convert('L')

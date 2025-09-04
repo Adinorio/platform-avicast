@@ -175,6 +175,46 @@
                         <strong>Error:</strong> {{ evaluation_run.error_message }}
                     </div>
                     {% endif %}
+                    
+                    <!-- Ground Truth Guidance Section -->
+                    {% if evaluation_guidance %}
+                    <div class="alert alert-info border border-info mt-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-info-circle fa-2x text-info me-3"></i>
+                            <div>
+                                <h5 class="mb-1">{{ evaluation_guidance.issue }}</h5>
+                                <p class="mb-0">{{ evaluation_guidance.explanation }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">📋 Available Data:</h6>
+                                <ul class="list-unstyled">
+                                    {% for item in evaluation_guidance.available_data %}
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">💡 Recommendations:</h6>
+                                <ul class="list-unstyled">
+                                    {% for suggestion in evaluation_guidance.suggestions %}
+                                    <li><i class="fas fa-lightbulb text-warning me-2"></i>{{ suggestion }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <strong>For thesis research:</strong> Consider using a properly annotated dataset or 
+                                <a href="{% url 'image_processing:reviewed_analytics' %}" class="alert-link">review the processed results</a> 
+                                for alternative analysis approaches.
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -428,6 +468,64 @@
         </div>
     </div>
 
+    {% if use_reviewed_fallback and reviewed_summary %}
+    <!-- Reviewed Results Fallback (no label-based ground truth found) -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fas fa-user-check me-2"></i>Reviewed Results Summary (No GT labels found)</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Showing aggregates from Approved/Overridden results. Use this for thesis reporting when YOLO label files are not available.</p>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h6 class="text-primary">By Model</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead><tr><th>Model</th><th>Images</th><th>Total Detections</th><th>Avg Conf</th></tr></thead>
+                                    <tbody>
+                                        {% for model, m in reviewed_summary.models.items %}
+                                        <tr>
+                                            <td><strong>{{ model }}</strong></td>
+                                            <td>{{ m.images }}</td>
+                                            <td>{{ m.detections }}</td>
+                                            <td>{{ m.avg_conf|floatformat:2 }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="4" class="text-muted">No reviewed data</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <h6 class="text-success">By Species</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead><tr><th>Species</th><th>Images</th><th>Total Detections</th><th>Avg Conf</th></tr></thead>
+                                    <tbody>
+                                        {% for species, s in reviewed_summary.species.items %}
+                                        <tr>
+                                            <td><strong>{{ species }}</strong></td>
+                                            <td>{{ s.images }}</td>
+                                            <td>{{ s.detections }}</td>
+                                            <td>{{ s.avg_conf|floatformat:2 }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="4" class="text-muted">No reviewed data</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Alternative Analysis for Small Datasets -->
     {% if evaluation_run.total_images_evaluated|default:0 < 5 %}
     <div class="row mb-4">
@@ -545,6 +643,308 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- Enhanced Thesis Analysis Section -->
+    {% if thesis_report and has_meaningful_metrics %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Thesis Analysis & Insights</h5>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Statistical Significance Analysis -->
+                    {% if statistical_analysis %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2"><i class="fas fa-chart-bar me-2"></i>Statistical Significance Analysis</h6>
+                            
+                            {% if statistical_analysis.pairwise_comparisons %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Model Comparison</th>
+                                            <th>T-Statistic</th>
+                                            <th>P-Value</th>
+                                            <th>Significant?</th>
+                                            <th>Effect Size</th>
+                                            <th>Interpretation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for comparison, stats in statistical_analysis.pairwise_comparisons.items %}
+                                        <tr>
+                                            <td><strong>{{ comparison }}</strong></td>
+                                            <td>{{ stats.t_statistic|floatformat:3 }}</td>
+                                            <td>{{ stats.p_value|floatformat:4 }}</td>
+                                            <td>
+                                                {% if stats.significant %}
+                                                    <span class="badge bg-success">Yes (p < 0.05)</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">No (p ≥ 0.05)</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ stats.effect_size|floatformat:3 }}</td>
+                                            <td>
+                                                {% if stats.significant %}
+                                                    {% if stats.effect_size > 0.8 %}
+                                                        <span class="text-success">Large effect</span>
+                                                    {% elif stats.effect_size > 0.5 %}
+                                                        <span class="text-warning">Medium effect</span>
+                                                    {% else %}
+                                                        <span class="text-info">Small effect</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">No significant difference</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Statistical comparison requires multiple evaluation runs or K-fold validation.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Enhanced Model Performance Metrics -->
+                    {% if thesis_report.model_performance %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2"><i class="fas fa-robot me-2"></i>Advanced Model Performance Metrics</h6>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Model</th>
+                                            <th>F1-Score</th>
+                                            <th>Precision</th>
+                                            <th>Recall</th>
+                                            <th>mAP@0.5</th>
+                                            <th>Accuracy</th>
+                                            <th>Specificity</th>
+                                            <th>MCC</th>
+                                            <th>Efficiency Score</th>
+                                            <th>Inference Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for model in thesis_report.model_performance %}
+                                        <tr>
+                                            <td><strong>{{ model.model_name }}</strong></td>
+                                            <td>
+                                                <span class="badge bg-{% if model.f1_score > 0.8 %}success{% elif model.f1_score > 0.6 %}warning{% else %}danger{% endif %}">
+                                                    {{ model.f1_score|floatformat:3 }}
+                                                </span>
+                                            </td>
+                                            <td>{{ model.precision|floatformat:3 }}</td>
+                                            <td>{{ model.recall|floatformat:3 }}</td>
+                                            <td>{{ model.map_50|floatformat:3 }}</td>
+                                            <td>{{ model.accuracy|floatformat:3 }}</td>
+                                            <td>{{ model.specificity|floatformat:3 }}</td>
+                                            <td>{{ model.matthews_correlation|floatformat:3 }}</td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar bg-{% if model.efficiency_score > 0.8 %}success{% elif model.efficiency_score > 0.6 %}warning{% else %}danger{% endif %}" 
+                                                         style="width: {{ model.efficiency_score|floatformat:0 }}%">
+                                                        {{ model.efficiency_score|floatformat:2 }}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ model.avg_inference_time_ms|floatformat:1 }}ms</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Research Recommendations -->
+                    {% if recommendations %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2"><i class="fas fa-lightbulb me-2"></i>Research Recommendations</h6>
+                            <div class="row">
+                                {% for rec in recommendations %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 border-{% if rec.priority == 'HIGH' %}danger{% elif rec.priority == 'MEDIUM' %}warning{% else %}info{% endif %}">
+                                        <div class="card-header bg-{% if rec.priority == 'HIGH' %}danger{% elif rec.priority == 'MEDIUM' %}warning{% else %}info{% endif %} text-white">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>{{ rec.category }}</strong>
+                                                <span class="badge bg-light text-dark">{{ rec.priority }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ rec.issue }}</h6>
+                                            <p class="card-text">{{ rec.recommendation }}</p>
+                                            {% if rec.target_metric %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    <strong>{{ rec.target_metric }}:</strong> 
+                                                    Current {{ rec.current_value|floatformat:3 }} → Target {{ rec.target_value|floatformat:3 }}
+                                                </small>
+                                            </div>
+                                            {% endif %}
+                                            {% if rec.details %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">{{ rec.details }}</small>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Error Analysis for Research Discussion -->
+                    {% if error_analysis %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2"><i class="fas fa-exclamation-triangle me-2"></i>Error Pattern Analysis</h6>
+                            <div class="row">
+                                {% if error_analysis.common_false_positives %}
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0">Common False Positives</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% for error_type, count in error_analysis.common_false_positives.items %}
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>{{ error_type }}</span>
+                                                <span class="badge bg-warning">{{ count }}</span>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if error_analysis.common_false_negatives %}
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-danger text-white">
+                                            <h6 class="mb-0">Common False Negatives</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% for error_type, count in error_analysis.common_false_negatives.items %}
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>{{ error_type }}</span>
+                                                <span class="badge bg-danger">{{ count }}</span>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Methodology Summary for Thesis -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2"><i class="fas fa-flask me-2"></i>Methodology Summary</h6>
+                            <div class="alert alert-light">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Evaluation Parameters</h6>
+                                        <ul class="list-unstyled">
+                                            <li><strong>IoU Threshold:</strong> {{ evaluation_run.iou_threshold }}</li>
+                                            <li><strong>Confidence Threshold:</strong> {{ evaluation_run.confidence_threshold }}</li>
+                                            <li><strong>Total Images:</strong> {{ evaluation_run.total_images_evaluated }}</li>
+                                            <li><strong>Models Compared:</strong> {{ total_models_compared }}</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Dataset Characteristics</h6>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Ground Truth Objects:</strong> {{ evaluation_run.total_ground_truth_objects|default:"N/A" }}</li>
+                                            <li><strong>Total Predictions:</strong> {{ evaluation_run.total_predicted_objects|default:"N/A" }}</li>
+                                            <li><strong>Species Evaluated:</strong> 
+                                                {% if evaluation_run.species_filter %}
+                                                    {{ evaluation_run.species_filter|join:", " }}
+                                                {% else %}
+                                                    All available species
+                                                {% endif %}
+                                            </li>
+                                            <li><strong>Processing Duration:</strong> 
+                                                {% if evaluation_run.processing_duration %}
+                                                    {{ evaluation_run.processing_duration.total_seconds|floatformat:1 }}s
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Options for Thesis -->
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary" onclick="exportResultsAsJSON()">
+                                    <i class="fas fa-download me-2"></i>Export JSON
+                                </button>
+                                <button class="btn btn-outline-success" onclick="exportResultsAsCSV()">
+                                    <i class="fas fa-file-csv me-2"></i>Export CSV
+                                </button>
+                                <button class="btn btn-outline-info" onclick="generateCitation()">
+                                    <i class="fas fa-quote-right me-2"></i>Generate Citation
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Citation Modal -->
+<div class="modal fade" id="citationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Research Citation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">APA Style Citation:</label>
+                    <textarea class="form-control" id="apaCitation" rows="3" readonly></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">BibTeX Entry:</label>
+                    <textarea class="form-control" id="bibtexCitation" rows="6" readonly></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="copyCitation('apa')">Copy APA</button>
+                <button type="button" class="btn btn-primary" onclick="copyCitation('bibtex')">Copy BibTeX</button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -574,11 +974,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
 
                 {% if model_metrics %}
-                    {% for model_metrics in model_metrics %}
+                    {% for model_metric in model_metrics %}
                     // Create more meaningful PR curve data
-                    const modelPrecision = {{ model_metrics.precision|default:0 }};
-                    const modelRecall = {{ model_metrics.recall|default:0 }};
-                    const modelName = '{{ model_metrics.model_name }}';
+                    const modelPrecision = {{ model_metric.precision|default:0 }};
+                    const modelRecall = {{ model_metric.recall|default:0 }};
+                    const modelName = '{{ model_metric.model_name }}';
 
                     // For small datasets, create a simplified curve
                     if (totalImages < 5) {
@@ -1032,6 +1432,106 @@ function redirectToResults() {
     // Since we're already on the results page, just refresh to show final data
     console.log('Evaluation completed, refreshing page to show final results...');
     window.location.reload();
+}
+
+// Export functions for thesis data
+function exportResultsAsJSON() {
+    const data = {
+        evaluation_run: {
+            name: '{{ evaluation_run.name|escapejs }}',
+            created_at: '{{ evaluation_run.created_at|date:"c" }}',
+            total_images: {{ evaluation_run.total_images_evaluated|default:0 }},
+            models_evaluated: {{ evaluation_run.models_evaluated|safe }},
+            species_filter: {{ evaluation_run.species_filter|safe }},
+            iou_threshold: {{ evaluation_run.iou_threshold }},
+            confidence_threshold: {{ evaluation_run.confidence_threshold }}
+        },
+        overall_metrics: {
+            precision: {{ evaluation_run.overall_precision|default:0 }},
+            recall: {{ evaluation_run.overall_recall|default:0 }},
+            f1_score: {{ evaluation_run.overall_f1_score|default:0 }},
+            map_50: {{ evaluation_run.overall_map_50|default:0 }},
+            map_50_95: {{ evaluation_run.overall_map_50_95|default:0 }}
+        },
+        {% if thesis_report %}
+        thesis_report: {{ thesis_report|safe }},
+        statistical_analysis: {{ statistical_analysis|safe }},
+        {% endif %}
+        exported_at: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `evaluation_results_${data.evaluation_run.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function exportResultsAsCSV() {
+    let csvContent = "Model,F1-Score,Precision,Recall,mAP@0.5,Accuracy,Specificity,MCC,Efficiency Score,Inference Time (ms)\n";
+    
+    {% if thesis_report.model_performance %}
+    {% for model in thesis_report.model_performance %}
+    csvContent += "{{ model.model_name|escapejs }},{{ model.f1_score }},{{ model.precision }},{{ model.recall }},{{ model.map_50 }},{{ model.accuracy }},{{ model.specificity }},{{ model.matthews_correlation }},{{ model.efficiency_score }},{{ model.avg_inference_time_ms }}\n";
+    {% endfor %}
+    {% endif %}
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `model_performance_{{ evaluation_run.name|slugify }}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function generateCitation() {
+    const evaluationName = '{{ evaluation_run.name|escapejs }}';
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+    const year = new Date().getFullYear();
+    const username = '{{ request.user.get_full_name|default:request.user.username|escapejs }}';
+    
+    // APA Citation
+    const apaCitation = `${username}. (${year}). ${evaluationName}: YOLO Model Performance Evaluation for Bird Species Detection. Generated using Platform-AviCast Analytics. Retrieved ${currentDate}.`;
+    
+    // BibTeX Citation
+    const bibtexCitation = `@misc{avicast_eval_${year},
+    author = {${username}},
+    title = {${evaluationName}: YOLO Model Performance Evaluation for Bird Species Detection},
+    year = {${year}},
+    note = {Generated using Platform-AviCast Analytics},
+    url = {${window.location.href}},
+    accessed = {${currentDate}}
+}`;
+    
+    document.getElementById('apaCitation').value = apaCitation;
+    document.getElementById('bibtexCitation').value = bibtexCitation;
+    
+    const citationModal = new bootstrap.Modal(document.getElementById('citationModal'));
+    citationModal.show();
+}
+
+function copyCitation(type) {
+    const textArea = document.getElementById(type === 'apa' ? 'apaCitation' : 'bibtexCitation');
+    textArea.select();
+    textArea.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        showMessage(`${type.toUpperCase()} citation copied to clipboard!`, 'success');
+    } catch (err) {
+        showMessage('Failed to copy citation. Please select and copy manually.', 'warning');
+    }
 }
 </script>
 {% endblock %}

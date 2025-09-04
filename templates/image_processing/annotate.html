@@ -1,0 +1,494 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Annotate Ground Truth - {{ image_upload.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .annotation-canvas {
+        border: 2px solid #007bff;
+        cursor: crosshair;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .annotation-controls {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    
+    .species-selector {
+        margin-bottom: 1rem;
+    }
+    
+    .bbox-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.5rem;
+    }
+    
+    .bbox-item {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 0.25rem;
+        margin: 0.25rem 0;
+        background: white;
+        border-radius: 4px;
+        border: 1px solid #eee;
+    }
+    
+    .annotation-help {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 4px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-1">🎯 Ground Truth Annotation</h1>
+                    <p class="text-muted mb-0">Create ground truth data for: <strong>{{ image_upload.title }}</strong></p>
+                </div>
+                <div>
+                    <a href="{% url 'image_processing:detail' image_upload.pk %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Details
+                    </a>
+                    <button type="button" class="btn btn-success" onclick="saveAnnotations()">
+                        <i class="fas fa-save me-2"></i>Save Annotations
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Help Section -->
+            <div class="annotation-help">
+                <h6><i class="fas fa-info-circle me-2"></i>How to Annotate</h6>
+                <ol class="mb-0">
+                    <li><strong>Select species</strong> from the dropdown</li>
+                    <li><strong>Click and drag</strong> to draw bounding boxes around birds</li>
+                    <li><strong>Review</strong> your annotations in the sidebar</li>
+                    <li><strong>Save</strong> when complete</li>
+                </ol>
+            </div>
+            
+            <!-- Canvas Container -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Image Canvas</h5>
+                </div>
+                <div class="card-body p-1">
+                    <div style="position: relative; display: inline-block;">
+                        <img id="annotationImage" 
+                             src="{{ image_upload.image_file.url }}" 
+                             class="annotation-canvas"
+                             onload="initializeCanvas()">
+                        <canvas id="annotationCanvas" 
+                                style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Controls -->
+            <div class="annotation-controls">
+                <div class="species-selector">
+                    <label for="speciesSelect" class="form-label fw-bold">Bird Species</label>
+                    <select class="form-select" id="speciesSelect">
+                        <option value="0">Unknown Bird</option>
+                        <!-- Dynamic species will be loaded here -->
+                    </select>
+                    
+                    <!-- Add New Species Section -->
+                    <div class="mt-2 d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAddSpecies()">
+                            <i class="fas fa-plus me-1"></i>Add New Species
+                        </button>
+                        <a href="{% url 'image_processing:species_management' %}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                            <i class="fas fa-list me-1"></i>Manage All
+                        </a>
+                    </div>
+                    
+                    <!-- Add Species Form (Hidden by default) -->
+                    <div id="addSpeciesForm" class="mt-3" style="display: none;">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white py-2">
+                                <h6 class="mb-0">Add New Species</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="mb-2">
+                                    <label for="newSpeciesName" class="form-label fw-bold">Species Name</label>
+                                    <input type="text" class="form-control" id="newSpeciesName" 
+                                           placeholder="e.g., American Robin">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="newSpeciesScientific" class="form-label">Scientific Name (Optional)</label>
+                                    <input type="text" class="form-control" id="newSpeciesScientific" 
+                                           placeholder="e.g., Turdus migratorius">
+                                    <small class="form-text text-muted">
+                                        💡 Tip: Use scientific names for academic accuracy
+                                    </small>
+                                </div>
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddSpecies()">
+                                        Cancel
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="saveNewSpecies()">
+                                        <i class="fas fa-save me-1"></i>Add Species
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-danger" onclick="clearAnnotations()">
+                        <i class="fas fa-trash me-2"></i>Clear All
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="undoLastAnnotation()">
+                        <i class="fas fa-undo me-2"></i>Undo Last
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Current Annotations -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Current Annotations (<span id="annotationCount">0</span>)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="annotationList" class="bbox-list">
+                        <p class="text-muted text-center">No annotations yet</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Predictions (for reference) -->
+            {% if processing_result %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">AI Predictions (Reference)</h6>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">AI found {{ processing_result.total_detections }} detections. Use these as reference but create your own ground truth annotations.</small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+let canvas, ctx, img;
+let isDrawing = false;
+let startX, startY, endX, endY;
+let annotations = [];
+let currentAnnotation = null;
+let customSpecies = [];
+let nextSpeciesId = 10; // Start after hardcoded options
+
+function initializeCanvas() {
+    img = document.getElementById('annotationImage');
+    canvas = document.getElementById('annotationCanvas');
+    ctx = canvas.getContext('2d');
+    
+    // Set canvas size to match image
+    canvas.width = img.offsetWidth;
+    canvas.height = img.offsetHeight;
+    canvas.style.width = img.offsetWidth + 'px';
+    canvas.style.height = img.offsetHeight + 'px';
+    
+    // Enable pointer events on canvas
+    canvas.style.pointerEvents = 'auto';
+    
+    // Add event listeners
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    
+    // Load existing species
+    loadSpeciesList();
+    
+    redrawAnnotations();
+}
+
+function loadSpeciesList() {
+    // Load custom species from localStorage
+    const savedSpecies = localStorage.getItem('customBirdSpecies');
+    if (savedSpecies) {
+        customSpecies = JSON.parse(savedSpecies);
+        updateSpeciesDropdown();
+    }
+}
+
+function updateSpeciesDropdown() {
+    const select = document.getElementById('speciesSelect');
+    
+    // Keep the "Unknown Bird" option and add custom species
+    const currentValue = select.value;
+    
+    // Remove all options except the first one (Unknown Bird)
+    while (select.children.length > 1) {
+        select.removeChild(select.lastChild);
+    }
+    
+    // Add custom species
+    customSpecies.forEach(species => {
+        const option = document.createElement('option');
+        option.value = species.id;
+        option.textContent = species.name;
+        if (species.scientific_name) {
+            option.textContent += ` (${species.scientific_name})`;
+        }
+        select.appendChild(option);
+    });
+    
+    // Restore previous selection if possible
+    if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+        select.value = currentValue;
+    }
+}
+
+function toggleAddSpecies() {
+    const form = document.getElementById('addSpeciesForm');
+    const isVisible = form.style.display !== 'none';
+    
+    if (isVisible) {
+        form.style.display = 'none';
+        // Clear form
+        document.getElementById('newSpeciesName').value = '';
+        document.getElementById('newSpeciesScientific').value = '';
+    } else {
+        form.style.display = 'block';
+        document.getElementById('newSpeciesName').focus();
+    }
+}
+
+function saveNewSpecies() {
+    const name = document.getElementById('newSpeciesName').value.trim();
+    const scientificName = document.getElementById('newSpeciesScientific').value.trim();
+    
+    if (!name) {
+        alert('Please enter a species name.');
+        return;
+    }
+    
+    // Check if species already exists
+    if (customSpecies.some(species => species.name.toLowerCase() === name.toLowerCase())) {
+        alert('This species already exists.');
+        return;
+    }
+    
+    // Create new species
+    const newSpecies = {
+        id: nextSpeciesId++,
+        name: name,
+        scientific_name: scientificName || null,
+        created_at: new Date().toISOString()
+    };
+    
+    customSpecies.push(newSpecies);
+    
+    // Save to localStorage
+    localStorage.setItem('customBirdSpecies', JSON.stringify(customSpecies));
+    
+    // Update dropdown
+    updateSpeciesDropdown();
+    
+    // Select the new species
+    document.getElementById('speciesSelect').value = newSpecies.id;
+    
+    // Hide form
+    toggleAddSpecies();
+    
+    console.log('Added new species:', newSpecies);
+}
+
+function startDrawing(e) {
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    endX = e.clientX - rect.left;
+    endY = e.clientY - rect.top;
+    
+    redrawAnnotations();
+    
+    // Draw current rectangle
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+}
+
+function stopDrawing(e) {
+    if (!isDrawing) return;
+    isDrawing = false;
+    
+    const rect = canvas.getBoundingClientRect();
+    endX = e.clientX - rect.left;
+    endY = e.clientY - rect.top;
+    
+    // Create annotation
+    const annotation = {
+        x: Math.min(startX, endX),
+        y: Math.min(startY, endY),
+        width: Math.abs(endX - startX),
+        height: Math.abs(endY - startY),
+        species: document.getElementById('speciesSelect').value,
+        species_name: document.getElementById('speciesSelect').selectedOptions[0].text
+    };
+    
+    // Only add if box is large enough
+    if (annotation.width > 10 && annotation.height > 10) {
+        annotations.push(annotation);
+        updateAnnotationList();
+        redrawAnnotations();
+    }
+}
+
+function redrawAnnotations() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    annotations.forEach((ann, index) => {
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.strokeRect(ann.x, ann.y, ann.width, ann.height);
+        
+        // Draw label
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '12px Arial';
+        ctx.fillText(`${ann.species_name}`, ann.x, ann.y - 5);
+    });
+}
+
+function updateAnnotationList() {
+    const listContainer = document.getElementById('annotationList');
+    document.getElementById('annotationCount').textContent = annotations.length;
+    
+    if (annotations.length === 0) {
+        listContainer.innerHTML = '<p class="text-muted text-center">No annotations yet</p>';
+        return;
+    }
+    
+    let html = '';
+    annotations.forEach((ann, index) => {
+        html += `
+            <div class="bbox-item">
+                <div>
+                    <strong>${ann.species_name}</strong><br>
+                    <small class="text-muted">${ann.width.toFixed(0)} × ${ann.height.toFixed(0)} px</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAnnotation(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+    });
+    
+    listContainer.innerHTML = html;
+}
+
+function removeAnnotation(index) {
+    annotations.splice(index, 1);
+    updateAnnotationList();
+    redrawAnnotations();
+}
+
+function clearAnnotations() {
+    if (confirm('Clear all annotations?')) {
+        annotations = [];
+        updateAnnotationList();
+        redrawAnnotations();
+    }
+}
+
+function undoLastAnnotation() {
+    if (annotations.length > 0) {
+        annotations.pop();
+        updateAnnotationList();
+        redrawAnnotations();
+    }
+}
+
+function saveAnnotations() {
+    if (annotations.length === 0) {
+        alert('Please create at least one annotation before saving.');
+        return;
+    }
+    
+    // Convert to YOLO format (normalized coordinates)
+    const yoloAnnotations = annotations.map(ann => {
+        const centerX = (ann.x + ann.width / 2) / canvas.width;
+        const centerY = (ann.y + ann.height / 2) / canvas.height;
+        const width = ann.width / canvas.width;
+        const height = ann.height / canvas.height;
+        
+        return {
+            class_id: parseInt(ann.species),
+            center_x: centerX,
+            center_y: centerY,
+            width: width,
+            height: height,
+            species_name: ann.species_name
+        };
+    });
+    
+    // Save via API
+    fetch(`{% url 'image_processing:save_annotations' image_upload.pk %}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            annotations: yoloAnnotations,
+            custom_species: customSpecies
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Annotations saved successfully!');
+            window.location.href = `{% url 'image_processing:detail' image_upload.pk %}`;
+        } else {
+            alert('Error saving annotations: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving annotations.');
+    });
+}
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    if (img && canvas) {
+        initializeCanvas();
+    }
+});
+</script>
+{% endblock %}

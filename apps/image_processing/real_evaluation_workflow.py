@@ -92,6 +92,21 @@ class RealEvaluationWorkflow:
         """Get current progress for an evaluation run"""
         return self.progress_tracker.get(run_id, EvaluationProgress())
 
+    def _clean_models_list(self, models: List[str]) -> List[str]:
+        """Remove falsy entries and deduplicate while preserving order."""
+        if not models:
+            return []
+        seen = set()
+        cleaned = []
+        for m in models:
+            if not m:
+                continue
+            if m in seen:
+                continue
+            seen.add(m)
+            cleaned.append(m)
+        return cleaned
+
     def _run_evaluation(self, evaluation_run: ModelEvaluationRun,
                        progress: EvaluationProgress,
                        progress_callback: Callable = None):
@@ -111,8 +126,7 @@ class RealEvaluationWorkflow:
             images_to_process = self._get_images_for_evaluation(evaluation_run)
             if not images_to_process:
                 logger.warning(f"No images found for evaluation run {evaluation_run.id}")
-                # Create a test image if none exist
-                images_to_process = self._create_test_images(evaluation_run)
+                raise RuntimeError("No images available for evaluation. Upload images first.")
 
             # Update evaluation run with total images
             evaluation_run.total_images_evaluated = len(images_to_process)
@@ -121,9 +135,13 @@ class RealEvaluationWorkflow:
             # Step 3: Load models (20%)
             progress.completed_steps = 10
             progress.update("Loading YOLO models...")
-            progress.current_step = f"Loading {len(evaluation_run.models_evaluated)} model(s)"
+            
+            # Clean and persist models to evaluate to avoid duplicates/None
+            models_to_evaluate = self._clean_models_list(evaluation_run.models_evaluated)
+            evaluation_run.models_evaluated = models_to_evaluate
+            evaluation_run.save(update_fields=['models_evaluated'])
+            progress.current_step = f"Loading {len(models_to_evaluate)} model(s)"
 
-            models_to_evaluate = evaluation_run.models_evaluated
             for i, model_name in enumerate(models_to_evaluate):
                 progress.current_step = f"Loading model {i+1}/{len(models_to_evaluate)}: {model_name}"
                 self.evaluation_service.load_model(model_name)
@@ -208,39 +226,94 @@ class RealEvaluationWorkflow:
                 progress_callback(evaluation_run.id, 'FAILED', str(e))
                 
     def _get_images_for_evaluation(self, evaluation_run: ModelEvaluationRun) -> List[str]:
-        """Get list of images to process for evaluation"""
+        """Get list of images for evaluation, prioritizing those with ground truth annotations"""
+        from .models import ImageProcessingResult, ImageUpload
         
-        # Get uploaded images from the database
-        images_query = ImageUpload.objects.filter(upload_status='UPLOADED')
+        # PRIORITY 1: Images with ground truth annotations (even if not AI-processed)
+        annotated_images = ImageUpload.objects.filter(
+            metadata__ground_truth_annotations__isnull=False
+        ).exclude(metadata__ground_truth_annotations=[])
+        
+        # Apply date filters to annotated images if specified
+        if evaluation_run.date_range_start:
+            annotated_images = annotated_images.filter(uploaded_at__gte=evaluation_run.date_range_start)
+        if evaluation_run.date_range_end:
+            annotated_images = annotated_images.filter(uploaded_at__lte=evaluation_run.date_range_end)
+        
+        # PRIORITY 2: Images that have processing results
+        results_query = ImageProcessingResult.objects.filter(
+            processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
+        ).select_related('image_upload')
+        
+        # Apply model filters if specified
+        if evaluation_run.models_evaluated:
+            results_query = results_query.filter(ai_model__in=evaluation_run.models_evaluated)
+        
+        # Apply species filters if specified
+        if evaluation_run.species_filter:
+            results_query = results_query.filter(detected_species__in=evaluation_run.species_filter)
         
         # Apply date filters if specified
         if evaluation_run.date_range_start:
-            images_query = images_query.filter(uploaded_at__gte=evaluation_run.date_range_start)
+            results_query = results_query.filter(created_at__gte=evaluation_run.date_range_start)
         if evaluation_run.date_range_end:
-            images_query = images_query.filter(uploaded_at__lte=evaluation_run.date_range_end)
-            
-        image_paths = []
-        for image_upload in images_query:
-            if image_upload.image_file and os.path.exists(image_upload.image_file.path):
-                image_paths.append(image_upload.image_file.path)
-                
-        # If no uploaded images, look for sample images in media directory
-        if not image_paths:
-            media_root = Path(settings.MEDIA_ROOT)
-            sample_dirs = [
-                media_root / 'bird_images',
-                media_root / 'samples',
-                media_root / 'test_images'
+            results_query = results_query.filter(created_at__lte=evaluation_run.date_range_end)
+        
+        # Prioritize reviewed/approved results for evaluation
+        reviewed_results = results_query.filter(
+            review_status__in=[
+                ImageProcessingResult.ReviewStatus.APPROVED,
+                ImageProcessingResult.ReviewStatus.OVERRIDDEN,
+                ImageProcessingResult.ReviewStatus.REJECTED  # Include rejected to understand failure modes
             ]
+        ).order_by('-reviewed_at')
+        
+        # If not enough reviewed results, include pending ones
+        if reviewed_results.count() < 10:
+            pending_results = results_query.filter(
+                review_status=ImageProcessingResult.ReviewStatus.PENDING
+            ).order_by('-created_at')
             
-            for sample_dir in sample_dirs:
-                if sample_dir.exists():
-                    for img_file in sample_dir.rglob('*'):
-                        if img_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.gif']:
-                            image_paths.append(str(img_file))
-                            
-        # Limit to reasonable number for testing
-        return image_paths[:20] if len(image_paths) > 20 else image_paths
+            # Combine reviewed and pending results
+            all_results = list(reviewed_results) + list(pending_results)
+        else:
+            all_results = list(reviewed_results)
+        
+        # Extract valid image paths
+        image_paths = []
+        unique_images = set()  # Avoid processing same image multiple times
+        
+        # FIRST: Add images with ground truth annotations (highest priority)
+        for image_upload in annotated_images:
+            if (image_upload and image_upload.image_file and 
+                os.path.exists(image_upload.image_file.path) and
+                image_upload.image_file.path not in unique_images):
+                
+                image_paths.append(image_upload.image_file.path)
+                unique_images.add(image_upload.image_file.path)
+                logger.info(f"  + Added annotated image: {image_upload.original_filename}")
+        
+        # SECOND: Add processed images that might not have ground truth
+        for result in all_results:
+            image_upload = result.image_upload
+            if (image_upload and image_upload.image_file and 
+                os.path.exists(image_upload.image_file.path) and
+                image_upload.image_file.path not in unique_images):
+                
+                image_paths.append(image_upload.image_file.path)
+                unique_images.add(image_upload.image_file.path)
+        
+        # Log evaluation parameters for transparency
+        logger.info(f"Evaluation setup for run {evaluation_run.id}:")
+        logger.info(f"  - Images with ground truth annotations: {annotated_images.count()}")
+        logger.info(f"  - Total processed images available: {results_query.count()}")
+        logger.info(f"  - Reviewed results: {reviewed_results.count()}")
+        logger.info(f"  - Images selected for evaluation: {len(image_paths)}")
+        logger.info(f"  - Model filters: {evaluation_run.models_evaluated}")
+        logger.info(f"  - Species filters: {evaluation_run.species_filter}")
+        
+        # Return all available images (no arbitrary limit for thesis work)
+        return image_paths
         
     def _save_image_results(self, evaluation_run: ModelEvaluationRun, image_eval):
         """Save detailed results for individual image"""
@@ -288,7 +361,7 @@ class RealEvaluationWorkflow:
             
     def _calculate_model_metrics(self, evaluation_run: ModelEvaluationRun, all_results: List):
         """Calculate aggregated metrics for each model"""
-        models = evaluation_run.models_evaluated
+        models = self._clean_models_list(evaluation_run.models_evaluated)
         
         for model_name in models:
             # Aggregate metrics across all images for this model
@@ -318,32 +391,52 @@ class RealEvaluationWorkflow:
             avg_inference_time = total_inference_time / len(all_results) if all_results else 0
             avg_confidence = total_confidence / confidence_count if confidence_count > 0 else 0
             
-            # Create model performance metrics
-            ModelPerformanceMetrics.objects.create(
+            # Create or update model performance metrics
+            obj, created = ModelPerformanceMetrics.objects.get_or_create(
                 evaluation_run=evaluation_run,
                 model_name=model_name,
-                model_version=f"v1.0",  # Could be extracted from model
-                images_processed=len(all_results),
-                ground_truth_objects=sum(len(r.ground_truth) for r in all_results),
-                predicted_objects=sum(len(r.predictions.get(model_name, [])) for r in all_results),
-                true_positives=total_tp,
-                false_positives=total_fp,
-                false_negatives=total_fn,
-                precision=Decimal(str(precision)),
-                recall=Decimal(str(recall)),
-                f1_score=Decimal(str(f1_score)),
-                map_50=Decimal(str(precision)),  # Simplified - could calculate real mAP
-                map_50_95=Decimal(str(precision * 0.8)),  # Simplified
-                avg_inference_time_ms=Decimal(str(avg_inference_time * 1000)),
-                avg_confidence_score=Decimal(str(avg_confidence)),
-                model_parameters_millions=self._get_model_params(model_name),
-                model_size_mb=self._get_model_size(model_name)
+                defaults={
+                    'model_version': f"v1.0",
+                    'images_processed': len(all_results),
+                    'ground_truth_objects': sum(len(r.ground_truth) for r in all_results),
+                    'predicted_objects': sum(len(r.predictions.get(model_name, [])) for r in all_results),
+                    'true_positives': total_tp,
+                    'false_positives': total_fp,
+                    'false_negatives': total_fn,
+                    'precision': Decimal(str(precision)),
+                    'recall': Decimal(str(recall)),
+                    'f1_score': Decimal(str(f1_score)),
+                    'map_50': Decimal(str(precision)),  # Simplified
+                    'map_50_95': Decimal(str(precision * 0.8)),
+                    'avg_inference_time_ms': Decimal(str(avg_inference_time * 1000)),
+                    'avg_confidence_score': Decimal(str(avg_confidence)),
+                    'model_parameters_millions': self._get_model_params(model_name),
+                    'model_size_mb': self._get_model_size(model_name),
+                }
             )
+            if not created:
+                obj.model_version = f"v1.0"
+                obj.images_processed = len(all_results)
+                obj.ground_truth_objects = sum(len(r.ground_truth) for r in all_results)
+                obj.predicted_objects = sum(len(r.predictions.get(model_name, [])) for r in all_results)
+                obj.true_positives = total_tp
+                obj.false_positives = total_fp
+                obj.false_negatives = total_fn
+                obj.precision = Decimal(str(precision))
+                obj.recall = Decimal(str(recall))
+                obj.f1_score = Decimal(str(f1_score))
+                obj.map_50 = Decimal(str(precision))
+                obj.map_50_95 = Decimal(str(precision * 0.8))
+                obj.avg_inference_time_ms = Decimal(str(avg_inference_time * 1000))
+                obj.avg_confidence_score = Decimal(str(avg_confidence))
+                obj.model_parameters_millions = self._get_model_params(model_name)
+                obj.model_size_mb = self._get_model_size(model_name)
+                obj.save()
             
     def _calculate_species_metrics(self, evaluation_run: ModelEvaluationRun, all_results: List):
         """Calculate per-species performance metrics"""
         species_names = ['chinese_egret', 'whiskered_tern', 'great_knot']
-        models = evaluation_run.models_evaluated
+        models = self._clean_models_list(evaluation_run.models_evaluated)
         
         for model_name in models:
             model_metrics = ModelPerformanceMetrics.objects.get(
@@ -451,49 +544,4 @@ class RealEvaluationWorkflow:
         }
         return size_map.get(model_name, Decimal('40.0'))
 
-    def _create_test_images(self, evaluation_run: ModelEvaluationRun) -> List[str]:
-        """Create test images for evaluation when no real images are available"""
-        import tempfile
-        import numpy as np
-        from PIL import Image, ImageDraw
-        import os
-
-        logger.info("Creating test images for evaluation...")
-
-        test_images = []
-        temp_dir = tempfile.mkdtemp()
-
-        # Create 3 test images with different scenarios
-        test_scenarios = [
-            {"name": "chinese_egret_test.jpg", "objects": ["chinese_egret"], "background": "beach"},
-            {"name": "whiskered_tern_test.jpg", "objects": ["whiskered_tern"], "background": "ocean"},
-            {"name": "mixed_birds_test.jpg", "objects": ["chinese_egret", "whiskered_tern"], "background": "wetland"}
-        ]
-
-        for scenario in test_scenarios:
-            # Create a simple test image
-            img = Image.new('RGB', (640, 480), color=(135, 206, 235))  # Sky blue background
-
-            # Add some simple shapes to simulate birds
-            draw = ImageDraw.Draw(img)
-
-            # Add some random shapes to simulate birds
-            for i, obj in enumerate(scenario["objects"]):
-                # Draw a simple rectangle or circle to represent a bird
-                x = 100 + i * 150
-                y = 200
-                width, height = 80, 60
-
-                # Draw a simple bird-like shape
-                draw.rectangle([x, y, x+width, y+height], fill=(139, 69, 19), outline=(0, 0, 0))
-                # Add some details
-                draw.ellipse([x+10, y+10, x+30, y+25], fill=(255, 255, 255))
-
-            # Save the test image
-            img_path = os.path.join(temp_dir, scenario["name"])
-            img.save(img_path)
-            test_images.append(img_path)
-
-            logger.info(f"Created test image: {scenario['name']}")
-
-        return test_images[:5]  # Limit to 5 test images
+    # Removed test image generation to enforce real data only

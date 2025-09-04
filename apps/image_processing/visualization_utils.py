@@ -83,6 +83,10 @@ def draw_detections_on_image(image_content: bytes, detections: List[Dict],
         # Convert bytes to PIL Image
         image = Image.open(io.BytesIO(image_content))
 
+        # Convert to RGB to prevent issues with RGBA formats (e.g., PNG) when saving as JPEG
+        if image.mode == 'RGBA':
+            image = image.convert('RGB')
+
         # Get display image dimensions
         display_width, display_height = image.size
         

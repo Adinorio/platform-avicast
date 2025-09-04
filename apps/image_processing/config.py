@@ -145,3 +145,41 @@ def validate_image_dimensions(width, height):
 def get_quality_for_format(format_name):
     """Get quality setting for image format"""
     return IMAGE_CONFIG['QUALITY_SETTINGS'].get(format_name.upper(), 85)
+
+# =============================================================================
+# AI MODEL CONFIGURATIONS
+# =============================================================================
+
+YOLO_VERSION_CONFIGS = {
+    'YOLO_V5': {
+        'base_model': 'yolov5s.pt',
+        'custom_model': 'chinese_egret_model_v5.pt',
+        'description': 'YOLOv5 - Fast and lightweight',
+        'performance': {'mAP': 0.65, 'fps': 90}
+    },
+    'YOLO_V8': {
+        'base_model': 'yolov8s.pt',
+        'custom_model': 'chinese_egret_model_v8.pt',
+        'description': 'YOLOv8 - Balanced performance and accuracy',
+        'performance': {'mAP': 0.70, 'fps': 75}
+    },
+    'YOLO_V9': {
+        'base_model': 'yolov9c.pt',
+        'custom_model': 'chinese_egret_model_v9.pt',
+        'description': 'YOLOv9 - Latest and most advanced',
+        'performance': {'mAP': 0.75, 'fps': 65}
+    },
+    'CHINESE_EGRET_V1': {
+        'base_model': 'chinese_egret_best.pt',
+        'custom_model': 'chinese_egret_best.pt',
+        'description': '🏆 Chinese Egret Specialist - Ultra High Performance (99.46% mAP)',
+        'performance': {'mAP': 0.9946, 'fps': 75},
+        'model_path': 'models/chinese_egret_v1/chinese_egret_best.pt',
+        'onnx_path': 'models/chinese_egret_v1/chinese_egret_best.onnx',
+        'trained_classes': ['chinese_egret'],
+        'training_images': 1198,
+        'validation_accuracy': {'precision': 0.9735, 'recall': 0.9912},
+        'specialty': 'Chinese Egret Detection',
+        'recommended': True
+    }
+}

@@ -122,6 +122,7 @@ class ImageUpload(StatusManagedModel):
     # Metadata
     image_width = models.IntegerField(null=True, blank=True)
     image_height = models.IntegerField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True, help_text="Additional metadata including ground truth annotations")
     
     class Meta:
         ordering = ['-uploaded_at']

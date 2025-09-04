@@ -224,9 +224,12 @@
                     </div>
 
                     <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-analytics btn-lg">
+                        <button type="submit" class="btn btn-analytics btn-lg" id="startEvaluationBtn">
                             <i class="fas fa-rocket me-2"></i>Start Evaluation Run
                         </button>
+                        <div id="submitStatus" class="mt-2" style="display: none;">
+                            <small class="text-muted">Processing your request...</small>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -405,6 +408,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Form submitted!'); // Debug log
         
+        // Prevent double submissions
+        const submitBtn = document.getElementById('startEvaluationBtn');
+        const submitStatus = document.getElementById('submitStatus');
+        
+        if (submitBtn.disabled) {
+            console.log('Form already being submitted, ignoring duplicate request');
+            return;
+        }
+        
+        // Disable button and show status
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
+        submitStatus.style.display = 'block';
+        
         // Collect form data
         const formData = {
             name: document.getElementById('runName').value || `Evaluation Run ${new Date().toLocaleDateString()}`,
@@ -423,12 +440,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (formData.models.length === 0) {
             alert('Please select at least one model to evaluate.');
             console.log('Validation failed: No models selected');
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-rocket me-2"></i>Start Evaluation Run';
+            submitStatus.style.display = 'none';
             return;
         }
 
         if (formData.species.length === 0) {
             alert('Please select at least one species to include.');
             console.log('Validation failed: No species selected');
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-rocket me-2"></i>Start Evaluation Run';
+            submitStatus.style.display = 'none';
             return;
         }
         
@@ -474,6 +499,11 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingModal.hide();
             console.error('Error:', error);
             alert('An error occurred while starting the evaluation.');
+            
+            // Re-enable button on error
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-rocket me-2"></i>Start Evaluation Run';
+            submitStatus.style.display = 'none';
         });
     });
 });

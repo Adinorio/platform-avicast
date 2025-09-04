@@ -13,6 +13,7 @@ from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 from decimal import Decimal
 import logging
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -45,135 +46,75 @@ class RealEvaluationService:
     def __init__(self):
         self.models = {}
         self.class_names = ['chinese_egret', 'whiskered_tern', 'great_knot']
-        self.model_paths = {
-            'yolov5s': 'models/yolov5s.pt',
-            'yolov8l': 'models/yolov8l.pt', 
-            'yolov9c': 'models/yolov9c.pt'
+        # model path resolution is handled dynamically to support multiple aliases
+
+    def _resolve_model_path(self, model_name: str) -> Tuple[Optional[str], Optional[str]]:
+        """Resolve a given model name/alias to an on-disk weight file.
+        Returns (resolved_model_name, absolute_path) or (None, None) if not found.
+        Supports aliases like 'YOLO_V8', 'yolov8l', 'yolov9c', etc.
+        """
+        if not model_name:
+            return None, None
+
+        alias = model_name.strip()
+        upper = alias.upper()
+        base_models_dir = Path(settings.BASE_DIR) / 'models'
+
+        alias_map = {
+            'YOLO_V5': 'yolov5s.pt',
+            'YOLO_V8': 'yolov8l.pt',
+            'YOLO_V9': 'yolov9c.pt',
+            'YOLOV5S': 'yolov5s.pt',
+            'YOLOV8L': 'yolov8l.pt',
+            'YOLOV9C': 'yolov9c.pt',
+            'YOLOV5': 'yolov5s.pt',
+            'YOLOV8': 'yolov8l.pt',
+            'YOLOV9': 'yolov9c.pt',
+            'CHINESE_EGRET_V1': 'chinese_egret_v1/chinese_egret_best.pt',
         }
-        
+
+        # If user passed a direct filename
+        if alias.lower().endswith('.pt'):
+            abs_path = Path(alias)
+            if not abs_path.is_absolute():
+                abs_path = base_models_dir / alias
+            return alias, str(abs_path)
+
+        filename = None
+        if upper in alias_map:
+            filename = alias_map[upper]
+        elif alias.lower() in ['yolov5s', 'yolov8l', 'yolov9c']:
+            filename = f"{alias.lower()}.pt"
+
+        if not filename:
+            return None, None
+
+        abs_path = base_models_dir / filename
+        return alias, str(abs_path)
+ 
     def load_model(self, model_name: str) -> bool:
         """Load a YOLO model"""
         try:
-            model_path = self.model_paths.get(model_name)
+            resolved_name, model_path = self._resolve_model_path(model_name)
             if not model_path or not os.path.exists(model_path):
-                logger.warning(f"Model file not found: {model_path}")
-                # For development, create a mock model
-                self.models[model_name] = self._create_mock_model(model_name)
-                return True
+                logger.error(f"Model file not found for '{model_name}': {model_path}")
+                return False
                 
             # Try to load real YOLO model
-            if 'yolov5' in model_name:
+            if 'yolov5' in model_path or 'yolov5' in (resolved_name or '').lower():
                 # Load YOLOv5 model
                 model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path)
-            elif 'yolov8' in model_name or 'yolov9' in model_name:
+            else:
                 # Load YOLOv8/v9 with ultralytics
                 from ultralytics import YOLO
                 model = YOLO(model_path)
-            else:
-                raise ValueError(f"Unsupported model type: {model_name}")
-                
             self.models[model_name] = model
-            logger.info(f"Successfully loaded model: {model_name}")
+            logger.info(f"Successfully loaded model: {model_name} from {model_path}")
             return True
-            
+             
         except Exception as e:
             logger.error(f"Failed to load model {model_name}: {e}")
-            # Fallback to mock model for development
-            self.models[model_name] = self._create_mock_model(model_name)
-            return True
-    
-    def _create_mock_model(self, model_name: str):
-        """Create a mock model for development when real models aren't available"""
-        class MockModel:
-            def __init__(self, name):
-                self.name = name
-                # Different models have different performance characteristics
-                if 'yolov5' in name:
-                    self.base_conf = 0.72
-                    self.speed_factor = 1.2
-                elif 'yolov8' in name:
-                    self.base_conf = 0.79
-                    self.speed_factor = 0.8
-                elif 'yolov9' in name:
-                    self.base_conf = 0.76
-                    self.speed_factor = 1.0
-                else:
-                    self.base_conf = 0.75
-                    self.speed_factor = 1.0
-                    
-            def predict(self, image_path, conf=0.25):
-                """Generate realistic mock predictions"""
-                time.sleep(0.03 * self.speed_factor)  # Simulate inference time
-                
-                # Load image to get dimensions
-                img = cv2.imread(str(image_path))
-                if img is None:
-                    return []
-                    
-                height, width = img.shape[:2]
-                
-                # Generate realistic detections based on image name and model
-                detections = []
-                
-                # Simulate different detection patterns based on filename
-                filename = os.path.basename(image_path).lower()
-                
-                if 'chinese_egret' in filename or 'egret' in filename:
-                    # Higher chance of detecting egret
-                    if np.random.random() < self.base_conf:
-                        detections.append(self._generate_detection(0, 'chinese_egret', width, height))
-                    if np.random.random() < 0.1:  # Small chance of false positives
-                        detections.append(self._generate_detection(np.random.randint(1, 3), 
-                                                                 self.class_names[np.random.randint(1, 3)], 
-                                                                 width, height))
-                        
-                elif 'whiskered_tern' in filename or 'tern' in filename:
-                    if np.random.random() < self.base_conf:
-                        detections.append(self._generate_detection(1, 'whiskered_tern', width, height))
-                    if np.random.random() < 0.08:
-                        detections.append(self._generate_detection(np.random.randint(0, 3), 
-                                                                 self.class_names[np.random.randint(0, 3)], 
-                                                                 width, height))
-                        
-                elif 'great_knot' in filename or 'knot' in filename:
-                    if np.random.random() < self.base_conf:
-                        detections.append(self._generate_detection(2, 'great_knot', width, height))
-                    if np.random.random() < 0.12:
-                        detections.append(self._generate_detection(np.random.randint(0, 2), 
-                                                                 self.class_names[np.random.randint(0, 2)], 
-                                                                 width, height))
-                else:
-                    # Random image - chance of detecting any species
-                    for class_id, class_name in enumerate(self.class_names):
-                        if np.random.random() < 0.3:
-                            detections.append(self._generate_detection(class_id, class_name, width, height))
-                
-                return detections
-                
-            def _generate_detection(self, class_id, class_name, width, height):
-                """Generate a realistic bounding box detection"""
-                # Generate realistic bounding box (bird typically in center area)
-                center_x = width * (0.3 + np.random.random() * 0.4)
-                center_y = height * (0.3 + np.random.random() * 0.4)
-                box_w = width * (0.1 + np.random.random() * 0.3)
-                box_h = height * (0.1 + np.random.random() * 0.3)
-                
-                x1 = max(0, center_x - box_w/2)
-                y1 = max(0, center_y - box_h/2)
-                x2 = min(width, center_x + box_w/2)
-                y2 = min(height, center_y + box_h/2)
-                
-                confidence = self.base_conf + np.random.normal(0, 0.1)
-                confidence = max(0.1, min(0.99, confidence))
-                
-                return Detection(
-                    bbox=(x1, y1, x2, y2),
-                    confidence=confidence,
-                    class_id=class_id,
-                    class_name=class_name
-                )
-        
-        return MockModel(model_name)
+            return False
     
     def run_inference(self, model_name: str, image_path: str, conf_threshold: float = 0.25) -> List[Detection]:
         """Run inference on a single image"""
@@ -186,8 +127,22 @@ class RealEvaluationService:
         try:
             # Run prediction
             if hasattr(model, 'predict'):
-                # Mock model or ultralytics model
-                return model.predict(image_path, conf=conf_threshold)
+                # Ultralytics YOLO models
+                from ultralytics import YOLO  # ensure available
+                results = model.predict(image_path, conf=conf_threshold, verbose=False)
+                detections: List[Detection] = []
+                for r in results:
+                    if getattr(r, 'boxes', None) is None:
+                        continue
+                    for b in r.boxes:
+                        # xyxy tensor
+                        xyxy = b.xyxy[0].cpu().numpy()
+                        x1, y1, x2, y2 = float(xyxy[0]), float(xyxy[1]), float(xyxy[2]), float(xyxy[3])
+                        conf = float(b.conf[0].cpu().numpy()) if hasattr(b, 'conf') else 0.0
+                        cls_id = int(b.cls[0].cpu().numpy()) if hasattr(b, 'cls') else -1
+                        cls_name = self.class_names[cls_id] if 0 <= cls_id < len(self.class_names) else f'class_{cls_id}'
+                        detections.append(Detection(bbox=(x1, y1, x2, y2), confidence=conf, class_id=cls_id, class_name=cls_name))
+                return detections
             else:
                 # Real PyTorch model
                 img = cv2.imread(str(image_path))
@@ -199,12 +154,14 @@ class RealEvaluationService:
                 
                 # Convert results to Detection objects
                 for result in results.pandas().xyxy[0].itertuples():
-                    if result.confidence >= conf_threshold:
-                        class_id = int(result.cls)
+                    conf = getattr(result, 'confidence', getattr(result, 'conf', 0))
+                    cls_val = getattr(result, 'cls', getattr(result, 'class', -1))
+                    if conf >= conf_threshold:
+                        class_id = int(cls_val)
                         if class_id < len(self.class_names):
                             detection = Detection(
-                                bbox=(result.xmin, result.ymin, result.xmax, result.ymax),
-                                confidence=result.confidence,
+                                bbox=(float(result.xmin), float(result.ymin), float(result.xmax), float(result.ymax)),
+                                confidence=float(conf),
                                 class_id=class_id,
                                 class_name=self.class_names[class_id]
                             )
@@ -307,8 +264,8 @@ class RealEvaluationService:
         annotation_path = image_path.parent / 'labels' / f"{image_path.stem}.txt"
         
         if not annotation_path.exists():
-            # Generate mock ground truth based on filename for development
-            return self._generate_mock_ground_truth(str(image_path))
+            # No ground truth available
+            return []
         
         ground_truth = []
         
@@ -342,45 +299,11 @@ class RealEvaluationService:
                             
         except Exception as e:
             logger.error(f"Failed to load ground truth for {image_path}: {e}")
-            return self._generate_mock_ground_truth(str(image_path))
+            return []
         
         return ground_truth
     
-    def _generate_mock_ground_truth(self, image_path: str) -> List[GroundTruth]:
-        """Generate mock ground truth for development"""
-        filename = os.path.basename(image_path).lower()
-        ground_truth = []
-        
-        # Load image to get dimensions
-        img = cv2.imread(image_path)
-        if img is None:
-            return []
-        height, width = img.shape[:2]
-        
-        # Generate ground truth based on filename
-        if 'chinese_egret' in filename or 'egret' in filename:
-            gt = GroundTruth(
-                bbox=(width*0.2, height*0.3, width*0.7, height*0.8),
-                class_id=0,
-                class_name='chinese_egret'
-            )
-            ground_truth.append(gt)
-        elif 'whiskered_tern' in filename or 'tern' in filename:
-            gt = GroundTruth(
-                bbox=(width*0.25, height*0.25, width*0.75, height*0.75),
-                class_id=1,
-                class_name='whiskered_tern'
-            )
-            ground_truth.append(gt)
-        elif 'great_knot' in filename or 'knot' in filename:
-            gt = GroundTruth(
-                bbox=(width*0.3, height*0.2, width*0.8, height*0.7),
-                class_id=2,
-                class_name='great_knot'
-            )
-            ground_truth.append(gt)
-        
-        return ground_truth
+    # Removed mock ground truth generation to ensure only real data is used
     
     def evaluate_image(self, image_path: str, models: List[str],
                       conf_threshold: float = 0.25, iou_threshold: float = 0.5) -> ImageEvaluation:

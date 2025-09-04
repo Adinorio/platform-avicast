@@ -5,14 +5,18 @@ Advanced dashboard for YOLO model comparison and thesis analysis
 import json
 from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
-from django.db.models import Avg, Count, Max, Min
+from django.db.models import Avg, Count, Max, Min, Q
 from django.core.paginator import Paginator
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import ImageUpload, ImageProcessingResult
 from .analytics_models import (
@@ -29,12 +33,21 @@ from .analytics_config import (
 @login_required
 def analytics_dashboard(request):
     """
-    Main Model Performance Analytics Dashboard
-    Advanced MLOps metrics for thesis analysis
+    Enhanced Model Performance Analytics Dashboard
+    Advanced MLOps metrics for thesis analysis with improved filtering
     """
     if not request.user.can_access_feature('image_processing'):
         messages.error(request, "You don't have permission to access analytics.")
         return redirect('image_processing:list')
+    
+    # Get filtering parameters
+    model_filter = request.GET.getlist('model')
+    species_filter = request.GET.getlist('species')
+    date_start = request.GET.get('date_start')
+    date_end = request.GET.get('date_end')
+    review_status_filter = request.GET.getlist('review_status')
+    confidence_min = request.GET.get('confidence_min')
+    confidence_max = request.GET.get('confidence_max')
     
     # Get available models for filtering (dynamic)
     available_models = get_available_models()
@@ -44,62 +57,227 @@ def analytics_dashboard(request):
         status='COMPLETED'
     ).order_by('-created_at')[:ANALYTICS_CONFIG['RECENT_RUNS_LIMIT']]
     
-    # Get overall statistics
-    total_processed_images = ImageProcessingResult.objects.filter(
+    # Base query for processed images
+    processed_query = ImageProcessingResult.objects.filter(
         processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
-    ).count()
+    )
     
-    total_approved_results = ImageProcessingResult.objects.filter(
+    # Apply filters
+    if model_filter:
+        processed_query = processed_query.filter(ai_model__in=model_filter)
+    if species_filter:
+        processed_query = processed_query.filter(detected_species__in=species_filter)
+    if date_start:
+        processed_query = processed_query.filter(created_at__date__gte=date_start)
+    if date_end:
+        processed_query = processed_query.filter(created_at__date__lte=date_end)
+    if review_status_filter:
+        processed_query = processed_query.filter(review_status__in=review_status_filter)
+    if confidence_min:
+        processed_query = processed_query.filter(confidence_score__gte=float(confidence_min))
+    if confidence_max:
+        processed_query = processed_query.filter(confidence_score__lte=float(confidence_max))
+    
+    # Get enhanced statistics
+    total_processed_images = processed_query.count()
+    
+    total_approved_results = processed_query.filter(
         review_status__in=[
             ImageProcessingResult.ReviewStatus.APPROVED,
             ImageProcessingResult.ReviewStatus.OVERRIDDEN
         ]
     ).count()
     
-    # Get model usage statistics
-    model_usage = ImageProcessingResult.objects.filter(
-        processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
-    ).values('ai_model').annotate(
+    total_rejected_results = processed_query.filter(
+        review_status=ImageProcessingResult.ReviewStatus.REJECTED
+    ).count()
+    
+    # Enhanced model usage statistics with performance metrics
+    model_usage = processed_query.values('ai_model').annotate(
         count=Count('id'),
         avg_confidence=Avg('confidence_score'),
-        avg_inference_time=Avg('inference_time')
+        avg_inference_time=Avg('inference_time'),
+        approved_count=Count('id', filter=Q(review_status__in=[
+            ImageProcessingResult.ReviewStatus.APPROVED,
+            ImageProcessingResult.ReviewStatus.OVERRIDDEN
+        ])),
+        rejected_count=Count('id', filter=Q(review_status=ImageProcessingResult.ReviewStatus.REJECTED))
     ).order_by('-count')
     
-    # Get species detection statistics
+    # Calculate approval rates for each model and convert Decimals to float
+    for model in model_usage:
+        total = model['count']
+        approved = model['approved_count']
+        model['approval_rate'] = (approved / total * 100) if total > 0 else 0
+        model['rejection_rate'] = (model['rejected_count'] / total * 100) if total > 0 else 0
+        
+        # Convert Decimal fields to float for JavaScript compatibility
+        if model.get('avg_confidence') is not None:
+            model['avg_confidence'] = float(model['avg_confidence'])
+        if model.get('avg_inference_time') is not None:
+            model['avg_inference_time'] = float(model['avg_inference_time'])
+    
+    # Enhanced species detection statistics
     species_stats = []
     target_species = get_target_species()
     for species in target_species:
-        count = ImageProcessingResult.objects.filter(
-            detected_species__icontains=species,
+        species_results = processed_query.filter(detected_species=species)
+        total_count = species_results.count()
+        approved_count = species_results.filter(
             review_status__in=[
                 ImageProcessingResult.ReviewStatus.APPROVED,
                 ImageProcessingResult.ReviewStatus.OVERRIDDEN
             ]
         ).count()
+        avg_confidence = species_results.aggregate(avg_conf=Avg('confidence_score'))['avg_conf'] or 0
+        
         species_stats.append({
             'name': species,
-            'count': count
+            'total_count': total_count,
+            'approved_count': approved_count,
+            'approval_rate': (approved_count / total_count * 100) if total_count > 0 else 0,
+            'avg_confidence': avg_confidence
         })
+    
+    # Available filter options
+    available_species = ImageProcessingResult.objects.values_list('detected_species', flat=True).distinct()
+    available_review_statuses = ImageProcessingResult.ReviewStatus.choices
+    
+    # Confidence statistics for threshold optimization
+    confidence_stats = processed_query.aggregate(
+        min_confidence=Min('confidence_score'),
+        max_confidence=Max('confidence_score'),
+        avg_confidence=Avg('confidence_score')
+    )
+    
+    # Processing performance metrics
+    performance_stats = processed_query.aggregate(
+        avg_inference_time=Avg('inference_time'),
+        min_inference_time=Min('inference_time'),
+        max_inference_time=Max('inference_time'),
+        total_processed_results=Count('id')
+    )
+    
+    # Calculate average detections per image separately to avoid aggregate conflict
+    detections_data = processed_query.values_list('total_detections', flat=True)
+    avg_detections = sum(d for d in detections_data if d is not None) / len(detections_data) if detections_data else 0
+    performance_stats['avg_detections_per_image'] = avg_detections
+    
+    # Convert Decimal objects to float for JavaScript compatibility
+    for stat in species_stats:
+        if 'avg_confidence' in stat and stat['avg_confidence']:
+            stat['avg_confidence'] = float(stat['avg_confidence'])
+    
+    # Convert confidence stats to float
+    for key, value in confidence_stats.items():
+        if value is not None:
+            confidence_stats[key] = float(value)
+    
+    # Convert performance stats to float
+    for key, value in performance_stats.items():
+        if value is not None and hasattr(value, '__float__'):
+            performance_stats[key] = float(value)
     
     context = {
         'available_models': available_models,
+        'available_species': [s for s in available_species if s],
+        'available_review_statuses': available_review_statuses,
         'recent_runs': recent_runs,
         'total_processed_images': total_processed_images,
         'total_approved_results': total_approved_results,
+        'total_rejected_results': total_rejected_results,
         'model_usage': model_usage,
         'species_stats': species_stats,
         'target_species': target_species,
+        'confidence_stats': confidence_stats,
+        'performance_stats': performance_stats,
+        # Current filter values
+        'current_filters': {
+            'model': model_filter,
+            'species': species_filter,
+            'date_start': date_start,
+            'date_end': date_end,
+            'review_status': review_status_filter,
+            'confidence_min': confidence_min,
+            'confidence_max': confidence_max
+        }
     }
     
     return render(request, 'image_processing/analytics_dashboard.html', context)
 
 @login_required
+def image_selection_view(request):
+    """
+    View for selecting specific images for evaluation runs
+    """
+    if not request.user.can_access_feature('image_processing'):
+        messages.error(request, "You don't have permission to access analytics.")
+        return redirect('image_processing:list')
+    
+    # Get filtering parameters
+    model_filter = request.GET.getlist('model')
+    species_filter = request.GET.getlist('species')
+    review_status_filter = request.GET.getlist('review_status')
+    date_start = request.GET.get('date_start')
+    date_end = request.GET.get('date_end')
+    
+    # Base query for processed images
+    results_query = ImageProcessingResult.objects.filter(
+        processing_status=ImageProcessingResult.ProcessingStatus.COMPLETED
+    ).select_related('image_upload')
+    
+    # Apply filters
+    if model_filter:
+        results_query = results_query.filter(ai_model__in=model_filter)
+    if species_filter:
+        results_query = results_query.filter(detected_species__in=species_filter)
+    if review_status_filter:
+        results_query = results_query.filter(review_status__in=review_status_filter)
+    if date_start:
+        results_query = results_query.filter(created_at__date__gte=date_start)
+    if date_end:
+        results_query = results_query.filter(created_at__date__lte=date_end)
+    
+    # Pagination
+    paginator = Paginator(results_query, 24)  # 24 images per page for grid display
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Available filter options
+    available_models = get_available_models()
+    available_species = ImageProcessingResult.objects.values_list('detected_species', flat=True).distinct()
+    available_review_statuses = ImageProcessingResult.ReviewStatus.choices
+    
+    context = {
+        'page_obj': page_obj,
+        'available_models': available_models,
+        'available_species': [s for s in available_species if s],
+        'available_review_statuses': available_review_statuses,
+        'current_filters': {
+            'model': model_filter,
+            'species': species_filter,
+            'review_status': review_status_filter,
+            'date_start': date_start,
+            'date_end': date_end
+        },
+        'total_images': results_query.count()
+    }
+    
+    return render(request, 'image_processing/image_selection.html', context)
+
+@login_required
 @csrf_exempt
-@require_http_methods(["POST"])
 def create_evaluation_run(request):
     """
-    Create and execute a new model evaluation run
+    Create and execute a new model evaluation run with optional image selection
     """
+    if request.method != 'POST':
+        return JsonResponse({
+            'error': 'Method not allowed. This endpoint only accepts POST requests.',
+            'message': 'To start an evaluation run, please use the form on the analytics dashboard.',
+            'redirect_url': reverse('image_processing:analytics_dashboard')
+        }, status=405)
+        
     if not request.user.can_access_feature('image_processing'):
         return JsonResponse({'error': 'Access denied'}, status=403)
     
@@ -108,15 +286,25 @@ def create_evaluation_run(request):
         data = json.loads(request.body)
         log_debug(f"Parsed data: {data}")
         
-        # Create evaluation run with configurable defaults
+        # Validate that we have either filters or selected images
+        models = data.get('models', [])
+        species = data.get('species', [])
+        selected_images = data.get('selected_images', [])
+        
+        if not models and not species and not selected_images:
+            return JsonResponse({
+                'error': 'Please specify at least one model, species filter, or select specific images'
+            }, status=400)
+        
+        # Create evaluation run with enhanced configuration
         evaluation_run = ModelEvaluationRun.objects.create(
             name=data.get('name', f"Evaluation Run {timezone.now().strftime('%Y-%m-%d %H:%M')}"),
             description=data.get('description', ''),
             created_by=request.user,
             iou_threshold=data.get('iou_threshold', ANALYTICS_CONFIG['DEFAULT_IOU_THRESHOLD']),
             confidence_threshold=data.get('confidence_threshold', ANALYTICS_CONFIG['DEFAULT_CONFIDENCE_THRESHOLD']),
-            models_evaluated=data.get('models', []),
-            species_filter=data.get('species', [])
+            models_evaluated=models,
+            species_filter=species
         )
         
         # Parse date range if provided
@@ -129,15 +317,30 @@ def create_evaluation_run(request):
             evaluation_run.save()
             date_range = (date_start, date_end)
         
-        # Run REAL evaluation in background
+        # Store selected images if provided
+        if selected_images:
+            # Store selected image IDs in the evaluation run for targeted evaluation
+            # Add a new field to store selected image IDs
+            evaluation_run.description += f"\nSelected {len(selected_images)} specific images for evaluation."
+            evaluation_run.save()
+        
+        # Preview the images that will be evaluated
         from .real_evaluation_workflow import RealEvaluationWorkflow
         workflow = RealEvaluationWorkflow()
+        temp_eval_run = evaluation_run  # Use the created run for preview
+        
+        # Get the images that would be evaluated
+        preview_images = workflow._get_images_for_evaluation(temp_eval_run)
+        
+        # Start the actual evaluation
         workflow.start_evaluation(evaluation_run)
         
         return JsonResponse({
             'success': True,
             'evaluation_run_id': str(evaluation_run.id),
-            'redirect_url': f'/image-processing/analytics/results/{evaluation_run.id}/'
+            'preview_image_count': len(preview_images),
+            'redirect_url': f'/image-processing/analytics/results/{evaluation_run.id}/',
+            'message': f'Evaluation started with {len(preview_images)} images'
         })
         
     except Exception as e:
@@ -224,7 +427,113 @@ def evaluation_results(request, run_id):
     failure_cases = evaluation_run.image_results.filter(
         image_recall__lt=ANALYTICS_CONFIG['FAILURE_RECALL_THRESHOLD']
     ).order_by('image_recall')[:ANALYTICS_CONFIG['FAILURE_CASES_LIMIT']]
+
+    # Generate comprehensive performance report for thesis
+    thesis_report = None
+    statistical_analysis = None
+    try:
+        service = ModelAnalyticsService()
+        thesis_report = service.generate_performance_report(
+            evaluation_run, 
+            include_statistical_analysis=True
+        )
+        
+        # Convert Decimal objects to float for JavaScript compatibility
+        if thesis_report:
+            # Convert model performance metrics
+            for model in thesis_report.get('model_performance', []):
+                for key, value in model.items():
+                    if hasattr(value, '__float__') and hasattr(value, 'as_tuple'):  # Check if it's a Decimal
+                        model[key] = float(value)
+            
+            # Convert species performance metrics
+            for species in thesis_report.get('species_performance', []):
+                for key, value in species.items():
+                    if hasattr(value, '__float__') and hasattr(value, 'as_tuple'):  # Check if it's a Decimal
+                        species[key] = float(value)
+            
+            # Convert overall metrics
+            for key, value in thesis_report.get('overall_metrics', {}).items():
+                if hasattr(value, '__float__') and hasattr(value, 'as_tuple'):  # Check if it's a Decimal
+                    thesis_report['overall_metrics'][key] = float(value)
+        
+        # Extract statistical analysis if available
+        if 'statistical_analysis' in thesis_report:
+            statistical_analysis = thesis_report['statistical_analysis']
+            
+    except Exception as e:
+        logger.error(f"Error generating thesis report: {e}")
+        thesis_report = None
+
+    # Reviewed-results fallback summary when no ground-truth exists
+    reviewed_summary = None
+    use_reviewed_fallback = False
+    try:
+        reviewed_summary = service.summarize_reviewed_results(
+            model_filters=list(evaluation_run.models_evaluated) if evaluation_run.models_evaluated else None,
+            species_filter=list(evaluation_run.species_filter) if evaluation_run.species_filter else None,
+        )
+        # Use fallback section if the ground-truth-based totals are zero
+        use_reviewed_fallback = (getattr(evaluation_run, 'total_ground_truth_objects', 0) or 0) == 0
+    except Exception:
+        reviewed_summary = None
+        use_reviewed_fallback = False
+
+    # Check if evaluation has meaningful data or if we need to show guidance
+    has_ground_truth = any(
+        len(result.ground_truth_boxes) > 0 if result.ground_truth_boxes else False 
+        for result in evaluation_run.image_results.all()
+    )
     
+    # Also check if there are any images with annotations in the system
+    annotated_images_available = ImageUpload.objects.filter(
+        metadata__ground_truth_annotations__isnull=False
+    ).exclude(metadata__ground_truth_annotations=[]).count()
+    
+    # Update guidance based on available annotated images
+    if not has_ground_truth and annotated_images_available > 0:
+        evaluation_guidance = {
+            'issue': 'Ground Truth Available But Not Used in Evaluation',
+            'explanation': f'Found {annotated_images_available} images with ground truth annotations, but they weren\'t included in this evaluation run.',
+            'suggestions': [
+                'Run a new evaluation to include your annotated images',
+                'Make sure your annotated images match the model and species filters',
+                'Check that your annotated images are in the selected date range',
+                'Ensure your image files still exist and are accessible'
+            ],
+            'available_data': [
+                f'{annotated_images_available} images with ground truth annotations available',
+                f'{evaluation_run.total_images_evaluated} images processed in this run',
+                'Ready for real evaluation with proper metrics'
+            ]
+        }
+    
+    has_meaningful_metrics = (
+        evaluation_run.overall_precision and evaluation_run.overall_precision > 0
+    ) or (
+        evaluation_run.overall_recall and evaluation_run.overall_recall > 0
+    )
+    
+    # Provide guidance for no ground truth scenario
+    evaluation_guidance = None
+    if not has_ground_truth:
+        evaluation_guidance = {
+            'issue': 'No Ground Truth Data Available',
+            'explanation': 'This evaluation run contains images without ground truth annotations, making traditional metrics (Precision, Recall, mAP) unavailable.',
+            'suggestions': [
+                'For thesis evaluation, consider using a labeled dataset with ground truth annotations',
+                'Use the reviewed results feature to analyze model performance on user-approved detections',
+                'Export detection results for manual validation and annotation',
+                'Consider confidence score distributions and detection counts as alternative metrics'
+            ],
+            'available_data': [
+                f'{evaluation_run.total_images_evaluated} images processed',
+                f'{evaluation_run.model_metrics.first().images_processed if evaluation_run.model_metrics.exists() else 0} successful detections',
+                'Detection confidence distributions',
+                'Species detection counts'
+            ]
+        }
+
     context = {
         'evaluation_run': evaluation_run,
         'model_metrics': model_metrics,
@@ -237,8 +546,18 @@ def evaluation_results(request, run_id):
         'total_models_compared': model_metrics.count(),
         'best_model_name': best_model.model_name if best_model else 'N/A',
         'best_model_f1': float(best_model.f1_score) if best_model and best_model.f1_score else 0,
+        'reviewed_summary': reviewed_summary,
+        'use_reviewed_fallback': use_reviewed_fallback,
+        # Enhanced thesis-relevant data
+        'thesis_report': thesis_report,
+        'statistical_analysis': statistical_analysis,
+        'recommendations': thesis_report['recommendations'] if thesis_report else [],
+        'error_analysis': thesis_report['error_analysis'] if thesis_report else {},
+        # Ground truth status and guidance
+        'has_ground_truth': has_ground_truth,
+        'has_meaningful_metrics': has_meaningful_metrics,
+        'evaluation_guidance': evaluation_guidance,
     }
-    
     return render(request, 'image_processing/evaluation_results.html', context)
 
 @login_required
@@ -502,3 +821,95 @@ def delete_evaluation_run(request, run_id):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def reviewed_analytics_view(request):
+    """Display analytics based on human-reviewed processing results."""
+    if not request.user.can_access_feature('image_processing'):
+        messages.error(request, "You don't have permission to access analytics.")
+        return redirect('image_processing:list')
+
+    service = ModelAnalyticsService()
+    performance_summary = service.summarize_model_performance_from_reviews()
+
+    context = {
+        'summary': performance_summary,
+    }
+    return render(request, 'image_processing/reviewed_analytics.html', context)
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_kfold_evaluation(request):
+    """Trigger K-fold evaluation over processed results for thesis reporting."""
+    if not request.user.can_access_feature('image_processing'):
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    try:
+        data = json.loads(request.body or '{}')
+        k = int(data.get('k', 5))
+        iou_th = float(data.get('iou_threshold', ANALYTICS_CONFIG['DEFAULT_IOU_THRESHOLD']))
+        conf_th = float(data.get('confidence_threshold', ANALYTICS_CONFIG['DEFAULT_CONFIDENCE_THRESHOLD']))
+        models = data.get('models', None)
+        species = data.get('species', None)
+
+        # Optional date range
+        date_range = None
+        if data.get('date_start') and data.get('date_end'):
+            date_start = datetime.fromisoformat(data['date_start'].replace('Z', '+00:00'))
+            date_end = datetime.fromisoformat(data['date_end'].replace('Z', '+00:00'))
+            date_range = (date_start, date_end)
+
+        service = ModelAnalyticsService()
+        eval_run = service.run_kfold_evaluation(
+            k=k,
+            created_by=request.user,
+            name=data.get('name'),
+            model_filters=models,
+            date_range=date_range,
+            species_filter=species,
+            iou_threshold=iou_th,
+            confidence_threshold=conf_th,
+        )
+
+        # Summarize aggregate rows
+        aggregates = []
+        for m in eval_run.model_metrics.filter(model_name__icontains='[k-fold aggregate]'):
+            aggregates.append({
+                'model': m.model_name.replace(' [k-fold aggregate]', ''),
+                'precision_mean': float(m.precision) if m.precision else 0.0,
+                'recall_mean': float(m.recall) if m.recall else 0.0,
+                'f1_mean': float(m.f1_score) if m.f1_score else 0.0,
+                'map50_mean': float(m.map_50) if m.map_50 else 0.0,
+                'images_processed': m.images_processed,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'evaluation_run_id': str(eval_run.id),
+            'status': eval_run.status,
+            'overall_map_50': float(eval_run.overall_map_50) if eval_run.overall_map_50 else None,
+            'total_images': eval_run.total_images_evaluated,
+            'aggregates': aggregates,
+            'redirect_url': f"/image-processing/analytics/results/{eval_run.id}/",
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_reviewed_summary(request):
+    """Return analytics summary based on reviewed (approved/overridden) results."""
+    if not request.user.can_access_feature('image_processing'):
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    try:
+        models = request.GET.getlist('model') or None
+        species = request.GET.getlist('species') or None
+
+        service = ModelAnalyticsService()
+        summary = service.summarize_reviewed_results(species_filter=species, model_filters=models)
+        return JsonResponse({'success': True, 'summary': summary})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
