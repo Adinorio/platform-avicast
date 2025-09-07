@@ -1,0 +1,23 @@
+* text=auto eol=lf
+
+# Treat these as binary
+*.pt binary
+*.pth binary
+*.onnx binary
+*.zip binary
+*.7z binary
+*.tar.gz binary
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.mkv binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.bmp binary
+*.tiff binary
+*.tif binary
+*.gif binary
+*.webp binary
+
+
