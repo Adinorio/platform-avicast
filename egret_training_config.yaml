@@ -1,0 +1,14 @@
+# YOLO Dataset Configuration for Egret Detection
+# Dataset: unified_egret_dataset
+# Classes: Chinese Egret, Great Egret, Intermediate Egret, Little Egret
+
+# Dataset paths (relative to project root)
+train: training_data/final_yolo_dataset/unified_egret_dataset/train/images
+val: training_data/final_yolo_dataset/unified_egret_dataset/val/images
+test: training_data/final_yolo_dataset/unified_egret_dataset/test/images
+
+# Number of classes
+nc: 4
+
+# Class names (as a list, not dictionary)
+names: ['Chinese Egret', 'Great Egret', 'Intermediate Egret', 'Little Egret']
