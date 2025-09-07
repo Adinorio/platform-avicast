@@ -117,7 +117,6 @@ class WeatherAPIService:
     def _extract_current_weather_meteo(self, data: dict) -> dict[str, Any]:
         """Extract current weather from Open-Meteo response"""
         hourly = data.get("hourly", {})
-        current_time = timezone.now()
 
         # Find the closest hourly data point
         times = hourly.get("temperatures", [])

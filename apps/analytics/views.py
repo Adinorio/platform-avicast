@@ -8,19 +8,25 @@ import plotly.graph_objects as go
 import plotly.utils
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
+from django.db.models.functions import ExtractMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-
 from apps.locations.models import CensusObservation, Site, SpeciesObservation
 
 
 def role_required(allowed_roles):
     """
-    Decorator to check if user has required role
+    Decorator to check if user has required role for accessing views.
+
+    Args:
+        allowed_roles: List of role strings that are allowed access
+
+    Returns:
+        Decorated function or redirect/error response
     """
 
     def decorator(view_func):
@@ -45,7 +51,12 @@ def role_required(allowed_roles):
 @login_required
 @role_required(["ADMIN", "FIELD_WORKER"])
 def analytics_dashboard(request):
-    """Main analytics dashboard with overview charts"""
+    """
+    Main analytics dashboard displaying overview charts and statistics.
+
+    Shows total sites, census observations, species count, bird population,
+    recent activity, top sites by diversity, and available AI models.
+    """
 
     # Get basic statistics
     total_sites = Site.objects.count()
@@ -205,20 +216,20 @@ def population_trends_chart(request):
 def seasonal_analysis_chart(request):
     """Generate seasonal analysis heatmap"""
 
-    # Get seasonal data
+    # Get seasonal data - group by month properly
     census_data = CensusObservation.objects.annotate(
         total_birds=Sum("species_observations__count"),
-        month=Count("observation_date", filter=Q(observation_date__month=1)),  # This needs fixing
-    ).values("observation_date", "total_birds")
+        observation_month=ExtractMonth("observation_date"),
+    ).values("observation_date", "total_birds", "observation_month")
 
     # Create monthly heatmap data
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-    # This is a simplified version - in practice, you'd aggregate by month properly
+    # Aggregate data by month properly
     monthly_totals = [0] * 12
 
     for census in census_data:
-        month = census["observation_date"].month - 1  # 0-indexed
+        month = census["observation_month"] - 1  # 0-indexed (1-12 -> 0-11)
         monthly_totals[month] += census["total_birds"] or 0
 
     # Create heatmap

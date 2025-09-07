@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import logging
 from functools import wraps
 
 from django.contrib import messages
@@ -19,6 +20,8 @@ from .forms import (
     SpeciesObservationFormSet,
 )
 from .models import CensusObservation, MobileDataImport, Site, SpeciesObservation
+
+logger = logging.getLogger(__name__)
 
 
 def role_required(allowed_roles):
