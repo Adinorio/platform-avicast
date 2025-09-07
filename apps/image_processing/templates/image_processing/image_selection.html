@@ -13,18 +13,18 @@
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         cursor: pointer;
     }
-    
+
     .image-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
-    
+
     .image-card.selected {
         border: 3px solid #007bff;
         transform: scale(1.02);
         box-shadow: 0 8px 25px rgba(0,123,255,0.3);
     }
-    
+
     .image-overlay {
         position: absolute;
         bottom: 0;
@@ -35,7 +35,7 @@
         padding: 1rem;
         font-size: 0.85rem;
     }
-    
+
     .selection-checkbox {
         position: absolute;
         top: 10px;
@@ -43,7 +43,7 @@
         transform: scale(1.5);
         z-index: 10;
     }
-    
+
     .filter-panel {
         background: white;
         border-radius: 10px;
@@ -51,7 +51,7 @@
         padding: 1.5rem;
         margin-bottom: 1.5rem;
     }
-    
+
     .stats-panel {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -59,12 +59,12 @@
         padding: 1.5rem;
         margin-bottom: 1.5rem;
     }
-    
+
     .review-status-badge {
         font-size: 0.7rem;
         padding: 0.2rem 0.5rem;
     }
-    
+
     .confidence-bar {
         height: 4px;
         background: rgba(255,255,255,0.3);
@@ -72,13 +72,13 @@
         overflow: hidden;
         margin-top: 0.5rem;
     }
-    
+
     .confidence-fill {
         height: 100%;
         background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
         transition: width 0.3s ease;
     }
-    
+
     .evaluation-preview {
         position: fixed;
         bottom: 20px;
@@ -91,19 +91,19 @@
         z-index: 1000;
         transition: all 0.3s ease;
     }
-    
+
     .evaluation-preview:hover {
         transform: translateY(-2px);
         box-shadow: 0 12px 35px rgba(0,123,255,0.4);
     }
-    
+
     .image-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1.5rem;
         margin-top: 1.5rem;
     }
-    
+
     .image-placeholder {
         width: 100%;
         height: 200px;
@@ -220,10 +220,10 @@
         {% for result in page_obj %}
         <div class="image-card" data-image-id="{{ result.id }}" data-image-path="{{ result.image_upload.image_file.url }}">
             <input type="checkbox" class="form-check-input selection-checkbox" data-image-id="{{ result.id }}">
-            
+
             {% if result.image_upload.image_file %}
-            <img src="{{ result.image_upload.image_file.url }}" 
-                 alt="{{ result.image_upload.title }}" 
+            <img src="{{ result.image_upload.image_file.url }}"
+                 alt="{{ result.image_upload.title }}"
                  class="image-placeholder"
                  loading="lazy">
             {% else %}
@@ -231,7 +231,7 @@
                 <i class="fas fa-image fa-3x text-muted"></i>
             </div>
             {% endif %}
-            
+
             <div class="image-overlay">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
@@ -251,7 +251,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="row g-2">
                     <div class="col-6">
                         <small>Species:</small>
@@ -264,14 +264,14 @@
                         <small><strong>{{ result.total_detections|default:0 }}</strong></small>
                     </div>
                 </div>
-                
+
                 <div class="mt-2">
                     <small>Confidence: {{ result.confidence_score|floatformat:1 }}%</small>
                     <div class="confidence-bar">
                         <div class="confidence-fill" style="width: {{ result.confidence_score|default:0 }}%"></div>
                     </div>
                 </div>
-                
+
                 <div class="mt-2">
                     <small class="text-muted">
                         Processed: {{ result.created_at|date:"M d, Y H:i" }}
@@ -362,19 +362,19 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Evaluation Name</label>
-                                <input type="text" class="form-control" id="evaluationName" 
+                                <input type="text" class="form-control" id="evaluationName"
                                        value="Custom Selection - {{ 'now'|date:'M d, Y H:i' }}" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Description</label>
-                                <input type="text" class="form-control" id="evaluationDescription" 
+                                <input type="text" class="form-control" id="evaluationDescription"
                                        placeholder="Describe this evaluation run...">
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
@@ -390,7 +390,7 @@
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">IoU Threshold</label>
-                                <input type="number" class="form-control" id="iouThreshold" 
+                                <input type="number" class="form-control" id="iouThreshold"
                                        value="0.50" step="0.05" min="0.1" max="0.95">
                                 <small class="text-muted">For detection matching</small>
                             </div>
@@ -398,13 +398,13 @@
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">Confidence Threshold</label>
-                                <input type="number" class="form-control" id="confidenceThreshold" 
+                                <input type="number" class="form-control" id="confidenceThreshold"
                                        value="0.25" step="0.05" min="0.05" max="0.95">
                                 <small class="text-muted">Minimum detection confidence</small>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle me-2"></i>Selected Images Summary</h6>
                         <div id="selectedImagesSummary">
@@ -431,7 +431,7 @@ let evaluationModal;
 
 document.addEventListener('DOMContentLoaded', function() {
     evaluationModal = new bootstrap.Modal(document.getElementById('evaluationModal'));
-    
+
     // Initialize event listeners
     initializeImageSelection();
     initializeButtons();
@@ -449,7 +449,7 @@ function initializeImageSelection() {
             }
         });
     });
-    
+
     // Handle checkbox changes
     document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -461,7 +461,7 @@ function initializeImageSelection() {
 function toggleImageSelection(checkbox) {
     const imageId = checkbox.dataset.imageId;
     const imageCard = checkbox.closest('.image-card');
-    
+
     if (checkbox.checked) {
         selectedImages.add(imageId);
         imageCard.classList.add('selected');
@@ -469,20 +469,20 @@ function toggleImageSelection(checkbox) {
         selectedImages.delete(imageId);
         imageCard.classList.remove('selected');
     }
-    
+
     updateSelectionDisplay();
 }
 
 function updateSelectionDisplay() {
     const count = selectedImages.size;
-    
+
     // Update counter
     document.getElementById('selectedCount').textContent = count;
-    
+
     // Show/hide floating preview
     const preview = document.getElementById('evaluationPreview');
     const previewCount = document.getElementById('previewCount');
-    
+
     if (count > 0) {
         preview.style.display = 'block';
         previewCount.textContent = count;
@@ -501,7 +501,7 @@ function initializeButtons() {
             }
         });
     });
-    
+
     // Clear selection
     document.getElementById('clearSelectionBtn').addEventListener('click', function() {
         document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
@@ -511,7 +511,7 @@ function initializeButtons() {
             }
         });
     });
-    
+
     // Start evaluation
     document.getElementById('startEvaluationBtn').addEventListener('click', function() {
         if (selectedImages.size > 0) {
@@ -530,34 +530,34 @@ function showEvaluationModal() {
 function updateSelectedImagesSummary() {
     const summary = document.getElementById('selectedImagesSummary');
     const selectedCards = document.querySelectorAll('.image-card.selected');
-    
+
     // Count by model and species
     const modelCounts = {};
     const speciesCounts = {};
     const reviewCounts = {};
-    
+
     selectedCards.forEach(card => {
         const overlay = card.querySelector('.image-overlay');
         const model = overlay.querySelector('small').textContent.trim();
         const species = overlay.querySelector('strong').textContent.trim();
         const reviewBadge = overlay.querySelector('.review-status-badge').textContent.trim();
-        
+
         modelCounts[model] = (modelCounts[model] || 0) + 1;
         speciesCounts[species] = (speciesCounts[species] || 0) + 1;
         reviewCounts[reviewBadge] = (reviewCounts[reviewBadge] || 0) + 1;
     });
-    
+
     let summaryHtml = `
         <div class="row">
             <div class="col-md-4">
                 <strong>By Model:</strong>
                 <ul class="list-unstyled small">
     `;
-    
+
     for (const [model, count] of Object.entries(modelCounts)) {
         summaryHtml += `<li>${model}: ${count} images</li>`;
     }
-    
+
     summaryHtml += `
                 </ul>
             </div>
@@ -565,11 +565,11 @@ function updateSelectedImagesSummary() {
                 <strong>By Species:</strong>
                 <ul class="list-unstyled small">
     `;
-    
+
     for (const [species, count] of Object.entries(speciesCounts)) {
         summaryHtml += `<li>${species}: ${count} images</li>`;
     }
-    
+
     summaryHtml += `
                 </ul>
             </div>
@@ -577,17 +577,17 @@ function updateSelectedImagesSummary() {
                 <strong>By Review Status:</strong>
                 <ul class="list-unstyled small">
     `;
-    
+
     for (const [status, count] of Object.entries(reviewCounts)) {
         summaryHtml += `<li>${status}: ${count} images</li>`;
     }
-    
+
     summaryHtml += `
                 </ul>
             </div>
         </div>
     `;
-    
+
     summary.innerHTML = summaryHtml;
 }
 
@@ -600,12 +600,12 @@ function initializeEvaluationModal() {
 async function createEvaluationRun() {
     const button = document.getElementById('confirmEvaluationBtn');
     const originalText = button.innerHTML;
-    
+
     try {
         // Show loading state
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
         button.disabled = true;
-        
+
         // Get form data
         const data = {
             name: document.getElementById('evaluationName').value,
@@ -615,21 +615,21 @@ async function createEvaluationRun() {
             confidence_threshold: parseFloat(document.getElementById('confidenceThreshold').value),
             selected_images: Array.from(selectedImages)
         };
-        
+
         // Validate
         if (!data.models.length) {
             throw new Error('Please select at least one model to evaluate.');
         }
-        
+
         if (selectedImages.size === 0) {
             throw new Error('No images selected for evaluation.');
         }
-        
+
         // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') || 
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ||
                          document.querySelector('meta[name=csrf-token]');
         const csrfValue = csrfToken ? (csrfToken.value || csrfToken.content) : '';
-        
+
         // Create evaluation run
         const response = await fetch('/image-processing/analytics/create-evaluation/', {
             method: 'POST',
@@ -639,23 +639,23 @@ async function createEvaluationRun() {
             },
             body: JSON.stringify(data)
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             // Show success message
             showMessage(`Evaluation run created successfully! Processing ${result.preview_image_count} images.`, 'success');
-            
+
             // Close modal and redirect
             evaluationModal.hide();
-            
+
             setTimeout(() => {
                 window.location.href = result.redirect_url;
             }, 1500);
         } else {
             throw new Error(result.error || 'Failed to create evaluation run');
         }
-        
+
     } catch (error) {
         console.error('Error creating evaluation run:', error);
         showMessage(error.message, 'danger');
@@ -669,7 +669,7 @@ async function createEvaluationRun() {
 function showMessage(message, type = 'info') {
     // Remove existing alerts
     document.querySelectorAll('.alert-dismissible').forEach(alert => alert.remove());
-    
+
     // Create new alert
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
@@ -678,9 +678,9 @@ function showMessage(message, type = 'info') {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     document.body.appendChild(alertDiv);
-    
+
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
         if (alertDiv.parentNode) {

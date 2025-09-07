@@ -14,36 +14,38 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
-from django.views.generic import TemplateView
-from django.contrib.auth import views as auth_views
-from django.shortcuts import redirect
-from django.contrib.auth.decorators import login_required
+
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.contrib.auth import views as auth_views
+from django.shortcuts import redirect
+from django.urls import include, path
+from django.views.generic import TemplateView
+
 
 def custom_login_redirect(request):
     """Custom login view that redirects based on user role"""
     if request.user.is_authenticated:
-        if request.user.role == 'SUPERADMIN':
-            return redirect('admin:index')
+        if request.user.role == "SUPERADMIN":
+            return redirect("admin:index")
         else:
             # Redirect ADMIN and FIELD_WORKER to home page
-            return redirect('home')
-    return auth_views.LoginView.as_view(template_name='registration/login.html')(request)
+            return redirect("home")
+    return auth_views.LoginView.as_view(template_name="registration/login.html")(request)
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name='home.html'), name='home'),
-    path('login/', custom_login_redirect, name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
-    path('users/', include('apps.users.urls', namespace='users')),
-    path('fauna/', include('apps.fauna.urls', namespace='fauna')),
-    path('locations/', include('apps.locations.urls', namespace='locations')),
-    path('analytics/', include('apps.analytics.urls', namespace='analytics')),
-    path('image-processing/', include('apps.image_processing.urls', namespace='image_processing')),
-    path('weather/', include('apps.weather.urls', namespace='weather')),
+    path("admin/", admin.site.urls),
+    path("", TemplateView.as_view(template_name="home.html"), name="home"),
+    path("login/", custom_login_redirect, name="login"),
+    path("logout/", auth_views.LogoutView.as_view(next_page="home"), name="logout"),
+    path("users/", include("apps.users.urls", namespace="users")),
+    path("fauna/", include("apps.fauna.urls", namespace="fauna")),
+    path("locations/", include("apps.locations.urls", namespace="locations")),
+    path("analytics/", include("apps.analytics.urls", namespace="analytics")),
+    path("image-processing/", include("apps.image_processing.urls", namespace="image_processing")),
+    path("weather/", include("apps.weather.urls", namespace="weather")),
 ]
 
 # Serve media files in development

@@ -13,65 +13,57 @@ STORAGE_WARNING_THRESHOLD = 0.8  # Warn when 80% full
 
 # Image Optimization
 AUTO_OPTIMIZE_IMAGES = True
-DEFAULT_IMAGE_FORMAT = 'WEBP'  # WEBP for best compression
+DEFAULT_IMAGE_FORMAT = "WEBP"  # WEBP for best compression
 MAX_IMAGE_DIMENSIONS = (2048, 1536)  # Max width x height
-IMAGE_QUALITY = {
-    'JPEG': 85,
-    'PNG': 95,
-    'WEBP': 80
-}
+IMAGE_QUALITY = {"JPEG": 85, "PNG": 95, "WEBP": 80}
 
 # Deduplication Settings
 ENABLE_HASH_DEDUPLICATION = True
-HASH_ALGORITHM = 'SHA256'  # or 'MD5' for faster but less secure
+HASH_ALGORITHM = "SHA256"  # or 'MD5' for faster but less secure
 
 # Storage Tiers (in days)
 STORAGE_TIERS = {
-    'HOT_TO_WARM': 30,      # Move to warm storage after 30 days
-    'WARM_TO_COLD': 90,     # Move to cold storage after 90 days  
-    'COLD_TO_ARCHIVE': 365, # Archive after 1 year
-    'ARCHIVE_DELETE': 2555, # Delete after 7 years (government retention)
+    "HOT_TO_WARM": 30,  # Move to warm storage after 30 days
+    "WARM_TO_COLD": 90,  # Move to cold storage after 90 days
+    "COLD_TO_ARCHIVE": 365,  # Archive after 1 year
+    "ARCHIVE_DELETE": 2555,  # Delete after 7 years (government retention)
 }
 
 # Local Storage Configuration (WiFi-Only System)
 USE_CLOUD_STORAGE = False  # ALWAYS False for CENRO local deployment
-CLOUD_STORAGE_PROVIDER = 'local'  # Local storage only
+CLOUD_STORAGE_PROVIDER = "local"  # Local storage only
 
 # Local Storage Paths
-ARCHIVE_STORAGE_PATH = 'media/archive'  # Local archive storage
+ARCHIVE_STORAGE_PATH = "media/archive"  # Local archive storage
 EXTERNAL_BACKUP_PATHS = [
-    'media/external_backup',  # Local external backup folder
-    'media/usb_backup',       # USB backup folder
+    "media/external_backup",  # Local external backup folder
+    "media/usb_backup",  # USB backup folder
 ]
 
 # Local Network Optimization
-WIFI_ONLY_MODE = True          # Optimize for WiFi-only deployment
-LOCAL_NETWORK_OPTIMIZED = True # Enable local network optimizations
-OFFLINE_CAPABLE = True         # System works without internet
+WIFI_ONLY_MODE = True  # Optimize for WiFi-only deployment
+LOCAL_NETWORK_OPTIMIZED = True  # Enable local network optimizations
+OFFLINE_CAPABLE = True  # System works without internet
 
 # Government Compliance Settings
 GOVERNMENT_RETENTION_YEARS = 7  # Philippine government standard
-AUDIT_TRAIL_ENABLED = True     # Full audit logging for compliance
-DATA_SOVEREIGNTY = True        # All data stays within Philippines
+AUDIT_TRAIL_ENABLED = True  # Full audit logging for compliance
+DATA_SOVEREIGNTY = True  # All data stays within Philippines
 
 # Automatic Cleanup Settings
 AUTO_CLEANUP_ENABLED = True
-AUTO_CLEANUP_SCHEDULE = 'daily'  # 'daily', 'weekly', 'monthly'
+AUTO_CLEANUP_SCHEDULE = "daily"  # 'daily', 'weekly', 'monthly'
 CLEANUP_DRY_RUN_FIRST = True  # Always do dry run before actual cleanup
 
 # Performance Settings
 DATABASE_INDEXES = True  # Enable database indexes for file hash lookups
 THUMBNAIL_CACHE_ENABLED = True
-THUMBNAIL_SIZES = {
-    'small': (150, 150),
-    'medium': (300, 300),
-    'large': (600, 600)
-}
+THUMBNAIL_SIZES = {"small": (150, 150), "medium": (300, 300), "large": (600, 600)}
 
 # Monitoring and Alerts
 STORAGE_MONITORING_ENABLED = True
 ALERT_EMAIL_WHEN_STORAGE_FULL = True
-STORAGE_ALERT_RECIPIENTS = ['admin@cenro.gov.ph']
+STORAGE_ALERT_RECIPIENTS = ["admin@cenro.gov.ph"]
 
 # ============================================================================
 # EXAMPLE CONFIGURATION FOR PRODUCTION

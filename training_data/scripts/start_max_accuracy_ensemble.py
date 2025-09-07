@@ -4,11 +4,9 @@ START MAXIMUM ACCURACY ENSEMBLE TRAINING
 Trains 5 YOLOv11x models with different seeds for 98%+ mAP accuracy
 """
 
-import os
-import sys
 import subprocess
 import time
-from pathlib import Path
+
 
 def train_ensemble_model(seed_number):
     """Train a single model in the ensemble"""
@@ -18,7 +16,8 @@ def train_ensemble_model(seed_number):
 
     # Maximum accuracy command for ensemble
     cmd = [
-        "yolo", "train",
+        "yolo",
+        "train",
         "model=models/yolov11x.pt",
         "data=training_data/prepared_dataset/chinese_egret_dataset",
         "epochs=300",
@@ -65,7 +64,7 @@ def train_ensemble_model(seed_number):
         "fl_gamma=0.0",
         "weight_decay=0.0001",
         "project=max_accuracy_ensemble_results",
-        f"name=chinese_egret_ensemble_seed_{seed_number}"
+        f"name=chinese_egret_ensemble_seed_{seed_number}",
     ]
 
     print("📋 TRAINING COMMAND:")
@@ -87,6 +86,7 @@ def train_ensemble_model(seed_number):
     except Exception as e:
         print(f"❌ Error training model {seed_number}: {e}")
         return False
+
 
 def main():
     """Main ensemble training function"""
@@ -118,7 +118,7 @@ def main():
     # Final confirmation
     response = input("🚀 START MAXIMUM ACCURACY ENSEMBLE TRAINING? (yes/no): ").lower().strip()
 
-    if response not in ['yes', 'y']:
+    if response not in ["yes", "y"]:
         print("❌ Training cancelled by user")
         return
 
@@ -140,7 +140,7 @@ def main():
 
         # Brief pause between models to let system cool
         if seed != 999:  # Don't pause after last model
-            print(f"\n⏸️  Pausing for 5 minutes to let system cool...")
+            print("\n⏸️  Pausing for 5 minutes to let system cool...")
             time.sleep(300)  # 5 minutes
 
     # Final summary
@@ -161,9 +161,6 @@ def main():
         print("   Not enough successful models for optimal ensemble")
         print("   Consider retraining failed models or using available ones")
 
+
 if __name__ == "__main__":
     main()
-
-
-
-

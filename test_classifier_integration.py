@@ -3,8 +3,9 @@
 Test script for classifier integration
 """
 
-import sys
 import os
+import sys
+
 import numpy as np
 
 # Add current directory to path
@@ -12,6 +13,7 @@ sys.path.insert(0, os.getcwd())
 
 try:
     from apps.image_processing.bird_detection_service import trained_classifier_predict
+
     print("✅ Import successful")
 
     # Test with a sample crop
@@ -26,7 +28,5 @@ try:
 except Exception as e:
     print(f"❌ Error: {e}")
     import traceback
+
     traceback.print_exc()
-
-
-

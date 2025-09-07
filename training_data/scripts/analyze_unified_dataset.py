@@ -3,9 +3,9 @@
 Analyze the existing unified egret dataset for multi-class training
 """
 
-import os
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
+
 
 def analyze_unified_dataset():
     """Analyze the unified egret dataset that's already available"""
@@ -22,19 +22,19 @@ def analyze_unified_dataset():
 
     # Read data.yaml
     data_yaml_path = dataset_path / "data.yaml"
-    with open(data_yaml_path, 'r') as f:
+    with open(data_yaml_path) as f:
         data_yaml_content = f.read()
 
-    print(f"\n📄 DATA.YAML CONFIGURATION:")
+    print("\n📄 DATA.YAML CONFIGURATION:")
     print("-" * 30)
     print(data_yaml_content)
 
     # Analyze classes in the dataset
-    splits = ['train', 'val', 'test']
+    splits = ["train", "val", "test"]
     all_classes = Counter()
     total_labels = 0
 
-    print(f"\n📊 DATASET ANALYSIS:")
+    print("\n📊 DATASET ANALYSIS:")
     print("-" * 30)
 
     for split in splits:
@@ -46,7 +46,7 @@ def analyze_unified_dataset():
         split_total = 0
 
         for label_file in label_files:
-            with open(label_file, 'r') as f:
+            with open(label_file) as f:
                 lines = f.readlines()
 
             for line in lines:
@@ -62,22 +62,26 @@ def analyze_unified_dataset():
         print(f"  📊 Total labels: {split_total}")
         print(f"  🏷️  Classes found: {sorted(split_classes.keys())}")
         for class_id, count in sorted(split_classes.items()):
-            class_name = ['Chinese_Egret', 'Great_Egret', 'Intermediate_Egret', 'Little_Egret'][class_id] if class_id < 4 else f"Unknown_{class_id}"
+            class_name = (
+                ["Chinese_Egret", "Great_Egret", "Intermediate_Egret", "Little_Egret"][class_id]
+                if class_id < 4
+                else f"Unknown_{class_id}"
+            )
             print(f"    Class {class_id} ({class_name}): {count} labels")
 
-    print(f"\n📈 OVERALL STATISTICS:")
+    print("\n📈 OVERALL STATISTICS:")
     print("=" * 30)
     print(f"📊 Total labels: {total_labels}")
     print(f"🏷️  Classes: {sorted(all_classes.keys())}")
 
-    class_names = ['Chinese_Egret', 'Great_Egret', 'Intermediate_Egret', 'Little_Egret']
+    class_names = ["Chinese_Egret", "Great_Egret", "Intermediate_Egret", "Little_Egret"]
     for class_id, count in sorted(all_classes.items()):
         class_name = class_names[class_id] if class_id < len(class_names) else f"Unknown_{class_id}"
         percentage = (count / total_labels) * 100
         print(f"    Class {class_id}: {class_name} - {count} labels ({percentage:.1f}%)")
 
     # Check if data is balanced
-    print(f"\n⚖️  CLASS BALANCE ANALYSIS:")
+    print("\n⚖️  CLASS BALANCE ANALYSIS:")
     print("-" * 30)
 
     min_count = min(all_classes.values())
@@ -95,7 +99,7 @@ def analyze_unified_dataset():
     print(f"📊 Min class: {min_count} labels")
     print(f"📊 Max class: {max_count} labels")
 
-    print(f"\n🎯 MULTI-CLASS TRAINING READY:")
+    print("\n🎯 MULTI-CLASS TRAINING READY:")
     print("=" * 30)
     print("✅ Dataset configured for 4 egret species")
     print("✅ All classes represented")
@@ -103,6 +107,7 @@ def analyze_unified_dataset():
     print("✅ Ready for maximum accuracy training")
 
     return dataset_path, total_labels, all_classes
+
 
 if __name__ == "__main__":
     dataset_path, total_labels, class_distribution = analyze_unified_dataset()

@@ -11,7 +11,3 @@ yolo train model=models/yolov11x.pt data=training_data/prepared_dataset/chinese_
 # - Training time: ~8-12 hours
 # - Model size: ~100MB
 # - Perfect for Chinese Egret conservation
-
-
-
-

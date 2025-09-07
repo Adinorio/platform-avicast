@@ -3,8 +3,8 @@
 Analyze mixed-species images to understand their training value
 """
 
-import os
 from pathlib import Path
+
 
 def analyze_mixed_images():
     """Analyze what we lost by filtering mixed images"""
@@ -17,7 +17,7 @@ def analyze_mixed_images():
     project_root = script_dir.parent.parent
     base_path = project_root / "training_data" / "final_yolo_dataset" / "chinese_egret_dataset"
 
-    splits = ['train', 'val', 'test']
+    splits = ["train", "val", "test"]
     total_mixed = 0
     total_chinese_only = 0
 
@@ -38,7 +38,7 @@ def analyze_mixed_images():
             if not label_file.exists():  # Was removed during filtering
                 continue
 
-            with open(label_file, 'r') as f:
+            with open(label_file) as f:
                 lines = f.readlines()
 
             classes_in_image = set()
@@ -56,7 +56,9 @@ def analyze_mixed_images():
             if len(classes_in_image) > 1:  # Mixed species
                 mixed_count += 1
                 chinese_in_mixed += chinese_egrets
-                print(f"  🦆 {label_file.name}: {chinese_egrets} Chinese + {len(classes_in_image)-1} other species")
+                print(
+                    f"  🦆 {label_file.name}: {chinese_egrets} Chinese + {len(classes_in_image)-1} other species"
+                )
             else:  # Pure Chinese Egret
                 chinese_count += 1
 
@@ -89,6 +91,7 @@ def analyze_mixed_images():
     print("❌ Harder to evaluate performance per species")
 
     return total_mixed, total_chinese_only
+
 
 if __name__ == "__main__":
     analyze_mixed_images()

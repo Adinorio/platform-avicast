@@ -3,9 +3,11 @@
 Setup script for image processing dependencies
 Run this to ensure all AI/ML packages are properly installed
 """
+
+import platform
 import subprocess
 import sys
-import platform
+
 
 def run_command(command, description):
     """Run a command and return success status"""
@@ -26,11 +28,13 @@ def run_command(command, description):
         print(f"❌ {description} - ERROR: {e}")
         return False
 
+
 def check_gpu():
     """Check if GPU support is available"""
     print("\n🔍 Checking GPU availability...")
     try:
         import torch
+
         if torch.cuda.is_available():
             print(f"✅ GPU detected: {torch.cuda.get_device_name(0)}")
             print(f"   CUDA version: {torch.version.cuda}")
@@ -41,6 +45,7 @@ def check_gpu():
     except ImportError:
         print("⚠️  PyTorch not installed yet")
         return False
+
 
 def main():
     print("🚀 Setting up Platform Avicast Image Processing Dependencies")
@@ -69,7 +74,7 @@ def main():
 
         all_good = True
         for cmd, name in verifications:
-            if not run_command(f"python -c \"{cmd}\"", f"Verifying {name}"):
+            if not run_command(f'python -c "{cmd}"', f"Verifying {name}"):
                 all_good = False
 
         if all_good:
@@ -82,7 +87,9 @@ def main():
             if not gpu_available:
                 print("\n⚡ For faster processing, consider installing GPU support:")
                 print("   pip uninstall torch torchvision torchaudio")
-                print("   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118")
+                print(
+                    "   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
+                )
         else:
             print("\n❌ Some dependencies failed to install properly")
             print("   Try installing individually: pip install ultralytics opencv-python")
@@ -90,6 +97,7 @@ def main():
         print("\n❌ Failed to install processing dependencies")
         print("   Check your internet connection and try again")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

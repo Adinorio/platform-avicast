@@ -17,9 +17,10 @@ It will:
 Run:
   python scripts/setup/rebalance_unified_egret_dataset.py
 """
-from pathlib import Path
+
 import shutil
 from collections import defaultdict
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DATASET = ROOT / "training_data/final_yolo_dataset/unified_egret_dataset"
@@ -45,8 +46,10 @@ TRAIN_TARGETS = {
     3: 15,
 }
 
+
 def is_image(p: Path) -> bool:
     return p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}
+
 
 def collect_pairs(split: str):
     img_dir = DATASET / split / "images"
@@ -62,11 +65,13 @@ def collect_pairs(split: str):
             pairs.append((img, lbl))
     return pairs
 
+
 def infer_class_from_name(stem: str) -> int | None:
     for cid, prefixes in NAME_PATTERNS.items():
         if any(stem.startswith(pref) for pref in prefixes):
             return cid
     return None
+
 
 def classify_pairs(pairs):
     by_class = defaultdict(list)
@@ -82,16 +87,19 @@ def classify_pairs(pairs):
         by_class[cid].append((img, lbl))
     return by_class
 
+
 def ensure_dirs():
     for split in ["train", "val", "test"]:
         (DATASET / split / "images").mkdir(parents=True, exist_ok=True)
         (DATASET / split / "labels").mkdir(parents=True, exist_ok=True)
+
 
 def move_pair(img: Path, lbl: Path, dst_split: str):
     dst_img = DATASET / dst_split / "images" / img.name
     dst_lbl = DATASET / dst_split / "labels" / lbl.name
     shutil.move(str(img), str(dst_img))
     shutil.move(str(lbl), str(dst_lbl))
+
 
 def main():
     ensure_dirs()
@@ -135,8 +143,6 @@ def main():
     for s in ["train", "val", "test"]:
         print(s, dict(final[s]))
 
+
 if __name__ == "__main__":
     main()
-
-
-

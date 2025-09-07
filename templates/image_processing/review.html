@@ -114,13 +114,13 @@
                                 <div class="card h-100 border-warning">
                                     <div class="card-img-top-container" style="height: 200px; overflow: hidden; position: relative;">
                                         {% if result.image_upload.image_file %}
-                                            <img src="{{ result.image_upload.image_file.url }}" 
-                                                 class="card-img-top detection-image" 
-                                                 alt="{{ result.image_upload.title|default:result.image_upload.original_filename }}" 
+                                            <img src="{{ result.image_upload.image_file.url }}"
+                                                 class="card-img-top detection-image"
+                                                 alt="{{ result.image_upload.title|default:result.image_upload.original_filename }}"
                                                  style="width: 100%; height: 100%; object-fit: cover;"
                                                  data-result-id="{{ result.pk }}"
                                                  data-bounding-box="{{ result.bounding_box|safe }}">
-                                            
+
                                             <!-- Display all detections with bounding boxes -->
                                             {% if result.bounding_box and result.bounding_box.all_detections %}
                                                 {% for detection in result.bounding_box.all_detections %}
@@ -163,7 +163,7 @@
                                     <div class="card-body">
                                         <h5 class="card-title">{{ result.image_upload.title|default:"Untitled" }}</h5>
                                         <p class="card-text text-muted">{{ result.image_upload.description|default:"No description"|truncatechars:100 }}</p>
-                                        
+
                                         <!-- AI Detection Results -->
                                         <div class="alert alert-info">
                                             <strong>AI Detection Results:</strong><br>
@@ -193,22 +193,22 @@
                                                     <small class="text-muted">
                                                         {% if result.bounding_box.all_detections %}
                                                             {% for detection in result.bounding_box.all_detections %}
-                                                                <strong>{{ detection.species|default:"Bird" }}</strong>: 
-                                                                X: {{ detection.bounding_box.x|default:"N/A" }}, 
-                                                                Y: {{ detection.bounding_box.y|default:"N/A" }}, 
-                                                                W: {{ detection.bounding_box.width|default:"N/A" }}, 
+                                                                <strong>{{ detection.species|default:"Bird" }}</strong>:
+                                                                X: {{ detection.bounding_box.x|default:"N/A" }},
+                                                                Y: {{ detection.bounding_box.y|default:"N/A" }},
+                                                                W: {{ detection.bounding_box.width|default:"N/A" }},
                                                                 H: {{ detection.bounding_box.height|default:"N/A" }}
                                                                 ({{ detection.confidence|floatformat:1 }}%)<br>
                                                             {% endfor %}
                                                         {% elif result.bounding_box.best_detection %}
-                                                            X: {{ result.bounding_box.best_detection.x|default:"N/A" }}, 
-                                                            Y: {{ result.bounding_box.best_detection.y|default:"N/A" }}, 
-                                                            W: {{ result.bounding_box.best_detection.width|default:"N/A" }}, 
+                                                            X: {{ result.bounding_box.best_detection.x|default:"N/A" }},
+                                                            Y: {{ result.bounding_box.best_detection.y|default:"N/A" }},
+                                                            W: {{ result.bounding_box.best_detection.width|default:"N/A" }},
                                                             H: {{ result.bounding_box.best_detection.height|default:"N/A" }}
                                                         {% else %}
-                                                            X: {{ result.bounding_box.x|default:"N/A" }}, 
-                                                            Y: {{ result.bounding_box.y|default:"N/A" }}, 
-                                                            W: {{ result.bounding_box.width|default:"N/A" }}, 
+                                                            X: {{ result.bounding_box.x|default:"N/A" }},
+                                                            Y: {{ result.bounding_box.y|default:"N/A" }},
+                                                            W: {{ result.bounding_box.width|default:"N/A" }},
                                                             H: {{ result.bounding_box.height|default:"N/A" }}
                                                         {% endif %}
                                                     </small>
@@ -724,7 +724,7 @@ let currentResultId = null;
 function approveResult(resultId) {
     if (confirm('Are you sure you want to approve this result?')) {
         const notes = prompt('Add approval notes (optional):');
-        
+
         fetch(`/image-processing/api/approve-result/${resultId}/`, {
             method: 'POST',
             headers: {
@@ -954,13 +954,13 @@ function positionAllBoundingBoxes() {
         const container = img.closest('.card-img-top-container, .position-relative');
         if (container) {
             const boundingBoxes = container.querySelectorAll('.bounding-box');
-    
+
     boundingBoxes.forEach(function(box) {
         const x = parseInt(box.dataset.x);
         const y = parseInt(box.dataset.y);
         const width = parseInt(box.dataset.width);
         const height = parseInt(box.dataset.height);
-        
+
         if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
                     // Scale the coordinates based on the displayed image size
                     const scaledX = x * scaleX;

@@ -4,14 +4,11 @@ MAXIMUM PERFORMANCE YOLOv11x Training for RTX 3050 Laptop
 Fully utilizes CPU + GPU resources with advanced optimization
 """
 
-import os
-import sys
 import multiprocessing
-import torch
+
 import psutil
-import subprocess
-from pathlib import Path
-import time
+import torch
+
 
 def get_max_system_specs():
     """Get maximum system specifications for optimal performance"""
@@ -46,24 +43,25 @@ def get_max_system_specs():
         print(f"🎯 Compute Capability: {compute_capability[0]}.{compute_capability[1]}")
 
         return {
-            'cpu_cores': cpu_count,
-            'cpu_logical': cpu_logical,
-            'cpu_freq': cpu_freq.current,
-            'ram_gb': memory.total / (1024**3),
-            'gpu_name': gpu_name,
-            'gpu_memory_gb': gpu_memory,
-            'cuda_available': True,
-            'compute_capability': compute_capability
+            "cpu_cores": cpu_count,
+            "cpu_logical": cpu_logical,
+            "cpu_freq": cpu_freq.current,
+            "ram_gb": memory.total / (1024**3),
+            "gpu_name": gpu_name,
+            "gpu_memory_gb": gpu_memory,
+            "cuda_available": True,
+            "compute_capability": compute_capability,
         }
     else:
         print("❌ No GPU detected - will use CPU optimization")
         return {
-            'cpu_cores': cpu_count,
-            'cpu_logical': cpu_logical,
-            'cpu_freq': cpu_freq.current,
-            'ram_gb': memory.total / (1024**3),
-            'cuda_available': False
+            "cpu_cores": cpu_count,
+            "cpu_logical": cpu_logical,
+            "cpu_freq": cpu_freq.current,
+            "ram_gb": memory.total / (1024**3),
+            "cuda_available": False,
         }
+
 
 def calculate_max_performance_settings(specs):
     """Calculate maximum performance settings based on hardware"""
@@ -71,15 +69,15 @@ def calculate_max_performance_settings(specs):
     print("\n⚡ CALCULATING MAXIMUM PERFORMANCE SETTINGS")
     print("=" * 60)
 
-    if specs['cuda_available']:
+    if specs["cuda_available"]:
         # RTX 3050 Laptop GPU - push to limits safely
-        gpu_memory_gb = specs['gpu_memory_gb']
+        gpu_memory_gb = specs["gpu_memory_gb"]
 
         if gpu_memory_gb >= 4:  # 4GB+ VRAM
             # Aggressive settings for RTX 3050
             batch_size = 16  # Push the limit but stay safe
             img_size = 1280  # Maximum detail preservation
-            workers = min(8, specs['cpu_logical'])  # Maximize CPU utilization
+            workers = min(8, specs["cpu_logical"])  # Maximize CPU utilization
 
             print("🎮 RTX 3050 MAX PERFORMANCE MODE:")
             print("   • Pushing GPU to 90% utilization")
@@ -90,7 +88,7 @@ def calculate_max_performance_settings(specs):
             # Fallback for lower VRAM
             batch_size = 12
             img_size = 1024
-            workers = min(6, specs['cpu_logical'])
+            workers = min(6, specs["cpu_logical"])
 
         device = "0"
 
@@ -98,34 +96,34 @@ def calculate_max_performance_settings(specs):
         # CPU-only optimization
         batch_size = 8
         img_size = 896  # Good balance for CPU
-        workers = min(4, specs['cpu_logical'])
+        workers = min(4, specs["cpu_logical"])
         device = "cpu"
 
     # Advanced optimizations
     optimizations = {
-        'batch_size': batch_size,
-        'img_size': img_size,
-        'workers': workers,
-        'device': device,
-        'amp': True,  # Automatic mixed precision
-        'cache': 'ram',  # RAM caching for speed
-        'rect': True,  # Rectangular training for efficiency
-        'mosaic': 1.0,  # Mosaic augmentation
-        'mixup': 0.2,   # Mixup augmentation
-        'copy_paste': 0.3,  # Copy-paste augmentation
-        'degrees': 10.0,  # Rotation augmentation
-        'translate': 0.2,  # Translation augmentation
-        'scale': 0.9,   # Scale augmentation
-        'shear': 2.0,   # Shear augmentation
-        'perspective': 0.0005,  # Perspective augmentation
-        'flipud': 0.5,  # Vertical flip
-        'fliplr': 0.5,  # Horizontal flip
-        'hsv_h': 0.015,  # HSV-Hue augmentation
-        'hsv_s': 0.7,   # HSV-Saturation augmentation
-        'hsv_v': 0.4,   # HSV-Value augmentation
+        "batch_size": batch_size,
+        "img_size": img_size,
+        "workers": workers,
+        "device": device,
+        "amp": True,  # Automatic mixed precision
+        "cache": "ram",  # RAM caching for speed
+        "rect": True,  # Rectangular training for efficiency
+        "mosaic": 1.0,  # Mosaic augmentation
+        "mixup": 0.2,  # Mixup augmentation
+        "copy_paste": 0.3,  # Copy-paste augmentation
+        "degrees": 10.0,  # Rotation augmentation
+        "translate": 0.2,  # Translation augmentation
+        "scale": 0.9,  # Scale augmentation
+        "shear": 2.0,  # Shear augmentation
+        "perspective": 0.0005,  # Perspective augmentation
+        "flipud": 0.5,  # Vertical flip
+        "fliplr": 0.5,  # Horizontal flip
+        "hsv_h": 0.015,  # HSV-Hue augmentation
+        "hsv_s": 0.7,  # HSV-Saturation augmentation
+        "hsv_v": 0.4,  # HSV-Value augmentation
     }
 
-    print(f"📊 MAX SETTINGS:")
+    print("📊 MAX SETTINGS:")
     print(f"   • Batch size: {batch_size}")
     print(f"   • Image size: {img_size}px")
     print(f"   • Workers: {workers}")
@@ -133,6 +131,7 @@ def calculate_max_performance_settings(specs):
     print(f"   • AMP: {optimizations['amp']}")
 
     return optimizations
+
 
 def create_max_performance_command(dataset_type, settings):
     """Create maximum performance training command"""
@@ -143,7 +142,7 @@ def create_max_performance_command(dataset_type, settings):
     if dataset_type == "specialist":
         data_path = "training_data/prepared_dataset/chinese_egret_dataset"
         epochs = 200  # Extended for max performance
-        lr = 0.002   # Slightly higher for faster convergence
+        lr = 0.002  # Slightly higher for faster convergence
         optimizer = "SGD"
         name = "chinese_egret_max_performance"
     else:
@@ -155,7 +154,8 @@ def create_max_performance_command(dataset_type, settings):
 
     # Build maximum performance command
     cmd_parts = [
-        "yolo", "train",
+        "yolo",
+        "train",
         "model=models/yolov11x.pt",
         f"data={data_path}",
         f"epochs={epochs}",
@@ -202,7 +202,7 @@ def create_max_performance_command(dataset_type, settings):
         "box=5.0",
         "cls=0.5",
         "dfl=1.5",
-        "fl_gamma=0.0"
+        "fl_gamma=0.0",
     ]
 
     command = " ".join(cmd_parts)
@@ -222,6 +222,7 @@ def create_max_performance_command(dataset_type, settings):
 
     return command
 
+
 def show_performance_monitoring_tips():
     """Show tips for monitoring maximum performance"""
 
@@ -236,7 +237,7 @@ def show_performance_monitoring_tips():
         "💾 RAM: Monitor for memory bottlenecks",
         "📈 Speed: Expect 2-3x faster than conservative settings",
         "🎯 Accuracy: Advanced augmentations improve generalization",
-        "⏱️  Time: Extended training for maximum convergence"
+        "⏱️  Time: Extended training for maximum convergence",
     ]
 
     for tip in tips:
@@ -247,6 +248,7 @@ def show_performance_monitoring_tips():
     print("   • VRAM usage > 95%: Reduce batch size")
     print("   • System unresponsive: Emergency stop (Ctrl+C)")
     print("   • Fan noise excessive: Add external cooling")
+
 
 def optimize_system_for_training():
     """Show system optimization commands"""
@@ -269,6 +271,7 @@ def optimize_system_for_training():
     print("   • Disable Windows Defender real-time protection temporarily")
     print("   • Disable OneDrive syncing")
     print()
+
 
 def main():
     """Main maximum performance training interface"""
@@ -302,7 +305,7 @@ def main():
         print("💡 This will push your RTX 3050 to its limits")
         print("💡 Monitor temperature and VRAM usage closely")
         print("\n🚀 START MAX PERFORMANCE TRAINING? (y/n): ", end="")
-        if input().lower().startswith('y'):
+        if input().lower().startswith("y"):
             print("\n🔥 EXECUTING MAXIMUM PERFORMANCE TRAINING...")
             print(f"Command: {command}")
             # subprocess.run(command, shell=True)
@@ -313,7 +316,7 @@ def main():
         print("💡 This will utilize all available resources")
         print("💡 Expect 2-3x faster training than conservative settings")
         print("\n🚀 START MAX PERFORMANCE TRAINING? (y/n): ", end="")
-        if input().lower().startswith('y'):
+        if input().lower().startswith("y"):
             print("\n🔥 EXECUTING MAXIMUM PERFORMANCE TRAINING...")
             print(f"Command: {command}")
             # subprocess.run(command, shell=True)
@@ -341,6 +344,7 @@ def main():
 
     else:
         print("❌ Invalid choice")
+
 
 if __name__ == "__main__":
     main()

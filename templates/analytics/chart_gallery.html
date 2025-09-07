@@ -36,13 +36,13 @@
                 </div>
                 <div class="card-body">
                     <p class="text-muted">{{ chart.description }}</p>
-                    
+
                     <!-- Chart Container -->
                     <div id="chart{{ forloop.counter }}" class="chart-container" style="height: 400px;">
                         <div class="text-center py-5">
                             <i class="fas fa-chart-{{ chart.type }} fa-3x text-muted mb-3"></i>
                             <p class="text-muted">Click to load chart</p>
-                            <button class="btn btn-primary btn-sm load-chart-btn" 
+                            <button class="btn btn-primary btn-sm load-chart-btn"
                                     data-chart-endpoint="{% url chart.endpoint %}">
                                 <i class="fas fa-play"></i> Load Chart
                             </button>
@@ -55,8 +55,8 @@
                             <i class="fas fa-chart-{{ chart.type }}"></i>
                             {{ chart.type|title }} Chart
                         </small>
-                        <button class="btn btn-outline-primary btn-sm download-chart-btn" 
-                                data-chart-id="chart{{ forloop.counter }}" 
+                        <button class="btn btn-outline-primary btn-sm download-chart-btn"
+                                data-chart-id="chart{{ forloop.counter }}"
                                 style="display: none;">
                             <i class="fas fa-download"></i> Download
                         </button>
@@ -153,20 +153,20 @@ $(document).ready(function() {
         const btn = $(this);
         const chartContainer = btn.closest('.chart-container');
         const endpoint = btn.data('chart-endpoint');
-        
+
         // Show loading state
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Loading...');
-        
+
         // Load chart data
         $.get(endpoint)
             .done(function(data) {
                 if (data.chart) {
                     const chartData = JSON.parse(data.chart);
                     Plotly.newPlot(chartContainer.attr('id'), chartData.data, chartData.layout);
-                    
+
                     // Show download button
                     btn.closest('.card').find('.download-chart-btn').show();
-                    
+
                     // Hide load button
                     btn.hide();
                 }
@@ -175,17 +175,17 @@ $(document).ready(function() {
                 chartContainer.html('<p class="text-danger text-center py-5">Failed to load chart</p>');
             });
     });
-    
+
     // Load all charts
     $('#loadAllCharts').click(function() {
         $('.load-chart-btn').click();
     });
-    
+
     // Refresh all charts
     $('#refreshCharts').click(function() {
         location.reload();
     });
-    
+
     // Download chart
     $('.download-chart-btn').click(function() {
         const chartId = $(this).data('chart-id');
@@ -196,7 +196,7 @@ $(document).ready(function() {
             width: 800
         });
     });
-    
+
     // Download all charts
     $('#downloadAllCharts').click(function() {
         $('.download-chart-btn').each(function() {
@@ -207,4 +207,4 @@ $(document).ready(function() {
     });
 });
 </script>
-{% endblock %} 
+{% endblock %}

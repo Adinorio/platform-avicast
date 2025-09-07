@@ -245,7 +245,7 @@ python manage.py verify_archive
 ## 📝 **Perfect for CENRO Because:**
 
 - ✅ **No Internet Required** - Works completely offline
-- ✅ **Government Security** - All data stays on premises  
+- ✅ **Government Security** - All data stays on premises
 - ✅ **Cost Effective** - No monthly cloud fees
 - ✅ **Fast Performance** - Local network speeds
 - ✅ **Simple Management** - Automated maintenance

@@ -6,23 +6,25 @@ Run this script to ensure all image processing URLs are working correctly.
 
 import os
 import sys
+
 import django
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'avicast_project.settings.development')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "avicast_project.settings.development")
 sys.path.insert(0, os.path.dirname(__file__))
 django.setup()
+
 
 def fix_image_processing():
     print("🔧 Fixing Image Processing Issues...")
 
     # Check URL configuration
-    from django.urls import reverse, resolve
     from django.test import Client
+    from django.urls import resolve, reverse
 
     # Test URL patterns
-    test_uuid = '837c9ee9-874b-47a0-82be-5f012f925282'
-    test_url = f'/image-processing/process/{test_uuid}/start/'
+    test_uuid = "837c9ee9-874b-47a0-82be-5f012f925282"
+    test_url = f"/image-processing/process/{test_uuid}/start/"
 
     print(f"\n1. Testing URL: {test_url}")
 
@@ -36,7 +38,7 @@ def fix_image_processing():
 
     # Test reverse lookup
     try:
-        url = reverse('image_processing:start_processing', args=[test_uuid])
+        url = reverse("image_processing:start_processing", args=[test_uuid])
         print(f"✅ Reverse lookup: {url}")
     except Exception as e:
         print(f"❌ Reverse lookup failed: {e}")
@@ -51,19 +53,21 @@ def fix_image_processing():
 
     print("\n2. Checking view function...")
     from apps.image_processing.views import start_processing
+
     print(f"✅ start_processing function exists: {start_processing}")
 
     print("\n3. Checking URL patterns...")
     from apps.image_processing.urls import urlpatterns
+
     for pattern in urlpatterns:
         print(f"   - {pattern.pattern} -> {pattern.name}")
 
     print("\n4. Testing main URLs...")
     main_urls = [
-        '/image-processing/',
-        '/image-processing/upload/',
-        '/image-processing/process/',
-        f'/image-processing/process/{test_uuid}/',
+        "/image-processing/",
+        "/image-processing/upload/",
+        "/image-processing/process/",
+        f"/image-processing/process/{test_uuid}/",
     ]
 
     for url in main_urls:
@@ -81,5 +85,6 @@ def fix_image_processing():
     print("4. Template rendering issues")
     print("\nTry accessing the process page first, then try the processing.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     fix_image_processing()

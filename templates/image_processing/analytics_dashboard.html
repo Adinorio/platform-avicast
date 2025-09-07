@@ -13,30 +13,30 @@
         box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         transition: transform 0.3s ease;
     }
-    
+
     .analytics-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 12px 35px rgba(0,0,0,0.15);
     }
-    
+
     .metric-value {
         font-size: 2.5rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
     }
-    
+
     .metric-label {
         font-size: 0.9rem;
         opacity: 0.9;
     }
-    
+
     .evaluation-form {
         background: #f8f9fa;
         border-radius: 15px;
         padding: 2rem;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    
+
     .btn-analytics {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -46,18 +46,18 @@
         font-weight: 600;
         transition: all 0.3s ease;
     }
-    
+
     .btn-analytics:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         color: white;
     }
-    
+
     .recent-runs {
         max-height: 400px;
         overflow-y: auto;
     }
-    
+
     .run-item {
         border-left: 4px solid #667eea;
         padding-left: 1rem;
@@ -66,24 +66,24 @@
         border-radius: 0 8px 8px 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    
+
     .status-badge {
         font-size: 0.75rem;
         padding: 0.25rem 0.75rem;
         border-radius: 15px;
         font-weight: 600;
     }
-    
+
     .status-completed { background: #28a745; color: white; }
     .status-processing { background: #ffc107; color: #212529; }
     .status-failed { background: #dc3545; color: white; }
     .status-pending { background: #6c757d; color: white; }
-    
+
     .species-chart-container {
         height: 300px;
         position: relative;
     }
-    
+
     .filter-section {
         background: white;
         border-radius: 10px;
@@ -146,7 +146,7 @@
             <div class="evaluation-form">
                 <h3 class="mb-4">🎯 Create New Evaluation Run</h3>
                 <p class="text-muted mb-4">Configure and execute a comprehensive model performance evaluation for your thesis analysis.</p>
-                
+
                 <form id="evaluationForm">
                     {% csrf_token %}
                     <div class="row">
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Species Chart
     const speciesData = {{ species_stats|safe }};
     const speciesCtx = document.getElementById('speciesChart').getContext('2d');
-    
+
     new Chart(speciesCtx, {
         type: 'doughnut',
         data: {
@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: speciesData.map(s => s.count),
                 backgroundColor: [
                     '#FF6384',
-                    '#36A2EB', 
+                    '#36A2EB',
                     '#FFCE56'
                 ],
                 borderWidth: 2,
@@ -405,23 +405,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Evaluation Form Submission
     document.getElementById('evaluationForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         console.log('Form submitted!'); // Debug log
-        
+
         // Prevent double submissions
         const submitBtn = document.getElementById('startEvaluationBtn');
         const submitStatus = document.getElementById('submitStatus');
-        
+
         if (submitBtn.disabled) {
             console.log('Form already being submitted, ignoring duplicate request');
             return;
         }
-        
+
         // Disable button and show status
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
         submitStatus.style.display = 'block';
-        
+
         // Collect form data
         const formData = {
             name: document.getElementById('runName').value || `Evaluation Run ${new Date().toLocaleDateString()}`,
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
             submitStatus.style.display = 'none';
             return;
         }
-        
+
         console.log('Validation passed, proceeding with submission');
 
         // Show loading modal
@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Submit evaluation
         console.log('Submitting to:', '{% url "image_processing:create_evaluation_run" %}'); // Debug log
         console.log('CSRF Token:', document.querySelector('[name=csrfmiddlewaretoken]').value); // Debug log
-        
+
         fetch('{% url "image_processing:create_evaluation_run" %}', {
             method: 'POST',
             headers: {
@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingModal.hide();
             console.error('Error:', error);
             alert('An error occurred while starting the evaluation.');
-            
+
             // Re-enable button on error
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-rocket me-2"></i>Start Evaluation Run';

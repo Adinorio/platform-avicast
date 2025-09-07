@@ -3,9 +3,9 @@
 Train YOLOv11x with unified multi-class egret dataset for MAXIMUM conservation accuracy
 """
 
-import os
 import subprocess
 from pathlib import Path
+
 
 def train_yolov11x_max_accuracy():
     """Train YOLOv11x with maximum accuracy settings for egret conservation"""
@@ -29,7 +29,8 @@ def train_yolov11x_max_accuracy():
 
     # Maximum accuracy training command for YOLOv11x
     cmd = [
-        "yolo", "train",
+        "yolo",
+        "train",
         "model=models/yolov11x.pt",
         "data=training_data/final_yolo_dataset/unified_egret_dataset/data.yaml",
         "epochs=200",
@@ -74,7 +75,7 @@ def train_yolov11x_max_accuracy():
         "dfl=1.5",
         "weight_decay=0.0001",
         "project=yolov11x_max_accuracy_results",
-        "name=egret_conservation_max_accuracy_200_epochs"
+        "name=egret_conservation_max_accuracy_200_epochs",
     ]
 
     print("\n" + "=" * 60)
@@ -153,11 +154,14 @@ def train_yolov11x_max_accuracy():
         print(f"\n❌ Training error: {e}")
         return False
 
+
 if __name__ == "__main__":
     success = train_yolov11x_max_accuracy()
     if success:
         print("\n🎉 YOLOv11x MAXIMUM ACCURACY TRAINING COMPLETED!")
-        print("📊 Check results: yolov11x_max_accuracy_results/egret_conservation_max_accuracy_200_epochs/")
+        print(
+            "📊 Check results: yolov11x_max_accuracy_results/egret_conservation_max_accuracy_200_epochs/"
+        )
         print("🦆 Your state-of-the-art egret conservation model is ready!")
         print("🌟 Maximum accuracy achieved for endangered species detection!")
     else:

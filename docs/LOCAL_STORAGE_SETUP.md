@@ -178,14 +178,14 @@ python manage.py showmigrations image_processing
 ### **Step 2: Verify Database Schema**
 ```sql
 -- Check new fields were added
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'image_processing_imageupload' 
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'image_processing_imageupload'
 AND column_name IN ('file_hash', 'storage_tier', 'archive_path', 'is_compressed');
 
 -- Expected output:
 -- file_hash | character varying
--- storage_tier | character varying  
+-- storage_tier | character varying
 -- archive_path | character varying
 -- is_compressed | boolean
 ```

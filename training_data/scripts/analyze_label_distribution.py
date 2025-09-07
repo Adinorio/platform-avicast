@@ -3,9 +3,9 @@
 Analyze the distribution of labels in our dataset to understand class distribution
 """
 
-import os
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
+
 
 def analyze_label_distribution():
     """Analyze what classes are actually present in our dataset"""
@@ -18,7 +18,7 @@ def analyze_label_distribution():
     project_root = script_dir.parent.parent
     dataset_path = project_root / "training_data" / "final_yolo_dataset" / "chinese_egret_maximum"
 
-    splits = ['train', 'val', 'test']
+    splits = ["train", "val", "test"]
     all_classes = Counter()
     total_labels = 0
 
@@ -34,7 +34,7 @@ def analyze_label_distribution():
         split_total = 0
 
         for label_file in label_files:
-            with open(label_file, 'r') as f:
+            with open(label_file) as f:
                 lines = f.readlines()
 
             for line in lines:
@@ -66,7 +66,7 @@ def analyze_label_distribution():
         2: "Great Knot",
         3: "Little Egret",
         4: "Great Egret",
-        5: "Intermediate Egret"
+        5: "Intermediate Egret",
     }
 
     for class_id, count in sorted(all_classes.items()):
@@ -98,6 +98,7 @@ def analyze_label_distribution():
     print("→ Single-class: Simpler, faster deployment")
     print("→ Multi-class: Better discrimination, uses all data")
     print("→ Your choice depends on deployment scenario!")
+
 
 if __name__ == "__main__":
     analyze_label_distribution()

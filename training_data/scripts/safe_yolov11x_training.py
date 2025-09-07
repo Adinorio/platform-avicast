@@ -4,14 +4,12 @@ SAFE YOLOv11x Training with GPU/CPU Support and Resource Management
 Optimized for laptop training with RTX 3050 GPU
 """
 
-import os
-import sys
-import psutil
-import GPUtil
-import torch
-from pathlib import Path
-import subprocess
 import time
+
+import GPUtil
+import psutil
+import torch
+
 
 def check_system_resources():
     """Check system resources and GPU availability"""
@@ -47,6 +45,7 @@ def check_system_resources():
     except:
         print("❌ GPU monitoring not available")
         return False
+
 
 def get_optimal_training_settings():
     """Get optimal training settings based on hardware"""
@@ -92,11 +91,12 @@ def get_optimal_training_settings():
         print(f"   • Workers: {workers}")
 
     return {
-        'batch_size': batch_size,
-        'img_size': img_size,
-        'workers': workers,
-        'gpu_available': torch.cuda.is_available()
+        "batch_size": batch_size,
+        "img_size": img_size,
+        "workers": workers,
+        "gpu_available": torch.cuda.is_available(),
     }
+
 
 def create_safe_training_command(dataset_type="specialist"):
     """Create safe training command with resource management"""
@@ -121,7 +121,8 @@ def create_safe_training_command(dataset_type="specialist"):
 
     # Build command with safety settings
     cmd_parts = [
-        "yolo", "train",
+        "yolo",
+        "train",
         "model=models/yolov11x.pt",
         f"data={data_path}",
         f"epochs={epochs}",
@@ -141,11 +142,11 @@ def create_safe_training_command(dataset_type="specialist"):
         f"workers={settings['workers']}",
         "cos_lr=True",  # Cosine learning rate scheduling
         "close_mosaic=10",  # Close mosaic augmentation
-        "cache=disk"  # Disk caching for memory efficiency
+        "cache=disk",  # Disk caching for memory efficiency
     ]
 
     # GPU-specific settings
-    if settings['gpu_available']:
+    if settings["gpu_available"]:
         cmd_parts.append("device=0")  # Use GPU 0
         print("🎮 GPU Mode: Using CUDA device 0 (RTX 3050)")
     else:
@@ -159,6 +160,7 @@ def create_safe_training_command(dataset_type="specialist"):
     print()
 
     return command
+
 
 def monitor_training_resources(duration_minutes=5):
     """Monitor system resources during training simulation"""
@@ -182,7 +184,7 @@ def monitor_training_resources(duration_minutes=5):
             except:
                 pass
 
-            print(".1f" % (i/6, cpu_percent, memory.percent, gpu_info))
+            print(".1f" % (i / 6, cpu_percent, memory.percent, gpu_info))
             time.sleep(10)
 
         except KeyboardInterrupt:
@@ -190,6 +192,7 @@ def monitor_training_resources(duration_minutes=5):
             break
 
     print("\n✅ Resource monitoring completed")
+
 
 def show_safety_features():
     """Show safety features built into the training"""
@@ -206,7 +209,7 @@ def show_safety_features():
         "✅ Disk caching for memory efficiency",
         "✅ Regular checkpoint saving",
         "✅ Resource monitoring capability",
-        "✅ Graceful fallback to CPU mode"
+        "✅ Graceful fallback to CPU mode",
     ]
 
     for feature in safety_features:
@@ -217,6 +220,7 @@ def show_safety_features():
     print("   • Thermal monitoring capability")
     print("   • CPU usage monitoring")
     print("   • Emergency stop with Ctrl+C")
+
 
 def main():
     """Main training menu"""
@@ -244,7 +248,7 @@ def main():
         print("💡 Tip: Monitor your laptop temperature during training")
         print("💡 Tip: Use Ctrl+C to stop training anytime")
         print("\n🚀 START TRAINING? (y/n): ", end="")
-        if input().lower().startswith('y'):
+        if input().lower().startswith("y"):
             print(f"\n🔥 Executing: {command}")
             # subprocess.run(command, shell=True)
 
@@ -254,7 +258,7 @@ def main():
         print("💡 Tip: Monitor your laptop temperature during training")
         print("💡 Tip: Use Ctrl+C to stop training anytime")
         print("\n🚀 START TRAINING? (y/n): ", end="")
-        if input().lower().startswith('y'):
+        if input().lower().startswith("y"):
             print(f"\n🔥 Executing: {command}")
             # subprocess.run(command, shell=True)
 
@@ -266,6 +270,7 @@ def main():
 
     else:
         print("❌ Invalid choice")
+
 
 if __name__ == "__main__":
     main()

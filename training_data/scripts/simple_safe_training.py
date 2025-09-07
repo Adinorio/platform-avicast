@@ -4,11 +4,10 @@ SIMPLE SAFE YOLOv11x Training for RTX 3050 Laptop
 No external dependencies - uses only standard libraries
 """
 
-import os
-import sys
-import subprocess
-import torch
 from pathlib import Path
+
+import torch
+
 
 def check_gpu_status():
     """Check GPU availability and status"""
@@ -30,6 +29,7 @@ def check_gpu_status():
         print("❌ CUDA not available - will use CPU")
         return False
 
+
 def show_training_commands():
     """Show optimized training commands for RTX 3050"""
 
@@ -42,15 +42,15 @@ def show_training_commands():
 
     # Base settings for RTX 3050 (4GB VRAM)
     if gpu_available:
-        batch_size = 8   # Conservative for 4GB VRAM
+        batch_size = 8  # Conservative for 4GB VRAM
         img_size = 1024  # Good detail preservation
-        workers = 4      # Reasonable for laptop
-        device = "0"     # Use GPU 0
+        workers = 4  # Reasonable for laptop
+        device = "0"  # Use GPU 0
         print("🎮 USING GPU MODE (RTX 3050 optimized)")
     else:
-        batch_size = 4   # CPU mode
+        batch_size = 4  # CPU mode
         img_size = 640  # Smaller for CPU
-        workers = 2      # Fewer workers for CPU
+        workers = 2  # Fewer workers for CPU
         device = "cpu"
         print("🖥️  USING CPU MODE")
 
@@ -77,6 +77,7 @@ def show_training_commands():
     print(unified_cmd)
     print()
 
+
 def show_safety_tips():
     """Show laptop safety tips"""
     print("\n🛡️  LAPTOP SAFETY TIPS")
@@ -91,7 +92,7 @@ def show_safety_tips():
         "✅ Save work frequently (auto-save enabled)",
         "✅ Close unnecessary programs",
         "✅ Use Ctrl+C to stop training anytime",
-        "✅ Training can be resumed from checkpoints"
+        "✅ Training can be resumed from checkpoints",
     ]
 
     for tip in tips:
@@ -100,6 +101,7 @@ def show_safety_tips():
     print("\n⚠️  EMERGENCY STOP:")
     print("   Press Ctrl+C to stop training immediately")
     print("   Models auto-save every 25 epochs")
+
 
 def show_existing_training():
     """Show existing training runs"""
@@ -117,6 +119,7 @@ def show_existing_training():
             print("📭 No previous training runs found")
     else:
         print("📭 Training directory not found")
+
 
 def main():
     """Main menu"""
@@ -144,9 +147,6 @@ def main():
     else:
         print("❌ Invalid choice")
 
+
 if __name__ == "__main__":
     main()
-
-
-
-

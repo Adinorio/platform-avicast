@@ -8,16 +8,20 @@ without mixing them. Each species gets its own prepared_dataset directory and YO
 Run this to prepare all egret species training data independently.
 """
 
-import os
-import sys
-import shutil
-from pathlib import Path
-import zipfile
 import random
-from typing import List, Tuple
+import shutil
+import sys
+import zipfile
+from pathlib import Path
 
-def prepare_single_egret_dataset(base_path: Path, species_name: str, image_folders: List[str],
-                                annotation_zip_pattern: str, class_id: int = 0):
+
+def prepare_single_egret_dataset(
+    base_path: Path,
+    species_name: str,
+    image_folders: list[str],
+    annotation_zip_pattern: str,
+    class_id: int = 0,
+):
     """
     Prepare dataset for a single egret species
 
@@ -52,7 +56,7 @@ def prepare_single_egret_dataset(base_path: Path, species_name: str, image_folde
         for zip_file in zip_files:
             try:
                 print(f"Extracting {zip_file.name}...")
-                with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+                with zipfile.ZipFile(zip_file, "r") as zip_ref:
                     temp_dir = labels_output / f"temp_{zip_file.stem}"
                     zip_ref.extractall(temp_dir)
 
@@ -86,7 +90,7 @@ def prepare_single_egret_dataset(base_path: Path, species_name: str, image_folde
             folder_path = training_path / folder_name
             if folder_path.exists() and folder_path.is_dir():
                 print(f"Processing folder: {folder_name}")
-                for ext in ['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG']:
+                for ext in [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG"]:
                     for img_file in folder_path.glob(f"*{ext}"):
                         target = images_output / img_file.name
                         if not target.exists():
@@ -104,13 +108,13 @@ def prepare_single_egret_dataset(base_path: Path, species_name: str, image_folde
     dataset_path = base_path / f"final_yolo_dataset/{species_name}_dataset"
 
     # Create directories
-    for split in ['train', 'val', 'test']:
-        for subdir in ['images', 'labels']:
+    for split in ["train", "val", "test"]:
+        for subdir in ["images", "labels"]:
             (dataset_path / split / subdir).mkdir(parents=True, exist_ok=True)
 
     # Get image-label pairs
     pairs = []
-    for ext in ['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG']:
+    for ext in [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG"]:
         for img_file in images_output.glob(f"*{ext}"):
             lbl_file = labels_output / f"{img_file.stem}.txt"
             if lbl_file.exists():
@@ -131,15 +135,15 @@ def prepare_single_egret_dataset(base_path: Path, species_name: str, image_folde
     n_test = len(pairs) - n_train - n_val
 
     splits_data = [
-        (pairs[:n_train], 'train'),
-        (pairs[n_train:n_train + n_val], 'val'),
-        (pairs[n_train + n_val:], 'test')
+        (pairs[:n_train], "train"),
+        (pairs[n_train : n_train + n_val], "val"),
+        (pairs[n_train + n_val :], "test"),
     ]
 
     for split_pairs, split_name in splits_data:
         for img_file, lbl_file in split_pairs:
-            shutil.copy2(str(img_file), str(dataset_path / split_name / 'images' / img_file.name))
-            shutil.copy2(str(lbl_file), str(dataset_path / split_name / 'labels' / lbl_file.name))
+            shutil.copy2(str(img_file), str(dataset_path / split_name / "images" / img_file.name))
+            shutil.copy2(str(lbl_file), str(dataset_path / split_name / "labels" / lbl_file.name))
 
     # Create data.yaml
     yaml_content = f"""train: train/images
@@ -149,7 +153,7 @@ nc: 1
 names: ['{species_name.replace('_', ' ').title()}']
 """
 
-    with open(dataset_path / "data.yaml", 'w', encoding='utf-8') as f:
+    with open(dataset_path / "data.yaml", "w", encoding="utf-8") as f:
         f.write(yaml_content)
 
     print("\n✅ Data preparation complete!")
@@ -161,6 +165,7 @@ names: ['{species_name.replace('_', ' ').title()}']
     print(f"📁 Prepared data: {prepared_base.absolute()}")
 
     return len(pairs)
+
 
 def prepare_all_egret_datasets(base_path: Path):
     """Prepare datasets for all egret species"""
@@ -174,23 +179,23 @@ def prepare_all_egret_datasets(base_path: Path):
     # Species configuration
     species_config = [
         {
-            'name': 'little_egret',
-            'folders': ['little_egret_batch1'],
-            'zip_pattern': '*YOLO*.zip',
-            'class_id': 0
+            "name": "little_egret",
+            "folders": ["little_egret_batch1"],
+            "zip_pattern": "*YOLO*.zip",
+            "class_id": 0,
         },
         {
-            'name': 'great_egret',
-            'folders': ['Great_Egret'],
-            'zip_pattern': '*Yolo*.zip',
-            'class_id': 0
+            "name": "great_egret",
+            "folders": ["Great_Egret"],
+            "zip_pattern": "*Yolo*.zip",
+            "class_id": 0,
         },
         {
-            'name': 'intermediate_egret',
-            'folders': ['Intermediate_Egret'],
-            'zip_pattern': '*Yolo*.zip',
-            'class_id': 0
-        }
+            "name": "intermediate_egret",
+            "folders": ["Intermediate_Egret"],
+            "zip_pattern": "*Yolo*.zip",
+            "class_id": 0,
+        },
     ]
 
     results = {}
@@ -200,12 +205,12 @@ def prepare_all_egret_datasets(base_path: Path):
         print(f"\n{'='*60}")
         pairs_count = prepare_single_egret_dataset(
             base_path=base_path,
-            species_name=config['name'],
-            image_folders=config['folders'],
-            annotation_zip_pattern=config['zip_pattern'],
-            class_id=config['class_id']
+            species_name=config["name"],
+            image_folders=config["folders"],
+            annotation_zip_pattern=config["zip_pattern"],
+            class_id=config["class_id"],
         )
-        results[config['name']] = pairs_count
+        results[config["name"]] = pairs_count
         total_pairs += pairs_count
         print()
 
@@ -226,16 +231,18 @@ def prepare_all_egret_datasets(base_path: Path):
 
     return results
 
+
 def prepare_chinese_egret_data(base_path: Path):
     """Legacy function for backward compatibility"""
     print("⚠️  Using legacy Chinese Egret preparation (consider using prepare_all_egret_datasets)")
     return prepare_single_egret_dataset(
         base_path=base_path,
-        species_name='chinese_egret',
-        image_folders=[f'Chinese_Egret_Batch{i}' for i in range(1, 8)],
-        annotation_zip_pattern='*.zip',
-        class_id=0
+        species_name="chinese_egret",
+        image_folders=[f"Chinese_Egret_Batch{i}" for i in range(1, 8)],
+        annotation_zip_pattern="*.zip",
+        class_id=0,
     )
+
 
 def create_unified_egret_dataset(base_path: Path):
     """Create a unified dataset combining all four egret species for multi-class training"""
@@ -248,18 +255,18 @@ def create_unified_egret_dataset(base_path: Path):
 
     # Class mapping for unified dataset
     class_mapping = {
-        'chinese_egret': 0,
-        'great_egret': 1,
-        'intermediate_egret': 2,
-        'little_egret': 3
+        "chinese_egret": 0,
+        "great_egret": 1,
+        "intermediate_egret": 2,
+        "little_egret": 3,
     }
 
     # Unified dataset path
     unified_path = base_path / "final_yolo_dataset" / "unified_egret_dataset"
 
     # Create directories
-    for split in ['train', 'val', 'test']:
-        for subdir in ['images', 'labels']:
+    for split in ["train", "val", "test"]:
+        for subdir in ["images", "labels"]:
             (unified_path / split / subdir).mkdir(parents=True, exist_ok=True)
 
     all_image_label_pairs = []
@@ -280,7 +287,7 @@ def create_unified_egret_dataset(base_path: Path):
 
         # Collect image-label pairs for this species
         species_pairs = []
-        for ext in ['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG']:
+        for ext in [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG"]:
             for img_file in source_images.glob(f"*{ext}"):
                 lbl_file = source_labels / f"{img_file.stem}.txt"
                 if lbl_file.exists():
@@ -305,9 +312,9 @@ def create_unified_egret_dataset(base_path: Path):
     n_test = len(all_image_label_pairs) - n_train - n_val
 
     splits_data = [
-        (all_image_label_pairs[:n_train], 'train'),
-        (all_image_label_pairs[n_train:n_train + n_val], 'val'),
-        (all_image_label_pairs[n_train + n_val:], 'test')
+        (all_image_label_pairs[:n_train], "train"),
+        (all_image_label_pairs[n_train : n_train + n_val], "val"),
+        (all_image_label_pairs[n_train + n_val :], "test"),
     ]
 
     # Copy files and adjust labels
@@ -316,36 +323,36 @@ def create_unified_egret_dataset(base_path: Path):
 
         for img_file, lbl_file, class_id in split_pairs:
             # Copy image
-            img_target = unified_path / split_name / 'images' / img_file.name
+            img_target = unified_path / split_name / "images" / img_file.name
             shutil.copy2(str(img_file), str(img_target))
 
             # Read and adjust labels
-            with open(lbl_file, 'r') as f:
+            with open(lbl_file) as f:
                 original_labels = f.read().strip()
 
             if original_labels:
                 adjusted_labels = []
-                for line in original_labels.split('\n'):
+                for line in original_labels.split("\n"):
                     if line.strip():
                         # Replace original class ID (usually 0) with correct class ID
                         parts = line.split()
                         parts[0] = str(class_id)  # Set correct class ID
-                        adjusted_labels.append(' '.join(parts))
+                        adjusted_labels.append(" ".join(parts))
 
                 # Write adjusted labels
-                lbl_target = unified_path / split_name / 'labels' / lbl_file.name
-                with open(lbl_target, 'w') as f:
-                    f.write('\n'.join(adjusted_labels))
+                lbl_target = unified_path / split_name / "labels" / lbl_file.name
+                with open(lbl_target, "w") as f:
+                    f.write("\n".join(adjusted_labels))
 
     # Create data.yaml
-    yaml_content = f"""train: train/images
+    yaml_content = """train: train/images
 val: val/images
 test: test/images
 nc: 4
 names: ['Chinese Egret', 'Great Egret', 'Intermediate Egret', 'Little Egret']
 """
 
-    with open(unified_path / "data.yaml", 'w', encoding='utf-8') as f:
+    with open(unified_path / "data.yaml", "w", encoding="utf-8") as f:
         f.write(yaml_content)
 
     print("\n✅ UNIFIED DATASET CREATION COMPLETE!")
@@ -354,21 +361,23 @@ names: ['Chinese Egret', 'Great Egret', 'Intermediate Egret', 'Little Egret']
     print(f"   - Train: {n_train} images")
     print(f"   - Val: {n_val} images")
     print(f"   - Test: {n_test} images")
-    print(f"🏷️  Classes: 4 (Chinese, Great, Intermediate, Little Egret)")
+    print("🏷️  Classes: 4 (Chinese, Great, Intermediate, Little Egret)")
     print("\n🔧 Ready for multi-class YOLO training!")
     return {
-        'path': unified_path,
-        'total_images': total_images,
-        'train_count': n_train,
-        'val_count': n_val,
-        'test_count': n_test
+        "path": unified_path,
+        "total_images": total_images,
+        "train_count": n_train,
+        "val_count": n_val,
+        "test_count": n_test,
     }
+
 
 if __name__ == "__main__":
     base_path = Path("training_data")
 
     # Choose what to do
     import sys
+
     if len(sys.argv) > 1 and sys.argv[1] == "unified":
         create_unified_egret_dataset(base_path)
     else:

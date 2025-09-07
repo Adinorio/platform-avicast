@@ -11,18 +11,18 @@
         max-width: 100%;
         height: auto;
     }
-    
+
     .annotation-controls {
         background: #f8f9fa;
         padding: 1rem;
         border-radius: 8px;
         margin-bottom: 1rem;
     }
-    
+
     .species-selector {
         margin-bottom: 1rem;
     }
-    
+
     .bbox-list {
         max-height: 300px;
         overflow-y: auto;
@@ -30,7 +30,7 @@
         border-radius: 4px;
         padding: 0.5rem;
     }
-    
+
     .bbox-item {
         display: flex;
         justify-content: between;
@@ -41,7 +41,7 @@
         border-radius: 4px;
         border: 1px solid #eee;
     }
-    
+
     .annotation-help {
         background: #e3f2fd;
         border: 1px solid #2196f3;
@@ -72,7 +72,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="row">
         <div class="col-lg-8">
             <!-- Help Section -->
@@ -85,7 +85,7 @@
                     <li><strong>Save</strong> when complete</li>
                 </ol>
             </div>
-            
+
             <!-- Canvas Container -->
             <div class="card">
                 <div class="card-header">
@@ -93,17 +93,17 @@
                 </div>
                 <div class="card-body p-1">
                     <div style="position: relative; display: inline-block;">
-                        <img id="annotationImage" 
-                             src="{{ image_upload.image_file.url }}" 
+                        <img id="annotationImage"
+                             src="{{ image_upload.image_file.url }}"
                              class="annotation-canvas"
                              onload="initializeCanvas()">
-                        <canvas id="annotationCanvas" 
+                        <canvas id="annotationCanvas"
                                 style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4">
             <!-- Controls -->
             <div class="annotation-controls">
@@ -113,7 +113,7 @@
                         <option value="0">Unknown Bird</option>
                         <!-- Dynamic species will be loaded here -->
                     </select>
-                    
+
                     <!-- Add New Species Section -->
                     <div class="mt-2 d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAddSpecies()">
@@ -123,7 +123,7 @@
                             <i class="fas fa-list me-1"></i>Manage All
                         </a>
                     </div>
-                    
+
                     <!-- Add Species Form (Hidden by default) -->
                     <div id="addSpeciesForm" class="mt-3" style="display: none;">
                         <div class="card border-primary">
@@ -133,12 +133,12 @@
                             <div class="card-body p-3">
                                 <div class="mb-2">
                                     <label for="newSpeciesName" class="form-label fw-bold">Species Name</label>
-                                    <input type="text" class="form-control" id="newSpeciesName" 
+                                    <input type="text" class="form-control" id="newSpeciesName"
                                            placeholder="e.g., American Robin">
                                 </div>
                                 <div class="mb-3">
                                     <label for="newSpeciesScientific" class="form-label">Scientific Name (Optional)</label>
-                                    <input type="text" class="form-control" id="newSpeciesScientific" 
+                                    <input type="text" class="form-control" id="newSpeciesScientific"
                                            placeholder="e.g., Turdus migratorius">
                                     <small class="form-text text-muted">
                                         💡 Tip: Use scientific names for academic accuracy
@@ -156,7 +156,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="d-grid gap-2">
                     <button type="button" class="btn btn-outline-danger" onclick="clearAnnotations()">
                         <i class="fas fa-trash me-2"></i>Clear All
@@ -166,7 +166,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Current Annotations -->
             <div class="card">
                 <div class="card-header">
@@ -178,7 +178,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- AI Predictions (for reference) -->
             {% if processing_result %}
             <div class="card mt-3">
@@ -207,24 +207,24 @@ function initializeCanvas() {
     img = document.getElementById('annotationImage');
     canvas = document.getElementById('annotationCanvas');
     ctx = canvas.getContext('2d');
-    
+
     // Set canvas size to match image
     canvas.width = img.offsetWidth;
     canvas.height = img.offsetHeight;
     canvas.style.width = img.offsetWidth + 'px';
     canvas.style.height = img.offsetHeight + 'px';
-    
+
     // Enable pointer events on canvas
     canvas.style.pointerEvents = 'auto';
-    
+
     // Add event listeners
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
-    
+
     // Load existing species
     loadSpeciesList();
-    
+
     redrawAnnotations();
 }
 
@@ -239,15 +239,15 @@ function loadSpeciesList() {
 
 function updateSpeciesDropdown() {
     const select = document.getElementById('speciesSelect');
-    
+
     // Keep the "Unknown Bird" option and add custom species
     const currentValue = select.value;
-    
+
     // Remove all options except the first one (Unknown Bird)
     while (select.children.length > 1) {
         select.removeChild(select.lastChild);
     }
-    
+
     // Add custom species
     customSpecies.forEach(species => {
         const option = document.createElement('option');
@@ -258,7 +258,7 @@ function updateSpeciesDropdown() {
         }
         select.appendChild(option);
     });
-    
+
     // Restore previous selection if possible
     if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
         select.value = currentValue;
@@ -268,7 +268,7 @@ function updateSpeciesDropdown() {
 function toggleAddSpecies() {
     const form = document.getElementById('addSpeciesForm');
     const isVisible = form.style.display !== 'none';
-    
+
     if (isVisible) {
         form.style.display = 'none';
         // Clear form
@@ -283,18 +283,18 @@ function toggleAddSpecies() {
 function saveNewSpecies() {
     const name = document.getElementById('newSpeciesName').value.trim();
     const scientificName = document.getElementById('newSpeciesScientific').value.trim();
-    
+
     if (!name) {
         alert('Please enter a species name.');
         return;
     }
-    
+
     // Check if species already exists
     if (customSpecies.some(species => species.name.toLowerCase() === name.toLowerCase())) {
         alert('This species already exists.');
         return;
     }
-    
+
     // Create new species
     const newSpecies = {
         id: nextSpeciesId++,
@@ -302,21 +302,21 @@ function saveNewSpecies() {
         scientific_name: scientificName || null,
         created_at: new Date().toISOString()
     };
-    
+
     customSpecies.push(newSpecies);
-    
+
     // Save to localStorage
     localStorage.setItem('customBirdSpecies', JSON.stringify(customSpecies));
-    
+
     // Update dropdown
     updateSpeciesDropdown();
-    
+
     // Select the new species
     document.getElementById('speciesSelect').value = newSpecies.id;
-    
+
     // Hide form
     toggleAddSpecies();
-    
+
     console.log('Added new species:', newSpecies);
 }
 
@@ -329,13 +329,13 @@ function startDrawing(e) {
 
 function draw(e) {
     if (!isDrawing) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     endX = e.clientX - rect.left;
     endY = e.clientY - rect.top;
-    
+
     redrawAnnotations();
-    
+
     // Draw current rectangle
     ctx.strokeStyle = '#ff0000';
     ctx.lineWidth = 2;
@@ -346,11 +346,11 @@ function draw(e) {
 function stopDrawing(e) {
     if (!isDrawing) return;
     isDrawing = false;
-    
+
     const rect = canvas.getBoundingClientRect();
     endX = e.clientX - rect.left;
     endY = e.clientY - rect.top;
-    
+
     // Create annotation
     const annotation = {
         x: Math.min(startX, endX),
@@ -360,7 +360,7 @@ function stopDrawing(e) {
         species: document.getElementById('speciesSelect').value,
         species_name: document.getElementById('speciesSelect').selectedOptions[0].text
     };
-    
+
     // Only add if box is large enough
     if (annotation.width > 10 && annotation.height > 10) {
         annotations.push(annotation);
@@ -371,13 +371,13 @@ function stopDrawing(e) {
 
 function redrawAnnotations() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     annotations.forEach((ann, index) => {
         ctx.strokeStyle = '#00ff00';
         ctx.lineWidth = 2;
         ctx.setLineDash([]);
         ctx.strokeRect(ann.x, ann.y, ann.width, ann.height);
-        
+
         // Draw label
         ctx.fillStyle = '#00ff00';
         ctx.font = '12px Arial';
@@ -388,12 +388,12 @@ function redrawAnnotations() {
 function updateAnnotationList() {
     const listContainer = document.getElementById('annotationList');
     document.getElementById('annotationCount').textContent = annotations.length;
-    
+
     if (annotations.length === 0) {
         listContainer.innerHTML = '<p class="text-muted text-center">No annotations yet</p>';
         return;
     }
-    
+
     let html = '';
     annotations.forEach((ann, index) => {
         html += `
@@ -408,7 +408,7 @@ function updateAnnotationList() {
             </div>
         `;
     });
-    
+
     listContainer.innerHTML = html;
 }
 
@@ -439,14 +439,14 @@ function saveAnnotations() {
         alert('Please create at least one annotation before saving.');
         return;
     }
-    
+
     // Convert to YOLO format (normalized coordinates)
     const yoloAnnotations = annotations.map(ann => {
         const centerX = (ann.x + ann.width / 2) / canvas.width;
         const centerY = (ann.y + ann.height / 2) / canvas.height;
         const width = ann.width / canvas.width;
         const height = ann.height / canvas.height;
-        
+
         return {
             class_id: parseInt(ann.species),
             center_x: centerX,
@@ -456,7 +456,7 @@ function saveAnnotations() {
             species_name: ann.species_name
         };
     });
-    
+
     // Save via API
     fetch(`{% url 'image_processing:save_annotations' image_upload.pk %}`, {
         method: 'POST',

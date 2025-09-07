@@ -61,7 +61,7 @@ python run_pipeline.py <command> [options]
 
 # Available commands:
 train      # Train new model
-validate   # Test model performance  
+validate   # Test model performance
 export     # Export for deployment
 inference  # Run on new images
 monitor    # Watch training progress

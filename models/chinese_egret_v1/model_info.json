@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "created_date": "2024-12-19",
   "description": "Ultra high-performance YOLOv8 model specifically trained for Chinese Egret detection with exceptional accuracy",
-  
+
   "performance_metrics": {
     "mAP@0.5": 99.46,
     "mAP@0.5-0.95": 80.06,
@@ -13,14 +13,14 @@
     "f1_score": 98.23,
     "fitness": 82.00
   },
-  
+
   "speed_metrics": {
     "inference_time_ms": 13.4,
     "fps": 75,
     "gpu_optimized": true,
     "optimal_hardware": "NVIDIA RTX 3050+"
   },
-  
+
   "training_info": {
     "training_images": 1198,
     "validation_images": 119,
@@ -30,21 +30,21 @@
     "input_size": "640x640",
     "training_time_minutes": 13.4
   },
-  
+
   "validation_results": {
     "test_detection_rate": 99.1,
     "test_images_detected": "116/117",
     "multi_bird_detection": true,
     "max_birds_detected": 8
   },
-  
+
   "specialized_for": {
     "primary_species": "Chinese Egret",
     "scientific_name": "Egretta eulophotes",
     "detection_confidence": "Extremely High",
     "recommended_use": "Primary model for Chinese Egret surveys and monitoring"
   },
-  
+
   "deployment_options": {
     "pytorch": {
       "file": "chinese_egret_best.pt",
@@ -52,26 +52,26 @@
       "format": "PyTorch"
     },
     "onnx": {
-      "file": "chinese_egret_best.onnx", 
+      "file": "chinese_egret_best.onnx",
       "size_mb": 42.7,
       "format": "ONNX",
       "cross_platform": true
     }
   },
-  
+
   "usage_recommendations": {
     "confidence_threshold": 0.25,
     "iou_threshold": 0.45,
     "batch_size": 8,
     "best_for": [
       "Chinese Egret surveys",
-      "Bird monitoring projects", 
+      "Bird monitoring projects",
       "Species identification",
       "Population counts",
       "Real-time detection"
     ]
   },
-  
+
   "comparison_to_base_models": {
     "vs_yolov8_base": {
       "accuracy_improvement": "+29.46%",
@@ -84,7 +84,7 @@
       "deployment_ready": "Production quality"
     }
   },
-  
+
   "integration_status": {
     "platform_integrated": true,
     "default_model": true,

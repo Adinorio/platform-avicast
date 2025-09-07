@@ -3,17 +3,20 @@
 Download YOLOv11x model for bird identification
 """
 
-import sys
 import os
-sys.path.append('../../')
+import sys
+
+sys.path.append("../../")
 
 try:
     from ultralytics import YOLO
+
     print("✅ Ultralytics library found")
 except ImportError:
     print("❌ Ultralytics library not found. Installing...")
     os.system("pip install ultralytics")
     from ultralytics import YOLO
+
 
 def download_yolov11x():
     """Download YOLOv11x model using Ultralytics"""
@@ -23,7 +26,7 @@ def download_yolov11x():
 
     try:
         # Load YOLOv11x (this will download if not present)
-        model = YOLO('yolov11x.pt')
+        model = YOLO("yolov11x.pt")
 
         print("✅ YOLOv11x loaded successfully!")
         print(f"📍 Model path: {model.ckpt_path}")
@@ -49,6 +52,7 @@ def download_yolov11x():
         print(f"❌ Error downloading YOLOv11x: {e}")
         print("💡 Alternative: Try downloading manually from https://github.com/ultralytics/assets")
         return False
+
 
 if __name__ == "__main__":
     download_yolov11x()

@@ -5,9 +5,9 @@ Using only valid YOLO arguments for reliable training
 """
 
 import os
-import sys
 import subprocess
 import time
+
 
 def train_single_model(seed_number, model_number):
     """Train a single model in the ensemble"""
@@ -17,7 +17,8 @@ def train_single_model(seed_number, model_number):
 
     # Simplified but effective maximum accuracy command
     cmd = [
-        "yolo", "train",
+        "yolo",
+        "train",
         "model=models/yolov11x.pt",
         "data=training_data/prepared_dataset/chinese_egret_dataset",
         "epochs=300",
@@ -62,7 +63,7 @@ def train_single_model(seed_number, model_number):
         "dfl=1.5",
         "weight_decay=0.0001",
         "project=max_accuracy_ensemble_results",
-        f"name=chinese_egret_ensemble_seed_{seed_number}"
+        f"name=chinese_egret_ensemble_seed_{seed_number}",
     ]
 
     print("📋 TRAINING COMMAND:")
@@ -89,6 +90,7 @@ def train_single_model(seed_number, model_number):
     except Exception as e:
         print(f"❌ Error training model {model_number}: {e}")
         return False
+
 
 def main():
     """Main ensemble training function"""
@@ -137,7 +139,7 @@ def main():
 
             # Brief pause between models (except for last one)
             if idx < len(seeds):
-                print(f"\n⏸️  Pausing for 5 minutes to let system cool...")
+                print("\n⏸️  Pausing for 5 minutes to let system cool...")
                 time.sleep(300)  # 5 minutes
 
     except KeyboardInterrupt:
@@ -164,9 +166,6 @@ def main():
         print("   Not enough successful models for optimal ensemble")
         print("   Consider retraining failed models or using available ones")
 
+
 if __name__ == "__main__":
     main()
-
-
-
-

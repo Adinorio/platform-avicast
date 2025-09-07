@@ -29,15 +29,15 @@
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data" novalidate>
                         {% csrf_token %}
-                        
+
                         <!-- File Selection -->
                         <div class="mb-3">
                             <label for="{{ import_form.import_file.id_for_label }}" class="form-label">
                                 <strong>{{ import_form.import_file.label }} *</strong>
                             </label>
-                            <input type="file" 
-                                   class="form-control {% if import_form.import_file.errors %}is-invalid{% endif %}" 
-                                   id="{{ import_form.import_file.id_for_label }}" 
+                            <input type="file"
+                                   class="form-control {% if import_form.import_file.errors %}is-invalid{% endif %}"
+                                   id="{{ import_form.import_file.id_for_label }}"
                                    name="{{ import_form.import_file.name }}"
                                    accept="{{ import_form.import_file.field.widget.attrs.accept }}"
                                    required>
@@ -58,8 +58,8 @@
                             <label for="{{ import_form.file_format.id_for_label }}" class="form-label">
                                 <strong>{{ import_form.file_format.label }}</strong>
                             </label>
-                            <select class="form-select {% if import_form.file_format.errors %}is-invalid{% endif %}" 
-                                    id="{{ import_form.file_format.id_for_label }}" 
+                            <select class="form-select {% if import_form.file_format.errors %}is-invalid{% endif %}"
+                                    id="{{ import_form.file_format.id_for_label }}"
                                     name="{{ import_form.file_format.name }}">
                                 {% for value, label in import_form.file_format.field.choices %}
                                     <option value="{{ value }}" {% if value == import_form.file_format.value %}selected{% endif %}>
@@ -79,9 +79,9 @@
                         <!-- Overwrite Option -->
                         <div class="mb-3">
                             <div class="form-check">
-                                <input type="checkbox" 
-                                       class="form-check-input {% if import_form.overwrite_existing.errors %}is-invalid{% endif %}" 
-                                       id="{{ import_form.overwrite_existing.id_for_label }}" 
+                                <input type="checkbox"
+                                       class="form-check-input {% if import_form.overwrite_existing.errors %}is-invalid{% endif %}"
+                                       id="{{ import_form.overwrite_existing.id_for_label }}"
                                        name="{{ import_form.overwrite_existing.name }}"
                                        {% if import_form.overwrite_existing.value %}checked{% endif %}>
                                 <label class="form-check-label" for="{{ import_form.overwrite_existing.id_for_label }}">
@@ -170,4 +170,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

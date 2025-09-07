@@ -5,7 +5,6 @@ Bypasses pip update checks to avoid network interruptions.
 """
 
 import os
-import sys
 
 
 def main() -> int:
@@ -93,9 +92,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
-
-
-
-

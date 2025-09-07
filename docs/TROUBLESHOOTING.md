@@ -29,7 +29,7 @@ pip list | grep openpyxl
 
 ### 2. PowerShell Execution Policy Error
 
-**Symptoms**: 
+**Symptoms**:
 ```
 File cannot be loaded because running scripts is disabled on this system.
 ```
@@ -41,7 +41,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ### 3. Missing Static Directory Warning
 
-**Symptoms**: 
+**Symptoms**:
 ```
 System check identified some issues:
 WARNINGS:
@@ -55,7 +55,7 @@ mkdir static
 
 ### 4. Database Migration Issues
 
-**Symptoms**: 
+**Symptoms**:
 ```
 You have X unapplied migration(s). Your project may not work properly until you apply the migrations.
 ```
@@ -68,7 +68,7 @@ python manage.py migrate
 
 ### 5. Port Already in Use
 
-**Symptoms**: 
+**Symptoms**:
 ```
 Error: That port is already in use.
 ```
@@ -107,7 +107,7 @@ taskkill /PID <PID> /F
 
 ### 3. Template Not Found Errors
 
-**Symptoms**: 
+**Symptoms**:
 ```
 TemplateDoesNotExist at /url/
 ```

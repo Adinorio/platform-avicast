@@ -9,31 +9,31 @@
         border-left: 4px solid #667eea;
         transition: all 0.3s ease;
     }
-    
+
     .run-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
-    
+
     .status-badge {
         font-size: 0.75rem;
         padding: 0.25rem 0.75rem;
         border-radius: 15px;
         font-weight: 600;
     }
-    
+
     .status-completed { background: #28a745; color: white; }
     .status-processing { background: #ffc107; color: #212529; }
     .status-failed { background: #dc3545; color: white; }
     .status-pending { background: #6c757d; color: white; }
-    
+
     .filter-section {
         background: #f8f9fa;
         border-radius: 10px;
         padding: 1.5rem;
         margin-bottom: 1rem;
     }
-    
+
     .metric-highlight {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -148,7 +148,7 @@
                             </div>
                             <div class="card-body">
                                 <p class="text-muted small mb-3">{{ run.description|truncatechars:100 }}</p>
-                                
+
                                 <div class="row g-2 mb-3">
                                     <div class="col-6">
                                         <small class="text-muted">IoU Threshold:</small><br>
@@ -159,7 +159,7 @@
                                         <strong>{{ run.confidence_threshold }}</strong>
                                     </div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <small class="text-muted">Models:</small><br>
                                     <div class="d-flex flex-wrap gap-1">
@@ -168,13 +168,13 @@
                                         {% endfor %}
                                     </div>
                                 </div>
-                                
+
                                 {% if run.status == 'COMPLETED' and run.overall_map_50 %}
                                 <div class="alert alert-success small mb-3">
                                     <strong>mAP@0.5: {{ run.overall_map_50|floatformat:3 }}</strong>
                                 </div>
                                 {% endif %}
-                                
+
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">{{ run.created_at|date:"M d, Y H:i" }}</small>
                                     <div class="btn-group">
@@ -193,7 +193,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                
+
                 <!-- Pagination -->
                 {% if is_paginated %}
                 <nav aria-label="Evaluation runs pagination" class="mt-4">
@@ -210,11 +210,11 @@
                             </a>
                         </li>
                         {% endif %}
-                        
+
                         <li class="page-item active">
                             <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                         </li>
-                        
+
                         {% if page_obj.has_next %}
                         <li class="page-item">
                             <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if model_filter %}&model={{ model_filter }}{% endif %}{% if date_start %}&date_start={{ date_start }}{% endif %}{% if date_end %}&date_end={{ date_end }}{% endif %}">
@@ -230,7 +230,7 @@
                     </ul>
                 </nav>
                 {% endif %}
-                
+
             {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-chart-line fa-4x text-muted mb-4"></i>
@@ -296,7 +296,7 @@ document.getElementById('confirmDelete').addEventListener('click', function() {
             alert('An error occurred while deleting the evaluation run.');
         });
     }
-    
+
     const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
     deleteModal.hide();
 });

@@ -52,7 +52,7 @@
                         <h1 class="display-4 fw-bold text-primary mb-3">Welcome to AVICAST System</h1>
                         <p class="lead text-muted mb-4">Employee ID: {{ user.employee_id }} | Role: {{ user.get_role_display }}</p>
                     </div>
-                    
+
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-primary text-white">
                             <h4 class="mb-0">
@@ -90,7 +90,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="text-center mt-4">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -117,7 +117,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="alert alert-info mt-4 mb-0">
                                 <i class="fas fa-info-circle me-2"></i>
                                 <strong>Note:</strong> For data management, please create Admin users who will handle species, sites, and census data.
@@ -137,7 +137,7 @@
                     <p class="lead text-muted mb-4">Employee ID: {{ user.employee_id }} | Role: {{ user.get_role_display }}</p>
                 </div>
             </div>
-            
+
             <!-- Enhanced Feature Cards -->
             <div class="row g-4 mb-5">
                 <!-- Species Management -->
@@ -157,7 +157,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Site Management -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card h-100 border-0 shadow-sm feature-card">
@@ -175,7 +175,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Analytics & Reports -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card h-100 border-0 shadow-sm feature-card">
@@ -310,7 +310,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Role-Specific Information -->
             {% if user.role == 'ADMIN' %}
             <div class="row mb-4">
@@ -335,7 +335,7 @@
                 </div>
             </div>
             {% endif %}
-            
+
             <!-- System Overview Section -->
             <div class="row">
                 <div class="col-12">
@@ -362,7 +362,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-lg-4 col-md-6">
                                     <div class="d-flex align-items-start">
                                         <div class="flex-shrink-0 me-3">
@@ -379,7 +379,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-lg-4 col-md-6">
                                     <div class="d-flex align-items-start">
                                         <div class="flex-shrink-0 me-3">
@@ -528,4 +528,4 @@
     color: white !important;
 }
 </style>
-{% endblock %} 
+{% endblock %}

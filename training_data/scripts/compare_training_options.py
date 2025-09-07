@@ -3,8 +3,8 @@
 Compare different training approaches with mixed vs pure datasets
 """
 
-import os
 from pathlib import Path
+
 
 def compare_training_options():
     """Compare the value of different training approaches"""
@@ -26,13 +26,13 @@ def compare_training_options():
     mixed_images = 0
     pure_images = 0
 
-    for split in ['train', 'val', 'test']:
+    for split in ["train", "val", "test"]:
         labels_path = base_path / split / "labels"
         label_files = list(labels_path.glob("*.txt"))
 
         for label_file in label_files:
             total_images += 1
-            with open(label_file, 'r') as f:
+            with open(label_file) as f:
                 lines = f.readlines()
 
             classes_in_image = set()
@@ -89,7 +89,7 @@ def compare_training_options():
     print("   ✅ Maximum training data utilization")
     print("   ✅ Best conservation tool (identify any egret)")
     print("   ✅ Advanced species discrimination")
-    print(f"   📊 Classes: 4 (Chinese, Little, Great, Intermediate)")
+    print("   📊 Classes: 4 (Chinese, Little, Great, Intermediate)")
     print(f"   📊 Training images: {total_images} (100% of total)")
     print("   ✅ Most comprehensive solution")
     print("   ⚠️  More complex model and evaluation")
@@ -115,6 +115,7 @@ def compare_training_options():
     print("   1. Run: python training_data/scripts/train_with_mixed.py")
     print("   2. Or: python training_data/scripts/filter_chinese_egret_only.py (back to pure)")
     print("   3. Or: python training_data/scripts/create_multi_class_dataset.py (all species)")
+
 
 if __name__ == "__main__":
     compare_training_options()

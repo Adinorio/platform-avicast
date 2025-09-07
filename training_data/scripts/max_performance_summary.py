@@ -116,7 +116,3 @@ print()
 
 print("🔥 READY TO MAXIMIZE YOUR RTX 3050 PERFORMANCE!")
 print("💡 This will push your laptop to its absolute limits safely.")
-
-
-
-

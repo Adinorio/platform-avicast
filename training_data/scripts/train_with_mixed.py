@@ -3,9 +3,8 @@
 Train YOLOv8x with mixed species dataset for maximum Chinese Egret accuracy
 """
 
-import os
 import subprocess
-from pathlib import Path
+
 
 def train_with_mixed_dataset():
     """Train using the mixed dataset with all available images"""
@@ -18,7 +17,8 @@ def train_with_mixed_dataset():
 
     # Training command for maximum accuracy
     cmd = [
-        "yolo", "train",
+        "yolo",
+        "train",
         "model=models/yolov8x.pt",
         "data=training_data/final_yolo_dataset/chinese_egret_dataset/data.yaml",
         "epochs=200",
@@ -63,7 +63,7 @@ def train_with_mixed_dataset():
         "dfl=1.5",
         "weight_decay=0.0001",
         "project=max_accuracy_mixed_results",
-        "name=chinese_egret_mixed_max_accuracy"
+        "name=chinese_egret_mixed_max_accuracy",
     ]
 
     print("\n" + "=" * 50)
@@ -103,6 +103,7 @@ def train_with_mixed_dataset():
         print(f"\n❌ Training error: {e}")
         return False
 
+
 if __name__ == "__main__":
     success = train_with_mixed_dataset()
     if success:
@@ -111,7 +112,3 @@ if __name__ == "__main__":
     else:
         print("\n⚠️  TRAINING DID NOT COMPLETE")
         print("💡 You can resume with the same command")
-
-
-
-

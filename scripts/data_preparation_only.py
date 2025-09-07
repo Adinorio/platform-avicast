@@ -13,17 +13,17 @@ This creates a standalone data preparation workflow that can run independently
 of the full Django application.
 """
 
-import os
-import sys
 import shutil
-from pathlib import Path
+import sys
 import zipfile
+from pathlib import Path
+
 
 def step_1_collect_raw_data(base_path: Path):
     """Step 1: Collect and verify raw data sources"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 1: COLLECT RAW DATA")
-    print("="*60)
+    print("=" * 60)
 
     # Check for annotated datasets
     annotated_path = base_path / "exported_annotations/Chinese_Egret"
@@ -55,7 +55,11 @@ def step_1_collect_raw_data(base_path: Path):
             print(f"   - {zip_file.name}")
 
     # Count training batches
-    batch_folders = [d for d in training_path.iterdir() if d.is_dir() and d.name.startswith("Chinese_Egret_Batch")]
+    batch_folders = [
+        d
+        for d in training_path.iterdir()
+        if d.is_dir() and d.name.startswith("Chinese_Egret_Batch")
+    ]
     print(f"✅ Found {len(batch_folders)} training batches:")
     for batch in sorted(batch_folders):
         png_count = len(list(batch.glob("*.png")))
@@ -63,11 +67,12 @@ def step_1_collect_raw_data(base_path: Path):
 
     return True
 
+
 def step_2_extract_annotations(base_path: Path):
     """Step 2: Extract YOLO format annotations"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 2: EXTRACT YOLO ANNOTATIONS")
-    print("="*60)
+    print("=" * 60)
 
     yolo_path = base_path / "exported_annotations/Chinese_Egret/yolo"
     output_labels = base_path / "prepared_dataset/labels"
@@ -83,7 +88,7 @@ def step_2_extract_annotations(base_path: Path):
         print(f"📦 Extracting {zip_file.name}...")
 
         try:
-            with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            with zipfile.ZipFile(zip_file, "r") as zip_ref:
                 # Extract to temporary directory
                 temp_dir = output_labels / f"temp_{zip_file.stem}"
                 zip_ref.extractall(temp_dir)
@@ -105,11 +110,12 @@ def step_2_extract_annotations(base_path: Path):
     print(f"✅ Extracted {total_extracted} annotation files to {output_labels}/")
     return True
 
+
 def step_3_consolidate_images(base_path: Path):
     """Step 3: Consolidate all training images"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 3: CONSOLIDATE TRAINING IMAGES")
-    print("="*60)
+    print("=" * 60)
 
     training_path = base_path / "raw_images"
     output_images = base_path / "prepared_dataset/images"
@@ -118,14 +124,18 @@ def step_3_consolidate_images(base_path: Path):
 
     print("Consolidating images from all batch folders...")
 
-    batch_folders = [d for d in training_path.iterdir() if d.is_dir() and d.name.startswith("Chinese_Egret_Batch")]
+    batch_folders = [
+        d
+        for d in training_path.iterdir()
+        if d.is_dir() and d.name.startswith("Chinese_Egret_Batch")
+    ]
     total_images = 0
 
     for batch_folder in sorted(batch_folders):
         print(f"📁 Processing {batch_folder.name}...")
 
         batch_images = 0
-        image_extensions = ['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG']
+        image_extensions = [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG"]
 
         for ext in image_extensions:
             image_files = list(batch_folder.glob(f"*{ext}"))
@@ -144,11 +154,12 @@ def step_3_consolidate_images(base_path: Path):
     print(f"✅ Consolidated {total_images} images to {output_images}/")
     return True
 
+
 def step_4_verify_data_integrity(base_path: Path):
     """Step 4: Verify data integrity and matching"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 4: VERIFY DATA INTEGRITY")
-    print("="*60)
+    print("=" * 60)
 
     images_path = base_path / "prepared_dataset/images"
     labels_path = base_path / "prepared_dataset/labels"
@@ -156,7 +167,7 @@ def step_4_verify_data_integrity(base_path: Path):
     print("Verifying image-label pairs...")
 
     # Get all image files
-    image_extensions = ['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG']
+    image_extensions = [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG"]
     image_files = []
     for ext in image_extensions:
         image_files.extend(images_path.glob(f"*{ext}"))
@@ -213,11 +224,12 @@ def step_4_verify_data_integrity(base_path: Path):
 
     return matched > 0
 
+
 def step_5_create_dataset_structure(base_path: Path):
     """Step 5: Create YOLO dataset structure"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 5: CREATE YOLO DATASET STRUCTURE")
-    print("="*60)
+    print("=" * 60)
 
     output_path = base_path / "final_yolo_dataset/bird_dataset_v1"
     images_path = base_path / "prepared_dataset/images"
@@ -227,16 +239,19 @@ def step_5_create_dataset_structure(base_path: Path):
 
     # Create directory structure
     directories = [
-        'train/images', 'train/labels',
-        'valid/images', 'valid/labels',
-        'test/images', 'test/labels'
+        "train/images",
+        "train/labels",
+        "valid/images",
+        "valid/labels",
+        "test/images",
+        "test/labels",
     ]
 
     for directory in directories:
         (output_path / directory).mkdir(parents=True, exist_ok=True)
 
     # Get all image-label pairs
-    image_extensions = ['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG']
+    image_extensions = [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG"]
     pairs = []
 
     for ext in image_extensions:
@@ -249,6 +264,7 @@ def step_5_create_dataset_structure(base_path: Path):
 
     # Split dataset (80% train, 10% valid, 10% test)
     import random
+
     random.seed(42)  # For reproducible splits
 
     shuffled_pairs = pairs.copy()
@@ -259,15 +275,11 @@ def step_5_create_dataset_structure(base_path: Path):
     n_valid = int(n_total * 0.1)
 
     train_pairs = shuffled_pairs[:n_train]
-    valid_pairs = shuffled_pairs[n_train:n_train + n_valid]
-    test_pairs = shuffled_pairs[n_train + n_valid:]
+    valid_pairs = shuffled_pairs[n_train : n_train + n_valid]
+    test_pairs = shuffled_pairs[n_train + n_valid :]
 
     # Copy files to respective directories
-    splits = [
-        (train_pairs, 'train'),
-        (valid_pairs, 'valid'),
-        (test_pairs, 'test')
-    ]
+    splits = [(train_pairs, "train"), (valid_pairs, "valid"), (test_pairs, "test")]
 
     total_files = 0
     for split_pairs, split_name in splits:
@@ -275,9 +287,13 @@ def step_5_create_dataset_structure(base_path: Path):
 
         for image_file, label_file in split_pairs:
             # Copy image
-            shutil.copy2(str(image_file), str(output_path / split_name / 'images' / image_file.name))
+            shutil.copy2(
+                str(image_file), str(output_path / split_name / "images" / image_file.name)
+            )
             # Copy label
-            shutil.copy2(str(label_file), str(output_path / split_name / 'labels' / label_file.name))
+            shutil.copy2(
+                str(label_file), str(output_path / split_name / "labels" / label_file.name)
+            )
 
         total_files += len(split_pairs) * 2
 
@@ -308,18 +324,19 @@ names: ['Chinese_Egret']
 """
 
     data_yaml_path = output_path / "data.yaml"
-    with open(data_yaml_path, 'w', encoding='utf-8') as f:
+    with open(data_yaml_path, "w", encoding="utf-8") as f:
         f.write(data_yaml_content)
 
     print(f"✅ Created {data_yaml_path}")
 
     return True
 
+
 def step_6_validate_final_dataset(base_path: Path):
     """Step 6: Validate the final dataset"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 6: VALIDATE FINAL DATASET")
-    print("="*60)
+    print("=" * 60)
 
     dataset_path = base_path / "final_yolo_dataset/bird_dataset_v1"
 
@@ -327,9 +344,12 @@ def step_6_validate_final_dataset(base_path: Path):
 
     # Check directory structure
     required_dirs = [
-        'train/images', 'train/labels',
-        'valid/images', 'valid/labels',
-        'test/images', 'test/labels'
+        "train/images",
+        "train/labels",
+        "valid/images",
+        "valid/labels",
+        "test/images",
+        "test/labels",
     ]
 
     for dir_path in required_dirs:
@@ -340,9 +360,9 @@ def step_6_validate_final_dataset(base_path: Path):
         print(f"✅ {dir_path}/ exists")
 
     # Count files in each split
-    for split in ['train', 'valid', 'test']:
-        img_dir = dataset_path / split / 'images'
-        lbl_dir = dataset_path / split / 'labels'
+    for split in ["train", "valid", "test"]:
+        img_dir = dataset_path / split / "images"
+        lbl_dir = dataset_path / split / "labels"
 
         image_count = len(list(img_dir.glob("*")))
         label_count = len(list(lbl_dir.glob("*.txt")))
@@ -350,7 +370,9 @@ def step_6_validate_final_dataset(base_path: Path):
         print(f"📊 {split.capitalize()}: {image_count} images, {label_count} labels")
 
         if image_count != label_count:
-            print(f"⚠️  Warning: Mismatch in {split} split ({image_count} images vs {label_count} labels)")
+            print(
+                f"⚠️  Warning: Mismatch in {split} split ({image_count} images vs {label_count} labels)"
+            )
 
     # Validate data.yaml
     yaml_path = dataset_path / "data.yaml"
@@ -365,11 +387,12 @@ def step_6_validate_final_dataset(base_path: Path):
 
     return True
 
+
 def create_standalone_data_prep_script(base_path: Path):
     """Create a standalone script with just the data preparation steps"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("CREATING STANDALONE DATA PREPARATION SCRIPT")
-    print("="*60)
+    print("=" * 60)
 
     script_content = '''#!/usr/bin/env python3
 """
@@ -495,7 +518,7 @@ if __name__ == "__main__":
 
     script_path = base_path / "scripts/prepare_data_minimal.py"
     script_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(script_path, 'w', encoding='utf-8') as f:
+    with open(script_path, "w", encoding="utf-8") as f:
         f.write(script_content)
 
     print(f"✅ Created standalone script: {script_path}")
@@ -505,6 +528,7 @@ if __name__ == "__main__":
     print("   - Just pure data processing")
 
     return script_path
+
 
 def main():
     """Main data preparation pipeline"""
@@ -525,7 +549,7 @@ def main():
         (step_3_consolidate_images, [base_path]),
         (step_4_verify_data_integrity, [base_path]),
         (step_5_create_dataset_structure, [base_path]),
-        (step_6_validate_final_dataset, [base_path])
+        (step_6_validate_final_dataset, [base_path]),
     ]
 
     for step, args in steps:
@@ -541,9 +565,9 @@ def main():
     # Create standalone script
     standalone_script = create_standalone_data_prep_script(base_path)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🎉 COMPLETE DATA PREPARATION PIPELINE FINISHED!")
-    print("="*60)
+    print("=" * 60)
     print("\n📋 What was accomplished:")
     print("   ✅ Extracted YOLO annotations from ZIP files")
     print("   ✅ Consolidated images from all training batches")
@@ -558,6 +582,7 @@ def main():
     print("\n🚀 Ready for training with:")
     print("   python prepare_data_minimal.py  # To recreate from scratch")
     print("   python train_chinese_egret.py --model-size s --epochs 100  # To train")
+
 
 if __name__ == "__main__":
     main()

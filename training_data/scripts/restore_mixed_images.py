@@ -3,9 +3,9 @@
 Restore mixed-species images to analyze their training value
 """
 
-import os
 import shutil
 from pathlib import Path
+
 
 def restore_mixed_images():
     """Restore the mixed-species images that were removed during filtering"""
@@ -18,13 +18,17 @@ def restore_mixed_images():
     project_root = script_dir.parent.parent
 
     # Source: original prepared dataset
-    source_images = project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "images"
-    source_labels = project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "labels"
+    source_images = (
+        project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "images"
+    )
+    source_labels = (
+        project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "labels"
+    )
 
     # Destination: final dataset
     dest_base = project_root / "training_data" / "final_yolo_dataset" / "chinese_egret_dataset"
 
-    splits = ['train', 'val', 'test']
+    splits = ["train", "val", "test"]
 
     print("\n📋 RESTORATION PLAN:")
     print("1. Copy all original images back")
@@ -32,7 +36,7 @@ def restore_mixed_images():
     print("3. Re-run the split logic")
 
     # Get all original image-label pairs
-    image_extensions = ['*.png', '*.jpg', '*.jpeg', '*.PNG', '*.JPG', '*.JPEG']
+    image_extensions = ["*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG"]
     all_images = []
 
     for ext in image_extensions:
@@ -58,7 +62,7 @@ def restore_mixed_images():
     print("-" * 40)
 
     for img_path, label_path in image_label_pairs:
-        with open(label_path, 'r') as f:
+        with open(label_path) as f:
             lines = f.readlines()
 
         classes_in_image = set()
@@ -111,9 +115,6 @@ def restore_mixed_images():
 
     return mixed_count, pure_count, total_chinese_in_mixed
 
+
 if __name__ == "__main__":
     restore_mixed_images()
-
-
-
-

@@ -6,23 +6,23 @@ This script trains an EfficientNet model to classify egret species from cropped 
 Uses transfer learning from ImageNet pre-trained weights.
 """
 
-import os
-import sys
-import json
 import argparse
+import sys
+import warnings
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
-from torchvision import datasets, transforms, models
 from PIL import Image
 from sklearn.metrics import classification_report, confusion_matrix
-import matplotlib.pyplot as plt
+from torch.utils.data import DataLoader, Dataset
+from torchvision import models, transforms
 from tqdm import tqdm
-import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 
 class FilteredImageFolder(Dataset):
@@ -38,7 +38,7 @@ class FilteredImageFolder(Dataset):
         # Find classes that have images
         for class_dir in sorted(self.root.iterdir()):
             if class_dir.is_dir():
-                images = list(class_dir.glob('*.png'))
+                images = list(class_dir.glob("*.png"))
                 if images:  # Only include classes with images
                     class_name = class_dir.name
                     class_idx = len(self.classes)
@@ -56,7 +56,7 @@ class FilteredImageFolder(Dataset):
 
     def __getitem__(self, idx):
         img_path, label = self.samples[idx]
-        image = Image.open(img_path).convert('RGB')
+        image = Image.open(img_path).convert("RGB")
 
         if self.transform:
             image = self.transform(image)
@@ -67,14 +67,14 @@ class FilteredImageFolder(Dataset):
 class EgretClassifierTrainer:
     """Trainer for egret species classification."""
 
-    def __init__(self, data_dir: str, model_name: str = 'efficientnet_b0'):
+    def __init__(self, data_dir: str, model_name: str = "efficientnet_b0"):
         self.data_dir = Path(data_dir)
         self.model_name = model_name
         # num_classes will be determined from the dataset
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Class names
-        self.class_names = ['Chinese Egret', 'Great Egret', 'Intermediate Egret', 'Little Egret']
+        self.class_names = ["Chinese Egret", "Great Egret", "Intermediate Egret", "Little Egret"]
 
         # Setup data transforms
         self.setup_transforms()
@@ -90,28 +90,31 @@ class EgretClassifierTrainer:
 
     def setup_transforms(self):
         """Setup data augmentation and preprocessing transforms."""
-        self.train_transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomRotation(15),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+        self.train_transform = transforms.Compose(
+            [
+                transforms.Resize((224, 224)),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomRotation(15),
+                transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        )
 
-        self.val_transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+        self.val_transform = transforms.Compose(
+            [
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        )
 
     def load_datasets(self):
         """Load training and validation datasets."""
         # Load training dataset
         try:
             self.train_dataset = FilteredImageFolder(
-                root=self.data_dir / 'train',
-                transform=self.train_transform
+                root=self.data_dir / "train", transform=self.train_transform
             )
         except Exception as e:
             print(f"❌ Error loading training data: {e}")
@@ -119,13 +122,10 @@ class EgretClassifierTrainer:
             raise
 
         # Load validation dataset (may not exist)
-        val_path = self.data_dir / 'val'
-        if val_path.exists() and any(val_path.rglob('*.png')):
+        val_path = self.data_dir / "val"
+        if val_path.exists() and any(val_path.rglob("*.png")):
             try:
-                self.val_dataset = FilteredImageFolder(
-                    root=val_path,
-                    transform=self.val_transform
-                )
+                self.val_dataset = FilteredImageFolder(root=val_path, transform=self.val_transform)
             except:
                 print("⚠️ No validation data available")
                 self.val_dataset = None
@@ -134,12 +134,11 @@ class EgretClassifierTrainer:
             self.val_dataset = None
 
         # Load test dataset (may not exist)
-        test_path = self.data_dir / 'test'
-        if test_path.exists() and any(test_path.rglob('*.png')):
+        test_path = self.data_dir / "test"
+        if test_path.exists() and any(test_path.rglob("*.png")):
             try:
                 self.test_dataset = FilteredImageFolder(
-                    root=test_path,
-                    transform=self.val_transform
+                    root=test_path, transform=self.val_transform
                 )
             except:
                 print("⚠️ No test data available")
@@ -165,7 +164,7 @@ class EgretClassifierTrainer:
 
         # Count samples per class
         class_counts = np.bincount(train_targets, minlength=len(actual_classes))
-        print(f"Class distribution: {dict(zip(actual_classes, class_counts))}")
+        print(f"Class distribution: {dict(zip(actual_classes, class_counts, strict=False))}")
 
         # Calculate weights (inverse frequency)
         total_samples = len(train_targets)
@@ -181,11 +180,13 @@ class EgretClassifierTrainer:
         # Get actual number of classes from dataset
         num_classes = len(self.train_dataset.classes)
 
-        if self.model_name == 'efficientnet_b0':
-            self.model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.IMAGENET1K_V1)
+        if self.model_name == "efficientnet_b0":
+            self.model = models.efficientnet_b0(
+                weights=models.EfficientNet_B0_Weights.IMAGENET1K_V1
+            )
             num_features = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_features, num_classes)
-        elif self.model_name == 'resnet50':
+        elif self.model_name == "resnet50":
             self.model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
             num_features = self.model.fc.in_features
             self.model.fc = nn.Linear(num_features, num_classes)
@@ -199,7 +200,9 @@ class EgretClassifierTrainer:
             param.requires_grad = False
 
         print(f"Model: {self.model_name} with {num_classes} classes")
-        print(f"Trainable parameters: {sum(p.numel() for p in self.model.parameters() if p.requires_grad)}")
+        print(
+            f"Trainable parameters: {sum(p.numel() for p in self.model.parameters() if p.requires_grad)}"
+        )
 
     def setup_training(self):
         """Setup optimizer, loss function, and data loaders."""
@@ -208,9 +211,7 @@ class EgretClassifierTrainer:
 
         # Optimizer (only train unfrozen parameters)
         self.optimizer = optim.AdamW(
-            filter(lambda p: p.requires_grad, self.model.parameters()),
-            lr=1e-3,
-            weight_decay=1e-4
+            filter(lambda p: p.requires_grad, self.model.parameters()), lr=1e-3, weight_decay=1e-4
         )
 
         # Learning rate scheduler
@@ -218,31 +219,19 @@ class EgretClassifierTrainer:
 
         # Data loaders
         self.train_loader = DataLoader(
-            self.train_dataset,
-            batch_size=16,
-            shuffle=True,
-            num_workers=2,
-            pin_memory=True
+            self.train_dataset, batch_size=16, shuffle=True, num_workers=2, pin_memory=True
         )
 
         if self.val_dataset:
             self.val_loader = DataLoader(
-                self.val_dataset,
-                batch_size=16,
-                shuffle=False,
-                num_workers=2,
-                pin_memory=True
+                self.val_dataset, batch_size=16, shuffle=False, num_workers=2, pin_memory=True
             )
         else:
             self.val_loader = None
 
         if self.test_dataset:
             self.test_loader = DataLoader(
-                self.test_dataset,
-                batch_size=16,
-                shuffle=False,
-                num_workers=2,
-                pin_memory=True
+                self.test_dataset, batch_size=16, shuffle=False, num_workers=2, pin_memory=True
             )
         else:
             self.test_loader = None
@@ -271,7 +260,7 @@ class EgretClassifierTrainer:
             correct += predicted.eq(labels).sum().item()
 
         epoch_loss = running_loss / len(self.train_loader)
-        epoch_acc = 100. * correct / total
+        epoch_acc = 100.0 * correct / total
 
         return epoch_loss, epoch_acc
 
@@ -295,11 +284,11 @@ class EgretClassifierTrainer:
                 correct += predicted.eq(labels).sum().item()
 
         epoch_loss = running_loss / len(self.val_loader)
-        epoch_acc = 100. * correct / total
+        epoch_acc = 100.0 * correct / total
 
         return epoch_loss, epoch_acc
 
-    def train(self, num_epochs: int = 20, save_dir: str = 'models/classifier'):
+    def train(self, num_epochs: int = 20, save_dir: str = "models/classifier"):
         """Train the model."""
         save_dir = Path(save_dir)
         save_dir.mkdir(exist_ok=True)
@@ -326,78 +315,81 @@ class EgretClassifierTrainer:
                 val_losses.append(val_loss)
                 val_accs.append(val_acc)
             else:
-                val_loss, val_acc = float('inf'), 0.0
+                val_loss, val_acc = float("inf"), 0.0
                 val_losses.append(val_loss)
                 val_accs.append(val_acc)
 
             # Update learning rate
             self.scheduler.step()
 
-            print(".4f"
-                  ".4f"
-                  ".4f"
-                  ".4f")
+            print(".4f" ".4f" ".4f" ".4f")
 
             # Save best model
             if val_acc > best_acc:
                 best_acc = val_acc
-                torch.save({
-                    'epoch': epoch,
-                    'model_state_dict': self.model.state_dict(),
-                    'optimizer_state_dict': self.optimizer.state_dict(),
-                    'val_acc': val_acc,
-                    'class_names': self.class_names,
-                    'model_name': self.model_name
-                }, save_dir / 'best_model.pth')
+                torch.save(
+                    {
+                        "epoch": epoch,
+                        "model_state_dict": self.model.state_dict(),
+                        "optimizer_state_dict": self.optimizer.state_dict(),
+                        "val_acc": val_acc,
+                        "class_names": self.class_names,
+                        "model_name": self.model_name,
+                    },
+                    save_dir / "best_model.pth",
+                )
                 print(f"✓ Saved best model with validation accuracy: {val_acc:.2f}%")
 
         # Save final model
-        torch.save({
-            'epoch': num_epochs,
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'class_names': self.class_names,
-            'model_name': self.model_name
-        }, save_dir / 'final_model.pth')
+        torch.save(
+            {
+                "epoch": num_epochs,
+                "model_state_dict": self.model.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "class_names": self.class_names,
+                "model_name": self.model_name,
+            },
+            save_dir / "final_model.pth",
+        )
 
         # Plot training curves
         self.plot_training_curves(train_losses, val_losses, train_accs, val_accs, save_dir)
 
         print("\nTraining completed!")
         print(f"Best validation accuracy: {best_acc:.2f}%")
-        return save_dir / 'best_model.pth'
+        return save_dir / "best_model.pth"
 
     def plot_training_curves(self, train_losses, val_losses, train_accs, val_accs, save_dir):
         """Plot training curves."""
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
         # Loss plot
-        ax1.plot(train_losses, label='Train Loss')
-        ax1.plot(val_losses, label='Val Loss')
-        ax1.set_title('Training Loss')
-        ax1.set_xlabel('Epoch')
-        ax1.set_ylabel('Loss')
+        ax1.plot(train_losses, label="Train Loss")
+        ax1.plot(val_losses, label="Val Loss")
+        ax1.set_title("Training Loss")
+        ax1.set_xlabel("Epoch")
+        ax1.set_ylabel("Loss")
         ax1.legend()
         ax1.grid(True)
 
         # Accuracy plot
-        ax2.plot(train_accs, label='Train Acc')
-        ax2.plot(val_accs, label='Val Acc')
-        ax2.set_title('Training Accuracy')
-        ax2.set_xlabel('Epoch')
-        ax2.set_ylabel('Accuracy (%)')
+        ax2.plot(train_accs, label="Train Acc")
+        ax2.plot(val_accs, label="Val Acc")
+        ax2.set_title("Training Accuracy")
+        ax2.set_xlabel("Epoch")
+        ax2.set_ylabel("Accuracy (%)")
         ax2.legend()
         ax2.grid(True)
 
         plt.tight_layout()
-        plt.savefig(save_dir / 'training_curves.png', dpi=300, bbox_inches='tight')
+        plt.savefig(save_dir / "training_curves.png", dpi=300, bbox_inches="tight")
         plt.close()
 
     def evaluate(self, model_path: str = None):
         """Evaluate the model on test set."""
         if model_path:
             checkpoint = torch.load(model_path, map_location=self.device)
-            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.model.load_state_dict(checkpoint["model_state_dict"])
 
         self.model.eval()
 
@@ -415,15 +407,17 @@ class EgretClassifierTrainer:
                 all_labels.extend(labels.cpu().numpy())
 
         # Calculate metrics
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("TEST RESULTS")
-        print("="*50)
+        print("=" * 50)
 
         # Classification report
         print("\nClassification Report:")
-        print(classification_report(all_labels, all_preds,
-                                  target_names=self.class_names,
-                                  zero_division=0))
+        print(
+            classification_report(
+                all_labels, all_preds, target_names=self.class_names, zero_division=0
+            )
+        )
 
         # Confusion matrix
         cm = confusion_matrix(all_labels, all_preds)
@@ -442,18 +436,22 @@ class EgretClassifierTrainer:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Train egret classifier')
-    parser.add_argument('--data-dir', type=str, required=True,
-                       help='Path to classifier training data directory')
-    parser.add_argument('--model', type=str, default='efficientnet_b0',
-                       choices=['efficientnet_b0', 'resnet50'],
-                       help='Model architecture to use')
-    parser.add_argument('--epochs', type=int, default=20,
-                       help='Number of training epochs')
-    parser.add_argument('--batch-size', type=int, default=16,
-                       help='Batch size for training')
-    parser.add_argument('--save-dir', type=str, default='models/classifier',
-                       help='Directory to save trained models')
+    parser = argparse.ArgumentParser(description="Train egret classifier")
+    parser.add_argument(
+        "--data-dir", type=str, required=True, help="Path to classifier training data directory"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="efficientnet_b0",
+        choices=["efficientnet_b0", "resnet50"],
+        help="Model architecture to use",
+    )
+    parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs")
+    parser.add_argument("--batch-size", type=int, default=16, help="Batch size for training")
+    parser.add_argument(
+        "--save-dir", type=str, default="models/classifier", help="Directory to save trained models"
+    )
 
     args = parser.parse_args()
 
@@ -477,5 +475,5 @@ def main():
     print("Next: Integrate this model into the pipeline by updating the mock classifier.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,28 +12,28 @@
         margin-bottom: 1.5rem;
         transition: all 0.3s ease;
     }
-    
+
     .model-card:hover {
         border-color: #007bff;
         box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
     }
-    
+
     .model-card.current {
         border-color: #28a745;
         background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
     }
-    
+
     .model-card.available {
         border-color: #17a2b8;
         background: linear-gradient(135deg, #f8fcff 0%, #e8f8fc 100%);
     }
-    
+
     .model-card.unavailable {
         border-color: #dc3545;
         background: linear-gradient(135deg, #fff8f8 0%, #fce8e8 100%);
         opacity: 0.7;
     }
-    
+
     .model-status {
         position: absolute;
         top: 1rem;
@@ -43,33 +43,33 @@
         font-size: 0.75rem;
         font-weight: bold;
     }
-    
+
     .status-current {
         background: #28a745;
         color: white;
     }
-    
+
     .status-available {
         background: #17a2b8;
         color: white;
     }
-    
+
     .status-unavailable {
         background: #dc3545;
         color: white;
     }
-    
+
     .model-info {
         margin-top: 1rem;
     }
-    
+
     .model-metrics {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
         margin-top: 1rem;
     }
-    
+
     .metric-card {
         background: white;
         padding: 1rem;
@@ -77,13 +77,13 @@
         text-align: center;
         border: 1px solid #e9ecef;
     }
-    
+
     .metric-value {
         font-size: 1.5rem;
         font-weight: bold;
         color: #007bff;
     }
-    
+
     .metric-label {
         font-size: 0.875rem;
         color: #6c757d;
@@ -128,7 +128,7 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
-                        
+
                         <div class="mb-3">
                             <label for="{{ form.ai_model.id_for_label }}" class="form-label">
                                 <strong>YOLO Model Version</strong>
@@ -138,7 +138,7 @@
                                 <div class="form-text">{{ form.ai_model.help_text }}</div>
                             {% endif %}
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="{{ form.confidence_threshold.id_for_label }}" class="form-label">
                                 <strong>Confidence Threshold</strong>
@@ -148,14 +148,14 @@
                                 <div class="form-text">{{ form.confidence_threshold.help_text }}</div>
                             {% endif %}
                         </div>
-                        
+
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-save me-2"></i>Update Configuration
                         </button>
                     </form>
                 </div>
             </div>
-            
+
             <!-- Current Model Info -->
             <div class="card mt-3">
                 <div class="card-header">
@@ -194,16 +194,16 @@
                                 <span class="model-status {% if info.is_current %}status-current{% elif info.available %}status-available{% else %}status-unavailable{% endif %}">
                                     {% if info.is_current %}Current{% elif info.available %}Available{% else %}Unavailable{% endif %}
                                 </span>
-                                
+
                                 <h6 class="mb-2">{{ version|title }}</h6>
                                 <p class="text-muted small mb-2">{{ info.description }}</p>
-                                
+
                                 <div class="model-info">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="badge {% if info.available %}bg-success{% else %}bg-danger{% endif %}">
                                             {% if info.available %}✓ Available{% else %}✗ Unavailable{% endif %}
                                         </span>
-                                        
+
                                         {% if info.is_current %}
                                         <span class="badge bg-primary">Active</span>
                                         {% endif %}
@@ -215,7 +215,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- System Information -->
             <div class="card mt-3">
                 <div class="card-header">
@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modelSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             const description = selectedOption.text.split(' - ')[1] || '';
-            
+
             // Update form help text or show model description
             console.log(`Selected model: ${this.value} - ${description}`);
         });

@@ -12,9 +12,9 @@ It performs the following actions:
 4. Creates a README.md explaining the new architecture.
 """
 
-import os
 import shutil
 from pathlib import Path
+
 
 def refactor_training_data_structure():
     """Refactors the training data into a new clean architecture."""
@@ -61,7 +61,7 @@ def refactor_training_data_structure():
             # The directory might not be empty if there are hidden files
             shutil.rmtree(str(old_paths["training_images"]))
 
-        print(f"   ✅ Moved raw images.")
+        print("   ✅ Moved raw images.")
     else:
         print(f"   ⚠️  Warning: {old_paths['training_images']} not found, skipping.")
 
@@ -70,12 +70,12 @@ def refactor_training_data_structure():
         target_path = paths["exported_annotations"] / "Chinese_Egret"
         print(f"   🚚 Moving {old_paths['annotations']} -> {target_path}")
         if target_path.exists():
-             shutil.rmtree(target_path)
+            shutil.rmtree(target_path)
         shutil.move(str(old_paths["annotations"]), str(target_path))
         # Clean up empty parent if it exists
         if Path("annotated_datasets").exists() and not any(Path("annotated_datasets").iterdir()):
-             Path("annotated_datasets").rmdir()
-        print(f"   ✅ Moved annotations.")
+            Path("annotated_datasets").rmdir()
+        print("   ✅ Moved annotations.")
     else:
         print(f"   ⚠️  Warning: {old_paths['annotations']} not found, skipping.")
 
@@ -89,7 +89,7 @@ def refactor_training_data_structure():
             old_paths["prepared_data"].rmdir()
         except OSError:
             shutil.rmtree(str(old_paths["prepared_data"]))
-        print(f"   ✅ Moved prepared data.")
+        print("   ✅ Moved prepared data.")
     else:
         print(f"   ⚠️  Warning: {old_paths['prepared_data']} not found, skipping.")
 
@@ -100,13 +100,13 @@ def refactor_training_data_structure():
         if target_path.exists():
             shutil.rmtree(target_path)
         shutil.move(str(old_paths["final_dataset"]), str(target_path))
-        print(f"   ✅ Moved final YOLO dataset.")
+        print("   ✅ Moved final YOLO dataset.")
     else:
         print(f"   ⚠️  Warning: {old_paths['final_dataset']} not found, skipping.")
 
     # 3. Create README for the new structure
     print("\n3. Creating documentation for the new structure...")
-    readme_content = f"""# 🦆 Chinese Egret Training Data Architecture
+    readme_content = """# 🦆 Chinese Egret Training Data Architecture
 
 This directory contains all data, scripts, and configurations related to training
 the Chinese Egret detection model. It follows a clean, logical data flow.
@@ -147,11 +147,6 @@ the Chinese Egret detection model. It follows a clean, logical data flow.
     print("   Next step is to update the scripts to use these new paths.")
     print("=" * 60)
 
+
 if __name__ == "__main__":
     refactor_training_data_structure()
-
-
-
-
-
-

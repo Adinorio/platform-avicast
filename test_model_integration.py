@@ -2,13 +2,14 @@
 """
 Test script to verify the trained YOLO11m model integration
 """
+
 import sys
-import os
 from pathlib import Path
 
 # Add the project root to Python path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
+
 
 def test_service_initialization():
     """Test BirdDetectionService initialization with trained model"""
@@ -23,11 +24,11 @@ def test_service_initialization():
             settings.configure(
                 DEBUG=True,
                 MAX_FILE_SIZE_MB=50,
-                SECRET_KEY='debug-key-for-testing',
+                SECRET_KEY="debug-key-for-testing",
                 INSTALLED_APPS=[
-                    'django.contrib.contenttypes',
-                    'django.contrib.auth',
-                ]
+                    "django.contrib.contenttypes",
+                    "django.contrib.auth",
+                ],
             )
             django.setup()
 
@@ -40,9 +41,9 @@ def test_service_initialization():
         print(f"Available models: {list(service.models.keys())}")
 
         # Check if our trained model is loaded
-        if 'YOLO11M_EGRET_MAX_ACCURACY' in service.models:
+        if "YOLO11M_EGRET_MAX_ACCURACY" in service.models:
             print("✅ YOLO11M_EGRET_MAX_ACCURACY model found in service")
-            model = service.models['YOLO11M_EGRET_MAX_ACCURACY']
+            model = service.models["YOLO11M_EGRET_MAX_ACCURACY"]
             print(f"Model type: {type(model)}")
             print("✅ Model loaded successfully!")
             return True
@@ -54,8 +55,10 @@ def test_service_initialization():
     except Exception as e:
         print(f"❌ Service initialization error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_inference():
     """Test inference with the trained model"""
@@ -70,26 +73,28 @@ def test_inference():
             settings.configure(
                 DEBUG=True,
                 MAX_FILE_SIZE_MB=50,
-                SECRET_KEY='debug-key-for-testing',
+                SECRET_KEY="debug-key-for-testing",
                 INSTALLED_APPS=[
-                    'django.contrib.contenttypes',
-                    'django.contrib.auth',
-                ]
+                    "django.contrib.contenttypes",
+                    "django.contrib.auth",
+                ],
             )
             django.setup()
 
-        from apps.image_processing.bird_detection_service import BirdDetectionService
-        from PIL import Image
         import io
+
+        from PIL import Image
+
+        from apps.image_processing.bird_detection_service import BirdDetectionService
 
         service = BirdDetectionService()
 
         # Create a dummy test image (since we don't have real images handy)
-        test_image = Image.new('RGB', (640, 480), color='white')
+        test_image = Image.new("RGB", (640, 480), color="white")
 
         # Convert to bytes as expected by detect_birds
         buffer = io.BytesIO()
-        test_image.save(buffer, format='JPEG')
+        test_image.save(buffer, format="JPEG")
         image_bytes = buffer.getvalue()
 
         print("Running inference on test image...")
@@ -107,8 +112,10 @@ def test_inference():
     except Exception as e:
         print(f"❌ Inference error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     print("🚀 Testing YOLO11m Model Integration")

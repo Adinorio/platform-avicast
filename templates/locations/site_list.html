@@ -57,7 +57,7 @@
                                 <span class="input-group-text bg-light border-end-0">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
-                                <input type="text" name="search" id="search" class="form-control border-start-0" 
+                                <input type="text" name="search" id="search" class="form-control border-start-0"
                                        placeholder="Search by name, description, or type..." value="{{ search_query }}">
                             </div>
                         </div>
@@ -92,7 +92,7 @@
                             </div>
                         </div>
                     </form>
-                    
+
                     <!-- Active Filters Display -->
                     {% if search_query or site_type or status %}
                     <div class="mt-4 pt-3 border-top">
@@ -103,21 +103,21 @@
                             {% if search_query %}
                             <span class="badge bg-primary">
                                 Search: "{{ search_query }}"
-                                <a href="?{% if site_type %}site_type={{ site_type }}{% endif %}{% if status %}{% if site_type %}&{% endif %}status={{ status }}{% endif %}" 
+                                <a href="?{% if site_type %}site_type={{ site_type }}{% endif %}{% if status %}{% if site_type %}&{% endif %}status={{ status }}{% endif %}"
                                    class="text-white text-decoration-none ms-1">×</a>
                             </span>
                             {% endif %}
                             {% if site_type %}
                             <span class="badge bg-info">
                                 Type: {{ site_type }}
-                                <a href="?{% if search_query %}search={{ search_query }}{% endif %}{% if status %}{% if search_query %}&{% endif %}status={{ status }}{% endif %}" 
+                                <a href="?{% if search_query %}search={{ search_query }}{% endif %}{% if status %}{% if search_query %}&{% endif %}status={{ status }}{% endif %}"
                                    class="text-white text-decoration-none ms-1">×</a>
                             </span>
                             {% endif %}
                             {% if status %}
                             <span class="badge bg-warning">
                                 Status: {{ status }}
-                                <a href="?{% if search_query %}search={{ search_query }}{% endif %}{% if site_type %}{% if search_query %}&{% endif %}site_type={{ site_type }}{% endif %}" 
+                                <a href="?{% if search_query %}search={{ search_query }}{% endif %}{% if site_type %}{% if search_query %}&{% endif %}site_type={{ site_type }}{% endif %}"
                                    class="text-white text-decoration-none ms-1">×</a>
                             </span>
                             {% endif %}
@@ -149,13 +149,13 @@
                         </span>
                     </div>
                 </div>
-                
+
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h5 class="card-title text-primary mb-0 fw-bold">{{ site.name }}</h5>
                         <span class="badge bg-info fs-6">{{ site.get_site_type_display }}</span>
                     </div>
-                    
+
                     <p class="card-text text-muted mb-3">
                         {% if site.description %}
                             {{ site.description|truncatewords:25 }}
@@ -163,7 +163,7 @@
                             <em class="text-muted">No description available</em>
                         {% endif %}
                     </p>
-                    
+
                     <div class="mb-3">
                         <div class="d-flex align-items-center text-muted mb-2">
                             <i class="fas fa-location-dot me-2"></i>
@@ -180,7 +180,7 @@
                             <small>Created {{ site.created_at|date:"M d, Y" }}</small>
                         </div>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="btn-group w-100" role="group">
                             <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-outline-primary btn-sm flex-fill">
@@ -196,7 +196,7 @@
         </div>
         {% endfor %}
     </div>
-    
+
     <!-- Pagination -->
     {% if page_obj.has_other_pages %}
     <div class="row mt-5">
@@ -210,7 +210,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    
+
                     {% for num in page_obj.paginator.page_range %}
                         {% if page_obj.number == num %}
                         <li class="page-item active">
@@ -222,7 +222,7 @@
                         </li>
                         {% endif %}
                     {% endfor %}
-                    
+
                     {% if page_obj.has_next %}
                     <li class="page-item">
                         <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if site_type %}&site_type={{ site_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
@@ -235,7 +235,7 @@
         </div>
     </div>
     {% endif %}
-    
+
     {% else %}
     <!-- Empty State -->
     <div class="row">
@@ -382,4 +382,4 @@ $(document).ready(function() {
     console.log('Enhanced site list page loaded');
 });
 </script>
-{% endblock %} 
+{% endblock %}

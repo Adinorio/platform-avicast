@@ -19,29 +19,29 @@
             overflow-y: auto;
             transition: transform 0.3s ease;
         }
-        
+
         .sidebar.collapsed {
             transform: translateX(-100%);
         }
-        
+
         .sidebar-header {
             padding: 1.5rem;
             border-bottom: 1px solid rgba(255,255,255,0.1);
             text-align: center;
         }
-        
+
         .sidebar-brand {
             color: white;
             font-size: 1.5rem;
             font-weight: bold;
             text-decoration: none;
         }
-        
+
         .sidebar-brand:hover {
             color: #17a2b8;
             text-decoration: none;
         }
-        
+
         .user-profile {
             padding: 1rem;
             margin: 1rem;
@@ -49,11 +49,11 @@
             border-radius: 0.5rem;
             color: white;
         }
-        
+
         .sidebar-nav {
             padding: 1rem 0;
         }
-        
+
         .sidebar-nav .nav-link {
             color: rgba(255,255,255,0.8);
             padding: 0.75rem 1.5rem;
@@ -61,25 +61,25 @@
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
         }
-        
+
         .sidebar-nav .nav-link:hover {
             color: white;
             background: rgba(255,255,255,0.1);
             border-left-color: #17a2b8;
             transform: translateX(5px);
         }
-        
+
         .sidebar-nav .nav-link.active {
             color: white;
             background: rgba(23, 162, 184, 0.2);
             border-left-color: #17a2b8;
         }
-        
+
         .sidebar-nav .nav-link.text-danger:hover {
             background: rgba(220, 53, 69, 0.2);
             border-left-color: #dc3545;
         }
-        
+
         /* Main content area */
         .main-content {
             margin-left: 280px;
@@ -87,11 +87,11 @@
             background: #f8f9fa;
             transition: margin-left 0.3s ease;
         }
-        
+
         .main-content.expanded {
             margin-left: 0;
         }
-        
+
         /* Top navbar */
         .top-navbar {
             background: white;
@@ -101,7 +101,7 @@
             top: 0;
             z-index: 999;
         }
-        
+
         .sidebar-toggle {
             background: none;
             border: none;
@@ -111,26 +111,26 @@
             border-radius: 0.375rem;
             transition: all 0.2s ease;
         }
-        
+
         .sidebar-toggle:hover {
             background: #f8f9fa;
             color: #495057;
         }
-        
+
         /* Responsive design */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
             }
-            
+
             .sidebar.show {
                 transform: translateX(0);
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
-            
+
             .sidebar-overlay {
                 position: fixed;
                 top: 0;
@@ -141,17 +141,17 @@
                 z-index: 999;
                 display: none;
             }
-            
+
             .sidebar-overlay.show {
                 display: block;
             }
         }
-        
+
         /* Content padding */
         .content-wrapper {
             padding: 2rem;
         }
-        
+
         /* Smooth transitions */
         * {
             transition: all 0.2s ease;
@@ -162,7 +162,7 @@
 <body>
     <!-- Sidebar Overlay for mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
+
     <!-- Left Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -170,7 +170,7 @@
                 <i class="fas fa-bird me-2"></i>AVICAST System
             </a>
         </div>
-        
+
         {% if user.is_authenticated %}
         <div class="user-profile">
             <div class="d-flex align-items-center">
@@ -181,7 +181,7 @@
                 </div>
             </div>
         </div>
-        
+
         <ul class="nav flex-column sidebar-nav">
             {% if user.role == 'SUPERADMIN' %}
                 <!-- Superadmin navigation -->
@@ -212,7 +212,7 @@
                         <i class="fas fa-chart-bar me-2"></i> Chart Gallery
                     </a>
                 </li>
-                
+
                 {% if user.role == 'ADMIN' %}
                 <!-- Admin-only features -->
                 <li class="nav-item">
@@ -231,7 +231,7 @@
                     </a>
                 </li>
                 {% endif %}
-                
+
                 {% if user.role == 'FIELD_WORKER' %}
                 <!-- Field Worker features -->
                 <li class="nav-item">
@@ -245,7 +245,7 @@
                     </a>
                 </li>
                 {% endif %}
-                
+
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'locations:site_create' %}">
                         <i class="fas fa-plus me-2"></i> Add New Site
@@ -257,9 +257,9 @@
                     </a>
                 </li>
             {% endif %}
-            
+
             <li><hr class="my-3 border-light"></li>
-            
+
             <li class="nav-item">
                 <a class="nav-link text-danger" href="{% url 'logout' %}">
                     <i class="fas fa-sign-out-alt me-2"></i> Logout
@@ -287,7 +287,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- Messages -->
         {% if messages %}
         <div class="container-fluid mt-3">
@@ -405,7 +405,7 @@
             const mainContent = document.getElementById('mainContent');
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
-            
+
             // Desktop sidebar toggle
             sidebarToggle.addEventListener('click', function() {
                 if (window.innerWidth > 768) {
@@ -416,13 +416,13 @@
                     sidebarOverlay.classList.toggle('show');
                 }
             });
-            
+
             // Mobile overlay click to close sidebar
             sidebarOverlay.addEventListener('click', function() {
                 sidebar.classList.remove('show');
                 sidebarOverlay.classList.remove('show');
             });
-            
+
             // Close sidebar on mobile when clicking navigation links
             const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
             navLinks.forEach(link => {
@@ -433,7 +433,7 @@
                     }
                 });
             });
-            
+
             // Handle window resize
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 768) {

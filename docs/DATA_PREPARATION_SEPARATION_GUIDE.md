@@ -314,9 +314,3 @@ python prepare_data_minimal.py
 ---
 
 **🎉 This gives you complete separation of the data preparation process from the Platform Avicast web application, allowing you to prepare training data independently!** 🦆✨
-
-
-
-
-
-

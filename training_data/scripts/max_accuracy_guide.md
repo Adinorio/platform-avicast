@@ -211,18 +211,14 @@ htop
 
 **Use the Maximum Accuracy Software Optimizations:**
 
-✅ **Safe**: No hardware risk  
-✅ **Effective**: 96-98% mAP achievable  
-✅ **Stable**: Consistent, reproducible results  
-✅ **Future-proof**: Works on any RTX 3050  
-✅ **Conservation-ready**: Perfect for Chinese Egret detection  
+✅ **Safe**: No hardware risk
+✅ **Effective**: 96-98% mAP achievable
+✅ **Stable**: Consistent, reproducible results
+✅ **Future-proof**: Works on any RTX 3050
+✅ **Conservation-ready**: Perfect for Chinese Egret detection
 
 **Skip overclocking entirely - software optimization gives you the highest accuracy with zero risk!**
 
 ---
 
 *Generated for RTX 3050 Laptop GPU - Optimized for Chinese Egret Conservation Project*
-
-
-
-

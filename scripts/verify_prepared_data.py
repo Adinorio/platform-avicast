@@ -10,9 +10,9 @@ This script verifies the integrity of the prepared dataset by:
    contain a class ID and valid bounding box coordinates.
 """
 
-import os
 import random
 from pathlib import Path
+
 
 def verify_data_integrity():
     """Verifies the prepared dataset."""
@@ -25,24 +25,24 @@ def verify_data_integrity():
     labels_path = base_path / "prepared_dataset/labels"
 
     if not images_path.exists() or not labels_path.exists():
-        print(f"❌ Error: Prepared data paths not found.")
+        print("❌ Error: Prepared data paths not found.")
         print(f"   Checked for: {images_path}")
         print(f"   Checked for: {labels_path}")
         return
 
     # 1. Count Files
     print("1. Counting image and label files...")
-    image_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif', '.PNG', '.JPG', '.JPEG'}
-    
+    image_extensions = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif", ".PNG", ".JPG", ".JPEG"}
+
     image_files = {p.stem: p for p in images_path.iterdir() if p.suffix in image_extensions}
-    label_files = {p.stem: p for p in labels_path.iterdir() if p.suffix == '.txt'}
+    label_files = {p.stem: p for p in labels_path.iterdir() if p.suffix == ".txt"}
 
     print(f"   - Found {len(image_files)} image files.")
     print(f"   - Found {len(label_files)} label files.")
 
     # 2. Find Matching Pairs and Orphans
     print("\n2. Checking for matching pairs and orphans...")
-    
+
     image_stems = set(image_files.keys())
     label_stems = set(label_files.keys())
 
@@ -64,7 +64,7 @@ def verify_data_integrity():
             print(f"     - Example {i+1}: {label_files[stem].name}")
     else:
         print("   - ✅ No orphan labels found.")
-        
+
     # 3. Validate Label File Format
     print("\n3. Validating format of a sample of 5 label files...")
 
@@ -73,13 +73,13 @@ def verify_data_integrity():
         return
 
     sample_stems = random.sample(list(matched_stems), min(5, len(matched_stems)))
-    
+
     all_samples_valid = True
     for stem in sample_stems:
         label_file_path = label_files[stem]
         is_valid = True
         try:
-            with open(label_file_path, 'r') as f:
+            with open(label_file_path) as f:
                 lines = f.readlines()
                 if not lines:
                     is_valid = False
@@ -90,24 +90,35 @@ def verify_data_integrity():
                     parts = line.strip().split()
                     if len(parts) != 5:
                         is_valid = False
-                        print(f"   - ❌ FAILED: {label_file_path.name} (Line {i+1}) has {len(parts)} parts, expected 5.")
+                        print(
+                            f"   - ❌ FAILED: {label_file_path.name} (Line {i+1}) has {len(parts)} parts, expected 5."
+                        )
                         break
-                    
+
                     class_id_str, x_center_str, y_center_str, width_str, height_str = parts
-                    
+
                     # Check class ID
                     if not class_id_str.isdigit():
                         is_valid = False
-                        print(f"   - ❌ FAILED: {label_file_path.name} (Line {i+1}) class ID is not an integer.")
+                        print(
+                            f"   - ❌ FAILED: {label_file_path.name} (Line {i+1}) class ID is not an integer."
+                        )
                         break
-                    
+
                     # Check coordinates
-                    coords = [float(x_center_str), float(y_center_str), float(width_str), float(height_str)]
+                    coords = [
+                        float(x_center_str),
+                        float(y_center_str),
+                        float(width_str),
+                        float(height_str),
+                    ]
                     if not all(0.0 <= c <= 1.0 for c in coords):
                         is_valid = False
-                        print(f"   - ❌ FAILED: {label_file_path.name} (Line {i+1}) coordinates are out of [0, 1] range.")
+                        print(
+                            f"   - ❌ FAILED: {label_file_path.name} (Line {i+1}) coordinates are out of [0, 1] range."
+                        )
                         break
-            
+
             if is_valid:
                 print(f"   - ✅ PASSED: {label_file_path.name} format is valid.")
 
@@ -117,7 +128,7 @@ def verify_data_integrity():
         except Exception as e:
             is_valid = False
             print(f"   - ❌ FAILED: Could not read or process {label_file_path.name}. Error: {e}")
-            
+
         if not is_valid:
             all_samples_valid = False
 
@@ -128,11 +139,6 @@ def verify_data_integrity():
     print("✅ Verification Complete.")
     print("=" * 60)
 
+
 if __name__ == "__main__":
     verify_data_integrity()
-
-
-
-
-
-

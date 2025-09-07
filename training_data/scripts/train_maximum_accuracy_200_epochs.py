@@ -4,9 +4,8 @@ Train YOLOv8x with maximum Chinese Egret dataset for highest accuracy
 200 epochs, batch size 20, optimized for conservation accuracy
 """
 
-import os
 import subprocess
-from pathlib import Path
+
 
 def train_maximum_accuracy():
     """Train with maximum accuracy settings for Chinese Egret conservation"""
@@ -19,7 +18,8 @@ def train_maximum_accuracy():
 
     # Training command with maximum accuracy settings
     cmd = [
-        "yolo", "train",
+        "yolo",
+        "train",
         "model=models/yolov8x.pt",
         "data=training_data/final_yolo_dataset/chinese_egret_maximum/data.yaml",
         "epochs=200",
@@ -64,7 +64,7 @@ def train_maximum_accuracy():
         "dfl=1.5",
         "weight_decay=0.0001",
         "project=maximum_accuracy_results",
-        "name=chinese_egret_max_accuracy_200_epochs"
+        "name=chinese_egret_max_accuracy_200_epochs",
     ]
 
     print("\n" + "=" * 70)
@@ -127,6 +127,7 @@ def train_maximum_accuracy():
         print(f"\n❌ Training error: {e}")
         return False
 
+
 if __name__ == "__main__":
     success = train_maximum_accuracy()
     if success:
@@ -137,7 +138,3 @@ if __name__ == "__main__":
         print("\n⚠️  TRAINING DID NOT COMPLETE")
         print("💡 You can resume with the same command")
         print("🔄 Next time it will continue from the last checkpoint")
-
-
-
-

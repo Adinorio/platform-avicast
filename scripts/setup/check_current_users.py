@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 import os
+
 import django
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'avicast_project.settings.development')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "avicast_project.settings.development")
 django.setup()
 
-from apps.users.models import User
 from django.contrib.auth.models import Group, Permission
+
+from apps.users.models import User
 
 print("=== Current Users ===")
 for user in User.objects.all():
@@ -27,4 +29,4 @@ for group in Group.objects.all():
 
 print("\n=== Current Permissions ===")
 for perm in Permission.objects.all():
-    print(f"{perm.content_type.app_label}.{perm.codename} - {perm.name}") 
+    print(f"{perm.content_type.app_label}.{perm.codename} - {perm.name}")

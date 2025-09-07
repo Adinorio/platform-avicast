@@ -36,8 +36,8 @@
                                 <div class="row" id="approvedResultsContainer">
                                     {% for result in approved_results %}
                                     <div class="col-12 mb-3">
-                                        <div class="card draggable-result" 
-                                             draggable="true" 
+                                        <div class="card draggable-result"
+                                             draggable="true"
                                              data-result-id="{{ result.pk }}"
                                              data-species="{{ result.final_species }}"
                                              data-confidence="{{ result.confidence_score }}">
@@ -45,12 +45,12 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-3">
                                                         {% if result.image_upload.image_file %}
-                                                            <img src="{{ result.image_upload.image_file.url }}" 
-                                                                 class="img-fluid rounded" 
+                                                            <img src="{{ result.image_upload.image_file.url }}"
+                                                                 class="img-fluid rounded"
                                                                  alt="{{ result.image_upload.title }}"
                                                                  style="max-height: 80px; width: auto;">
                                                         {% else %}
-                                                            <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                                            <div class="bg-light rounded d-flex align-items-center justify-content-center"
                                                                  style="height: 80px; width: 80px;">
                                                                 <i class="fas fa-image fa-2x text-muted"></i>
                                                             </div>
@@ -68,7 +68,7 @@
                                                         </div>
                                                         <div class="row text-muted small">
                                                             <div class="col-6">
-                                                                <strong>Status:</strong> 
+                                                                <strong>Status:</strong>
                                                                 {% if result.review_status == 'APPROVED' %}
                                                                     <span class="badge bg-success">Approved</span>
                                                                 {% else %}
@@ -128,10 +128,10 @@
                                     <div class="row g-2" id="monthlyAllocation">
                                         {% for month in months %}
                                         <div class="col-3">
-                                            <div class="allocation-target text-center p-2 border rounded" 
-                                                 data-month="{{ month.id }}" 
+                                            <div class="allocation-target text-center p-2 border rounded"
+                                                 data-month="{{ month.id }}"
                                                  data-month-name="{{ month.name }}"
-                                                 ondrop="drop(event)" 
+                                                 ondrop="drop(event)"
                                                  ondragover="allowDrop(event)">
                                                 <div class="fw-bold">{{ month.abbr }}</div>
                                                 <div class="small text-muted">Count: <span class="count-display">0</span></div>
@@ -191,26 +191,26 @@ function drop(ev) {
     ev.preventDefault();
     const monthTarget = ev.target.closest('.allocation-target');
     if (!monthTarget) return;
-    
+
     const resultId = ev.dataTransfer.getData("text");
     const resultElement = document.querySelector(`[data-result-id="${resultId}"]`);
-    
+
     if (resultElement && monthTarget) {
         const monthId = monthTarget.dataset.month;
         const monthName = monthTarget.dataset.monthName;
-        
+
         // Add to allocation data
         if (!allocationData[monthId]) {
             allocationData[monthId] = [];
         }
-        
+
         // Check if result is already allocated
         const isAlreadyAllocated = Object.values(allocationData).flat().some(item => item.id === resultId);
         if (isAlreadyAllocated) {
             alert('This result is already allocated to another month!');
             return;
         }
-        
+
         // Add result to allocation
         const resultData = {
             id: resultId,
@@ -218,9 +218,9 @@ function drop(ev) {
             species: resultElement.dataset.species,
             confidence: resultElement.dataset.confidence
         };
-        
+
         allocationData[monthId].push(resultData);
-        
+
         // Update display
         updateAllocationDisplay(monthId, monthName);
         updateAllocationSummary();
@@ -233,13 +233,13 @@ function updateAllocationDisplay(monthId, monthName) {
     const monthTarget = document.querySelector(`[data-month="${monthId}"]`);
     const countDisplay = monthTarget.querySelector('.count-display');
     const resultsContainer = monthTarget.querySelector('.allocated-results');
-    
+
     const results = allocationData[monthId] || [];
     countDisplay.textContent = results.length;
-    
+
     // Clear existing results
     resultsContainer.innerHTML = '';
-    
+
     // Add result badges
     results.forEach(result => {
         const badge = document.createElement('div');
@@ -254,12 +254,12 @@ function updateAllocationDisplay(monthId, monthName) {
 function updateAllocationSummary() {
     const summaryContainer = document.getElementById('allocationSummary');
     const totalAllocated = Object.values(allocationData).flat().length;
-    
+
     if (totalAllocated === 0) {
         summaryContainer.innerHTML = '<p class="text-muted mb-0">No results allocated yet. Drag and drop results to monthly targets.</p>';
         return;
     }
-    
+
     let summaryHTML = '<div class="row">';
     Object.keys(allocationData).forEach(monthId => {
         const monthName = document.querySelector(`[data-month="${monthId}"]`).dataset.monthName;
@@ -273,7 +273,7 @@ function updateAllocationSummary() {
         }
     });
     summaryHTML += '</div>';
-    
+
     summaryContainer.innerHTML = summaryHTML;
 }
 
@@ -288,19 +288,19 @@ function updateSaveButton() {
 function saveAllocation() {
     const siteId = document.getElementById('siteSelect').value;
     const year = document.getElementById('yearSelect').value;
-    
+
     if (!siteId || !year) {
         alert('Please select both a site and year before saving.');
         return;
     }
-    
+
     // Here you would send the allocation data to your backend
     console.log('Saving allocation:', {
         site_id: siteId,
         year: year,
         allocation: allocationData
     });
-    
+
     // For now, just show a success message
     alert('Allocation saved successfully! This would integrate with your census data system.');
 }
@@ -309,17 +309,17 @@ function saveAllocation() {
 function clearAllocation() {
     if (confirm('Are you sure you want to clear all allocations?')) {
         allocationData = {};
-        
+
         // Reset all month displays
         document.querySelectorAll('.allocation-target').forEach(target => {
             const monthId = target.dataset.month;
             const countDisplay = target.querySelector('.count-display');
             const resultsContainer = target.querySelector('.allocated-results');
-            
+
             countDisplay.textContent = '0';
             resultsContainer.innerHTML = '';
         });
-        
+
         updateAllocationSummary();
         updateSaveButton();
     }
@@ -328,13 +328,13 @@ function clearAllocation() {
 // Initialize drag and drop for result cards
 document.addEventListener('DOMContentLoaded', function() {
     const resultCards = document.querySelectorAll('.draggable-result');
-    
+
     resultCards.forEach(card => {
         card.addEventListener('dragstart', function(e) {
             e.dataTransfer.setData("text", this.dataset.resultId);
             this.style.opacity = '0.5';
         });
-        
+
         card.addEventListener('dragend', function(e) {
             this.style.opacity = '1';
         });

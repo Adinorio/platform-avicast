@@ -9,10 +9,8 @@ This script trains a YOLO model on the unified egret dataset with 4 classes:
 - Little Egret
 """
 
-import os
 import sys
 from pathlib import Path
-import argparse
 
 
 def check_dataset():
@@ -21,9 +19,9 @@ def check_dataset():
 
     base_path = Path("training_data/final_yolo_dataset/unified_egret_dataset")
 
-    for split in ['train', 'val', 'test']:
-        img_dir = base_path / split / 'images'
-        label_dir = base_path / split / 'labels'
+    for split in ["train", "val", "test"]:
+        img_dir = base_path / split / "images"
+        label_dir = base_path / split / "labels"
 
         if not img_dir.exists():
             print(f"❌ Missing: {img_dir}")
@@ -34,8 +32,10 @@ def check_dataset():
             return False
 
         # Count images and labels
-        images = list(img_dir.glob('*.png')) + list(img_dir.glob('*.jpg')) + list(img_dir.glob('*.jpeg'))
-        labels = list(label_dir.glob('*.txt'))
+        images = (
+            list(img_dir.glob("*.png")) + list(img_dir.glob("*.jpg")) + list(img_dir.glob("*.jpeg"))
+        )
+        labels = list(label_dir.glob("*.txt"))
 
         print(f"✅ {split}: {len(images)} images, {len(labels)} labels")
 
@@ -48,7 +48,7 @@ def check_dataset():
 def create_training_command():
     """Create the YOLO training command."""
     print("\n🚀 YOLO Training Command:")
-    print("="*60)
+    print("=" * 60)
 
     cmd = """
 yolo detect train \\
@@ -75,7 +75,7 @@ yolo detect train \\
 
 def main():
     print("🐦 Egret YOLO Detector Training Setup")
-    print("="*50)
+    print("=" * 50)
 
     # Check if required files exist
     config_file = Path("egret_training_config.yaml")
@@ -103,7 +103,9 @@ def main():
     print("• Expected training time: 4-8 hours (depending on GPU)")
 
     print("\n🔍 After training, you can:")
-    print("• Run inference: yolo detect predict model=runs/egret_detection/egret_yolo11m_baseline/weights/best.pt source=your_images/")
+    print(
+        "• Run inference: yolo detect predict model=runs/egret_detection/egret_yolo11m_baseline/weights/best.pt source=your_images/"
+    )
     print("• Analyze results: Check runs/egret_detection/egret_yolo11m_baseline/results.csv")
     print("• Use in pipeline: Copy best.pt to models/ and update bird_detection_service.py")
 
@@ -111,8 +113,5 @@ def main():
     print("Run the command above to begin YOLO training on your egret dataset.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
-

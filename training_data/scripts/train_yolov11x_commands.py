@@ -4,6 +4,7 @@ YOLOv11x Training Commands for Egret Species Identification
 Shows optimal training commands without executing them
 """
 
+
 def show_training_options():
     """Display all training options and commands"""
 
@@ -91,6 +92,7 @@ def show_training_options():
     print("   • Hybrid: ~92%+ mAP with multi-species capability")
     print()
 
+
 def show_quick_commands():
     """Show quick copy-paste commands"""
 
@@ -98,16 +100,25 @@ def show_quick_commands():
     print("=" * 40)
 
     print("\n1️⃣ CHINESE EGRET SPECIALIST:")
-    print('yolo train model=models/yolov11x.pt data=training_data/prepared_dataset/chinese_egret_dataset epochs=150 imgsz=1280 batch=8 lr0=0.001 lrf=0.01 patience=50 optimizer=SGD amp=True workers=4 project=training_results name=chinese_egret_specialist_yolov11x')
+    print(
+        "yolo train model=models/yolov11x.pt data=training_data/prepared_dataset/chinese_egret_dataset epochs=150 imgsz=1280 batch=8 lr0=0.001 lrf=0.01 patience=50 optimizer=SGD amp=True workers=4 project=training_results name=chinese_egret_specialist_yolov11x"
+    )
 
     print("\n2️⃣ UNIFIED MULTI-SPECIES:")
-    print('yolo train model=models/yolov11x.pt data=training_data/final_yolo_dataset/unified_egret_dataset/data.yaml epochs=100 imgsz=1024 batch=12 lr0=0.01 lrf=0.01 patience=30 optimizer=AdamW amp=True workers=4 cos_lr=True close_mosaic=10 project=training_results name=unified_egret_yolov11x')
+    print(
+        "yolo train model=models/yolov11x.pt data=training_data/final_yolo_dataset/unified_egret_dataset/data.yaml epochs=100 imgsz=1024 batch=12 lr0=0.01 lrf=0.01 patience=30 optimizer=AdamW amp=True workers=4 cos_lr=True close_mosaic=10 project=training_results name=unified_egret_yolov11x"
+    )
 
     print("\n3️⃣ HYBRID STAGE 1 (Specialist):")
-    print('yolo train model=models/yolov11x.pt data=training_data/prepared_dataset/chinese_egret_dataset epochs=150 imgsz=1280 batch=8 lr0=0.001 lrf=0.01 patience=50 optimizer=SGD amp=True workers=4 project=training_results name=chinese_egret_specialist_yolov11x')
+    print(
+        "yolo train model=models/yolov11x.pt data=training_data/prepared_dataset/chinese_egret_dataset epochs=150 imgsz=1280 batch=8 lr0=0.001 lrf=0.01 patience=50 optimizer=SGD amp=True workers=4 project=training_results name=chinese_egret_specialist_yolov11x"
+    )
 
     print("\n3️⃣ HYBRID STAGE 2 (Fine-tuning):")
-    print('yolo train model=training_results/chinese_egret_specialist_yolov11x/weights/best.pt data=training_data/final_yolo_dataset/unified_egret_dataset/data.yaml epochs=50 imgsz=1024 batch=8 lr0=0.0001 lrf=0.0001 patience=20 freeze=10 amp=True workers=4 project=training_results name=hybrid_egret_yolov11x')
+    print(
+        "yolo train model=training_results/chinese_egret_specialist_yolov11x/weights/best.pt data=training_data/final_yolo_dataset/unified_egret_dataset/data.yaml epochs=50 imgsz=1024 batch=8 lr0=0.0001 lrf=0.0001 patience=20 freeze=10 amp=True workers=4 project=training_results name=hybrid_egret_yolov11x"
+    )
+
 
 if __name__ == "__main__":
     import sys
@@ -116,7 +127,3 @@ if __name__ == "__main__":
         show_quick_commands()
     else:
         show_training_options()
-
-
-
-

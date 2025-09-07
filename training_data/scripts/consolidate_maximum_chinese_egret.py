@@ -3,10 +3,10 @@
 Consolidate all Chinese Egret data from multiple sources for maximum dataset size
 """
 
-import os
+import random
 import shutil
 from pathlib import Path
-import random
+
 
 def consolidate_maximum_chinese_egret():
     """Consolidate all available Chinese Egret data"""
@@ -19,8 +19,12 @@ def consolidate_maximum_chinese_egret():
     project_root = script_dir.parent.parent
 
     # Source directories
-    prepared_images = project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "images"
-    prepared_labels = project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "labels"
+    prepared_images = (
+        project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "images"
+    )
+    prepared_labels = (
+        project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "labels"
+    )
     temp_extracted = project_root / "training_data" / "temp_extracted"
 
     # Destination
@@ -32,12 +36,12 @@ def consolidate_maximum_chinese_egret():
     print(f"  📦 Extracted labels: {temp_extracted}")
 
     # Create destination structure
-    for split in ['train', 'val', 'test']:
-        (final_dataset / split / 'images').mkdir(parents=True, exist_ok=True)
-        (final_dataset / split / 'labels').mkdir(parents=True, exist_ok=True)
+    for split in ["train", "val", "test"]:
+        (final_dataset / split / "images").mkdir(parents=True, exist_ok=True)
+        (final_dataset / split / "labels").mkdir(parents=True, exist_ok=True)
 
     # Get all available images from prepared dataset
-    image_extensions = ['*.png', '*.jpg', '*.jpeg', '*.PNG', '*.JPG', '*.JPEG']
+    image_extensions = ["*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG"]
     all_images = []
 
     for ext in image_extensions:
@@ -106,7 +110,7 @@ def consolidate_maximum_chinese_egret():
     other_species_labels = set()
 
     for _, label_path in image_label_pairs:
-        with open(label_path, 'r') as f:
+        with open(label_path) as f:
             lines = f.readlines()
 
         classes_in_image = set()
@@ -142,8 +146,8 @@ def consolidate_maximum_chinese_egret():
     n_test = n_total - n_train - n_val
 
     train_pairs = image_label_pairs[:n_train]
-    val_pairs = image_label_pairs[n_train:n_train + n_val]
-    test_pairs = image_label_pairs[n_train + n_val:]
+    val_pairs = image_label_pairs[n_train : n_train + n_val]
+    test_pairs = image_label_pairs[n_train + n_val :]
 
     print("\n📊 DATA SPLIT (80-10-10):")
     print(f"   🏋️  Train: {len(train_pairs)} pairs")
@@ -178,7 +182,7 @@ def consolidate_maximum_chinese_egret():
     copy_files(test_pairs, test_img_dest, test_label_dest, "test")
 
     # Create data.yaml
-    data_yaml_content = f"""train: train/images
+    data_yaml_content = """train: train/images
 val: val/images
 test: test/images
 nc: 1
@@ -186,15 +190,18 @@ names: ['Chinese_Egret']
 """
 
     data_yaml_path = final_dataset / "data.yaml"
-    with open(data_yaml_path, 'w') as f:
+    with open(data_yaml_path, "w") as f:
         f.write(data_yaml_content)
 
     print("\n✅ DATA.YAML CREATED")
     print(f"📁 Dataset location: {final_dataset}")
     print(f"📊 Total images: {len(image_label_pairs)}")
-    print(f"📊 Mixed species: {mixed_species_count} ({(mixed_species_count / len(image_label_pairs) * 100):.1f}%)")
+    print(
+        f"📊 Mixed species: {mixed_species_count} ({(mixed_species_count / len(image_label_pairs) * 100):.1f}%)"
+    )
 
     return final_dataset, len(image_label_pairs), mixed_species_count
+
 
 if __name__ == "__main__":
     dataset_path, total_images, mixed_count = consolidate_maximum_chinese_egret()

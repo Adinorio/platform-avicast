@@ -58,7 +58,7 @@
                             {% if site.description %}
                             <p class="text-muted">{{ site.description }}</p>
                             {% endif %}
-                            
+
                             <div class="row mt-3">
                                 <div class="col-6">
                                     <small class="text-muted">Site ID</small>
@@ -69,7 +69,7 @@
                                     <p class="mb-1">{{ site.get_site_type_display }}</p>
                                 </div>
                             </div>
-                            
+
                             <div class="row">
                                 <div class="col-6">
                                     <small class="text-muted">Status</small>
@@ -100,22 +100,22 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
-                        
+
                         <div class="mb-3">
                             <label for="confirmation" class="form-label">
                                 <strong>Type "DELETE" to confirm</strong>
                             </label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="confirmation" 
-                                   name="confirmation" 
+                            <input type="text"
+                                   class="form-control"
+                                   id="confirmation"
+                                   name="confirmation"
                                    placeholder="Type DELETE in all caps"
                                    required>
                             <div class="form-text">
                                 This is a safety measure to prevent accidental deletions.
                             </div>
                         </div>
-                        
+
                         <div class="d-flex justify-content-between align-items-center">
                             <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Cancel
@@ -164,4 +164,4 @@ document.getElementById('confirmation').addEventListener('input', function() {
     }
 });
 </script>
-{% endblock %} 
+{% endblock %}

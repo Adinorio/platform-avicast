@@ -231,7 +231,7 @@ python manage.py createsuperuser --username=staff001 --email=staff001@cenro.gov.
 # Create regular user
 python manage.py shell
 >>> from django.contrib.auth.models import User
->>> user = User.objects.create_user(username='field_staff_001', 
+>>> user = User.objects.create_user(username='field_staff_001',
                                    email='field@cenro.gov.ph',
                                    password='secure_password_123')
 >>> user.is_staff = True

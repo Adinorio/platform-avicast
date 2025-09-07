@@ -3,9 +3,8 @@
 Train YOLOv8x with unified multi-class egret dataset for maximum conservation accuracy
 """
 
-import os
 import subprocess
-from pathlib import Path
+
 
 def train_multi_class_egret():
     """Train with the unified multi-class egret dataset"""
@@ -18,7 +17,8 @@ def train_multi_class_egret():
 
     # Training command for maximum accuracy with multi-class
     cmd = [
-        "yolo", "train",
+        "yolo",
+        "train",
         "model=models/yolov8x.pt",
         "data=training_data/final_yolo_dataset/unified_egret_dataset/data.yaml",
         "epochs=200",
@@ -63,7 +63,7 @@ def train_multi_class_egret():
         "dfl=1.5",
         "weight_decay=0.0001",
         "project=multi_class_egret_results",
-        "name=unified_egret_max_accuracy_200_epochs"
+        "name=unified_egret_max_accuracy_200_epochs",
     ]
 
     print("\n" + "=" * 60)
@@ -137,6 +137,7 @@ def train_multi_class_egret():
         print(f"\n❌ Training error: {e}")
         return False
 
+
 if __name__ == "__main__":
     success = train_multi_class_egret()
     if success:
@@ -147,7 +148,3 @@ if __name__ == "__main__":
         print("\n⚠️  TRAINING DID NOT COMPLETE")
         print("💡 You can resume with the same command")
         print("🔄 Next time it will continue from the last checkpoint")
-
-
-
-

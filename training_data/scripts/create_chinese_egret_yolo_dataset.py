@@ -4,11 +4,11 @@ Create proper YOLO dataset structure for Chinese Egret dataset
 Splits data into train/val/test and creates final_yolo_dataset structure
 """
 
-import os
 import shutil
-import random
 from pathlib import Path
+
 from sklearn.model_selection import train_test_split
+
 
 def create_chinese_egret_yolo_dataset():
     """Create YOLO dataset structure for Chinese Egret"""
@@ -21,8 +21,12 @@ def create_chinese_egret_yolo_dataset():
     project_root = script_dir.parent.parent
 
     # Source paths
-    source_images = project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "images"
-    source_labels = project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "labels"
+    source_images = (
+        project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "images"
+    )
+    source_labels = (
+        project_root / "training_data" / "prepared_dataset" / "chinese_egret_dataset" / "labels"
+    )
 
     # Destination paths
     dest_base = project_root / "training_data" / "final_yolo_dataset" / "chinese_egret_dataset"
@@ -38,12 +42,18 @@ def create_chinese_egret_yolo_dataset():
     dest_test_labels = dest_base / "test" / "labels"
 
     # Create directories
-    for dir_path in [dest_train_images, dest_train_labels, dest_val_images,
-                     dest_val_labels, dest_test_images, dest_test_labels]:
+    for dir_path in [
+        dest_train_images,
+        dest_train_labels,
+        dest_val_images,
+        dest_val_labels,
+        dest_test_images,
+        dest_test_labels,
+    ]:
         dir_path.mkdir(parents=True, exist_ok=True)
 
     # Get all image files
-    image_extensions = ['*.png', '*.jpg', '*.jpeg', '*.PNG', '*.JPG', '*.JPEG']
+    image_extensions = ["*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG"]
     all_images = []
 
     for ext in image_extensions:
@@ -95,7 +105,7 @@ def create_chinese_egret_yolo_dataset():
     copy_files(test_pairs, dest_test_images, dest_test_labels, "test")
 
     # Create data.yaml
-    data_yaml_content = f"""train: train/images
+    data_yaml_content = """train: train/images
 val: val/images
 test: test/images
 nc: 1
@@ -103,7 +113,7 @@ names: ['Chinese_Egret']
 """
 
     data_yaml_path = dest_base / "data.yaml"
-    with open(data_yaml_path, 'w') as f:
+    with open(data_yaml_path, "w") as f:
         f.write(data_yaml_content)
 
     print("\n✅ CREATED DATA.YAML:")
@@ -116,10 +126,13 @@ names: ['Chinese_Egret']
 
     return True
 
+
 if __name__ == "__main__":
     success = create_chinese_egret_yolo_dataset()
     if success:
         print("\n🚀 READY FOR TRAINING!")
-        print("Run: yolo train model=models/yolov8x.pt data=training_data/final_yolo_dataset/chinese_egret_dataset/data.yaml [other args]")
+        print(
+            "Run: yolo train model=models/yolov8x.pt data=training_data/final_yolo_dataset/chinese_egret_dataset/data.yaml [other args]"
+        )
     else:
         print("\n❌ Dataset creation failed!")

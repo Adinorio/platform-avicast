@@ -6,11 +6,9 @@ This script monitors Django logs to show which models are being used
 and provides real-time feedback on model performance.
 """
 
-import time
-import re
-import subprocess
 import sys
-from pathlib import Path
+import time
+
 
 def monitor_logs():
     """Monitor Django logs for model usage information"""
@@ -21,20 +19,20 @@ def monitor_logs():
 
     # Keywords to look for in logs
     model_patterns = [
-        (r'🏆 Loading Chinese Egret Specialist model', 'CHINESE_EGRET_V1'),
-        (r'Loading custom ([A-Z_]+) model', 'GENERIC_MODEL'),
-        (r'Switched to ([A-Z_]+) model', 'MODEL_SWITCH'),
-        (r'Processing image.*with ([A-Z_]+)', 'INFERENCE'),
-        (r'mAP.*99\.46', 'HIGH_PERFORMANCE'),
+        (r"🏆 Loading Chinese Egret Specialist model", "CHINESE_EGRET_V1"),
+        (r"Loading custom ([A-Z_]+) model", "GENERIC_MODEL"),
+        (r"Switched to ([A-Z_]+) model", "MODEL_SWITCH"),
+        (r"Processing image.*with ([A-Z_]+)", "INFERENCE"),
+        (r"mAP.*99\.46", "HIGH_PERFORMANCE"),
     ]
 
     # Track statistics
     stats = {
-        'chinese_egret_loads': 0,
-        'generic_model_loads': 0,
-        'model_switches': 0,
-        'inferences': 0,
-        'high_performance_detections': 0,
+        "chinese_egret_loads": 0,
+        "generic_model_loads": 0,
+        "model_switches": 0,
+        "inferences": 0,
+        "high_performance_detections": 0,
     }
 
     try:
@@ -73,6 +71,7 @@ def monitor_logs():
         print("\n👋 Monitoring stopped by user")
         print_final_report(stats)
 
+
 def print_final_report(stats):
     """Print final monitoring report"""
     print("\n" + "=" * 70)
@@ -85,7 +84,7 @@ def print_final_report(stats):
     print(f"   Total model switches: {stats['model_switches']}")
     print(f"   Total inferences: {stats['inferences']}")
 
-    if stats['chinese_egret_loads'] > 0:
+    if stats["chinese_egret_loads"] > 0:
         print("\n✅ SUCCESS: Chinese Egret model is being used!")
         print("🎯 Your system is benefiting from 99.46% accuracy detection.")
     else:
@@ -104,6 +103,7 @@ def print_final_report(stats):
     print("   2. Select '🏆 Chinese Egret Specialist (99.46% mAP)'")
     print("   3. Click 'Update Model Settings'")
     print("   4. Upload test images to verify the performance boost")
+
 
 def show_real_time_logs():
     """Show how to monitor real Django logs"""
@@ -129,12 +129,14 @@ def show_real_time_logs():
     print("   • Accurate bounding boxes")
     print("   • Low false positive rate")
 
+
 def main():
     """Main monitoring function"""
-    if len(sys.argv) > 1 and sys.argv[1] == '--real-logs':
+    if len(sys.argv) > 1 and sys.argv[1] == "--real-logs":
         show_real_time_logs()
     else:
         monitor_logs()
+
 
 if __name__ == "__main__":
     main()

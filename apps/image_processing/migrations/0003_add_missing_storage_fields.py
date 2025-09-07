@@ -5,50 +5,70 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('image_processing', '0002_add_ai_model_fields'),
+        ("image_processing", "0002_add_ai_model_fields"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='imageupload',
-            name='archive_path',
-            field=models.CharField(blank=True, help_text='Path to archived file', max_length=500, null=True),
+            model_name="imageupload",
+            name="archive_path",
+            field=models.CharField(
+                blank=True, help_text="Path to archived file", max_length=500, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='imageupload',
-            name='compressed_size',
-            field=models.BigIntegerField(blank=True, help_text='Size after compression', null=True),
+            model_name="imageupload",
+            name="compressed_size",
+            field=models.BigIntegerField(blank=True, help_text="Size after compression", null=True),
         ),
         migrations.AddField(
-            model_name='imageupload',
-            name='file_hash',
-            field=models.CharField(blank=True, help_text='SHA256 hash of file content', max_length=64),
+            model_name="imageupload",
+            name="file_hash",
+            field=models.CharField(
+                blank=True, help_text="SHA256 hash of file content", max_length=64
+            ),
         ),
         migrations.AddField(
-            model_name='imageupload',
-            name='is_compressed',
-            field=models.BooleanField(default=False, help_text='Whether image has been optimized'),
+            model_name="imageupload",
+            name="is_compressed",
+            field=models.BooleanField(default=False, help_text="Whether image has been optimized"),
         ),
         migrations.AddField(
-            model_name='imageupload',
-            name='last_accessed',
-            field=models.DateTimeField(auto_now=True, help_text='Last time file was accessed'),
+            model_name="imageupload",
+            name="last_accessed",
+            field=models.DateTimeField(auto_now=True, help_text="Last time file was accessed"),
         ),
         migrations.AddField(
-            model_name='imageupload',
-            name='retention_days',
-            field=models.IntegerField(default=365, help_text='Days to retain file'),
+            model_name="imageupload",
+            name="retention_days",
+            field=models.IntegerField(default=365, help_text="Days to retain file"),
         ),
         migrations.AddField(
-            model_name='imageupload',
-            name='storage_tier',
-            field=models.CharField(choices=[('HOT', 'Hot Storage'), ('WARM', 'Warm Storage'), ('COLD', 'Cold Storage'), ('ARCHIVE', 'Archive')], default='HOT', help_text='Storage tier for lifecycle management', max_length=20),
+            model_name="imageupload",
+            name="storage_tier",
+            field=models.CharField(
+                choices=[
+                    ("HOT", "Hot Storage"),
+                    ("WARM", "Warm Storage"),
+                    ("COLD", "Cold Storage"),
+                    ("ARCHIVE", "Archive"),
+                ],
+                default="HOT",
+                help_text="Storage tier for lifecycle management",
+                max_length=20,
+            ),
         ),
         migrations.AlterField(
-            model_name='imageupload',
-            name='image_file',
-            field=models.ImageField(upload_to='bird_images/%Y/%m/%d/', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif'])]),
+            model_name="imageupload",
+            name="image_file",
+            field=models.ImageField(
+                upload_to="bird_images/%Y/%m/%d/",
+                validators=[
+                    django.core.validators.FileExtensionValidator(
+                        allowed_extensions=["jpg", "jpeg", "png", "gif"]
+                    )
+                ],
+            ),
         ),
     ]

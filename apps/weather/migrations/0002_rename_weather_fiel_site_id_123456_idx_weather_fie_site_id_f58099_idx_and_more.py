@@ -4,50 +4,49 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('weather', '0001_initial'),
+        ("weather", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameIndex(
-            model_name='fieldworkschedule',
-            new_name='weather_fie_site_id_f58099_idx',
-            old_name='weather_fiel_site_id_123456_idx',
+            model_name="fieldworkschedule",
+            new_name="weather_fie_site_id_f58099_idx",
+            old_name="weather_fiel_site_id_123456_idx",
         ),
         migrations.RenameIndex(
-            model_name='fieldworkschedule',
-            new_name='weather_fie_status_4419cc_idx',
-            old_name='weather_fiel_status_123456_idx',
+            model_name="fieldworkschedule",
+            new_name="weather_fie_status_4419cc_idx",
+            old_name="weather_fiel_status_123456_idx",
         ),
         migrations.RenameIndex(
-            model_name='weatheralert',
-            new_name='weather_wea_alert_t_5b595d_idx',
-            old_name='weather_wea_alert__123456_idx',
+            model_name="weatheralert",
+            new_name="weather_wea_alert_t_5b595d_idx",
+            old_name="weather_wea_alert__123456_idx",
         ),
         migrations.RenameIndex(
-            model_name='weatheralert',
-            new_name='weather_wea_valid_f_b7e9d6_idx',
-            old_name='weather_wea_valid_f_123456_idx',
+            model_name="weatheralert",
+            new_name="weather_wea_valid_f_b7e9d6_idx",
+            old_name="weather_wea_valid_f_123456_idx",
         ),
         migrations.RenameIndex(
-            model_name='weatherforecast',
-            new_name='weather_wea_site_id_4554ac_idx',
-            old_name='weather_wea_site_id_123456_idx',
+            model_name="weatherforecast",
+            new_name="weather_wea_site_id_4554ac_idx",
+            old_name="weather_wea_site_id_123456_idx",
         ),
         migrations.RenameIndex(
-            model_name='weatherforecast',
-            new_name='weather_wea_forecas_af520f_idx',
-            old_name='weather_wea_forecas_123456_idx',
+            model_name="weatherforecast",
+            new_name="weather_wea_forecas_af520f_idx",
+            old_name="weather_wea_forecas_123456_idx",
         ),
         migrations.RenameIndex(
-            model_name='weatherforecast',
-            new_name='weather_wea_api_sou_d3d391_idx',
-            old_name='weather_wea_api_so_123456_idx',
+            model_name="weatherforecast",
+            new_name="weather_wea_api_sou_d3d391_idx",
+            old_name="weather_wea_api_so_123456_idx",
         ),
         migrations.AddField(
-            model_name='weatherforecast',
-            name='last_updated',
+            model_name="weatherforecast",
+            name="last_updated",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

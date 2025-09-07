@@ -10,12 +10,12 @@
         transition: all 0.3s ease;
         height: 100%;
     }
-    
+
     .model-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
-    
+
     .winner-badge {
         background: linear-gradient(135deg, #FFD700, #FFA500);
         color: white;
@@ -24,7 +24,7 @@
         font-size: 0.75rem;
         font-weight: 600;
     }
-    
+
     .metric-highlight {
         background: linear-gradient(135deg, #f8f9fa, #e9ecef);
         border-radius: 8px;
@@ -32,28 +32,28 @@
         text-align: center;
         border: 1px solid #dee2e6;
     }
-    
+
     .metric-value {
         font-size: 1.5rem;
         font-weight: 700;
         color: #495057;
         margin-bottom: 0.25rem;
     }
-    
+
     .performance-table {
         background: white;
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         overflow: hidden;
     }
-    
+
     .radar-chart-container {
         background: white;
         border-radius: 10px;
         padding: 1.5rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    
+
     .stats-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -61,7 +61,7 @@
         padding: 1.5rem;
         text-align: center;
     }
-    
+
     .stats-number {
         font-size: 2.5rem;
         font-weight: 700;
@@ -158,9 +158,9 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <hr class="my-3">
-                    
+
                     <div class="row g-2">
                         <div class="col-6">
                             <small class="text-muted">True Positives:</small><br>
@@ -301,7 +301,7 @@
                         <div class="col-md-6">
                             <p><strong>Run Name:</strong> {{ recent_run.name }}</p>
                             <p><strong>Created:</strong> {{ recent_run.created_at|date:"F j, Y, g:i a" }}</p>
-                            <p><strong>Status:</strong> 
+                            <p><strong>Status:</strong>
                                 <span class="badge bg-success">{{ recent_run.status }}</span>
                             </p>
                         </div>
@@ -323,10 +323,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const radarData = {{ radar_chart_data|safe }};
-    
+
     if (radarData && radarData.datasets && radarData.datasets.length > 0) {
         const ctx = document.getElementById('performanceRadarChart').getContext('2d');
-        
+
         new Chart(ctx, {
             type: 'radar',
             data: radarData,

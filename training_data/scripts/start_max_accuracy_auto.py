@@ -5,10 +5,9 @@ Automatically starts training 5 YOLOv11x models for 98%+ mAP
 """
 
 import os
-import sys
 import subprocess
 import time
-from pathlib import Path
+
 
 def start_ensemble_training():
     """Start the maximum accuracy ensemble training"""
@@ -42,7 +41,7 @@ def start_ensemble_training():
 
     # Countdown
     for i in range(10, 0, -1):
-        print(f"   Starting in {i} seconds...", end='\r')
+        print(f"   Starting in {i} seconds...", end="\r")
         time.sleep(1)
 
     print("\n\n🚀 TRAINING STARTED!")
@@ -60,7 +59,8 @@ def start_ensemble_training():
 
         # Maximum accuracy command
         cmd = [
-            "yolo", "train",
+            "yolo",
+            "train",
             "model=models/yolov11x.pt",
             "data=training_data/prepared_dataset/chinese_egret_dataset",
             "epochs=300",
@@ -107,7 +107,7 @@ def start_ensemble_training():
             "fl_gamma=0.0",
             "weight_decay=0.0001",
             "project=max_accuracy_ensemble_results",
-            f"name=chinese_egret_ensemble_seed_{seed}"
+            f"name=chinese_egret_ensemble_seed_{seed}",
         ]
 
         print("📋 COMMAND:")
@@ -137,7 +137,7 @@ def start_ensemble_training():
 
         # Brief pause between models (except for last one)
         if idx < len(seeds):
-            print(f"\n⏸️  Pausing for 5 minutes to let system cool...")
+            print("\n⏸️  Pausing for 5 minutes to let system cool...")
             time.sleep(300)  # 5 minutes
 
     # Final summary
@@ -158,9 +158,6 @@ def start_ensemble_training():
         print("   Not enough successful models for optimal ensemble")
         print("   Consider retraining failed models or using available ones")
 
+
 if __name__ == "__main__":
     start_ensemble_training()
-
-
-
-

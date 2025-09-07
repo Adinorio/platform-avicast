@@ -32,7 +32,7 @@
                 <div class="card-body">
                     <form method="post" id="censusForm">
                         {% csrf_token %}
-                        
+
                         <!-- Census Information -->
                         <div class="row mb-4">
                             <div class="col-md-6">
@@ -64,7 +64,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mb-4">
                             <label for="{{ census_form.notes.id_for_label }}" class="form-label">
                                 <strong>General Notes</strong>
@@ -86,9 +86,9 @@
                                 <i class="fas fa-bird"></i>
                                 Species Observations
                             </h5>
-                            
+
                             {{ species_formset.management_form }}
-                            
+
                             <div id="speciesForms">
                                 {% for form in species_formset %}
                                 <div class="species-form-row border rounded p-3 mb-3 bg-light">
@@ -137,13 +137,13 @@
                                             {% endif %}
                                         </div>
                                     </div>
-                                    
+
                                     <!-- Hidden fields -->
                                     {{ form.id }}
                                 </div>
                                 {% endfor %}
                             </div>
-                            
+
                             <div class="text-center">
                                 <button type="button" class="btn btn-outline-success" id="addSpeciesForm">
                                     <i class="fas fa-plus"></i> Add Another Species
@@ -205,22 +205,22 @@ $(document).ready(function() {
     $('#addSpeciesForm').click(function() {
         var formCount = parseInt($('#id_species_observations-TOTAL_FORMS').val());
         var row = $('.species-form-row:first').clone(true);
-        
+
         // Update form index
         row.find(':input').each(function() {
             var name = $(this).attr('name').replace('-0-', '-' + formCount + '-');
             var id = 'id_' + name;
             $(this).attr({'name': name, 'id': id}).val('').removeClass('is-invalid');
         });
-        
+
         // Clear form errors
         row.find('.invalid-feedback').remove();
-        
+
         // Add to form
         $('#speciesForms').append(row);
         $('#id_species_observations-TOTAL_FORMS').val(formCount + 1);
     });
-    
+
     // Handle form submission
     $('#censusForm').submit(function() {
         // Basic validation
@@ -228,20 +228,20 @@ $(document).ready(function() {
         $('.species-form-row:not(:has(:checkbox:checked))').each(function() {
             var speciesName = $(this).find('input[name*="species_name"]').val();
             var count = $(this).find('input[name*="count"]').val();
-            
+
             if (speciesName && count) {
                 hasSpecies = true;
             }
         });
-        
+
         if (!hasSpecies) {
             alert('Please add at least one species observation.');
             return false;
         }
-        
+
         return true;
     });
-    
+
     // Auto-hide deleted forms
     $('input[name*="DELETE"]').change(function() {
         if ($(this).is(':checked')) {
@@ -252,4 +252,4 @@ $(document).ready(function() {
     });
 });
 </script>
-{% endblock %} 
+{% endblock %}

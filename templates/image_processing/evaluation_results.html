@@ -12,28 +12,28 @@
         box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         transition: transform 0.3s ease;
     }
-    
+
     .metric-card:hover {
         transform: translateY(-5px);
     }
-    
+
     .metric-value {
         font-size: 2.5rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
     }
-    
+
     .metric-label {
         font-size: 0.9rem;
         opacity: 0.9;
     }
-    
+
     .performance-table {
         background: white;
         border-radius: 10px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    
+
     .chart-container {
         background: white;
         border-radius: 10px;
@@ -43,18 +43,18 @@
         height: 400px;
         position: relative;
     }
-    
+
     .species-performance {
         border-left: 4px solid #667eea;
         padding-left: 1rem;
         margin-bottom: 1rem;
     }
-    
+
     .status-badge {
         font-size: 0.9rem;
         padding: 0.5rem 1rem;
     }
-    
+
     .detail-row {
         background: #f8f9fa;
         border-radius: 8px;
@@ -94,7 +94,7 @@
                         <strong>Description:</strong> {{ evaluation_run.description|default:"No description provided" }}
                     </div>
                     <div class="detail-row">
-                        <strong>Status:</strong> 
+                        <strong>Status:</strong>
                         {% if evaluation_run.status == 'PENDING' %}
                             <span class="badge bg-warning status-badge">⏳ Pending</span>
                         {% elif evaluation_run.status == 'COMPLETED' %}
@@ -138,7 +138,7 @@
                     {% endif %}
                     {% if evaluation_run.total_images_evaluated and evaluation_run.processing_duration %}
                     <div class="detail-row">
-                        <strong>Processing Speed:</strong> 
+                        <strong>Processing Speed:</strong>
                         {% widthratio evaluation_run.total_images_evaluated evaluation_run.processing_duration.total_seconds 1 %} images/second
                     </div>
                     {% endif %}
@@ -175,7 +175,7 @@
                         <strong>Error:</strong> {{ evaluation_run.error_message }}
                     </div>
                     {% endif %}
-                    
+
                     <!-- Ground Truth Guidance Section -->
                     {% if evaluation_guidance %}
                     <div class="alert alert-info border border-info mt-3">
@@ -186,7 +186,7 @@
                                 <p class="mb-0">{{ evaluation_guidance.explanation }}</p>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <h6 class="text-primary">📋 Available Data:</h6>
@@ -205,11 +205,11 @@
                                 </ul>
                             </div>
                         </div>
-                        
+
                         <div class="mt-3">
                             <small class="text-muted">
-                                <strong>For thesis research:</strong> Consider using a properly annotated dataset or 
-                                <a href="{% url 'image_processing:reviewed_analytics' %}" class="alert-link">review the processed results</a> 
+                                <strong>For thesis research:</strong> Consider using a properly annotated dataset or
+                                <a href="{% url 'image_processing:reviewed_analytics' %}" class="alert-link">review the processed results</a>
                                 for alternative analysis approaches.
                             </small>
                         </div>
@@ -372,7 +372,7 @@
                 <canvas id="prCurve" height="300"></canvas>
             </div>
         </div>
-        
+
         <!-- Confusion Matrix -->
         <div class="col-lg-6">
             <div class="chart-container">
@@ -653,13 +653,13 @@
                     <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Thesis Analysis & Insights</h5>
                 </div>
                 <div class="card-body">
-                    
+
                     <!-- Statistical Significance Analysis -->
                     {% if statistical_analysis %}
                     <div class="row mb-4">
                         <div class="col-12">
                             <h6 class="text-primary border-bottom pb-2"><i class="fas fa-chart-bar me-2"></i>Statistical Significance Analysis</h6>
-                            
+
                             {% if statistical_analysis.pairwise_comparisons %}
                             <div class="table-responsive">
                                 <table class="table table-sm">
@@ -714,7 +714,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Enhanced Model Performance Metrics -->
                     {% if thesis_report.model_performance %}
                     <div class="row mb-4">
@@ -753,7 +753,7 @@
                                             <td>{{ model.matthews_correlation|floatformat:3 }}</td>
                                             <td>
                                                 <div class="progress" style="height: 20px;">
-                                                    <div class="progress-bar bg-{% if model.efficiency_score > 0.8 %}success{% elif model.efficiency_score > 0.6 %}warning{% else %}danger{% endif %}" 
+                                                    <div class="progress-bar bg-{% if model.efficiency_score > 0.8 %}success{% elif model.efficiency_score > 0.6 %}warning{% else %}danger{% endif %}"
                                                          style="width: {{ model.efficiency_score|floatformat:0 }}%">
                                                         {{ model.efficiency_score|floatformat:2 }}
                                                     </div>
@@ -768,7 +768,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Research Recommendations -->
                     {% if recommendations %}
                     <div class="row mb-4">
@@ -790,7 +790,7 @@
                                             {% if rec.target_metric %}
                                             <div class="mt-2">
                                                 <small class="text-muted">
-                                                    <strong>{{ rec.target_metric }}:</strong> 
+                                                    <strong>{{ rec.target_metric }}:</strong>
                                                     Current {{ rec.current_value|floatformat:3 }} → Target {{ rec.target_value|floatformat:3 }}
                                                 </small>
                                             </div>
@@ -808,7 +808,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Error Analysis for Research Discussion -->
                     {% if error_analysis %}
                     <div class="row mb-4">
@@ -832,7 +832,7 @@
                                     </div>
                                 </div>
                                 {% endif %}
-                                
+
                                 {% if error_analysis.common_false_negatives %}
                                 <div class="col-md-6">
                                     <div class="card">
@@ -854,7 +854,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Methodology Summary for Thesis -->
                     <div class="row">
                         <div class="col-12">
@@ -875,14 +875,14 @@
                                         <ul class="list-unstyled">
                                             <li><strong>Ground Truth Objects:</strong> {{ evaluation_run.total_ground_truth_objects|default:"N/A" }}</li>
                                             <li><strong>Total Predictions:</strong> {{ evaluation_run.total_predicted_objects|default:"N/A" }}</li>
-                                            <li><strong>Species Evaluated:</strong> 
+                                            <li><strong>Species Evaluated:</strong>
                                                 {% if evaluation_run.species_filter %}
                                                     {{ evaluation_run.species_filter|join:", " }}
                                                 {% else %}
                                                     All available species
                                                 {% endif %}
                                             </li>
-                                            <li><strong>Processing Duration:</strong> 
+                                            <li><strong>Processing Duration:</strong>
                                                 {% if evaluation_run.processing_duration %}
                                                     {{ evaluation_run.processing_duration.total_seconds|floatformat:1 }}s
                                                 {% else %}
@@ -895,7 +895,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Export Options for Thesis -->
                     <div class="row mt-3">
                         <div class="col-12 text-end">
@@ -912,7 +912,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
@@ -958,7 +958,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start real-time progress monitoring
     startProgressMonitoring();
     console.log('Initializing enhanced charts...');
-    
+
     setTimeout(function() {
         try {
             // Enhanced Precision-Recall Curve with better handling for small datasets
@@ -1079,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                 }
             }
-            
+
             // Enhanced Confusion Matrix with better handling for small datasets
             const confCanvas = document.getElementById('confusionMatrix');
             if (confCanvas) {
@@ -1191,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                 }
             }
-            
+
         } catch (error) {
             console.error('Enhanced chart error:', error);
         }
@@ -1459,7 +1459,7 @@ function exportResultsAsJSON() {
         {% endif %}
         exported_at: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1473,13 +1473,13 @@ function exportResultsAsJSON() {
 
 function exportResultsAsCSV() {
     let csvContent = "Model,F1-Score,Precision,Recall,mAP@0.5,Accuracy,Specificity,MCC,Efficiency Score,Inference Time (ms)\n";
-    
+
     {% if thesis_report.model_performance %}
     {% for model in thesis_report.model_performance %}
     csvContent += "{{ model.model_name|escapejs }},{{ model.f1_score }},{{ model.precision }},{{ model.recall }},{{ model.map_50 }},{{ model.accuracy }},{{ model.specificity }},{{ model.matthews_correlation }},{{ model.efficiency_score }},{{ model.avg_inference_time_ms }}\n";
     {% endfor %}
     {% endif %}
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1493,17 +1493,17 @@ function exportResultsAsCSV() {
 
 function generateCitation() {
     const evaluationName = '{{ evaluation_run.name|escapejs }}';
-    const currentDate = new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
     });
     const year = new Date().getFullYear();
     const username = '{{ request.user.get_full_name|default:request.user.username|escapejs }}';
-    
+
     // APA Citation
     const apaCitation = `${username}. (${year}). ${evaluationName}: YOLO Model Performance Evaluation for Bird Species Detection. Generated using Platform-AviCast Analytics. Retrieved ${currentDate}.`;
-    
+
     // BibTeX Citation
     const bibtexCitation = `@misc{avicast_eval_${year},
     author = {${username}},
@@ -1513,10 +1513,10 @@ function generateCitation() {
     url = {${window.location.href}},
     accessed = {${currentDate}}
 }`;
-    
+
     document.getElementById('apaCitation').value = apaCitation;
     document.getElementById('bibtexCitation').value = bibtexCitation;
-    
+
     const citationModal = new bootstrap.Modal(document.getElementById('citationModal'));
     citationModal.show();
 }
@@ -1525,7 +1525,7 @@ function copyCitation(type) {
     const textArea = document.getElementById(type === 'apa' ? 'apaCitation' : 'bibtexCitation');
     textArea.select();
     textArea.setSelectionRange(0, 99999); // For mobile devices
-    
+
     try {
         document.execCommand('copy');
         showMessage(`${type.toUpperCase()} citation copied to clipboard!`, 'success');

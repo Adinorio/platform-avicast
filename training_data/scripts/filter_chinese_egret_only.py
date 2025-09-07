@@ -5,8 +5,8 @@ Remove images that contain other egret species (class 3, 5)
 """
 
 import os
-import shutil
 from pathlib import Path
+
 
 def filter_chinese_egret_only():
     """Filter dataset to keep only images with Chinese Egret labels (class 0)"""
@@ -22,7 +22,7 @@ def filter_chinese_egret_only():
     print(f"🔍 Base path: {base_path}")
     print(f"🔍 Exists: {base_path.exists()}")
 
-    splits = ['train', 'val', 'test']
+    splits = ["train", "val", "test"]
     total_removed = 0
     total_kept = 0
 
@@ -47,7 +47,7 @@ def filter_chinese_egret_only():
 
         for label_file in label_files:
             # Read label file
-            with open(label_file, 'r') as f:
+            with open(label_file) as f:
                 lines = f.readlines()
 
             # Check if all classes in this file are Chinese Egret (class 0)
@@ -74,7 +74,7 @@ def filter_chinese_egret_only():
                 image_file = images_path / f"{label_file.stem}.PNG"  # or .png/.jpg
 
                 # Try different extensions
-                for ext in ['.PNG', '.png', '.jpg', '.jpeg', '.JPG', '.JPEG']:
+                for ext in [".PNG", ".png", ".jpg", ".jpeg", ".JPG", ".JPEG"]:
                     img_path = images_path / f"{label_file.stem}{ext}"
                     if img_path.exists():
                         os.remove(str(img_path))
@@ -99,11 +99,14 @@ def filter_chinese_egret_only():
 
     return total_kept, total_removed
 
+
 if __name__ == "__main__":
     kept, removed = filter_chinese_egret_only()
 
     if kept > 0:
         print("\n🚀 READY FOR TRAINING!")
-        print("Now run: yolo train model=models/yolov8x.pt data=training_data/final_yolo_dataset/chinese_egret_dataset/data.yaml [training args]")
+        print(
+            "Now run: yolo train model=models/yolov8x.pt data=training_data/final_yolo_dataset/chinese_egret_dataset/data.yaml [training args]"
+        )
     else:
         print("\n❌ No Chinese Egret images found!")
