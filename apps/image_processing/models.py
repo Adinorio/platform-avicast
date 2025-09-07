@@ -43,6 +43,9 @@ class BirdSpecies(models.TextChoices):
     CHINESE_EGRET = 'CHINESE_EGRET', 'Chinese Egret'
     WHISKERED_TERN = 'WHISKERED_TERN', 'Whiskered Tern'
     GREAT_KNOT = 'GREAT_KNOT', 'Great Knot'
+    LITTLE_EGRET = 'LITTLE_EGRET', 'Little Egret'
+    GREAT_EGRET = 'GREAT_EGRET', 'Great Egret'
+    INTERMEDIATE_EGRET = 'INTERMEDIATE_EGRET', 'Intermediate Egret'
 
 class AIModel(models.TextChoices):
     """AI model choices loaded from configuration"""

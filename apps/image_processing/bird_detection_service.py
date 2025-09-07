@@ -5,6 +5,8 @@ Supports YOLOv5, YOLOv8, and YOLOv9 with automatic fallback
 import os
 import sys
 import uuid
+import json
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import logging
@@ -30,6 +32,266 @@ except ImportError as e:
     Image = None
 
 logger = logging.getLogger(__name__)
+
+# -----------------------------------------------------------------------------
+# Decision policy for acceptance/abstain of detections
+# -----------------------------------------------------------------------------
+
+# Minimum detector confidence to accept a detection
+DETECTION_CONF_THRESHOLD: float = 0.80
+
+# Minimum crop side (in pixels) to accept a detection (guards small/ambiguous crops)
+DETECTION_MIN_CROP_SIDE: int = 128
+
+
+def decide_detection_gate(detector_confidence: float, crop_width_px: int, crop_height_px: int) -> Tuple[str, str]:
+    """Decide whether to accept a detection based on detector confidence and crop size.
+
+    Returns a tuple of (status, reason), where status is one of {"ACCEPT", "ABSTAIN"}.
+    """
+    try:
+        min_side = min(int(crop_width_px), int(crop_height_px))
+    except Exception:
+        # Fallback if values are unexpected
+        min_side = 0
+
+    if detector_confidence < DETECTION_CONF_THRESHOLD:
+        return "ABSTAIN", "low_confidence_detection"
+
+    if min_side < DETECTION_MIN_CROP_SIDE:
+        return "ABSTAIN", "small_crop_min_side"
+
+    return "ACCEPT", "accept_detection"
+
+
+# -----------------------------------------------------------------------------
+# Crop Extraction Helper
+# -----------------------------------------------------------------------------
+
+def crop_image(image: np.ndarray, bbox: Dict) -> np.ndarray:
+    """
+    Crop a region from the image given a YOLO bbox.
+
+    Args:
+        image (np.ndarray): Original image (H x W x C).
+        bbox (dict): {"x": int, "y": int, "width": int, "height": int}
+
+    Returns:
+        np.ndarray: Cropped image.
+    """
+    x, y, w, h = bbox["x"], bbox["y"], bbox["width"], bbox["height"]
+    x2, y2 = x + w, y + h
+
+    # Ensure within image bounds
+    h_img, w_img = image.shape[:2]
+    x, y = max(0, x), max(0, y)
+    x2, y2 = min(w_img, x2), min(h_img, y2)
+
+    return image[y:y2, x:x2]
+
+
+# -----------------------------------------------------------------------------
+# Review Queue for ABSTAIN Cases
+# -----------------------------------------------------------------------------
+
+REVIEW_QUEUE_BASE_DIR: str = "review_queue"
+
+
+def save_abstain_to_review_queue(crop: np.ndarray, detection: Dict, base_dir: str = REVIEW_QUEUE_BASE_DIR) -> bool:
+    """Save ABSTAIN cases with structured folder format: <date>/<uuid>.png + metadata.json"""
+    try:
+        # Create date-based folder
+        date_str = datetime.utcnow().strftime("%Y-%m-%d")
+        date_dir = os.path.join(base_dir, date_str)
+        os.makedirs(date_dir, exist_ok=True)
+
+        # Generate unique ID for this detection
+        detection_id = str(uuid.uuid4())
+
+        # Save cropped image
+        image_filename = f"{detection_id}.png"
+        image_path = os.path.join(date_dir, image_filename)
+        cv2.imwrite(image_path, crop)
+
+        # Prepare metadata entry
+        metadata_path = os.path.join(date_dir, "metadata.json")
+
+        # Load existing metadata if file exists
+        metadata = []
+        if os.path.exists(metadata_path):
+            try:
+                with open(metadata_path, 'r') as f:
+                    metadata = json.load(f)
+            except Exception:
+                metadata = []  # Start fresh if corrupted
+
+        # Create new entry
+        entry = {
+            "id": detection_id,
+            "timestamp": datetime.utcnow().isoformat(),
+            "image_file": image_filename,
+            "stage1_decision": detection.get("decision", {}),
+            "stage2_decision": detection.get("stage2_decision", {}),
+            "final_decision": detection.get("final_decision", {}),
+            "yolo_conf": detection.get("confidence", None),
+            "classifier_probs": detection.get("classifier_probs", {}),
+            "crop_size": detection.get("crop_size", ()),
+            "source_image": detection.get("source_image", None),
+            "site": detection.get("site", None),
+            "observer": "auto_pipeline"
+        }
+
+        metadata.append(entry)
+
+        # Save updated metadata
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+
+        logger.info(f"Saved ABSTAIN case to review queue: {image_path}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to save ABSTAIN case to review queue: {e}")
+        return False
+
+
+# -----------------------------------------------------------------------------
+# Stage-2 Classifier Decision Module
+# -----------------------------------------------------------------------------
+
+CLASSIFIER_CONF_THRESHOLD: float = 0.80  # Minimum classifier confidence to accept
+CLASSIFIER_MARGIN_THRESHOLD: float = 0.25  # Minimum margin between top-2 classes
+
+
+def decide_classification_gate(classifier_probs: Dict[str, float], crop_min_side: int) -> Tuple[str, str]:
+    """Decide whether to accept a classification based on probabilities and crop size.
+
+    Args:
+        classifier_probs: Dict of class_name -> probability (e.g., {"Chinese": 0.85, "Great": 0.10})
+        crop_min_side: Minimum side of the crop in pixels
+
+    Returns:
+        Tuple[str, str]: (status, reason) where status is "ACCEPT" or "ABSTAIN"
+    """
+    if not classifier_probs or not isinstance(classifier_probs, dict):
+        return "ABSTAIN", "invalid_classifier_output"
+
+    # Check if crop is too small for reliable classification
+    if crop_min_side < DETECTION_MIN_CROP_SIDE:
+        return "ABSTAIN", "crop_too_small_for_classification"
+
+    # Sort probabilities to find top-2
+    sorted_probs = sorted(classifier_probs.items(), key=lambda x: x[1], reverse=True)
+
+    if len(sorted_probs) < 1:
+        return "ABSTAIN", "no_classifier_predictions"
+
+    top1_prob = sorted_probs[0][1]
+    top2_prob = sorted_probs[1][1] if len(sorted_probs) > 1 else 0.0
+    margin = top1_prob - top2_prob
+
+    # Acceptance criteria
+    if top1_prob >= CLASSIFIER_CONF_THRESHOLD and margin >= CLASSIFIER_MARGIN_THRESHOLD:
+        return "ACCEPT", "high_confidence_classification"
+    else:
+        return "ABSTAIN", f"low_confidence_or_ambiguous_margin_{top1_prob:.2f}_{margin:.2f}"
+
+
+# -----------------------------------------------------------------------------
+# Mock Classifier for Testing (replace with real classifier)
+# -----------------------------------------------------------------------------
+
+def trained_classifier_predict(crop: np.ndarray) -> Dict[str, float]:
+    """Trained classifier using the Stage-2 EfficientNet model."""
+    import torch
+    from torchvision import transforms
+    from PIL import Image
+    import torch.nn as nn
+    from torchvision import models
+
+    # Load the trained model
+    model_path = Path(__file__).parent.parent / 'models' / 'classifier' / 'best_model.pth'
+
+    if not model_path.exists():
+        print("⚠️ Trained classifier model not found, falling back to mock")
+        return mock_classifier_predict(crop)
+
+    try:
+        # Load checkpoint
+        checkpoint = torch.load(model_path, map_location='cpu', weights_only=False)
+        model_name = checkpoint.get('model_name', 'efficientnet_b0')
+        class_names = checkpoint.get('class_names', ['Chinese Egret', 'Intermediate Egret'])
+
+        # Recreate model architecture
+        if model_name == 'efficientnet_b0':
+            model = models.efficientnet_b0(weights=None)
+            num_features = model.classifier[1].in_features
+            model.classifier[1] = nn.Linear(num_features, len(class_names))
+        else:
+            print("⚠️ Unsupported model architecture, falling back to mock")
+            return mock_classifier_predict(crop)
+
+        # Load trained weights
+        model.load_state_dict(checkpoint['model_state_dict'])
+        model.eval()
+
+        # Prepare image
+        image = Image.fromarray(crop)
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+
+        with torch.no_grad():
+            input_tensor = transform(image).unsqueeze(0)
+            outputs = model(input_tensor)
+            probabilities = torch.softmax(outputs, dim=1)[0]
+
+        # Convert to expected format (full egret names)
+        probs_dict = {}
+        for i, prob in enumerate(probabilities):
+            class_name = class_names[i]
+            # Map to expected format
+            if 'Chinese' in class_name:
+                probs_dict['Chinese'] = float(prob)
+            elif 'Intermediate' in class_name:
+                probs_dict['Intermediate'] = float(prob)
+            else:
+                probs_dict[class_name] = float(prob)
+
+        # Fill in missing classes with low probabilities
+        all_classes = ['Chinese', 'Great', 'Intermediate', 'Little']
+        for cls in all_classes:
+            if cls not in probs_dict:
+                probs_dict[cls] = 0.01  # Very low probability for missing classes
+
+        # Renormalize
+        total = sum(probs_dict.values())
+        probs_dict = {k: v/total for k, v in probs_dict.items()}
+
+        return probs_dict
+
+    except Exception as e:
+        print(f"⚠️ Error loading trained classifier: {e}, falling back to mock")
+        return mock_classifier_predict(crop)
+
+
+def mock_classifier_predict(crop: np.ndarray) -> Dict[str, float]:
+    """Mock classifier that returns random probabilities for testing the pipeline."""
+    import random
+
+    classes = ["Chinese", "Great", "Intermediate", "Little"]
+    # Simulate realistic probabilities (Chinese egret should be highest in our dataset)
+    base_probs = [0.6, 0.25, 0.10, 0.05]  # Chinese dominant
+    noise = [random.uniform(-0.1, 0.1) for _ in range(4)]
+
+    probs = [max(0.01, min(0.99, base_probs[i] + noise[i])) for i in range(4)]
+    total = sum(probs)
+    probs = [p/total for p in probs]  # Normalize
+
+    return dict(zip(classes, probs))
+
 
 # Import configuration at module level
 try:
@@ -78,7 +340,7 @@ class DetectionError:
 class BirdDetectionService:
     """Enhanced service for detecting birds using multiple YOLO versions"""
     
-    def __init__(self, preferred_version: str = 'YOLO_V8'):
+    def __init__(self, preferred_version: str = 'YOLO11M_EGRET_MAX_ACCURACY'):
         self.models = {}  # Cache for different YOLO versions
         self.current_model = None
         self.current_version = preferred_version
@@ -144,15 +406,30 @@ class BirdDetectionService:
                 else:
                     logger.error(f"❌ Chinese Egret model not found at: {model_path}")
                     return None
+
+            # Special handling for YOLO11m Egret Max Accuracy model
+            if version == 'YOLO11M_EGRET_MAX_ACCURACY':
+                model_path = project_root / config['model_path']
+                if model_path.exists():
+                    logger.info(f"🚀 Loading YOLO11m Egret Max Accuracy model from: {model_path}")
+                    logger.info(f"🎯 Performance: {config['performance']['mAP']:.1%} mAP, {config['performance']['fps']} FPS")
+                    logger.info(f"📊 Trained on {config['training_images']} images, validated on {config['validation_images']} images")
+                    logger.info(f"🦅 Species: {', '.join(config['trained_classes'])}")
+                    return YOLO(str(model_path))
+                else:
+                    logger.error(f"❌ YOLO11m Egret model not found at: {model_path}")
+                    return None
             
-            # Auto-discover: newest best.pt under training/runs/**/weights/best.pt
-            training_runs = project_root / 'training' / 'runs'
-            if training_runs.exists():
-                best_candidates = list(training_runs.rglob('weights/best.pt'))
-                if best_candidates:
-                    latest_best = max(best_candidates, key=lambda p: p.stat().st_mtime)
-                    logger.info(f"Auto-discovered latest training model: {latest_best}")
-                    return YOLO(str(latest_best))
+            # Skip auto-discovery for YOLO11M_EGRET_MAX_ACCURACY - use specific path
+            if version != 'YOLO11M_EGRET_MAX_ACCURACY':
+                # Auto-discover: newest best.pt under training/runs/**/weights/best.pt
+                training_runs = project_root / 'training' / 'runs'
+                if training_runs.exists():
+                    best_candidates = list(training_runs.rglob('weights/best.pt'))
+                    if best_candidates:
+                        latest_best = max(best_candidates, key=lambda p: p.stat().st_mtime)
+                        logger.info(f"Auto-discovered latest training model: {latest_best}")
+                        return YOLO(str(latest_best))
             
             # Priority 1: Custom trained model for bird detection
             custom_model_paths = [
@@ -308,37 +585,118 @@ class BirdDetectionService:
                 )
                 return self._create_error_result(error)
             
+            # Convert PIL image to numpy array for cropping
+            image_np = np.array(image)
+
             # Run detection
             results = detection_model(image, conf=self.confidence_threshold, device=self.device)
-            
+
             # Process results
             detections = []
             for result in results:
                 boxes = result.boxes
-                if boxes is not None:
-                    for box in boxes:
-                        # Get coordinates
-                        x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-                        confidence = float(box.conf[0].cpu().numpy())
-                        class_id = int(box.cls[0].cpu().numpy())
-                        class_name = result.names[class_id] if class_id in result.names else f"class_{class_id}"
-                        
-                        detection = {
+                if boxes is not None and len(boxes) > 0:
+                    for i, box in enumerate(boxes):
+                        try:
+                            # Get coordinates
+                            if hasattr(box, 'xyxy') and len(box.xyxy) > 0:
+                                x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                            else:
+                                continue  # Skip if no coordinates
+
+                            if hasattr(box, 'conf') and len(box.conf) > 0:
+                                confidence = float(box.conf[0].cpu().numpy())
+                            else:
+                                continue  # Skip if no confidence
+
+                            if hasattr(box, 'cls') and len(box.cls) > 0:
+                                class_id = int(box.cls[0].cpu().numpy())
+                            else:
+                                continue  # Skip if no class
+
+                            class_name = result.names[class_id] if hasattr(result, 'names') and class_id in result.names else f"class_{class_id}"
+
+                            crop_w = int(x2 - x1)
+                            crop_h = int(y2 - y1)
+
+                            # Stage-1: Detection gate
+                            decision_status, decision_reason = decide_detection_gate(
+                                detector_confidence=confidence,
+                                crop_width_px=crop_w,
+                                crop_height_px=crop_h,
+                            )
+
+                            # Extract crop for Stage-2 classifier
+                            bbox = {
+                                'x': int(x1),
+                                'y': int(y1),
+                                'width': crop_w,
+                                'height': crop_h
+                            }
+                            crop = crop_image(image_np, bbox)
+                            crop_min_side = min(crop.shape[0], crop.shape[1])
+
+                            # Stage-2: Classifier (using trained model)
+                            class_probs = trained_classifier_predict(crop)
+
+                            # Stage-2 decision
+                            stage2_status, stage2_reason = decide_classification_gate(
+                                classifier_probs=class_probs,
+                                crop_min_side=crop_min_side
+                            )
+
+                            # Final decision: ACCEPT only if both stages pass
+                            if decision_status == 'ACCEPT' and stage2_status == 'ACCEPT':
+                                final_status = 'ACCEPT'
+                                final_reason = 'both_stages_passed'
+                            else:
+                                final_status = 'ABSTAIN'
+                                final_reason = f'stage1_{decision_reason}_stage2_{stage2_reason}'
+
+                            detection = {
                             'species': class_name,
                             'confidence': confidence,
                             'bounding_box': {
                                 'x': int(x1),
                                 'y': int(y1),
-                                'width': int(x2 - x1),
-                                'height': int(y2 - y1),
+                                'width': crop_w,
+                                'height': crop_h,
                                 'x1': int(x1),
                                 'y1': int(y1),
                                 'x2': int(x2),
                                 'y2': int(y2)
                             },
-                            'class_id': class_id
+                            'class_id': class_id,
+                            'decision': {
+                                'status': decision_status,
+                                'reason': decision_reason,
+                                'detector_threshold': DETECTION_CONF_THRESHOLD,
+                                'min_crop_side_px': DETECTION_MIN_CROP_SIDE
+                            },
+                            'stage2_decision': {
+                                'status': stage2_status,
+                                'reason': stage2_reason,
+                                'classifier_threshold': CLASSIFIER_CONF_THRESHOLD,
+                                'margin_threshold': CLASSIFIER_MARGIN_THRESHOLD
+                            },
+                            'final_decision': {
+                                'status': final_status,
+                                'reason': final_reason
+                            },
+                            'classifier_probs': class_probs,
+                            'crop_size': (crop.shape[1], crop.shape[0]),  # width, height
+                            'source_image': image_filename or 'unknown'
                         }
-                        detections.append(detection)
+
+                            # Save ABSTAIN cases to review queue
+                            if final_status == 'ABSTAIN':
+                                save_abstain_to_review_queue(crop, detection)
+
+                            detections.append(detection)
+
+                        except Exception as e:
+                            logger.warning(f"Error processing detection {i}: {e}")
+                            continue  # Skip this detection and continue with others
             
             # Get the best detection (highest confidence)
             best_detection = None

@@ -34,7 +34,7 @@ IMAGE_CONFIG = {
     'THUMBNAIL_QUALITY': getattr(settings, 'THUMBNAIL_QUALITY', 85),  # Thumbnail quality
 
     # AI Model Settings
-    'DEFAULT_CONFIDENCE_THRESHOLD': getattr(settings, 'DEFAULT_CONFIDENCE_THRESHOLD', 0.5),
+    'DEFAULT_CONFIDENCE_THRESHOLD': getattr(settings, 'DEFAULT_CONFIDENCE_THRESHOLD', 0.75),
     'VARIANCE_THRESHOLDS': getattr(settings, 'VARIANCE_THRESHOLDS', {
         'VERY_LOW': 100,   # Very low variance (uniform image)
         'LOW': 500,        # Low variance threshold
@@ -60,15 +60,24 @@ IMAGE_CONFIG = {
 BIRD_SPECIES = {
     'CHINESE_EGRET': {'id': 0, 'name': 'Chinese Egret', 'class_id': 0},
     'WHISKERED_TERN': {'id': 1, 'name': 'Whiskered Tern', 'class_id': 1},
-    'GREAT_KNOT': {'id': 2, 'name': 'Great Knot', 'class_id': 2}
+    'GREAT_KNOT': {'id': 2, 'name': 'Great Knot', 'class_id': 2},
+    'LITTLE_EGRET': {'id': 3, 'name': 'Little Egret', 'class_id': 3},
+    'GREAT_EGRET': {'id': 4, 'name': 'Great Egret', 'class_id': 4},
+    'INTERMEDIATE_EGRET': {'id': 5, 'name': 'Intermediate Egret', 'class_id': 5}
 }
 
 AI_MODELS = {
     'YOLO_V5': {'version': 'v5', 'display': 'YOLOv5'},
     'YOLO_V8': {'version': 'v8', 'display': 'YOLOv8'},
     'YOLO_V9': {'version': 'v9', 'display': 'YOLOv9'},
+    'YOLO11M_EGRET_MAX_ACCURACY': {
+        'version': 'yolo11m_egret_max_accuracy',
+        'display': '🚀 YOLO11m Egret Max Accuracy (85.7% mAP)',
+        'specialty': 'Multi-species Egret Detection',
+        'performance': {'mAP': 85.7, 'precision': 86.4, 'recall': 76.3}
+    },
     'CHINESE_EGRET_V1': {
-        'version': 'chinese_egret_v1', 
+        'version': 'chinese_egret_v1',
         'display': '🏆 Chinese Egret Specialist (99.46% mAP)',
         'specialty': 'Chinese Egret Detection',
         'performance': {'mAP': 99.46, 'precision': 97.35, 'recall': 99.12}
@@ -169,6 +178,27 @@ YOLO_VERSION_CONFIGS = {
         'description': 'YOLOv9 - Latest and most advanced',
         'performance': {'mAP': 0.75, 'fps': 65}
     },
+    'YOLO11M_EGRET_MAX_ACCURACY': {
+        'base_model': 'yolo11m.pt',
+        'custom_model': 'egret_yolo11m_best.pt',
+        'description': '🚀 YOLO11m Egret Max Accuracy - Multi-species Detection (85.7% mAP)',
+        'performance': {'mAP': 0.857, 'fps': 45},
+        'model_path': 'runs/egret_detection/egret_yolo11m_50ep_resume/weights/best.pt',
+        'onnx_path': None,
+        'trained_classes': ['Chinese Egret', 'Great Egret', 'Intermediate Egret', 'Little Egret'],
+        'training_images': 992,
+        'validation_images': 283,
+        'validation_accuracy': {'precision': 0.864, 'recall': 0.763},
+        'specialty': 'Multi-species Egret Detection',
+        'recommended': True,
+        'training_time': '3.55 hours',
+        'per_class_performance': {
+            'Chinese Egret': {'mAP': 0.909, 'precision': 0.896, 'recall': 0.838},
+            'Great Egret': {'mAP': 0.777, 'precision': 0.788, 'recall': 0.800},
+            'Intermediate Egret': {'mAP': 0.815, 'precision': 0.771, 'recall': 0.718},
+            'Little Egret': {'mAP': 0.924, 'precision': 1.000, 'recall': 0.698}
+        }
+    },
     'CHINESE_EGRET_V1': {
         'base_model': 'chinese_egret_best.pt',
         'custom_model': 'chinese_egret_best.pt',
@@ -180,6 +210,6 @@ YOLO_VERSION_CONFIGS = {
         'training_images': 1198,
         'validation_accuracy': {'precision': 0.9735, 'recall': 0.9912},
         'specialty': 'Chinese Egret Detection',
-        'recommended': True
+        'recommended': False
     }
 }
