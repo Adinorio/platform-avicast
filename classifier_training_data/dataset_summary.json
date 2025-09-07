@@ -1,0 +1,38 @@
+{
+  "classes": [
+    "Chinese Egret",
+    "Great Egret",
+    "Intermediate Egret",
+    "Little Egret"
+  ],
+  "splits": {
+    "train": {
+      "counts": {
+        "Chinese Egret": 2,
+        "Great Egret": 0,
+        "Intermediate Egret": 24,
+        "Little Egret": 0
+      },
+      "total": 26
+    },
+    "val": {
+      "counts": {
+        "Chinese Egret": 1,
+        "Great Egret": 0,
+        "Intermediate Egret": 0,
+        "Little Egret": 0
+      },
+      "total": 1
+    },
+    "test": {
+      "counts": {
+        "Chinese Egret": 0,
+        "Great Egret": 0,
+        "Intermediate Egret": 4,
+        "Little Egret": 0
+      },
+      "total": 4
+    }
+  },
+  "total_crops": 31
+}
