@@ -238,6 +238,7 @@ def census_update(request, census_id):
 
     context = {
         "census": census,
+        "site": census.site,
         "census_form": census_form,
         "species_formset": species_formset,
         "action": "Update",
