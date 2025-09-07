@@ -279,3 +279,6 @@ training_data/*
 # !training_data/scripts/*
 # If you want to keep a specific script you could add:
 # !training_data/scripts/your_script.py
+
+# Review queue artifacts
+review_queue/
