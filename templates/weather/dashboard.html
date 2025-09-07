@@ -4,19 +4,22 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="text-primary">
-                        <i class="fas fa-cloud-sun me-2"></i>Weather Dashboard
-                    </h2>
-                    <p class="text-muted">Weather monitoring and field work optimization</p>
-                </div>
-                <div>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#fetchWeatherModal">
-                        <i class="fas fa-download me-2"></i>Fetch Weather Data
-                    </button>
+    <!-- Page Header -->
+    <div class="avic-page-header">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="avic-page-title">
+                            <i class="fas fa-cloud-sun"></i>Weather Dashboard
+                        </h1>
+                        <p class="avic-page-subtitle">Weather monitoring and field work optimization system</p>
+                    </div>
+                    <div>
+                        <button class="btn avic-btn-primary" data-bs-toggle="modal" data-bs-target="#fetchWeatherModal">
+                            <i class="fas fa-download me-2"></i>Fetch Weather Data
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -25,8 +28,8 @@
     <!-- Weather API Selection -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-info text-white">
+            <div class="avic-card">
+                <div class="avic-card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-server me-2"></i>Available Weather APIs
                     </h5>
@@ -61,7 +64,7 @@
     <!-- Sites Overview -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
+            <div class="avic-card">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-map-marker-alt me-2"></i>Monitoring Sites
@@ -114,7 +117,7 @@
     <!-- Recent Forecasts -->
     <div class="row mb-4">
         <div class="col-md-8">
-            <div class="card border-0 shadow-sm">
+            <div class="avic-card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-line me-2"></i>Recent Weather Forecasts
@@ -170,7 +173,7 @@
 
         <!-- Active Alerts -->
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
+            <div class="avic-card">
                 <div class="card-header bg-warning text-dark">
                     <h5 class="mb-0">
                         <i class="fas fa-exclamation-triangle me-2"></i>Active Alerts
@@ -206,8 +209,8 @@
     <!-- Upcoming Schedules -->
     <div class="row">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-info text-white">
+            <div class="avic-card">
+                <div class="avic-card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-calendar-alt me-2"></i>Upcoming Field Work Schedules
                     </h5>
