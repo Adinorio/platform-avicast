@@ -1606,15 +1606,10 @@ def _create_fallback_processing_result(image_upload):
 @login_required
 def model_selection_view(request):
     """View for selecting and managing AI models"""
-    # TEMPORARY WORKAROUND: Allow access for development/testing
-    # TODO: Remove this and properly set up user permissions
-    if not request.user.is_staff:
-        messages.warning(
-            request,
-            "⚠️ DEVELOPMENT MODE: AI model management is temporarily open for testing. In production, only staff users should access this.",
-        )
-        # For now, allow access but show warning
-        # return redirect('image_processing:list')
+    # Only allow ADMIN and SUPERADMIN roles to access model management
+    if not hasattr(request.user, "role") or request.user.role not in ["ADMIN", "SUPERADMIN"]:
+        messages.error(request, "Access denied. Only administrators can manage AI models.")
+        return redirect("image_processing:list")
 
     from .forms import ModelSelectionForm
 
@@ -1661,15 +1656,10 @@ def model_selection_view(request):
 @login_required
 def benchmark_models_view(request):
     """View for benchmarking different YOLO models"""
-    # TEMPORARY WORKAROUND: Allow access for development/testing
-    # TODO: Remove this and properly set up user permissions
-    if not request.user.is_staff:
-        messages.warning(
-            request,
-            "⚠️ DEVELOPMENT MODE: Model benchmarking is temporarily open for testing. In production, only staff users should access this.",
-        )
-        # For now, allow access but show warning
-        # return redirect('image_processing:list')
+    # Only allow ADMIN and SUPERADMIN roles to access model benchmarking
+    if not hasattr(request.user, "role") or request.user.role not in ["ADMIN", "SUPERADMIN"]:
+        messages.error(request, "Access denied. Only administrators can benchmark AI models.")
+        return redirect("image_processing:list")
 
     from .bird_detection_service import get_bird_detection_service
 

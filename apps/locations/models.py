@@ -58,8 +58,6 @@ class Site(models.Model):
 
     def get_census_summary(self):
         """Get summary of census data by year and month"""
-        from .models import CensusObservation
-
         summary = {}
         observations = CensusObservation.objects.filter(site=self).order_by("-observation_date")
 

@@ -1,20 +1,28 @@
+# Standard library imports
 import json
 import os
 from functools import wraps
 from io import BytesIO
 
+# Third-party imports
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.utils
+
+# Django imports
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import ExtractMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+
+# Third-party Django-related imports
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+# Local imports
 from apps.locations.models import CensusObservation, Site, SpeciesObservation
 
 
