@@ -1,26 +1,53 @@
-from functools import wraps
+"""
+Views for fauna app - Species management
+"""
 
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView
+from django.utils.decorators import method_decorator
 
 from .models import Species
 
-# Create your views here.
 
+class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """
+    Display list of all non-archived species
 
-# Import the shared decorator from analytics app
-from apps.analytics.views import role_required
-
-
-class SpeciesListView(LoginRequiredMixin, ListView):
+    Accessible by: ADMIN, FIELD_WORKER
+    """
     model = Species
     template_name = "fauna/species_list.html"
+    context_object_name = "species_list"
 
-    @role_required(["ADMIN", "FIELD_WORKER"])
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+    def test_func(self):
+        """Check if user has required permissions"""
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+
+        if not hasattr(user, "role"):
+            return False
+
+        # Allow ADMIN and FIELD_WORKER roles
+        return user.role in ["ADMIN", "FIELD_WORKER"]
+
+    def handle_no_permission(self):
+        """Handle unauthorized access"""
+        if not self.request.user.is_authenticated:
+            from django.shortcuts import redirect
+            from django.contrib import messages
+            messages.error(self.request, "Authentication required.")
+            return redirect("login")
+
+        from django.http import HttpResponse
+        return HttpResponse("Access denied. Insufficient permissions.", status=403)
 
     def get_queryset(self):
-        # Only show non-archived species
+        """Return only non-archived species ordered by name"""
         return Species.objects.filter(is_archived=False).order_by("name")
+
+    def get_context_data(self, **kwargs):
+        """Add additional context data"""
+        context = super().get_context_data(**kwargs)
+        context["total_species"] = self.get_queryset().count()
+        return context
