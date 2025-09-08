@@ -108,7 +108,7 @@ class Command(BaseCommand):
 
     def _optimize_uncompressed_images(self, dry_run=False):
         """Optimize images that haven't been compressed yet"""
-        from apps.image_processing.image_optimizer import ImageOptimizer
+        from apps.common.services.image_optimizer import UniversalImageOptimizer
         from apps.image_processing.models import ImageUpload
 
         uncompressed = ImageUpload.objects.filter(is_compressed=False)
@@ -128,10 +128,12 @@ class Command(BaseCommand):
                         original_size = image_obj.file_size
 
                         # Optimize
-                        optimizer = ImageOptimizer()
-                        optimized_content, original_size, new_size, format_used = (
-                            optimizer.optimize_image(f)
-                        )
+                        optimizer = UniversalImageOptimizer()
+                        f.seek(0)
+                        file_content = f.read()
+                        optimized_content = optimizer.optimize_for_web(file_content)
+                        new_size = len(optimized_content) if optimized_content else 0
+                        format_used = "WEBP"
 
                         # Save optimized version
                         from django.core.files.base import ContentFile

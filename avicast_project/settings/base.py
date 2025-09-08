@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # 'corsheaders',
     # 'axes',
     # Local apps
+    "apps.common.apps.CommonConfig",
     "apps.users.apps.UsersConfig",
     "apps.fauna.apps.FaunaConfig",
     "apps.locations.apps.LocationsConfig",

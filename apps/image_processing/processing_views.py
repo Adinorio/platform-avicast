@@ -83,7 +83,7 @@ def process_image_with_storage(image_upload, file_content):
         # Gradual progress for saving
         gradual_progress(20, 50, ImageUpload.ProcessingStep.SAVING, 1.0, "Saving results")
 
-        # Step 3: Run bird detection (50-95%)
+        # Step 3: Run bird detection (50-75%)
         logger.info("Step 3: Running bird detection...")
         update_progress(ImageUpload.ProcessingStep.DETECTING, 50, "Initializing AI model...")
 
@@ -230,6 +230,78 @@ def process_image_with_storage(image_upload, file_content):
             original_image = Image.open(io.BytesIO(file_content))
             actual_ai_dimensions = original_image.size
             _create_failed_processing_result(image_upload, str(e), actual_ai_dimensions)
+
+        # Step 4: Optimize images for web delivery (80-95%)
+        logger.info("Step 4: Optimizing images for web delivery...")
+        update_progress(ImageUpload.ProcessingStep.OPTIMIZING, 80, "Creating optimized versions...")
+
+        try:
+            from apps.common.services.image_optimizer import UniversalImageOptimizer
+
+            optimizer = UniversalImageOptimizer()
+
+            # Create optimized versions
+            gradual_progress(80, 90, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, "Optimizing for web")
+
+            optimized_result = optimizer.optimize_for_app(file_content, 'image_processing')
+
+            # Save optimized versions if successful
+            if optimized_result.get('optimized'):
+                from django.core.files.base import ContentFile
+
+                # Save optimized web version
+                optimized_filename = f"optimized_{image_upload.pk}.webp"
+                image_upload.optimized_image.save(
+                    optimized_filename,
+                    ContentFile(optimized_result['optimized']),
+                    save=False
+                )
+                image_upload.optimized_size = len(optimized_result['optimized'])
+                image_upload.is_compressed = True
+
+                logger.info(f"Optimized image saved: {optimized_filename}")
+
+            # Save thumbnail version
+            if optimized_result.get('thumbnail'):
+                thumbnail_filename = f"thumb_{image_upload.pk}.jpg"
+                image_upload.thumbnail.save(
+                    thumbnail_filename,
+                    ContentFile(optimized_result['thumbnail']),
+                    save=False
+                )
+                image_upload.thumbnail_size = len(optimized_result['thumbnail'])
+
+                logger.info(f"Thumbnail saved: {thumbnail_filename}")
+
+            # Save AI-optimized version for future use
+            if optimized_result.get('ai_ready'):
+                ai_filename = f"ai_ready_{image_upload.pk}.jpg"
+                image_upload.ai_processed_image.save(
+                    ai_filename,
+                    ContentFile(optimized_result['ai_ready']),
+                    save=False
+                )
+
+                logger.info(f"AI-ready image saved: {ai_filename}")
+
+            # Update optimization metadata
+            image_upload.optimization_status = 'completed'
+            image_upload.is_compressed = True
+
+            # Save all changes at once
+            image_upload.save(update_fields=[
+                'optimized_image', 'thumbnail', 'ai_processed_image',
+                'optimized_size', 'thumbnail_size', 'optimization_status', 'is_compressed'
+            ])
+
+            logger.info("Optimization completed successfully")
+
+        except Exception as e:
+            logger.warning(f"Image optimization failed: {str(e)}")
+            # Mark optimization as failed but don't break processing
+            image_upload.optimization_status = 'failed'
+            image_upload.save(update_fields=['optimization_status'])
+            # Continue processing even if optimization fails
 
         # Complete processing
         logger.info("Completing processing...")

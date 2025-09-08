@@ -110,6 +110,39 @@ class ImageUpload(StatusManagedModel):
         max_length=500, null=True, blank=True, help_text="Path to archived file"
     )
 
+    # Optimized image versions (Universal Optimization)
+    optimized_image = models.ImageField(
+        upload_to="optimized/",
+        null=True,
+        blank=True,
+        help_text="Web-optimized version for fast delivery",
+    )
+    thumbnail = models.ImageField(
+        upload_to="thumbnails/", null=True, blank=True, help_text="Thumbnail version for previews"
+    )
+    ai_processed_image = models.ImageField(
+        upload_to="ai_processed/",
+        null=True,
+        blank=True,
+        help_text="AI-optimized version for processing",
+    )
+
+    # Optimization metadata
+    optimization_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("processing", "Processing"),
+            ("completed", "Completed"),
+            ("failed", "Failed"),
+        ],
+        default="pending",
+        help_text="Status of image optimization",
+    )
+    thumbnail_size = models.BigIntegerField(
+        null=True, blank=True, help_text="Thumbnail file size in bytes"
+    )
+
     # Storage tier management
     storage_tier = models.CharField(
         max_length=20,

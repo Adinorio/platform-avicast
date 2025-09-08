@@ -5,12 +5,14 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from apps.common.mixins.optimizable_image import OptimizableImageMixin
+
 User = get_user_model()
 
 # Create your models here.
 
 
-class Site(models.Model):
+class Site(OptimizableImageMixin):
     SITE_TYPES = [
         ("wetland", "Wetland"),
         ("forest", "Forest"),

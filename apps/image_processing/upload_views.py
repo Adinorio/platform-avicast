@@ -282,9 +282,37 @@ def image_list_view(request):
         "total_images": images.count(),
         "compressed_images": images.filter(is_compressed=True).count(),
         "uncompressed_images": images.filter(is_compressed=False).count(),
+        # Utility functions for templates
+        "get_best_image_url": get_best_image_url,
+        "get_thumbnail_url": get_thumbnail_url,
     }
 
     return render(request, "image_processing/list.html", context)
+
+
+def get_best_image_url(image_upload):
+    """
+    Get the best available image URL for display.
+    Returns optimized version if available, otherwise original.
+    """
+    if image_upload.optimized_image:
+        return image_upload.optimized_image.url
+    elif image_upload.image_file:
+        return image_upload.image_file.url
+    return None
+
+
+def get_thumbnail_url(image_upload):
+    """
+    Get thumbnail URL, with fallbacks.
+    """
+    if image_upload.thumbnail:
+        return image_upload.thumbnail.url
+    elif image_upload.optimized_image:
+        return image_upload.optimized_image.url
+    elif image_upload.image_file:
+        return image_upload.image_file.url
+    return None
 
 
 @login_required
@@ -423,11 +451,30 @@ def image_detail_view(request, pk):
     # Get storage information
     storage_info = image.get_storage_info()
 
+    # Get optimization statistics
+    optimization_stats = None
+    if hasattr(image, 'original_size') and hasattr(image, 'optimized_size'):
+        if image.original_size and image.optimized_size:
+            from apps.common.services.image_optimizer import UniversalImageOptimizer
+            optimizer = UniversalImageOptimizer()
+            optimization_stats = optimizer.get_optimization_stats(
+                image.original_size, image.optimized_size
+            )
+
     context = {
         "image_upload": image,
         "processing_result": processing_result,
         "storage_info": storage_info,
         "processed_image_url": processed_image_url,
+        # Optimized image URLs
+        "optimized_image_url": get_best_image_url(image),
+        "thumbnail_url": get_thumbnail_url(image),
+        "original_image_url": image.image_file.url if image.image_file else None,
+        # Optimization information
+        "optimization_stats": optimization_stats,
+        "is_optimized": image.optimization_status == 'completed' and bool(image.optimized_image),
+        "has_thumbnail": bool(image.thumbnail),
+        "has_ai_processed": bool(image.ai_processed_image),
     }
 
     return render(request, "image_processing/detail.html", context)

@@ -86,7 +86,7 @@ def storage_cleanup_view(request):
 def optimize_uncompressed_images():
     """Optimize all uncompressed images"""
     from .models import ImageUpload
-    from .image_optimizer import ImageOptimizer
+    from apps.common.services.image_optimizer import UniversalImageOptimizer
     from django.core.files.base import ContentFile
 
     uncompressed_images = ImageUpload.objects.filter(is_compressed=False)
@@ -99,8 +99,10 @@ def optimize_uncompressed_images():
                     file_content = f.read()
 
                 # Optimize
-                optimizer = ImageOptimizer()
-                optimized_content, new_size, format_used = optimizer.optimize_image(file_content)
+                optimizer = UniversalImageOptimizer()
+                optimized_content = optimizer.optimize_for_web(file_content)
+                new_size = len(optimized_content) if optimized_content else 0
+                format_used = "WEBP"
 
                 # Save optimized version
                 optimized_file = ContentFile(

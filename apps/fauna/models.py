@@ -2,10 +2,12 @@ import uuid
 
 from django.db import models
 
+from apps.common.mixins.optimizable_image import OptimizableImageMixin
+
 # Create your models here.
 
 
-class Species(models.Model):
+class Species(OptimizableImageMixin):
     class IUCNStatus(models.TextChoices):
         LEAST_CONCERN = "LC", "Least Concern"
         NEAR_THREATENED = "NT", "Near Threatened"
