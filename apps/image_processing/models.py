@@ -139,6 +139,9 @@ class ImageUpload(StatusManagedModel):
         default="pending",
         help_text="Status of image optimization",
     )
+    optimized_size = models.BigIntegerField(
+        null=True, blank=True, help_text="Optimized image file size in bytes"
+    )
     thumbnail_size = models.BigIntegerField(
         null=True, blank=True, help_text="Thumbnail file size in bytes"
     )

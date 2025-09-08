@@ -51,7 +51,9 @@ def process_image_with_storage(image_upload, file_content):
 
     try:
         start_time = time.time()
-        logger.info(f"Starting processing for image {image_upload.pk}")
+        logger.error(f"=== PROCESS_IMAGE_WITH_STORAGE FUNCTION STARTED ===")
+        logger.error(f"Starting processing for image {image_upload.pk}")
+        logger.error(f"Image size: {len(file_content)} bytes")
 
         # Step 1: Start processing (0-20%)
         logger.info("Step 1: Starting processing...")
@@ -232,18 +234,27 @@ def process_image_with_storage(image_upload, file_content):
             _create_failed_processing_result(image_upload, str(e), actual_ai_dimensions)
 
         # Step 4: Optimize images for web delivery (80-95%)
-        logger.info("Step 4: Optimizing images for web delivery...")
+        logger.error("=== ABOUT TO START OPTIMIZATION STEP ===")
+        logger.error("Step 4: Optimize images for web delivery (80-95%)")
+        logger.error("=== OPTIMIZATION STEP STARTED ===")
+        logger.error("Step 4: Optimizing images for web delivery...")
         update_progress(ImageUpload.ProcessingStep.OPTIMIZING, 80, "Creating optimized versions...")
+        logger.error("=== OPTIMIZATION PROGRESS UPDATED ===")
 
         try:
+            logger.error("=== IMPORTING OPTIMIZER ===")
             from apps.common.services.image_optimizer import UniversalImageOptimizer
 
+            logger.error("=== CREATING OPTIMIZER INSTANCE ===")
             optimizer = UniversalImageOptimizer()
 
             # Create optimized versions
+            logger.error("=== STARTING GRADUAL PROGRESS ===")
             gradual_progress(80, 90, ImageUpload.ProcessingStep.OPTIMIZING, 1.0, "Optimizing for web")
 
+            logger.error("=== CALLING OPTIMIZE_FOR_APP ===")
             optimized_result = optimizer.optimize_for_app(file_content, 'image_processing')
+            logger.error(f"=== OPTIMIZE_FOR_APP RESULT: {optimized_result is not None} ===")
 
             # Save optimized versions if successful
             if optimized_result.get('optimized'):
@@ -331,6 +342,8 @@ def process_image_with_storage(image_upload, file_content):
         # storage_manager = get_storage_manager()
         # storage_manager.check_and_archive_if_needed()
 
+        logger.info("=== PROCESS_IMAGE_WITH_STORAGE FUNCTION COMPLETED SUCCESSFULLY ===")
+
     except Exception as e:
         import traceback
 
@@ -379,11 +392,13 @@ def process_batch_view(request, pk):
 @login_required
 def api_batch_process(request):
     """API endpoint for batch processing of images"""
+    logger.error("=== API_BATCH_PROCESS FUNCTION STARTED ===")
     try:
         import json
 
         _data = json.loads(request.body)
         image_ids = _data.get("image_ids", [])
+        logger.error(f"=== API_BATCH_PROCESS: Processing {len(image_ids)} images ===")
 
         if not image_ids:
             return JsonResponse({"success": False, "error": "No image IDs provided"})
@@ -418,7 +433,9 @@ def api_batch_process(request):
                     file_content = f.read()
 
                 # Process the image
+                logger.error(f"=== ABOUT TO CALL PROCESS_IMAGE_WITH_STORAGE for image {image.pk} ===")
                 process_image_with_storage(image, file_content)
+                logger.error(f"=== PROCESS_IMAGE_WITH_STORAGE COMPLETED for image {image.pk} ===")
                 processed_count += 1
                 logger.info(f"Successfully processed image {image.pk}")
 
