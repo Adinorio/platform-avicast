@@ -81,6 +81,7 @@ docs/_build/
 .venv
 env/
 venv/
+venv_new/
 ENV/
 env.bak/
 venv.bak/
@@ -117,6 +118,9 @@ check_table.py
 fix_db.py
 test_ai_deps.py
 apps/image_processing/views_new.py
+
+# ML requirements and temporary files
+ml-requirements.txt
 olve JavaScript syntax errors and improve error handling
 
 # ===== MACHINE LEARNING / AI PROJECT EXCLUSIONS =====

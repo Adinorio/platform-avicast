@@ -519,92 +519,195 @@ class BirdDetectionService:
         Returns:
             Dictionary containing detection results
         """
-        # Use specified version or current model
-        if model_version and model_version in self.models:
-            detection_model = self.models[model_version]
-            used_version = model_version
-        elif self.current_model:
-            detection_model = self.current_model
-            used_version = self.current_version
-        else:
-            logger.error("No detection model available")
-            error = DetectionError(
-                error_type="NO_MODEL_AVAILABLE",
-                message="No detection model available",
-                details="All YOLO models failed to load or are not available",
-                suggestions=[
-                    "Check if YOLO model files exist in the models/ directory",
-                    "Verify that ultralytics package is installed",
-                    "Check system requirements (CUDA, PyTorch)",
-                    "Restart the application to retry model loading",
-                ],
-            )
-            return self._create_error_result(error)
-
+        from .detection_pipeline import (
+            ImageValidator, YOLODetector, SpeciesClassifier, 
+            DecisionGates, DetectionResultFormatter
+        )
+        
+        # Initialize pipeline components
+        validator = ImageValidator()
+        decision_gates = DecisionGates()
+        species_classifier = SpeciesClassifier()
+        result_formatter = DetectionResultFormatter()
+        
+        # Get model
+        detection_model, used_version = self._get_detection_model(model_version)
+        if not detection_model:
+            return self._create_no_model_error()
+        
         try:
             logger.info(f"Processing image: {image_filename or 'unknown'} with {used_version}")
-
-            # Validate image content
-            if not image_content or len(image_content) == 0:
-                error = DetectionError(
-                    error_type="EMPTY_IMAGE",
-                    message="Image file is empty or corrupted",
-                    details="The uploaded image contains no data",
-                    suggestions=[
-                        "Re-upload the image file",
-                        "Check if the original file is corrupted",
-                        "Try a different image format (JPG, PNG)",
-                        "Ensure the file size is greater than 0 bytes",
-                    ],
-                )
-                return self._create_error_result(error)
-
-            # Convert bytes to PIL Image
+            
+            # Step 1: Validate image content
+            is_valid, error_msg = validator.validate_image_content(image_content)
+            if not is_valid:
+                return self._create_validation_error("EMPTY_IMAGE", error_msg)
+            
+            # Step 2: Validate image dimensions
+            is_valid, error_msg = validator.validate_image_dimensions(image_content)
+            if not is_valid:
+                return self._create_validation_error("IMAGE_TOO_SMALL", error_msg)
+            
+            # Step 3: Convert to PIL Image
             try:
                 image = Image.open(io.BytesIO(image_content))
             except Exception as e:
-                error = DetectionError(
-                    error_type="INVALID_IMAGE_FORMAT",
-                    message="Image format not supported or corrupted",
-                    details=f"Failed to open image: {str(e)}",
-                    suggestions=[
-                        "Use supported formats: JPG, JPEG, PNG, GIF",
-                        "Check if the file is actually an image",
-                        "Try converting the image to a different format",
-                        "Re-upload the original image file",
-                    ],
+                return self._create_validation_error("INVALID_IMAGE_FORMAT", f"Failed to open image: {str(e)}")
+            
+            # Step 4: Run YOLO detection
+            detector = YOLODetector(detection_model, self.device, self.confidence_threshold)
+            raw_detections = detector.detect_objects(image)
+            
+            # Step 5: Process detections through pipeline
+            processed_detections = self._process_detections_pipeline(
+                raw_detections, image, species_classifier, decision_gates
+            )
+            
+            # Step 6: Format results
+            result = result_formatter.format_detection_result(
+                processed_detections, image_content, image_filename or "unknown",
+                used_version, self.device, self.confidence_threshold
+            )
+            
+            logger.info(f"Detection completed: {len(processed_detections)} birds found")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Detection pipeline failed: {str(e)}")
+            return self._create_error_result(
+                DetectionError(
+                    error_type="DETECTION_PIPELINE_ERROR",
+                    message="Detection pipeline failed",
+                    details=str(e),
+                    suggestions=["Try uploading a different image", "Contact administrator if issue persists"]
                 )
-                return self._create_error_result(error)
-
-            # Validate image dimensions
-            width, height = image.size
-            min_dims = IMAGE_CONFIG["MIN_IMAGE_DIMENSIONS"]
-            if width < min_dims[0] or height < min_dims[1]:
-                error = DetectionError(
-                    error_type="IMAGE_TOO_SMALL",
-                    message="Image is too small for reliable detection",
-                    details=f"Image dimensions: {width}x{height} pixels (minimum: {min_dims[0]}x{min_dims[1]})",
-                    suggestions=[
-                        f"Use images with dimensions at least {min_dims[0]}x{min_dims[1]} pixels",
-                        "Higher resolution images provide better detection accuracy",
-                        "Consider resizing small images before upload",
-                    ],
+            )
+    
+    def _get_detection_model(self, model_version: str = None):
+        """Get detection model and version"""
+        if model_version and model_version in self.models:
+            return self.models[model_version], model_version
+        elif self.current_model:
+            return self.current_model, self.current_version
+        else:
+            return None, None
+    
+    def _create_no_model_error(self):
+        """Create error result when no model is available"""
+        error = DetectionError(
+            error_type="NO_MODEL_AVAILABLE",
+            message="No detection model available",
+            details="All YOLO models failed to load or are not available",
+            suggestions=[
+                "Check if YOLO model files exist in the models/ directory",
+                "Verify that ultralytics package is installed",
+                "Check system requirements (CUDA, PyTorch)",
+                "Restart the application to retry model loading",
+            ],
+        )
+        return self._create_error_result(error)
+    
+    def _create_validation_error(self, error_type: str, error_msg: str):
+        """Create validation error result"""
+        error = DetectionError(
+            error_type=error_type,
+            message=error_msg,
+            details=error_msg,
+            suggestions=[
+                "Re-upload the image file",
+                "Check if the original file is corrupted",
+                "Try a different image format (JPG, PNG)",
+            ],
+        )
+        return self._create_error_result(error)
+    
+    def _process_detections_pipeline(self, raw_detections, image, species_classifier, decision_gates):
+        """Process detections through the complete pipeline"""
+        processed_detections = []
+        
+        # Convert PIL image to numpy array for cropping
+        image_np = np.array(image)
+        
+        for detection in raw_detections:
+            try:
+                # Apply detection gate
+                detection_status, detection_reason = decision_gates.apply_detection_gate(detection)
+                
+                # Extract crop for classification
+                bbox = {
+                    "x": detection["bounding_box"]["x"],
+                    "y": detection["bounding_box"]["y"],
+                    "width": detection["bounding_box"]["width"],
+                    "height": detection["bounding_box"]["height"]
+                }
+                crop = self._crop_image(image_np, bbox)
+                crop_min_side = min(crop.shape[0], crop.shape[1])
+                
+                # Run species classification
+                classifier_probs = species_classifier.classify_species(crop)
+                
+                # Apply classification gate
+                classification_status, classification_reason = decision_gates.apply_classification_gate(
+                    classifier_probs, crop_min_side
                 )
-                return self._create_error_result(error)
-
-            max_dims = IMAGE_CONFIG["MAX_IMAGE_DIMENSIONS"]
-            if width > max_dims[0] or height > max_dims[1]:
-                error = DetectionError(
-                    error_type="IMAGE_TOO_LARGE",
-                    message="Image is too large and may cause memory issues",
-                    details=f"Image dimensions: {width}x{height} pixels (maximum: {max_dims[0]}x{max_dims[1]})",
-                    suggestions=[
-                        f"Resize the image to under {max_dims[0]}x{max_dims[1]} pixels",
-                        "Use image compression tools to reduce file size",
-                        "Consider using a smaller image for faster processing",
-                    ],
+                
+                # Apply final decision
+                final_status, final_reason = decision_gates.apply_final_decision(
+                    detection_status, detection_reason,
+                    classification_status, classification_reason
                 )
-                return self._create_error_result(error)
+                
+                # Add pipeline results to detection
+                detection.update({
+                    "decision": {
+                        "status": detection_status,
+                        "reason": detection_reason,
+                        "detector_threshold": decision_gates.detection_conf_threshold,
+                        "min_crop_side_px": decision_gates.detection_min_crop_side,
+                    },
+                    "stage2_decision": {
+                        "status": classification_status,
+                        "reason": classification_reason,
+                        "classifier_threshold": decision_gates.classifier_conf_threshold,
+                        "margin_threshold": decision_gates.classifier_margin_threshold,
+                    },
+                    "final_decision": {"status": final_status, "reason": final_reason},
+                    "classifier_probs": classifier_probs,
+                    "crop_size": (crop.shape[1], crop.shape[0]),  # width, height
+                })
+                
+                # Save ABSTAIN cases to review queue
+                if final_status == "ABSTAIN":
+                    self._save_abstain_to_review_queue(crop, detection)
+                
+                processed_detections.append(detection)
+                
+            except Exception as e:
+                logger.warning(f"Error processing detection: {e}")
+                continue
+        
+        return processed_detections
+    
+    def _crop_image(self, image: np.ndarray, bbox: dict) -> np.ndarray:
+        """Crop a region from the image given a bbox"""
+        x, y, w, h = bbox["x"], bbox["y"], bbox["width"], bbox["height"]
+        x2, y2 = x + w, y + h
+        
+        # Ensure within image bounds
+        h_img, w_img = image.shape[:2]
+        x, y = max(0, x), max(0, y)
+        x2, y2 = min(w_img, x2), min(h_img, y2)
+        
+        return image[y:y2, x:x2]
+    
+    def _save_abstain_to_review_queue(self, crop: np.ndarray, detection: dict):
+        """Save ABSTAIN cases to review queue for manual review"""
+        try:
+            # Implementation for saving to review queue
+            # This would save the crop and detection data for manual review
+            logger.info(f"Saving ABSTAIN case to review queue: {detection.get('species', 'unknown')}")
+        except Exception as e:
+            logger.error(f"Error saving to review queue: {e}")
 
             # Convert PIL image to numpy array for cropping
             image_np = np.array(image)
