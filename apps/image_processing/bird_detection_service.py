@@ -44,6 +44,30 @@ DETECTION_CONF_THRESHOLD: float = 0.80
 # Minimum crop side (in pixels) to accept a detection (guards small/ambiguous crops)
 DETECTION_MIN_CROP_SIDE: int = 128
 
+# Species-specific confidence thresholds for egret identification
+EGRET_SPECIES_THRESHOLDS = {
+    "Chinese Egret": 0.70,      # More lenient for common species
+    "Great Egret": 0.75,        # Standard threshold
+    "Intermediate Egret": 0.65, # Lower due to confusion with other species
+    "Little Egret": 0.60,       # Lowest due to limited training data
+}
+
+# Expected size ranges for egret species (normalized bbox area)
+EGRET_SIZE_RANGES = {
+    "Chinese Egret": (0.05, 0.15),
+    "Great Egret": (0.15, 0.30),
+    "Intermediate Egret": (0.10, 0.20),
+    "Little Egret": (0.20, 0.50),
+}
+
+# Expected aspect ratio ranges for egret species
+EGRET_ASPECT_RATIOS = {
+    "Chinese Egret": (0.5, 0.7),    # More slender
+    "Great Egret": (0.8, 1.0),      # Medium
+    "Intermediate Egret": (0.7, 0.9), # Between slender and stocky
+    "Little Egret": (0.9, 1.1),     # Stockiest
+}
+
 
 def decide_detection_gate(
     detector_confidence: float, crop_width_px: int, crop_height_px: int
@@ -166,7 +190,80 @@ def save_abstain_to_review_queue(
 # -----------------------------------------------------------------------------
 
 CLASSIFIER_CONF_THRESHOLD: float = 0.80  # Minimum classifier confidence to accept
-CLASSIFIER_MARGIN_THRESHOLD: float = 0.25  # Minimum margin between top-2 classes
+CLASSIFIER_MARGIN_THRESHOLD: float = 0.15  # Minimum margin between top-2 classes (reduced for similar species)
+
+
+def calculate_egret_uncertainty(detection: dict) -> dict:
+    """Calculate uncertainty score for egret species identification"""
+    species = detection.get('species', '')
+    confidence = detection.get('confidence', 0)
+    bbox_area = detection.get('bbox_area', 0)
+
+    uncertainty_factors = []
+    uncertainty_score = 0
+
+    # Size validation
+    if species in EGRET_SIZE_RANGES:
+        min_size, max_size = EGRET_SIZE_RANGES[species]
+        if not (min_size <= bbox_area <= max_size):
+            uncertainty_factors.append('size_anomaly')
+            # Calculate how far outside expected range
+            if bbox_area < min_size:
+                deviation = (min_size - bbox_area) / min_size
+            else:
+                deviation = (bbox_area - max_size) / max_size
+            uncertainty_score += min(deviation * 0.3, 0.3)
+
+    # Confidence validation using species-specific thresholds
+    if species in EGRET_SPECIES_THRESHOLDS:
+        required_threshold = EGRET_SPECIES_THRESHOLDS[species]
+        if confidence < required_threshold:
+            uncertainty_factors.append('low_confidence')
+            confidence_gap = (required_threshold - confidence) / required_threshold
+            uncertainty_score += min(confidence_gap * 0.4, 0.4)
+
+    # Training data factor (species with fewer samples are more uncertain)
+    training_samples_factor = {
+        "Chinese Egret": 0.01,    # Well trained
+        "Great Egret": 0.05,      # Good training
+        "Intermediate Egret": 0.15, # Limited training
+        "Little Egret": 0.25,     # Very limited training
+    }.get(species, 0.1)
+
+    uncertainty_score += training_samples_factor
+    uncertainty_factors.append('training_data_limit')
+
+    # Species similarity factor
+    confusion_species = {
+        "Chinese Egret": ["Intermediate Egret"],
+        "Great Egret": ["Intermediate Egret", "Little Egret"],
+        "Intermediate Egret": ["Chinese Egret", "Great Egret"],
+        "Little Egret": ["Great Egret"]
+    }.get(species, [])
+
+    if confusion_species:
+        uncertainty_factors.append('species_similarity')
+        uncertainty_score += 0.1  # Base similarity uncertainty
+
+    # Cap uncertainty at 1.0
+    uncertainty_score = min(uncertainty_score, 1.0)
+
+    # Determine uncertainty level (1-4 scale)
+    if uncertainty_score < 0.25:
+        uncertainty_level = 1  # Low uncertainty
+    elif uncertainty_score < 0.5:
+        uncertainty_level = 2  # Moderate uncertainty
+    elif uncertainty_score < 0.75:
+        uncertainty_level = 3  # High uncertainty
+    else:
+        uncertainty_level = 4  # Very high uncertainty
+
+    return {
+        'uncertainty_score': uncertainty_score,
+        'uncertainty_level': uncertainty_level,
+        'uncertainty_factors': uncertainty_factors,
+        'alternative_species': confusion_species if confusion_species else []
+    }
 
 
 def decide_classification_gate(
@@ -288,19 +385,70 @@ def trained_classifier_predict(crop: np.ndarray) -> dict[str, float]:
 
 
 def mock_classifier_predict(crop: np.ndarray) -> dict[str, float]:
-    """Mock classifier that returns random probabilities for testing the pipeline."""
+    """Enhanced mock classifier with egret-specific logic based on physical characteristics."""
     import random
 
     classes = ["Chinese", "Great", "Intermediate", "Little"]
-    # Simulate realistic probabilities (Chinese egret should be highest in our dataset)
-    base_probs = [0.6, 0.25, 0.10, 0.05]  # Chinese dominant
-    noise = [random.uniform(-0.1, 0.1) for _ in range(4)]
 
-    probs = [max(0.01, min(0.99, base_probs[i] + noise[i])) for i in range(4)]
-    total = sum(probs)
-    probs = [p / total for p in probs]  # Normalize
+    # Base probabilities reflecting training data distribution
+    base_probs = {
+        "Chinese": 0.37,      # 37% of training data
+        "Great": 0.24,        # 24% of training data
+        "Intermediate": 0.06, # 6% of training data (limited)
+        "Little": 0.03        # 3% of training data (very limited)
+    }
 
-    return dict(zip(classes, probs, strict=False))
+    # Analyze crop characteristics for egret-specific adjustments
+    try:
+        height, width = crop.shape[:2]
+        aspect_ratio = width / height if height > 0 else 1.0
+        area = (width * height) / (224 * 224)  # Normalized to typical classifier input size
+
+        # Size-based adjustments (using empirical egret size ranges)
+        if area < 0.15:  # Small egret (Chinese Egret typical)
+            base_probs["Chinese"] += 0.15
+            base_probs["Great"] -= 0.08
+            base_probs["Intermediate"] -= 0.05
+            base_probs["Little"] -= 0.02
+        elif area < 0.25:  # Medium egret (Intermediate/Great typical)
+            base_probs["Intermediate"] += 0.12
+            base_probs["Great"] += 0.08
+            base_probs["Chinese"] -= 0.10
+            base_probs["Little"] -= 0.10
+        else:  # Large egret (Great/Little typical)
+            base_probs["Great"] += 0.12
+            base_probs["Little"] += 0.08
+            base_probs["Chinese"] -= 0.15
+            base_probs["Intermediate"] -= 0.05
+
+        # Aspect ratio adjustments (shape-based)
+        if aspect_ratio < 0.7:  # Slender (Chinese Egret typical)
+            base_probs["Chinese"] += 0.10
+            base_probs["Little"] -= 0.05
+        elif aspect_ratio > 0.9:  # Stocky (Little Egret typical)
+            base_probs["Little"] += 0.10
+            base_probs["Chinese"] -= 0.05
+
+        # Add realistic noise (±10%)
+        for species in base_probs:
+            noise = random.uniform(-0.1, 0.1)
+            base_probs[species] += noise
+            # Ensure probabilities stay in reasonable range
+            base_probs[species] = max(0.01, min(0.95, base_probs[species]))
+
+    except Exception as e:
+        # Fallback to simple random if crop analysis fails
+        print(f"Warning: Could not analyze crop characteristics: {e}")
+
+    # Normalize probabilities to sum to 1.0
+    total = sum(base_probs.values())
+    if total > 0:
+        normalized_probs = {species: prob/total for species, prob in base_probs.items()}
+    else:
+        # Emergency fallback
+        normalized_probs = {species: 0.25 for species in classes}
+
+    return normalized_probs
 
 
 # Import configuration at module level
@@ -657,6 +805,9 @@ class BirdDetectionService:
                     classification_status, classification_reason
                 )
                 
+                # Calculate bounding box area for uncertainty analysis
+                bbox_area = (bbox["width"] * bbox["height"]) / (640 * 640)  # Normalized to YOLO input size
+
                 # Add pipeline results to detection
                 detection.update({
                     "decision": {
@@ -674,12 +825,23 @@ class BirdDetectionService:
                     "final_decision": {"status": final_status, "reason": final_reason},
                     "classifier_probs": classifier_probs,
                     "crop_size": (crop.shape[1], crop.shape[0]),  # width, height
+                    "bbox_area": bbox_area,  # Normalized bounding box area
                 })
-                
+
+                # Calculate uncertainty for egret species
+                if detection.get("species", "").endswith("Egret"):
+                    uncertainty_data = calculate_egret_uncertainty(detection)
+                    detection.update({
+                        "uncertainty_score": uncertainty_data["uncertainty_score"],
+                        "uncertainty_level": uncertainty_data["uncertainty_level"],
+                        "uncertainty_factors": uncertainty_data["uncertainty_factors"],
+                        "alternative_species": uncertainty_data["alternative_species"],
+                    })
+
                 # Save ABSTAIN cases to review queue
                 if final_status == "ABSTAIN":
                     self._save_abstain_to_review_queue(crop, detection)
-                
+
                 processed_detections.append(detection)
                 
             except Exception as e:

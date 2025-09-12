@@ -241,7 +241,39 @@ class ImageProcessor:
             from apps.common.services.image_optimizer import UniversalImageOptimizer
             
             optimizer = UniversalImageOptimizer()
-            optimizer.optimize_image(self.image_upload)
+            # Use the correct method name
+            result = optimizer.optimize_for_app(
+                file_content,  # Pass the image content
+                'image_processing',
+                preserve_original=True
+            )
+
+            # Save optimized versions if they exist
+            if result.get('optimized'):
+                optimized_file = ContentFile(result['optimized'])
+                self.image_upload.optimized_image.save(
+                    f"optimized_{self.image_upload.original_filename}",
+                    optimized_file,
+                    save=False
+                )
+
+            if result.get('thumbnail'):
+                thumbnail_file = ContentFile(result['thumbnail'])
+                self.image_upload.thumbnail.save(
+                    f"thumb_{self.image_upload.original_filename}",
+                    thumbnail_file,
+                    save=False
+                )
+
+            if result.get('ai_ready'):
+                ai_file = ContentFile(result['ai_ready'])
+                self.image_upload.ai_processed_image.save(
+                    f"ai_{self.image_upload.original_filename}",
+                    ai_file,
+                    save=False
+                )
+
+            self.image_upload.save()
             
             # Gradual progress for optimization
             self.progress_manager.gradual_progress(

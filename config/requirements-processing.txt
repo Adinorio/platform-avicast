@@ -1,0 +1,14 @@
+# File Moved
+
+This file has been moved to: `config/requirements-processing.txt`
+
+Please update your references accordingly.
+
+For quick access, you can use:
+```bash
+# View the file
+cat config/requirements-processing.txt
+
+# Edit the file
+code config/requirements-processing.txt
+```

@@ -5,40 +5,13 @@
 
 {% block extra_css %}
 <style>
+    /* Original styles preserved */
     .detection-info {
         background: #f8f9fa;
         border: 1px solid #dee2e6;
         border-radius: 8px;
         padding: 1rem;
         margin-bottom: 1rem;
-    }
-
-    .detection-item {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .confidence-bar {
-        height: 8px;
-        background: #e9ecef;
-        border-radius: 4px;
-        overflow: hidden;
-        margin-top: 0.25rem;
-    }
-
-    .confidence-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
-        transition: width 0.3s ease;
-    }
-
-    .species-badge {
-        font-size: 0.875rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 12px;
     }
 
     .detection-number {
@@ -120,6 +93,159 @@
         width: 2px;
         height: calc(100% - 1rem);
         background: #dee2e6;
+    }
+
+    /* Enhanced styles for uncertainty visualization */
+    .border-left-0 { border-left: 4px solid #28a745 !important; } /* High confidence - Green */
+    .border-left-1 { border-left: 4px solid #ffc107 !important; } /* Some uncertainty - Yellow */
+    .border-left-2 { border-left: 4px solid #fd7e14 !important; } /* Moderate uncertainty - Orange */
+    .border-left-3 { border-left: 4px solid #dc3545 !important; } /* High uncertainty - Red */
+    .border-left-4 { border-left: 4px solid #6c757d !important; } /* Very uncertain - Gray */
+
+    /* Bootstrap-compatible uncertainty colors */
+    .bg-uncertainty-0 { background-color: #28a745 !important; color: white; }
+    .bg-uncertainty-1 { background-color: #ffc107 !important; color: #212529; }
+    .bg-uncertainty-2 { background-color: #fd7e14 !important; color: white; }
+    .bg-uncertainty-3 { background-color: #dc3545 !important; color: white; }
+    .bg-uncertainty-4 { background-color: #6c757d !important; color: white; }
+
+    /* Confidence badge styles */
+    .confidence-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border: 1px solid;
+    }
+
+    .confidence-high {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #c3e6cb;
+    }
+
+    .confidence-medium {
+        background-color: #fff3cd;
+        color: #856404;
+        border-color: #ffeaa7;
+    }
+
+    .confidence-low {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #f5c6cb;
+    }
+
+    /* Alternative species styling */
+    .alternative-species {
+        background-color: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        border-left: 3px solid #17a2b8;
+    }
+
+    /* Size validation warning styling */
+    .size-warning {
+        background-color: #fff3cd;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        border-left: 3px solid #ffc107;
+    }
+
+    /* Uncertainty factors styling */
+    .uncertainty-factors {
+        background-color: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+    }
+
+    .factors-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.25rem;
+    }
+
+    .factor-badge {
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 0.125rem 0.375rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    /* Technical details toggle */
+    .btn-toggle-details {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        line-height: 1;
+    }
+
+    .btn-toggle-details i {
+        transition: transform 0.2s;
+    }
+
+    .btn-toggle-details[aria-expanded="true"] i {
+        transform: rotate(180deg);
+    }
+
+    /* Enhanced detection item hover effects */
+    .detection-item {
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .detection-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transform: translateY(-1px);
+    }
+
+    /* Confidence level indicators */
+    .confidence-indicator {
+        display: inline-block;
+        width: 100%;
+        height: 4px;
+        background-color: #e9ecef;
+        border-radius: 2px;
+        margin-top: 0.25rem;
+        overflow: hidden;
+    }
+
+    .confidence-indicator .confidence-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.3s ease;
+    }
+
+    .confidence-indicator.high .confidence-fill {
+        background-color: #28a745;
+    }
+
+    .confidence-indicator.medium .confidence-fill {
+        background-color: #ffc107;
+    }
+
+    .confidence-indicator.low .confidence-fill {
+        background-color: #dc3545;
+    }
+
+    /* Loading animation for confidence updates */
+    .confidence-loading {
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    /* Enhanced focus states for accessibility */
+    .detection-item:focus-within {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
     }
 </style>
 {% endblock %}
@@ -269,25 +395,99 @@
                             </h6>
 
                             {% for detection in processing_result.bounding_box.all_detections %}
-                                <div class="detection-item">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div>
-                                            <strong>{{ detection.species }}</strong>
-                                            <br>
-                                            <small class="text-muted">
-                                                Confidence: {{ detection.confidence|floatformat:1 }}%
-                                            </small>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="badge bg-secondary">#{{ forloop.counter }}</span>
+                                <div class="detection-item card mb-3 border-left-{{ detection.uncertainty_level|get_uncertainty_color }}">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-start justify-content-between">
+                                            <div class="flex-grow-1">
+                                                <!-- Species and Confidence Header -->
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <strong class="me-2">{{ detection.species }}</strong>
+                                                    {% if detection.uncertainty_level %}
+                                                        <span class="badge bg-{{ detection.uncertainty_level|get_uncertainty_bootstrap_color }} me-2"
+                                                              data-bs-toggle="tooltip"
+                                                              title="Uncertainty Level: {{ detection.uncertainty_level }}/4 - {{ detection.uncertainty_factors|join:', ' }}">
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                                            {{ detection.uncertainty_level }}/4
+                                                        </span>
+                                                    {% endif %}
+                                                    <span class="confidence-badge confidence-{{ detection.confidence|get_confidence_level }}"
+                                                          data-bs-toggle="tooltip"
+                                                          title="AI Confidence: {{ detection.confidence|floatformat:1 }}%">
+                                                        {{ detection.confidence|floatformat:1 }}%
+                                                    </span>
+                                                </div>
+
+                                                <!-- Alternative Species Suggestions -->
+                                                {% if detection.alternative_species %}
+                                                    <div class="alternative-species mb-2">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-question-circle me-1"></i>
+                                                            Could also be: <span class="text-primary">{{ detection.alternative_species|join:", " }}</span>
+                                                        </small>
+                                                    </div>
+                                                {% endif %}
+
+                                                <!-- Size Validation Warning -->
+                                                {% if detection.bbox_area %}
+                                                    {% with expected_range=detection.species|get_expected_size_range %}
+                                                        {% if detection.bbox_area < expected_range.0 or detection.bbox_area > expected_range.1 %}
+                                                            <div class="size-warning mb-2">
+                                                                <small class="text-warning">
+                                                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                                                    Size unusual for {{ detection.species }}
+                                                                    (Expected: {{ expected_range.0|floatformat:2 }}-{{ expected_range.1|floatformat:2 }},
+                                                                     Detected: {{ detection.bbox_area|floatformat:2 }})
+                                                                </small>
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                {% endif %}
+
+                                                <!-- Uncertainty Factors -->
+                                                {% if detection.uncertainty_factors %}
+                                                    <div class="uncertainty-factors mb-2">
+                                                        <small class="text-muted">
+                                                            <strong>Factors affecting confidence:</strong>
+                                                            <span class="factors-list">
+                                                                {% for factor in detection.uncertainty_factors %}
+                                                                    <span class="factor-badge">{{ factor|title }}</span>
+                                                                {% endfor %}
+                                                            </span>
+                                                        </small>
+                                                    </div>
+                                                {% endif %}
+
+                                                <!-- Technical Details (Collapsible) -->
+                                                {% if detection.bounding_box %}
+                                                    <div class="technical-details">
+                                                        <button class="btn btn-sm btn-outline-secondary btn-toggle-details"
+                                                                type="button"
+                                                                data-bs-toggle="collapse"
+                                                                data-bs-target="#details-{{ forloop.counter }}"
+                                                                aria-expanded="false">
+                                                            <i class="fas fa-chevron-down me-1"></i>
+                                                            Technical Details
+                                                        </button>
+                                                        <div class="collapse mt-2" id="details-{{ forloop.counter }}">
+                                                            <div class="small text-muted">
+                                                                <div><strong>Bounding Box:</strong> {{ detection.bounding_box.x|default:0 }}, {{ detection.bounding_box.y|default:0 }}
+                                                                     ({{ detection.bounding_box.width|default:0 }}×{{ detection.bounding_box.height|default:0 }})</div>
+                                                                {% if detection.bbox_area %}
+                                                                    <div><strong>Normalized Area:</strong> {{ detection.bbox_area|floatformat:3 }}</div>
+                                                                {% endif %}
+                                                                {% if detection.aspect_ratio %}
+                                                                    <div><strong>Aspect Ratio:</strong> {{ detection.aspect_ratio|floatformat:2 }}</div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-secondary">#{{ forloop.counter }}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    {% if detection.bounding_box %}
-                                        <div class="mt-2 small text-muted">
-                                            Box: {{ detection.bounding_box.x|default:0 }}, {{ detection.bounding_box.y|default:0 }}
-                                            ({{ detection.bounding_box.width|default:0 }}×{{ detection.bounding_box.height|default:0 }})
-                                        </div>
-                                    {% endif %}
                                 </div>
                             {% endfor %}
                         {% endif %}
@@ -478,5 +678,222 @@ function processSingleImage(imageId) {
         window.location.href = '{% url "image_processing:list" %}';
     }, 1000);
 }
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced egret identification UI functions
+
+    // Initialize tooltips for uncertainty information
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            container: 'body',
+            boundary: 'window'
+        });
+    });
+
+    // Enhanced confidence visualization
+    function updateConfidenceIndicators() {
+        const confidenceBadges = document.querySelectorAll('.confidence-badge[data-confidence]');
+
+        confidenceBadges.forEach(badge => {
+            const confidence = parseFloat(badge.getAttribute('data-confidence')) || 0;
+            const confidenceLevel = getConfidenceLevel(confidence);
+
+            // Remove existing classes
+            badge.classList.remove('confidence-high', 'confidence-medium', 'confidence-low');
+
+            // Add appropriate class
+            badge.classList.add(`confidence-${confidenceLevel}`);
+
+            // Update badge text
+            badge.textContent = `${confidence.toFixed(1)}%`;
+        });
+    }
+
+    function getConfidenceLevel(confidence) {
+        if (confidence >= 80) return 'high';
+        if (confidence >= 60) return 'medium';
+        return 'low';
+    }
+
+    // Interactive uncertainty explanation
+    function showUncertaintyDetails(detectionId) {
+        const detectionElement = document.querySelector(`[data-detection-id="${detectionId}"]`);
+        if (!detectionElement) return;
+
+        const uncertaintyLevel = detectionElement.getAttribute('data-uncertainty-level') || 0;
+        const factors = detectionElement.getAttribute('data-uncertainty-factors') || '';
+
+        // Create modal content
+        const modalContent = `
+            <div class="modal fade" id="uncertaintyModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Uncertainty Analysis - Detection #${detectionId}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-${getUncertaintyBootstrapColor(uncertaintyLevel)}">
+                                <strong>Uncertainty Level: ${uncertaintyLevel}/4</strong>
+                                <p class="mb-2">${getUncertaintyDescription(uncertaintyLevel)}</p>
+                            </div>
+
+                            ${factors ? `
+                            <h6>Factors Contributing to Uncertainty:</h6>
+                            <ul class="list-group list-group-flush">
+                                ${factors.split(',').map(factor =>
+                                    `<li class="list-group-item">${factor.trim()}</li>`
+                                ).join('')}
+                            </ul>
+                            ` : ''}
+
+                            <div class="mt-3">
+                                <h6>What This Means:</h6>
+                                <p class="text-muted small">
+                                    ${getUncertaintyExplanation(uncertaintyLevel)}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if present
+        const existingModal = document.getElementById('uncertaintyModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add new modal to body
+        document.body.insertAdjacentHTML('beforeend', modalContent);
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('uncertaintyModal'));
+        modal.show();
+    }
+
+    function getUncertaintyBootstrapColor(level) {
+        const colors = {
+            0: 'success',
+            1: 'warning',
+            2: 'warning',
+            3: 'danger',
+            4: 'secondary'
+        };
+        return colors[level] || colors[4];
+    }
+
+    function getUncertaintyDescription(level) {
+        const descriptions = {
+            0: "High confidence - This identification is very reliable.",
+            1: "Some uncertainty - Generally reliable but consider alternatives.",
+            2: "Moderate uncertainty - Review carefully, multiple species possible.",
+            3: "High uncertainty - Low confidence, manual review recommended.",
+            4: "Very uncertain - Identification may be incorrect."
+        };
+        return descriptions[level] || descriptions[4];
+    }
+
+    function getUncertaintyExplanation(level) {
+        const explanations = {
+            0: "The AI is highly confident in this identification. The bird's characteristics strongly match the predicted species.",
+            1: "The AI found some ambiguity in the identification, possibly due to unusual lighting, angle, or individual variation.",
+            2: "Multiple factors are contributing to uncertainty. The bird may be difficult to identify due to similar species or image quality.",
+            3: "Several factors indicate this identification may be unreliable. Consider the alternative species suggestions.",
+            4: "The identification has significant uncertainty. This could be due to poor image quality, unusual bird characteristics, or species similarity."
+        };
+        return explanations[level] || explanations[4];
+    }
+
+    // Enhanced detection highlighting
+    function enhanceDetectionHighlighting() {
+        const highlights = document.querySelectorAll('.detection-highlight');
+
+        highlights.forEach((highlight, index) => {
+            // Add click handler for uncertainty details
+            highlight.addEventListener('click', function() {
+                const detectionId = this.getAttribute('data-detection-id');
+                showUncertaintyDetails(detectionId);
+            });
+
+            // Add hover effects
+            highlight.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            });
+
+            highlight.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.8)';
+            });
+        });
+    }
+
+    // Alternative species suggestion handler
+    function setupAlternativeSpeciesHandlers() {
+        const alternativeLinks = document.querySelectorAll('.alternative-species .text-primary');
+
+        alternativeLinks.forEach(link => {
+            link.style.cursor = 'pointer';
+            link.addEventListener('click', function() {
+                const species = this.textContent.trim();
+                // Could implement search or filtering functionality here
+                console.log(`Alternative species clicked: ${species}`);
+                // For now, just show an alert
+                alert(`Alternative suggestion: ${species} - This could be another species to consider.`);
+            });
+        });
+    }
+
+    // Technical details toggle animation
+    function setupTechnicalDetailsToggles() {
+        const toggleButtons = document.querySelectorAll('.btn-toggle-details');
+
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+
+                // Animate icon
+                if (isExpanded) {
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        });
+    }
+
+    // Initialize all enhancements
+    function initializeEnhancements() {
+        updateConfidenceIndicators();
+        enhanceDetectionHighlighting();
+        setupAlternativeSpeciesHandlers();
+        setupTechnicalDetailsToggles();
+
+        console.log('🦆 Enhanced egret identification frontend initialized');
+    }
+
+    // Run initialization
+    initializeEnhancements();
+
+    // Make functions globally available for debugging
+    window.egretUI = {
+        updateConfidenceIndicators,
+        showUncertaintyDetails,
+        getUncertaintyBootstrapColor
+    };
+});
 </script>
+{% endblock %}
 {% endblock %}
