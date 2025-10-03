@@ -129,7 +129,10 @@ class SpeciesObservation(models.Model):
     census = models.ForeignKey(
         CensusObservation, on_delete=models.CASCADE, related_name="species_observations"
     )
-    species_name = models.CharField(max_length=200, help_text="Common or scientific name")
+    species = models.ForeignKey(
+        "fauna.Species", on_delete=models.CASCADE, related_name="site_observations", null=True, blank=True
+    )
+    species_name = models.CharField(max_length=200, help_text="Common or scientific name (legacy field)")
     count = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     behavior_notes = models.TextField(blank=True, help_text="Behavior, age, sex, etc.")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -141,7 +144,7 @@ class SpeciesObservation(models.Model):
         verbose_name_plural = "Species Observations"
 
     def __str__(self):
-        return f"{self.species_name} - {self.count} birds"
+        return f"{self.species.name if self.species else self.species_name} - {self.count} birds"
 
 
 class MobileDataImport(models.Model):

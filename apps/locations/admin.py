@@ -6,7 +6,7 @@ from .models import CensusObservation, Site, SpeciesObservation
 class SpeciesObservationInline(admin.TabularInline):
     model = SpeciesObservation
     extra = 1
-    fields = ["species_name", "count", "behavior_notes"]
+    fields = ["species", "count", "behavior_notes"]
 
 
 class CensusObservationInline(admin.TabularInline):
@@ -69,11 +69,17 @@ class CensusObservationAdmin(admin.ModelAdmin):
 
 @admin.register(SpeciesObservation)
 class SpeciesObservationAdmin(admin.ModelAdmin):
-    list_display = ["species_name", "census", "count", "behavior_notes", "created_at"]
-    list_filter = ["census__site", "census__observation_date", "created_at"]
-    search_fields = ["species_name", "behavior_notes", "census__site__name"]
+    list_display = ["get_species_name", "census", "count", "behavior_notes", "created_at"]
+    list_filter = ["census__site", "census__observation_date", "species", "created_at"]
+    search_fields = ["species__name", "species__scientific_name", "species_name", "behavior_notes", "census__site__name"]
     readonly_fields = ["id", "created_at", "updated_at"]
     fieldsets = (
-        ("Species Details", {"fields": ("census", "species_name", "count", "behavior_notes")}),
+        ("Species Details", {"fields": ("census", "species", "species_name", "count", "behavior_notes")}),
         ("Metadata", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
+
+    def get_species_name(self, obj):
+        """Display species name from the foreign key or fallback to text field"""
+        return obj.species.name if obj.species else obj.species_name
+    get_species_name.short_description = "Species"
+    get_species_name.admin_order_field = "species__name"

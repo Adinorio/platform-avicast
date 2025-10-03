@@ -4,6 +4,7 @@ from django.forms import inlineformset_factory
 from django.utils import timezone
 
 from .models import CensusObservation, Site, SpeciesObservation
+from apps.fauna.models import Species
 
 User = get_user_model()
 
@@ -51,11 +52,9 @@ class CensusObservationForm(forms.ModelForm):
 class SpeciesObservationForm(forms.ModelForm):
     class Meta:
         model = SpeciesObservation
-        fields = ["species_name", "count", "behavior_notes"]
+        fields = ["species", "count", "behavior_notes"]
         widgets = {
-            "species_name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "e.g., Mallard, American Robin"}
-            ),
+            "species": forms.Select(attrs={"class": "form-control"}),
             "count": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
             "behavior_notes": forms.Textarea(
                 attrs={
@@ -65,6 +64,12 @@ class SpeciesObservationForm(forms.ModelForm):
                 }
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Populate species choices with non-archived species
+        self.fields["species"].queryset = Species.objects.filter(is_archived=False).order_by("name")
+        self.fields["species"].empty_label = "Select a species..."
 
 
 # Create inline formset for species observations
