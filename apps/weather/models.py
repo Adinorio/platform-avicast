@@ -73,8 +73,19 @@ class WeatherForecast(models.Model):
     precipitation = models.DecimalField(
         max_digits=5, decimal_places=2, help_text="Precipitation in mm"
     )
+    precipitation_probability = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)], 
+        null=True, blank=True, help_text="Precipitation probability percentage"
+    )
     pressure = models.DecimalField(
         max_digits=6, decimal_places=2, help_text="Atmospheric pressure in hPa"
+    )
+    weather_code = models.IntegerField(
+        null=True, blank=True, help_text="WMO weather code"
+    )
+    cloud_cover = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)], 
+        null=True, blank=True, help_text="Cloud cover percentage"
     )
 
     # Condition classifications

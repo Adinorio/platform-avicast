@@ -87,16 +87,23 @@ class WeatherAPIService:
             "longitude": lon,
             "hourly": [
                 "temperature_2m",
+                "precipitation_probability",
+                "rain",
+                "showers",
+                "pressure_msl",
+                "weather_code",
+                "cloud_cover",
                 "relative_humidity_2m",
                 "wind_speed_10m",
                 "wind_direction_10m",
-                "precipitation",
-                "pressure_msl",
                 "visibility",
             ],
             "daily": ["sunrise", "sunset"],
             "forecast_days": min(days, 16),  # Open-Meteo limit
             "timezone": "auto",
+            "windspeed_unit": "kmh",
+            "precipitation_unit": "mm",
+            "timeformat": "iso8601",
         }
 
         response = requests.get(url, params=params, timeout=10)
@@ -109,6 +116,7 @@ class WeatherAPIService:
             "api_source": "METEO",
             "current": self._extract_current_weather_meteo(data),
             "forecast": self._extract_forecast_meteo(data),
+            "daily": self._extract_daily_forecast_meteo(data),
             "raw_response": data,
         }
 
@@ -119,22 +127,29 @@ class WeatherAPIService:
         hourly = data.get("hourly", {})
 
         # Find the closest hourly data point
-        times = hourly.get("temperatures", [])
+        times = hourly.get("time", [])
         if not times:
             return {}
 
         # For demo purposes, return first data point
+        weather_code = hourly.get("weather_code", [0])[0]
+        rain = hourly.get("rain", [0.0])[0]
+        showers = hourly.get("showers", [0.0])[0]
+        total_precipitation = rain + showers
+
         return {
             "temperature": hourly.get("temperature_2m", [20.0])[0],
             "humidity": hourly.get("relative_humidity_2m", [60])[0],
             "wind_speed": hourly.get("wind_speed_10m", [10.0])[0],
-            "wind_direction": hourly.get("wind_direction_10m", [180])[0],
-            "precipitation": hourly.get("precipitation", [0.0])[0],
+            "wind_direction": self._to_cardinal(hourly.get("wind_direction_10m", [180])[0]),
+            "precipitation": total_precipitation,
+            "precipitation_probability": hourly.get("precipitation_probability", [0])[0],
             "pressure": hourly.get("pressure_msl", [1013.0])[0],
-            "visibility": hourly.get("visibility", [10.0])[0],
-            "weather_condition": self._classify_weather_condition(
-                hourly.get("precipitation", [0.0])[0], hourly.get("wind_speed_10m", [10.0])[0]
-            ),
+            # Open-Meteo visibility is meters → convert to km
+            "visibility": (hourly.get("visibility", [10000])[0] or 0) / 1000,
+            "weather_code": weather_code,
+            "cloud_cover": hourly.get("cloud_cover", [0])[0],
+            "weather_condition": self._classify_weather_condition_from_code(weather_code),
         }
 
     def _extract_forecast_meteo(self, data: dict) -> list[dict[str, Any]]:
@@ -147,11 +162,21 @@ class WeatherAPIService:
         humidities = hourly.get("relative_humidity_2m", [])
         wind_speeds = hourly.get("wind_speed_10m", [])
         wind_directions = hourly.get("wind_direction_10m", [])
-        precipitations = hourly.get("precipitation", [])
+        rains = hourly.get("rain", [])
+        showers = hourly.get("showers", [])
+        weather_codes = hourly.get("weather_code", [])
+        cloud_covers = hourly.get("cloud_cover", [])
+        precipitation_probabilities = hourly.get("precipitation_probability", [])
+        pressures = hourly.get("pressure_msl", [])
+        visibilities = hourly.get("visibility", [])
 
         for i, time_str in enumerate(times):
-            if i >= 24:  # Limit to first 24 hours for demo
-                break
+            # Keep all available hours (up to API provided ~16 days * 24)
+
+            rain = rains[i] if i < len(rains) else 0.0
+            showers_val = showers[i] if i < len(showers) else 0.0
+            total_precipitation = rain + showers_val
+            weather_code = weather_codes[i] if i < len(weather_codes) else 0
 
             forecast.append(
                 {
@@ -159,16 +184,44 @@ class WeatherAPIService:
                     "temperature": temperatures[i] if i < len(temperatures) else 20.0,
                     "humidity": humidities[i] if i < len(humidities) else 60,
                     "wind_speed": wind_speeds[i] if i < len(wind_speeds) else 10.0,
-                    "wind_direction": wind_directions[i] if i < len(wind_directions) else 180,
-                    "precipitation": precipitations[i] if i < len(precipitations) else 0.0,
-                    "weather_condition": self._classify_weather_condition(
-                        precipitations[i] if i < len(precipitations) else 0.0,
-                        wind_speeds[i] if i < len(wind_speeds) else 10.0,
+                    "wind_direction": self._to_cardinal(
+                        wind_directions[i] if i < len(wind_directions) else 180
                     ),
+                    "precipitation": total_precipitation,
+                    "precipitation_probability": precipitation_probabilities[i] if i < len(precipitation_probabilities) else 0,
+                    "weather_code": weather_code,
+                    "cloud_cover": cloud_covers[i] if i < len(cloud_covers) else 0,
+                    "weather_condition": self._classify_weather_condition_from_code(weather_code),
+                    "pressure": pressures[i] if i < len(pressures) else 1013.0,
+                    # Convert meters to km
+                    "visibility": (visibilities[i] if i < len(visibilities) else 10000) / 1000,
                 }
             )
 
         return forecast
+
+    def _extract_daily_forecast_meteo(self, data: dict) -> list[dict[str, Any]]:
+        """Extract daily forecast data from Open-Meteo response"""
+        daily = data.get("daily", {})
+        daily_forecast = []
+
+        times = daily.get("time", [])
+        sunrises = daily.get("sunrise", [])
+        sunsets = daily.get("sunset", [])
+
+        for i, time_str in enumerate(times):
+            if i >= 7:  # Limit to first 7 days
+                break
+
+            daily_forecast.append(
+                {
+                    "date": time_str,
+                    "sunrise": sunrises[i] if i < len(sunrises) else None,
+                    "sunset": sunsets[i] if i < len(sunsets) else None,
+                }
+            )
+
+        return daily_forecast
 
     def _fetch_openweather_data(self, lat: float, lon: float) -> dict[str, Any]:
         """Fetch data from OpenWeather API"""
@@ -273,6 +326,30 @@ class WeatherAPIService:
 
         return forecast_data[:24]  # Limit to first 24 hours
 
+    def _classify_weather_condition_from_code(self, weather_code: int) -> str:
+        """Classify weather condition based on WMO weather code"""
+        # WMO Weather interpretation codes (WW)
+        if weather_code == 0:
+            return "CLEAR"
+        elif weather_code in [1, 2, 3]:
+            return "CLOUDY"
+        elif weather_code in [45, 48]:
+            return "FOGGY"
+        elif weather_code in [51, 53, 55, 56, 57]:
+            return "RAINY"
+        elif weather_code in [61, 63, 65, 66, 67]:
+            return "RAINY"
+        elif weather_code in [71, 73, 75, 77]:
+            return "RAINY"  # Snow conditions treated as rainy for field work
+        elif weather_code in [80, 81, 82]:
+            return "RAINY"
+        elif weather_code in [85, 86]:
+            return "RAINY"  # Snow showers treated as rainy
+        elif weather_code in [95, 96, 99]:
+            return "STORMY"
+        else:
+            return "CLEAR"  # Default fallback
+
     def _classify_weather_condition(self, precipitation: float, wind_speed: float) -> str:
         """Classify weather condition based on precipitation and wind"""
         if precipitation > 5.0:
@@ -283,6 +360,15 @@ class WeatherAPIService:
             return "CLOUDY"
         else:
             return "CLEAR"
+
+    def _to_cardinal(self, degrees: float) -> str:
+        """Convert wind direction in degrees to cardinal direction (8-wind)."""
+        if degrees is None:
+            return "N"
+        deg = float(degrees) % 360
+        dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        idx = int((deg + 22.5) // 45) % 8
+        return dirs[idx]
 
 
 class FieldWorkOptimizationService:
