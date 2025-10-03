@@ -85,14 +85,26 @@
                                         {{ site.coordinates }}
                                     </p>
                                     {% endif %}
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-outline-primary btn-sm fetch-site-weather"
+                                    <div class="d-grid gap-2">
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-outline-primary btn-sm flex-fill fetch-site-weather"
                                                 data-site-id="{{ site.id }}" data-site-name="{{ site.name }}">
                                             <i class="fas fa-cloud-download-alt me-1"></i>Get Weather
                                         </button>
-                                        <a href="{% url 'weather:site_forecast' site.id %}" class="btn btn-outline-info btn-sm">
+                                            <a href="{% url 'weather:site_forecast' site.id %}" class="btn btn-outline-info btn-sm flex-fill">
                                             <i class="fas fa-eye me-1"></i>Forecast
                                         </a>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-outline-success btn-sm flex-fill find-best-days"
+                                                    data-site-id="{{ site.id }}" data-site-name="{{ site.name }}" data-days="30">
+                                                <i class="fas fa-star me-1"></i>Best Days
+                                            </button>
+                                            <button class="btn btn-outline-info btn-sm flex-fill daily-summary"
+                                                    data-site-id="{{ site.id }}" data-site-name="{{ site.name }}" data-days="16">
+                                                <i class="fas fa-calendar-day me-1"></i>Summary
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -264,7 +276,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="fetchWeatherForm">
+                <form id="fetchWeatherForm" method="post">
+                    {% csrf_token %}
                     <div class="mb-3">
                         <label for="siteSelect" class="form-label">Select Site</label>
                         <select class="form-select" id="siteSelect" name="site_id" required>
@@ -292,13 +305,232 @@
     </div>
 </div>
 
+<!-- Weather Results Modal -->
+<div class="modal fade" id="weatherResultsModal" tabindex="-1" aria-labelledby="weatherResultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="weatherResultsModalLabel">
+                    <i class="fas fa-cloud-sun me-2"></i>Weather Results
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="weatherResultsContent">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="location.reload()">
+                    <i class="fas fa-refresh me-1"></i>Refresh Page
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Use a more robust approach to prevent duplicate event listeners
+(function() {
+    'use strict';
+    
+    // Debug: Log to see if this runs multiple times
+    console.log('Weather dashboard JavaScript loaded');
+    
+    // Track if we've already initialized
+    if (window.weatherDashboardInitialized) {
+        console.log('Weather dashboard already initialized, skipping...');
+        return;
+    }
+    window.weatherDashboardInitialized = true;
+    
+    // Wait for DOM to be ready
+    function initWeatherDashboard() {
+        // Helper function to show weather results in modal
+        function showWeatherResults(title, content, type = 'info') {
+            const modal = new bootstrap.Modal(document.getElementById('weatherResultsModal'));
+            const modalTitle = document.getElementById('weatherResultsModalLabel');
+            const modalContent = document.getElementById('weatherResultsContent');
+            
+            // Set title with appropriate icon
+            const icons = {
+                'success': 'fas fa-check-circle text-success',
+                'error': 'fas fa-exclamation-triangle text-danger',
+                'info': 'fas fa-info-circle text-info',
+                'warning': 'fas fa-exclamation-circle text-warning'
+            };
+            
+            modalTitle.innerHTML = `<i class="${icons[type]} me-2"></i>${title}`;
+            modalContent.innerHTML = content;
+            modal.show();
+        }
+        
+        // Helper function to format weather data
+        function formatWeatherData(data) {
+            if (data.success) {
+                // Get the actual weather data from the nested structure
+                const weatherData = data.data || {};
+                const currentWeather = weatherData.current || {};
+                
+                return `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>${data.message}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-thermometer-half me-2"></i>Temperature</h6>
+                            <p class="mb-2">${currentWeather.temperature || 'N/A'}°C</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-cloud me-2"></i>Weather</h6>
+                            <p class="mb-2">${currentWeather.weather_condition || 'N/A'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-tint me-2"></i>Precipitation</h6>
+                            <p class="mb-2">${currentWeather.precipitation || 'N/A'} mm</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-wind me-2"></i>Wind</h6>
+                            <p class="mb-2">${currentWeather.wind_speed || 'N/A'} km/h ${currentWeather.wind_direction || ''}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Data fetched from ${weatherData.api_source || 'Open-Meteo'} API
+                        </small>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Error: ${data.error}
+                    </div>
+                `;
+            }
+        }
+        
+        // Helper function to format best days data
+        function formatBestDaysData(data) {
+            if (data.success && data.best_days && data.best_days.length > 0) {
+                let content = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-star me-2"></i>Best fieldwork days found!
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Score (Avg)</th>
+                                    <th>Score (Max)</th>
+                                    <th>Recommendation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                data.best_days.slice(0, 5).forEach(day => {
+                    const recommendation = day.score_mean >= 80 ? 'Excellent' : 
+                                         day.score_mean >= 60 ? 'Good' : 
+                                         day.score_mean >= 40 ? 'Moderate' : 'Poor';
+                    const badgeClass = day.score_mean >= 80 ? 'success' : 
+                                     day.score_mean >= 60 ? 'primary' : 
+                                     day.score_mean >= 40 ? 'warning' : 'danger';
+                                     
+                    content += `
+                        <tr>
+                            <td>${day.date}</td>
+                            <td>${day.score_mean.toFixed(1)}</td>
+                            <td>${day.score_max.toFixed(1)}</td>
+                            <td><span class="badge bg-${badgeClass}">${recommendation}</span></td>
+                        </tr>
+                    `;
+                });
+                
+                content += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                return content;
+            } else {
+                return `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>No forecast data available to compute best days.
+                    </div>
+                `;
+            }
+        }
+        
+        // Helper function to format daily summary data
+        function formatDailySummaryData(data) {
+            if (data.success && data.daily_summaries && data.daily_summaries.length > 0) {
+                let content = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-calendar-day me-2"></i>Daily weather summary for the next ${data.daily_summaries.length} days
+                    </div>
+                `;
+                
+                data.daily_summaries.forEach(day => {
+                    const recommendation = day.field_work_score_avg >= 80 ? 'Excellent' : 
+                                         day.field_work_score_avg >= 60 ? 'Good' : 
+                                         day.field_work_score_avg >= 40 ? 'Moderate' : 'Poor';
+                    const badgeClass = day.field_work_score_avg >= 80 ? 'success' : 
+                                     day.field_work_score_avg >= 60 ? 'primary' : 
+                                     day.field_work_score_avg >= 40 ? 'warning' : 'danger';
+                                     
+                    content += `
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">${day.day_name} (${day.date})</h6>
+                                <span class="badge bg-${badgeClass}">${recommendation}</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Temperature</small>
+                                        <div>${day.temperature_min}° - ${day.temperature_max}°C</div>
+                                        <small class="text-muted">Avg: ${day.temperature_avg}°C</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Weather</small>
+                                        <div>${day.weather_condition}</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Precipitation</small>
+                                        <div>${day.precipitation_total} mm</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Field Work Score</small>
+                                        <div>${day.field_work_score_avg}/100</div>
+                                        <small class="text-muted">Best: ${day.best_hours.join(', ')}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                return content;
+            } else {
+                return `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>No daily summary data available.
+                    </div>
+                `;
+            }
+        }
+        
     // Fetch weather button
-    document.getElementById('fetchWeatherBtn').addEventListener('click', function() {
+        const fetchWeatherBtn = document.getElementById('fetchWeatherBtn');
+        if (fetchWeatherBtn) {
+            fetchWeatherBtn.addEventListener('click', function() {
         const form = document.getElementById('fetchWeatherForm');
         const formData = new FormData(form);
+        const siteId = formData.get('site_id');
+        const siteSelect = document.getElementById('siteSelect');
+        const siteName = siteSelect.options[siteSelect.selectedIndex].text;
 
         this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Fetching...';
         this.disabled = true;
@@ -306,7 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('{% url "weather:fetch_weather" %}', {
             method: 'POST',
             body: JSON.stringify({
-                site_id: formData.get('site_id'),
+                site_id: siteId,
                 api_source: formData.get('api_source')
             }),
             headers: {
@@ -316,16 +548,23 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
+                    console.log('Weather API Response:', data); // Debug log
+                    const title = data.success ? `Weather Data for ${siteName}` : 'Weather Fetch Error';
+                    const content = formatWeatherData(data);
+                    const type = data.success ? 'success' : 'error';
+                    
+                    showWeatherResults(title, content, type);
+                    
+                    // Remove automatic reload - let user manually close modal
+                    // if (data.success) {
+                    //     setTimeout(() => location.reload(), 2000);
+                    // }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while fetching weather data.');
+                        showWeatherResults('Weather Fetch Error', 
+                            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>An error occurred while fetching weather data.</div>', 
+                            'error');
         })
         .finally(() => {
             this.innerHTML = 'Fetch Weather';
@@ -333,6 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('[data-bs-dismiss="modal"]').click();
         });
     });
+        }
 
     // Site weather fetch buttons
     document.querySelectorAll('.fetch-site-weather').forEach(btn => {
@@ -357,25 +597,118 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.error);
-                    }
+                    console.log('Site Weather API Response:', data); // Debug log
+                    const title = data.success ? `Weather Data for ${siteName}` : 'Weather Fetch Error';
+                    const content = formatWeatherData(data);
+                    const type = data.success ? 'success' : 'error';
+                    
+                    showWeatherResults(title, content, type);
+                    
+                    // Remove automatic reload - let user manually close modal
+                    // if (data.success) {
+                    //     setTimeout(() => location.reload(), 2000);
+                    // }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while fetching weather data.');
+                    showWeatherResults('Weather Fetch Error', 
+                        '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>An error occurred while fetching weather data.</div>', 
+                        'error');
                 })
                 .finally(() => {
                     this.innerHTML = '<i class="fas fa-cloud-download-alt me-1"></i>Get Weather';
                     this.disabled = false;
                 });
             }
+            });
+        });
+
+        // Find Best Days buttons
+        document.querySelectorAll('.find-best-days').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const siteId = this.dataset.siteId;
+                const siteName = this.dataset.siteName;
+                const days = this.dataset.days || 30;
+
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Computing...';
+                this.disabled = true;
+
+                fetch('{% url "weather:best_days" %}', {
+                    method: 'POST',
+                    body: JSON.stringify({ site_id: siteId, days: days }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const title = `Best Fieldwork Days - ${siteName}`;
+                    const content = formatBestDaysData(data);
+                    const type = data.success ? 'success' : 'warning';
+                    
+                    showWeatherResults(title, content, type);
+                })
+                .catch(err => {
+                    console.error(err);
+                    showWeatherResults('Best Days Error', 
+                        '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Failed to compute best days.</div>', 
+                        'error');
+                })
+                .finally(() => {
+                    this.innerHTML = '<i class="fas fa-star me-1"></i>Find Best Days';
+                    this.disabled = false;
+                });
+            });
+        });
+
+        // Daily Summary buttons
+        document.querySelectorAll('.daily-summary').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const siteId = this.dataset.siteId;
+                const siteName = this.dataset.siteName;
+                const days = this.dataset.days || 16;
+
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+                this.disabled = true;
+
+                fetch('{% url "weather:daily_summary" %}', {
+                    method: 'POST',
+                    body: JSON.stringify({ site_id: siteId, days: days }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const title = `Daily Weather Summary - ${siteName}`;
+                    const content = formatDailySummaryData(data);
+                    const type = data.success ? 'info' : 'warning';
+                    
+                    showWeatherResults(title, content, type);
+                })
+                .catch(err => {
+                    console.error(err);
+                    showWeatherResults('Daily Summary Error', 
+                        '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Failed to load daily summary.</div>', 
+                        'error');
+                })
+                .finally(() => {
+                    this.innerHTML = '<i class="fas fa-calendar-day me-1"></i>Daily Summary';
+                    this.disabled = false;
         });
     });
 });
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWeatherDashboard);
+    } else {
+        initWeatherDashboard();
+    }
+})();
 </script>
 {% endblock %}
 {% endblock %}
