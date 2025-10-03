@@ -269,3 +269,9 @@ class DataRequestAdmin(admin.ModelAdmin):
 admin.site.site_header = "AVICAST System Administration"
 admin.site.site_title = "AVICAST Admin"
 admin.site.index_title = "Welcome to AVICAST System Administration"
+
+# Override admin index view
+from .admin_index import custom_admin_index
+admin.site.index = custom_admin_index
+
+# Admin site customization is handled via templates and CSS
