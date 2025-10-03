@@ -166,6 +166,12 @@ python manage.py shell
 python manage.py collectstatic
 ```
 
+### Weather app tests (unit stubs)
+
+```bash
+python manage.py test apps.weather -v 2
+```
+
 ## 📁 Project Structure
 
 ```

@@ -1,0 +1,106 @@
+I am trying to recreate our thesis project website again. And I want it to be more refined than the one we have right now because it is not following the basic structure of making a website, not following the basic standards in the industry such as conventional commit messages, basic clean system architecture, documentation, and etc.
+I want to make sure we are able to create them well this time. Can you tell me how I can do it in a step by step process and to make sure it would be viable to be released for our proposed beneficiary which is under the government that is CENRO that can accept an MVP and such?
+We will be making a website for them with a process of being able to view the website (main page) to login into their respective accounts.
+1) The main website has the ability to let the user login into the system. The superadmin has a default credential of special id "010101" and the password "avicast123" to access the system in the first run and can change their password after being redirected to the user management. The admin and field worker will be redirected to the main system of the website (dashboard) that can allow the users to view or interact with the features Species management, Site management (with bird census management), Image processing (can classify only 3 birds), and the Report generator (overall data accumulation of the species management and site management, and weather forecasting will be inside it).
+2) User management capable of adding, editing, archiving, etc. users. The user types has 3 role: Superadmin (can access user management only), admin (can add, edit, and manipulate date in the system except the user management), and field worker (can only view the system except the user management and can request to add/update/etc. data to the admin instead of directly adding/editing/manipulating the data).
+
+3) The dashboard shows the system’s offered features such as the species management, site management (bird census management inside), image processing, and report generation. Selecting any can be accessed accordingly.
+
+Features	
+1.0 Main System (Software):
+1.1 User Management
+1.2 Species Management
+1.3.1 Site Management
+1.3.2 Bird Census Management
+1.4 Image Processing
+1.5 Report Generator
+Expected output:
+1. Bird Species
+Recognition
+2. Generated
+personnel list
+3. Bird filtering
+3.1. IUCN Red List
+4. Import and
+export of data
+5. Forecasting
+6. Automated tally of
+census 
+
+System detailed context:
+AVICAST SYSTEM
+I am trying to make a system that has a login (super admin, admin, and field worker account types/roles), user management (super admin managing the CRUD of users with the disabling and archiving, edit roles/assignments and permissions, and checking the system’s logs), main dashboard (shows the features: Species Management, Site Management (Bird Census Management inside), Image Processing, and Report Generator).
+1.0  Login
+1.1  Super admin login
+-          The user has a default login credentials where User ID = 010101 and Password = Avicast123
+-          After the first login with the default login of the super admin, it will go to the user management dashboard and there will be a pop-up where it will have message containing the user can change the password, and then if the user presses “change password” they will be redirected to the change password location which is somewhere in the settings view, if the user chose “not now” then just cancel the pop-up and it will never appear again unless the database of the user management system is reset or something to recover the password.
+1.2  Admin login
+-          The admin will go to the main dashboard page and from there, the user will have access to all features because of the roles and assignments permissions set by default unless changed by the super admin in the user management system.
+1.3  Field worker login
+-          The field worker will go to the main dashboard page and from there, the user will have access to limited features because of the roles and assignments permissions set by default unless changed by the super admin in the user management system.
+2.0  User Management
+2.1  Dashboard view
+-          The super admin can view the summary of all the important details of the user management system where the total active admins and total active field workers shows the currently logged in users in the system.
+-          The authorization log card will show five (5) recent users that shows activity in the system whether it is log in/out, add bird, edit bird, etc. whatever the user is doing with their permissions in the options menu of the roles and assignments permissions.
+2.2  User management view
+-          The super admin can go to the user management view to view the most recently added user ID and daily active users to overseer their people and the total number of users the system has.
+-          They can view and search for the user’s credentials which is the user ID or full name.
+-          They can filter the list based on the enabled/disabled or archiving accounts.
+-          They can add a user/account and it will allow the super admin to select the role, add their first name and last name, password and re-confirm the password which are required credentials to create a user/account in the database for the system to recognize. The system then increments the last number of the account that has been made and it will be their user account ID.
+-          They have an option to click the settings icon to get a preview of the options: edit, archive, disable, and delete. The edit button will activate the drawer for the “Update user” to modify their credentials. The archive, disable, and delete options will have a user validity first before making the option true.
+-          This will make sure that there will be a pop-up for their options or actions for successfully creating/updating/archiving/disabling the user’s account and it will have a pop-up for the errors from the database or something like duplicate entry is forbidden/doesn’t exist/etc.
+2.3  Roles/Assignment
+-          The super admin can view the No. of admins and No. of field workers to check how many there are to give permissions to.
+-          They can switch the tabs for picking which role to change/edit permissions on how to access or operate with the main dashboard features.
+-          The admin permissions will have all the accessibility and options turned on.
+-          The field workers will have the generate of reports, modify data of the species management, add sites, add birds, and generate data of the image processing turned off/false because only the admin can add/modify/generate reports and data within the system. If ever, the field workers can only forward their requests to add/modify/generate data to the admins for verification.
+3.0  Main Dashboard Features
+3.1  Species management
+-          The admin can access the adding of the bird: species name and scientific name. The admin can also add an image/photo of the bird after creating the species.
+-          When there are available birds, the admin can add/edit the counts of the bird manually.
+-          The admin and field worker can view the counts of the certain bird. If ever, the user can also ask to request to the admin to update the count of a certain bird.
+-          The admin is the only one who can view the counts of both manual or AI so that it can be monitored.
+-          The admin is the only one who can access the archiving or deleting a bird species.
+-          The species management contains the PK of the bird species and FK of the counts because this is where the counts are tallied altogether and monitored easily.
+-          All of the birds and counts will be monitored in this feature for the report generation feature to take and generate the report.
+-          The mobile application will always be updated from the database of the species management especially the species name and its counts when connected.
+3.2  Site management
+-          The admin can access the adding of a site: site ID, site name, and site location. The admin can also add an image/photo of the site after creating the site.
+-          When there are available sites, the admin can add/edit/archive/delete the site.
+-          The sites should be able to contain the species found in that site and their counts.
+-          The sites will have the database of what kind of bird is found there and the count can be directly added there by the admin and if ever, requested by the field worker.
+-          Basically, the site management contains the PK of the database for the counts of the bird.
+-          The counts that came from the image processing/bird identification feature will go through the site so that the counts will be updated for both manual/AI version.
+-          There will be an option to import data to automatically add the counts of the bird species gathered from the mobile application. This is where the field worker should be able to request to the admin to either accept or reject the count instead of directly adding it in the database. It should smartly find out which site is targeted, and the data will be then be verified by the user before adding it and then it will be added into the database of the counts.
+-          All of the counts for each certain bird will be updated in this feature for the report generation feature to take and generate the report.
+-          The data gathered from the image processing/bird identification will be added here based on the site
+3.3  Image Processing (Bird Identification limited to 3 birds: Chinese Egret, Whiskered Tern, and Great Knot)
+The flow is:
+Upload view:
+1. Upload an image either file or folder
+2. Wait for Upload progress to finish
+3. Press the Upload button
+
+Process data:
+4. It will show the process data and upload the files there which they are free to view for the gallery, but don't let it generate or process the image processing yet unless the user presses a button to generate it
+5. It will show the generated results along with the images and details
+6. The user can now press the review button to continue to the review tab which is where they can pick whether to approve, reject, or override the results.
+
+Review view:
+7. There will be a way the user can now view all the results that can be filtered by approved, rejected, and override/overwritten along with their data. Which there will be a button where it will accept/cancel the thing.
+
+Allocate view:
+8. Next, it will now move into the new tab which is called "Allocate" where the generated results can be chosen where they will be stored, because the system supports the "Sites system" and it is where the bird census management is in and the user should be able to click where does all of those data will go. The site will be chosen first, then the next year if there is any, next the months, and there you go, the counts or the generated data will be forwarded there. I think the best way to handle this is to segregate the results to one column preferably the left side and the choices will be at the right side and it is where drag and dropping the selected results to the selectable months.
+3.4  Bird Census Management
+-           The user is able to view the total number of birds within the site that are picked within their respective year and month.
+-        The data is going to be updated when the user wants to edit it or when there is incoming data from the image processing, the admin can check whether to add them to the census or not.
+3.5  Forecasting (compiling multiple weather forecasting API's to find the best day to conduct field work)
+-           Can generate data to find out what is the best day to conduct field work and such.
+-        The values will depend on the weather, tide, and etc.
+-        The forecasting will be limited to the surrounding area of the location of the sites
+3.6  Report Generation
+-           This will show the overall summary of the species management, site management, bird census management, and the personnel handling all those data and such whatever. 
+-        Mostly this is for documenting everything.
+ 
+
+
