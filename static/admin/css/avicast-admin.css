@@ -1,0 +1,1721 @@
+s/* AVICAST Admin Design System */
+
+/* Prevent Theme Flash - Force Light Theme Immediately */
+body {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* Do not hide body; ensure pages render even before data-theme is applied */
+
+:root {
+    --avic-primary: #1e40af;
+    --avic-primary-light: #3b82f6;
+    --avic-primary-dark: #1e3a8a;
+    --avic-secondary: #64748b;
+    --avic-success: #059669;
+    --avic-warning: #d97706;
+    --avic-danger: #dc2626;
+    --avic-info: #0ea5e9;
+    
+    /* Light Theme Colors (Default) */
+    --avic-bg-primary: #ffffff;
+    --avic-bg-secondary: #f8f9fa;
+    --avic-bg-tertiary: #e9ecef;
+    --avic-text-primary: #212529;
+    --avic-text-secondary: #6c757d;
+    --avic-border-color: #dee2e6;
+    --avic-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    
+    /* Neutral Colors */
+    --avic-gray-50: #f8fafc;
+    --avic-gray-100: #f1f5f9;
+    --avic-gray-200: #e2e8f0;
+    --avic-gray-300: #cbd5e1;
+    --avic-gray-400: #94a3b8;
+    --avic-gray-500: #64748b;
+    --avic-gray-600: #475569;
+    --avic-gray-700: #334155;
+    --avic-gray-800: #1e293b;
+    --avic-gray-900: #0f172a;
+    
+    /* Typography */
+    --avic-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    
+    /* Spacing */
+    --avic-space-1: 0.25rem;
+    --avic-space-2: 0.5rem;
+    --avic-space-3: 0.75rem;
+    --avic-space-4: 1rem;
+    --avic-space-6: 1.5rem;
+    --avic-space-8: 2rem;
+    
+    /* Border Radius */
+    --avic-radius: 0.5rem;
+    --avic-radius-lg: 0.75rem;
+    
+    /* Shadows */
+    --avic-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --avic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --avic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    
+    /* Transitions */
+    --avic-transition: all 0.15s ease-in-out;
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+    --avic-bg-primary: #1e293b;
+    --avic-bg-secondary: #334155;
+    --avic-bg-tertiary: #475569;
+    --avic-text-primary: #f1f5f9;
+    --avic-text-secondary: #cbd5e1;
+    --avic-border-color: #475569;
+    --avic-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+    
+    /* Override Django admin specific elements */
+    --django-bg: #1e293b;
+    --django-text: #f1f5f9;
+    --django-border: #475569;
+    --django-header-bg: #334155;
+}
+
+
+/* Global Admin Interface Styles */
+.admin-interface {
+    font-family: var(--avic-font-family) !important;
+    background-color: var(--avic-bg-secondary) !important;
+    color: var(--avic-text-primary) !important;
+    transition: background-color 0.3s ease, color 0.3s ease !important;
+}
+
+/* Navigation Sidebar */
+#nav-sidebar {
+    background: var(--avic-bg-primary) !important;
+    border-right: 1px solid var(--avic-border-color) !important;
+    box-shadow: var(--avic-shadow) !important;
+    padding: var(--avic-space-6) !important;
+    transition: background-color 0.3s ease !important;
+}
+
+/* Remove white hover backgrounds from sidebar items */
+#nav-sidebar .module li:hover {
+    background: transparent !important;
+}
+
+#nav-sidebar .module a:hover {
+    background: transparent !important;
+}
+
+#nav-sidebar .module li a:hover {
+    background: transparent !important;
+}
+
+/* Hide "Add" buttons in navigation sidebar */
+#nav-sidebar .addlink {
+    display: none !important;
+}
+
+#nav-sidebar .module .addlink {
+    display: none !important;
+}
+
+#nav-sidebar .module li .addlink {
+    display: none !important;
+}
+
+
+/* Custom Sorting Buttons */
+.sortoptions {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    margin-left: 8px !important;
+}
+
+.sortoptions a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    max-width: 26px !important;
+    max-height: 26px !important;
+    background: var(--avic-bg-tertiary) !important;
+    color: var(--avic-text-secondary) !important;
+    border: 1px solid var(--avic-border-color) !important;
+    border-radius: 4px !important;
+    text-decoration: none !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+}
+
+/* Override Django's default sorting button styles */
+.sortoptions a[href*="o="] {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    max-width: 26px !important;
+    max-height: 26px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--avic-bg-tertiary) !important;
+    border: 1px solid var(--avic-border-color) !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.sortoptions a:hover {
+    background: var(--avic-primary) !important;
+    color: white !important;
+    border-color: var(--avic-primary) !important;
+    transform: scale(1.1) !important;
+}
+
+
+/* Remove sort button (X) */
+.sortremove {
+    position: relative !important;
+}
+
+.sortremove::before {
+    content: "×" !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+}
+
+.sortremove::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Toggle sort button (^ or v) */
+.toggle {
+    position: relative !important;
+}
+
+.toggle.ascending::before {
+    content: "▲" !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+}
+
+.toggle.descending::before {
+    content: "▼" !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+}
+
+/* Dark theme sorting buttons */
+[data-theme="dark"] .sortoptions a {
+    background: var(--avic-bg-tertiary) !important;
+    color: var(--avic-text-secondary) !important;
+    border-color: var(--avic-border-color) !important;
+}
+
+[data-theme="dark"] .sortoptions a:hover {
+    background: var(--avic-primary) !important;
+    color: white !important;
+    border-color: var(--avic-primary) !important;
+}
+
+/* Force override Django's default sorting button dimensions */
+.sortoptions a,
+.sortoptions a[href*="o="],
+.sortoptions a[href*="o=-"],
+.sortoptions a[href*="o=1"],
+.sortoptions a[href*="o=-1"],
+.sortoptions a[href*="o=2"],
+.sortoptions a[href*="o=-2"] {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    max-width: 26px !important;
+    max-height: 26px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--avic-bg-tertiary) !important;
+    border: 1px solid var(--avic-border-color) !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+
+/* Maximum specificity override for Django admin sorting buttons */
+body.admin-interface .sortoptions a,
+body.admin-interface .sortoptions a[href*="o="],
+body.admin-interface .sortoptions a[href*="o=-"],
+body.admin-interface .sortoptions a[href*="o=1"],
+body.admin-interface .sortoptions a[href*="o=-1"],
+body.admin-interface .sortoptions a[href*="o=2"],
+body.admin-interface .sortoptions a[href*="o=-2"],
+.admin-interface .sortoptions a,
+.admin-interface .sortoptions a[href*="o="],
+.admin-interface .sortoptions a[href*="o=-"],
+.admin-interface .sortoptions a[href*="o=1"],
+.admin-interface .sortoptions a[href*="o=-1"],
+.admin-interface .sortoptions a[href*="o=2"],
+.admin-interface .sortoptions a[href*="o=-2"] {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    max-width: 26px !important;
+    max-height: 26px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--avic-bg-tertiary) !important;
+    border: 1px solid var(--avic-border-color) !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+}
+
+
+.sidebar-header h2 {
+    color: var(--avic-text-primary) !important;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    margin-bottom: var(--avic-space-4) !important;
+}
+
+/* Navigation Modules */
+.admin-interface .module {
+    background: var(--avic-bg-primary) !important;
+    border: 1px solid var(--avic-border-color) !important;
+    border-radius: var(--avic-radius-lg) !important;
+    box-shadow: var(--avic-shadow) !important;
+    margin-bottom: var(--avic-space-6) !important;
+    overflow: hidden !important;
+    transition: background-color 0.3s ease !important;
+}
+
+.admin-interface .module h2 {
+    background: linear-gradient(135deg, var(--avic-bg-secondary) 0%, var(--avic-bg-tertiary) 100%) !important;
+    color: var(--avic-text-primary) !important;
+    padding: var(--avic-space-4) var(--avic-space-6) !important;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--avic-border-color) !important;
+    font-weight: 600 !important;
+}
+
+.admin-interface .module ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.admin-interface .module li {
+    border-bottom: 1px solid var(--avic-border-color) !important;
+}
+
+.admin-interface .module li:last-child {
+    border-bottom: none !important;
+}
+
+.admin-interface .module a {
+    color: var(--avic-primary) !important;
+    text-decoration: none !important;
+    padding: var(--avic-space-3) var(--avic-space-6) !important;
+    border-radius: 0 !important;
+    transition: var(--avic-transition) !important;
+    display: block !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+}
+
+.admin-interface .module a:hover {
+    background-color: var(--avic-bg-secondary) !important;
+    color: var(--avic-primary-dark) !important;
+}
+
+/* Buttons */
+.admin-interface .addlink,
+.admin-interface .deletelink,
+.admin-interface .changelink,
+.admin-interface .viewlink,
+.admin-interface .historylink,
+.admin-interface .button,
+.admin-interface .default,
+.admin-interface button,
+.admin-interface input[type="submit"] {
+    background: var(--avic-primary) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--avic-radius) !important;
+    padding: var(--avic-space-3) var(--avic-space-4) !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: var(--avic-transition) !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+}
+
+.admin-interface .addlink:hover,
+.admin-interface .deletelink:hover,
+.admin-interface .changelink:hover,
+.admin-interface .viewlink:hover,
+.admin-interface .historylink:hover,
+.admin-interface .button:hover,
+.admin-interface .default:hover,
+.admin-interface button:hover,
+.admin-interface input[type="submit"]:hover {
+    background: var(--avic-primary-dark) !important;
+    color: white !important;
+}
+
+/* Header */
+#header {
+    background: var(--avic-primary) !important;
+    border-bottom: 1px solid var(--avic-primary-dark) !important;
+}
+
+#site-name a {
+    color: white !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+}
+
+/* Hamburger Menu Button in Header */
+#header-hamburger {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--avic-radius) !important;
+    width: 40px !important;
+    height: 40px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    margin-left: 10px !important;
+}
+
+/* Header Styling */
+#header {
+    background: var(--avic-primary) !important;
+    color: white !important;
+    padding: 1rem 1.5rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    position: relative !important;
+    z-index: 150 !important;
+}
+
+/* Hamburger Button Styling */
+.hamburger-button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 1.25rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    margin-left: 1rem !important;
+    font-weight: bold !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+}
+
+.hamburger-button:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2) !important;
+}
+
+.hamburger-button:active {
+    transform: scale(0.95) !important;
+}
+
+#site-name {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+}
+
+#site-name a {
+    color: white !important;
+    text-decoration: none !important;
+}
+
+#site-name a:hover {
+    opacity: 0.8 !important;
+}
+
+/* Ensure header user tools are visible */
+#header .user-tools {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+#header .user-tools a {
+    color: white !important;
+    text-decoration: none !important;
+    padding: 0.5rem !important;
+    border-radius: 4px !important;
+    transition: background-color 0.2s ease !important;
+}
+
+#header .user-tools a:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+#header .user-tools button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: none !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    transition: background-color 0.2s ease !important;
+}
+
+#header .user-tools button:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Force hamburger button visibility */
+.hamburger-button {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    z-index: 1000 !important;
+}
+
+#header-hamburger:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Search Filter */
+.sidebar-quick-filter input {
+    width: 100% !important;
+    padding: var(--avic-space-3) !important;
+    border: 1px solid var(--avic-gray-200) !important;
+    border-radius: var(--avic-radius) !important;
+    font-size: 0.875rem !important;
+    margin-bottom: var(--avic-space-4) !important;
+}
+
+.sidebar-quick-filter input:focus {
+    outline: none !important;
+    border-color: var(--avic-primary) !important;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1) !important;
+}
+
+/* Theme Toggle Button - Hidden */
+.theme-toggle {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Hide any theme toggle buttons that might still show */
+.theme-toggle[data-avic-fixed="true"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Force Light Theme Only - Hide All Themes Except Light */
+/* Do not hide body; ensure pages render even before data-theme is applied */
+
+/* Force Light Theme Only - Override All Theme Variables */
+:root,
+[data-theme="light"],
+[data-theme="dark"],
+[data-theme="auto"] {
+    --avic-bg-primary: #ffffff !important;
+    --avic-bg-secondary: #f8f9fa !important;
+    --avic-bg-tertiary: #e9ecef !important;
+    --avic-text-primary: #212529 !important;
+    --avic-text-secondary: #6c757d !important;
+    --avic-border-color: #dee2e6 !important;
+    --avic-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Force Light Theme Only - Override Dark Theme Elements */
+[data-theme="dark"] *,
+[data-theme="auto"] * {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+    border-color: #dee2e6 !important;
+}
+
+/* Force Light Theme Only - Override Dark Theme Backgrounds */
+[data-theme="dark"] body,
+[data-theme="dark"] #content,
+[data-theme="dark"] #header,
+[data-theme="dark"] #nav-sidebar,
+[data-theme="auto"] body,
+[data-theme="auto"] #content,
+[data-theme="auto"] #header,
+[data-theme="auto"] #nav-sidebar {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+
+[data-theme="dark"] #content {
+    background-color: var(--avic-bg-secondary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] #content-main {
+    background-color: var(--avic-bg-secondary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .results {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+    border-color: var(--avic-border-color) !important;
+}
+
+[data-theme="dark"] .results table {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .results th,
+[data-theme="dark"] .results td {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+    border-color: var(--avic-border-color) !important;
+}
+
+[data-theme="dark"] .results th {
+    background-color: var(--avic-bg-tertiary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .results tr:hover {
+    background-color: var(--avic-bg-tertiary) !important;
+}
+
+[data-theme="dark"] .form-row {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .form-row input,
+[data-theme="dark"] .form-row select,
+[data-theme="dark"] .form-row textarea {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+    border-color: var(--avic-border-color) !important;
+}
+
+[data-theme="dark"] .form-row label {
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .help {
+    color: var(--avic-text-secondary) !important;
+}
+
+[data-theme="dark"] .help-text {
+    color: var(--avic-text-secondary) !important;
+}
+
+[data-theme="dark"] .errorlist {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-danger) !important;
+}
+
+[data-theme="dark"] .success {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-success) !important;
+}
+
+[data-theme="dark"] .warning {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-warning) !important;
+}
+
+[data-theme="dark"] .info {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-info) !important;
+}
+
+/* Additional Dark Theme Overrides */
+[data-theme="dark"] .breadcrumbs {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .breadcrumbs a {
+    color: var(--avic-primary-light) !important;
+}
+
+[data-theme="dark"] .breadcrumbs a:hover {
+    color: var(--avic-primary) !important;
+}
+
+[data-theme="dark"] .object-tools {
+    background-color: var(--avic-bg-primary) !important;
+}
+
+[data-theme="dark"] .object-tools a {
+    background-color: var(--avic-bg-tertiary) !important;
+    color: var(--avic-text-primary) !important;
+    border-color: var(--avic-border-color) !important;
+}
+
+[data-theme="dark"] .object-tools a:hover {
+    background-color: var(--avic-primary) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .paginator {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .paginator a {
+    color: var(--avic-primary-light) !important;
+}
+
+[data-theme="dark"] .paginator a:hover {
+    color: var(--avic-primary) !important;
+}
+
+[data-theme="dark"] .paginator .this-page {
+    background-color: var(--avic-primary) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .actions {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .actions select {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+    border-color: var(--avic-border-color) !important;
+}
+
+[data-theme="dark"] .actions button {
+    background-color: var(--avic-primary) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .actions button:hover {
+    background-color: var(--avic-primary-dark) !important;
+}
+
+[data-theme="dark"] .filtered {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .filtered h2 {
+    background-color: var(--avic-bg-tertiary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .filtered h3 {
+    background-color: var(--avic-bg-tertiary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .filtered ul {
+    background-color: var(--avic-bg-primary) !important;
+}
+
+[data-theme="dark"] .filtered li {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .filtered li a {
+    color: var(--avic-primary-light) !important;
+}
+
+[data-theme="dark"] .filtered li a:hover {
+    color: var(--avic-primary) !important;
+}
+
+[data-theme="dark"] .filtered li.selected {
+    background-color: var(--avic-primary) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .filtered li.selected a {
+    color: white !important;
+}
+
+/* Form specific dark theme */
+[data-theme="dark"] .form-row .field-box {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .form-row .field-box label {
+    color: var(--avic-text-primary) !important;
+}
+
+[data-theme="dark"] .form-row .field-box input,
+[data-theme="dark"] .form-row .field-box select,
+[data-theme="dark"] .form-row .field-box textarea {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-text-primary) !important;
+    border-color: var(--avic-border-color) !important;
+}
+
+[data-theme="dark"] .form-row .field-box .help {
+    color: var(--avic-text-secondary) !important;
+}
+
+[data-theme="dark"] .form-row .field-box .errorlist {
+    background-color: var(--avic-bg-primary) !important;
+    color: var(--avic-danger) !important;
+}
+
+/* Override any black elements */
+.admin-interface * {
+    border-color: var(--avic-border-color) !important;
+}
+
+.admin-interface .border-dark,
+.admin-interface .border-black {
+    border-color: var(--avic-border-color) !important;
+}
+
+.admin-interface .text-dark,
+.admin-interface .text-black {
+    color: var(--avic-text-primary) !important;
+}
+
+.admin-interface .bg-dark,
+.admin-interface .bg-black {
+    background-color: var(--avic-bg-primary) !important;
+}
+
+/* Final override for Django admin sorting buttons - highest specificity */
+body.admin-interface .sortoptions a,
+body.admin-interface .sortoptions a[href*="o="],
+body.admin-interface .sortoptions a[href*="o=-"],
+body.admin-interface .sortoptions a[href*="o=1"],
+body.admin-interface .sortoptions a[href*="o=-1"],
+body.admin-interface .sortoptions a[href*="o=2"],
+body.admin-interface .sortoptions a[href*="o=-2"] {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    max-width: 26px !important;
+    max-height: 26px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--avic-bg-tertiary) !important;
+    border: 1px solid var(--avic-border-color) !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Remove ALL hover effects for dashboard Add/Change buttons */
+.addlink:hover,
+.changelink:hover,
+.deletelink:hover,
+.viewlink:hover,
+.historylink:hover,
+#content .addlink:hover,
+#content .changelink:hover,
+#content .deletelink:hover,
+#content .viewlink:hover,
+#content .historylink:hover,
+body.admin-interface .addlink:hover,
+body.admin-interface .changelink:hover,
+body.admin-interface .deletelink:hover,
+body.admin-interface .viewlink:hover,
+body.admin-interface .historylink:hover,
+.admin-interface .addlink:hover,
+.admin-interface .changelink:hover,
+.admin-interface .deletelink:hover,
+.admin-interface .viewlink:hover,
+.admin-interface .historylink:hover {
+    background: inherit !important;
+    background-color: inherit !important;
+    color: inherit !important;
+    transform: none !important;
+    text-decoration: inherit !important;
+    border-color: inherit !important;
+    box-shadow: inherit !important;
+    opacity: inherit !important;
+    filter: inherit !important;
+    backdrop-filter: inherit !important;
+    outline: inherit !important;
+    outline-color: inherit !important;
+    outline-style: inherit !important;
+    outline-width: inherit !important;
+    outline-offset: inherit !important;
+    text-shadow: inherit !important;
+    border-radius: inherit !important;
+    border-width: inherit !important;
+    border-style: inherit !important;
+    border-image: inherit !important;
+    border-image-source: inherit !important;
+    border-image-slice: inherit !important;
+    border-image-width: inherit !important;
+    border-image-outset: inherit !important;
+    border-image-repeat: inherit !important;
+    border-top: inherit !important;
+    border-right: inherit !important;
+    border-bottom: inherit !important;
+    border-left: inherit !important;
+    border-top-color: inherit !important;
+    border-right-color: inherit !important;
+    border-bottom-color: inherit !important;
+    border-left-color: inherit !important;
+    border-top-style: inherit !important;
+    border-right-style: inherit !important;
+    border-bottom-style: inherit !important;
+    border-left-style: inherit !important;
+    border-top-width: inherit !important;
+    border-right-width: inherit !important;
+    border-bottom-width: inherit !important;
+    border-left-width: inherit !important;
+}
+
+/* ULTIMATE HOVER OVERRIDE - Remove ALL hover effects for dashboard buttons */
+*:hover.addlink,
+*:hover.changelink,
+*:hover.deletelink,
+*:hover.viewlink,
+*:hover.historylink {
+    background: inherit !important;
+    background-color: inherit !important;
+    color: inherit !important;
+    transform: none !important;
+    text-decoration: inherit !important;
+    border-color: inherit !important;
+    box-shadow: inherit !important;
+    opacity: inherit !important;
+    filter: inherit !important;
+    backdrop-filter: inherit !important;
+    outline: inherit !important;
+    outline-color: inherit !important;
+    outline-style: inherit !important;
+    outline-width: inherit !important;
+    outline-offset: inherit !important;
+    text-shadow: inherit !important;
+    border-radius: inherit !important;
+    border-width: inherit !important;
+    border-style: inherit !important;
+    border-image: inherit !important;
+    border-image-source: inherit !important;
+    border-image-slice: inherit !important;
+    border-image-width: inherit !important;
+    border-image-outset: inherit !important;
+    border-image-repeat: inherit !important;
+    border-top: inherit !important;
+    border-right: inherit !important;
+    border-bottom: inherit !important;
+    border-left: inherit !important;
+    border-top-color: inherit !important;
+    border-right-color: inherit !important;
+    border-bottom-color: inherit !important;
+    border-left-color: inherit !important;
+    border-top-style: inherit !important;
+    border-right-style: inherit !important;
+    border-bottom-style: inherit !important;
+    border-left-style: inherit !important;
+    border-top-width: inherit !important;
+    border-right-width: inherit !important;
+    border-bottom-width: inherit !important;
+    border-left-width: inherit !important;
+}
+
+/* SIMPLE MODERN DASHBOARD */
+/* Dashboard Container */
+.admin-interface #content-main {
+    padding: 1.5rem !important;
+    background: #f8f9fa !important;
+    min-height: calc(100vh - 60px) !important;
+}
+
+/* Hide duplicate title on dashboard */
+.admin-interface #content-main h1 {
+    display: none !important;
+}
+
+/* Statistics Row */
+.stats-row {
+    display: flex !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
+    flex-wrap: wrap !important;
+}
+
+.stat-item {
+    background: white !important;
+    padding: 0.75rem !important;
+    border-radius: 6px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    text-align: center !important;
+    flex: 1 !important;
+    min-width: 120px !important;
+    transition: transform 0.2s ease !important;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px) !important;
+}
+
+.stat-number {
+    display: block !important;
+    font-size: 1.5rem !important;
+    font-weight: bold !important;
+    color: var(--avic-primary) !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.stat-label {
+    color: var(--avic-text-secondary) !important;
+    font-size: 0.8rem !important;
+}
+
+/* Main Content Grid */
+.main-content-grid {
+    display: grid !important;
+    grid-template-columns: 2fr 1fr !important;
+    gap: 0.875rem !important;
+}
+
+/* Modules Section */
+.modules-section {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)) !important;
+    gap: 0.6125rem !important;
+    margin-top: 0.525rem !important;
+}
+
+.module {
+    background: white !important;
+    border-radius: 5.6px !important;
+    box-shadow: 0 0.7px 2.8px rgba(0, 0, 0, 0.06), 0 0.7px 1.4px rgba(0, 0, 0, 0.08) !important;
+    overflow: hidden !important;
+    transition: all 0.14s ease !important;
+    border: 0.7px solid rgba(0, 0, 0, 0.04) !important;
+    position: relative !important;
+    max-width: 224px !important;
+}
+
+.module:hover {
+    transform: translateY(-0.7px) !important;
+    box-shadow: 0 2.8px 8.4px rgba(0, 0, 0, 0.08), 0 1.4px 4.2px rgba(0, 0, 0, 0.06) !important;
+}
+
+.module h3 {
+    background: linear-gradient(135deg, var(--avic-primary), #1e40af) !important;
+    color: white !important;
+    padding: 0.525rem 0.7rem !important;
+    margin: 0 !important;
+    font-size: 0.63rem !important;
+    font-weight: 600 !important;
+    position: relative !important;
+    letter-spacing: 0.0175em !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.28rem !important;
+}
+
+.module h3 .emoji-icon {
+    font-size: 0.7rem !important;
+    filter: brightness(1.1) !important;
+    text-shadow: 0 0.7px 1.4px rgba(0, 0, 0, 0.1) !important;
+    display: inline-block !important;
+}
+
+.module h3::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
+}
+
+.module table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    margin: 0 !important;
+}
+
+.module th {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+    padding: 0.35rem 0.525rem !important;
+    text-align: left !important;
+    font-weight: 600 !important;
+    border-bottom: 0.7px solid #dee2e6 !important;
+    font-size: 0.525rem !important;
+    color: #495057 !important;
+    letter-spacing: 0.0175em !important;
+    text-transform: uppercase !important;
+}
+
+.module td {
+    padding: 0.35rem 0.525rem !important;
+    border-bottom: 0.7px solid rgba(0, 0, 0, 0.05) !important;
+    font-size: 0.56rem !important;
+    color: #495057 !important;
+    transition: background-color 0.105s ease !important;
+}
+
+.model-row:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.06)) !important;
+    cursor: pointer !important;
+}
+
+.model-row:hover td {
+    color: var(--avic-primary) !important;
+}
+
+.module a {
+    color: var(--avic-primary) !important;
+    text-decoration: none !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    transition: all 0.15s ease !important;
+    border-radius: 3px !important;
+    padding: 0.125rem 0.25rem !important;
+    display: inline-block !important;
+}
+
+.module a:hover {
+    color: var(--avic-primary) !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    text-decoration: none !important;
+    transform: translateX(1px) !important;
+}
+
+.actions-cell {
+    text-align: right !important;
+    white-space: nowrap !important;
+}
+
+.actions-cell .addlink,
+.actions-cell .changelink {
+    margin-left: 0.15rem !important;
+    padding: 0 !important;
+    border-radius: 3px !important;
+    font-size: 0.5rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.15s ease !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    width: 26px !important;
+    height: 26px !important;
+    text-align: center !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+}
+
+.actions-cell .addlink {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: white !important;
+    border-color: #059669 !important;
+}
+
+.actions-cell .addlink::before {
+    content: "+" !important;
+    font-weight: bold !important;
+    font-size: 0.65rem !important;
+}
+
+.actions-cell .changelink {
+    background: linear-gradient(135deg, #3b82f6, #1e40af) !important;
+    color: white !important;
+    border-color: #1e40af !important;
+}
+
+.actions-cell .addlink:hover,
+.actions-cell .changelink:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+    text-decoration: none !important;
+}
+
+.actions-cell .addlink:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    border-color: #047857 !important;
+}
+
+.actions-cell .changelink:hover {
+    background: linear-gradient(135deg, #1e40af, #1e3a8a) !important;
+    border-color: #1e3a8a !important;
+}
+
+.actions-cell .addlink:active,
+.actions-cell .changelink:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure buttons maintain their styling in all states */
+.actions-cell .addlink:focus,
+.actions-cell .changelink:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Better spacing between buttons */
+.actions-cell .addlink + .changelink {
+    margin-left: 0.2rem !important;
+}
+
+/* Recent Actions Sidebar - Compact Design */
+.recent-actions-section {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    padding: 1.25rem !important;
+    height: fit-content !important;
+    width: 100% !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.recent-actions-section h2 {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+    color: white !important;
+    margin: -1.25rem -1.25rem 1rem -1.25rem !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    padding: 1rem 1.25rem !important;
+    border-bottom: none !important;
+    border-radius: 12px 12px 0 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.recent-actions-section h3 {
+    color: #475569 !important;
+    margin: 0 0 1rem 0 !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+.action-list {
+    max-height: 400px !important;
+    overflow-y: auto !important;
+}
+
+.action-item {
+    padding: 0.75rem 0 !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6) !important;
+    transition: all 0.2s ease !important;
+}
+
+.action-item:hover {
+    background: linear-gradient(90deg, rgba(30, 64, 175, 0.05), rgba(59, 130, 246, 0.03)) !important;
+    padding-left: 0.5rem !important;
+    margin-left: -0.5rem !important;
+    border-radius: 6px !important;
+}
+
+.action-item:last-child {
+    border-bottom: none !important;
+}
+
+.action-description {
+    font-size: 0.75rem !important;
+    color: #334155 !important;
+    margin-bottom: 0.375rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+}
+
+.action-meta {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 0.7rem !important;
+    gap: 0.5rem !important;
+}
+
+.action-time {
+    color: #64748b !important;
+    font-weight: 500 !important;
+}
+
+.action-type {
+    padding: 0.125rem 0.375rem !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 0.6rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+    box-shadow: 0 1px 2px rgba(30, 64, 175, 0.2) !important;
+    flex-shrink: 0 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-content-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .modules-section {
+        grid-template-columns: 1fr !important;
+        gap: 0.525rem !important;
+        margin-top: 0.35rem !important;
+    }
+
+    .module {
+        margin-bottom: 0 !important;
+        max-width: none !important;
+    }
+
+    .module h3 {
+        padding: 0.4375rem 0.525rem !important;
+        font-size: 0.595rem !important;
+    }
+
+    .module th,
+    .module td {
+        padding: 0.28rem 0.42rem !important;
+        font-size: 0.525rem !important;
+    }
+
+    .module a {
+        font-size: 0.7rem !important;
+    }
+
+    .actions-cell .addlink,
+    .actions-cell .changelink {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 0.45rem !important;
+    }
+
+    .stats-row {
+        flex-direction: column !important;
+        gap: 0.35rem !important;
+    }
+
+    .stat-item {
+        min-width: auto !important;
+    }
+
+    .recent-actions-section {
+        margin-left: 0 !important;
+        border-radius: 8px !important;
+        padding: 1rem !important;
+    }
+
+    .recent-actions-section h2 {
+        margin: -1rem -1rem 1rem -1rem !important;
+        padding: 0.875rem 1rem !important;
+        font-size: 0.9rem !important;
+    }
+
+    .recent-actions-section h3 {
+        font-size: 0.8rem !important;
+    }
+
+    .action-item {
+        padding: 0.5rem 0 !important;
+    }
+
+    .action-description {
+        font-size: 0.7rem !important;
+    }
+
+    .action-meta {
+        font-size: 0.65rem !important;
+    }
+
+    .action-type {
+        font-size: 0.55rem !important;
+        padding: 0.1rem 0.3rem !important;
+    }
+}
+
+/* Welcome Header */
+.admin-interface h1 {
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    color: var(--avic-primary) !important;
+    margin-bottom: 2rem !important;
+    text-align: center !important;
+    background: linear-gradient(135deg, var(--avic-primary) 0%, var(--avic-primary-light) 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-shadow: none !important;
+}
+
+/* Dashboard Grid Layout */
+.admin-interface .dashboard-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)) !important;
+    gap: 1.5rem !important;
+    margin-top: 2rem !important;
+}
+
+/* Modern Module Cards */
+.admin-interface .module {
+    background: white !important;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.admin-interface .module:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Module Headers with Icons */
+.admin-interface .module h2 {
+    background: linear-gradient(135deg, var(--avic-primary) 0%, var(--avic-primary-light) 100%) !important;
+    color: white !important;
+    padding: 1.25rem 1.5rem !important;
+    margin: 0 !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+}
+
+/* Module Icons */
+.admin-interface .module h2::before {
+    font-size: 1.25rem !important;
+    opacity: 0.9 !important;
+}
+
+/* Analytics & Reporting */
+.admin-interface .module h2:contains("Analytics")::before {
+    content: "📊" !important;
+}
+
+/* Authentication */
+.admin-interface .module h2:contains("Authentication")::before {
+    content: "🔐" !important;
+}
+
+/* Fauna */
+.admin-interface .module h2:contains("Fauna")::before {
+    content: "🐦" !important;
+}
+
+/* Image Processing */
+.admin-interface .module h2:contains("Image Processing")::before {
+    content: "🔍" !important;
+}
+
+/* Locations */
+.admin-interface .module h2:contains("Locations")::before {
+    content: "📍" !important;
+}
+
+/* Users */
+.admin-interface .module h2:contains("Users")::before {
+    content: "👥" !important;
+}
+
+/* Weather */
+.admin-interface .module h2:contains("Weather")::before {
+    content: "🌤️" !important;
+}
+
+/* Module Content */
+.admin-interface .module ul {
+    padding: 1rem !important;
+    margin: 0 !important;
+    list-style: none !important;
+}
+
+.admin-interface .module li {
+    border: none !important;
+    margin-bottom: 0.75rem !important;
+    padding: 0.75rem !important;
+    background: #f8fafc !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.admin-interface .module li:hover {
+    background: #e2e8f0 !important;
+    transform: translateX(4px) !important;
+}
+
+.admin-interface .module li:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Module Links */
+.admin-interface .module a {
+    color: var(--avic-text-primary) !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    transition: color 0.2s ease !important;
+    flex: 1 !important;
+}
+
+.admin-interface .module a:hover {
+    color: var(--avic-primary) !important;
+    background: none !important;
+}
+
+/* Action Buttons Container */
+.admin-interface .module-actions {
+    display: flex !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
+}
+
+/* Modern Action Buttons */
+.admin-interface .addlink,
+.admin-interface .changelink {
+    background: var(--avic-primary) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    min-width: auto !important;
+    height: auto !important;
+}
+
+.admin-interface .addlink:hover,
+.admin-interface .changelink:hover {
+    background: var(--avic-primary-dark) !important;
+    transform: scale(1.05) !important;
+}
+
+.admin-interface .addlink::before {
+    content: "+" !important;
+    font-weight: bold !important;
+}
+
+/* Recent Actions Sidebar */
+.admin-interface .recent-actions {
+    background: white !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    padding: 1.5rem !important;
+    margin-top: 2rem !important;
+}
+
+.admin-interface .recent-actions h2 {
+    background: none !important;
+    color: var(--avic-text-primary) !important;
+    padding: 0 0 1rem 0 !important;
+    margin: 0 !important;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid var(--avic-border-color) !important;
+}
+
+/* Quick Stats Section */
+.admin-interface .dashboard-stats {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 1rem !important;
+    margin-bottom: 2rem !important;
+}
+
+.admin-interface .stat-card {
+    background: white !important;
+    padding: 1.5rem !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+}
+
+.admin-interface .stat-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.admin-interface .stat-number {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    color: var(--avic-primary) !important;
+    display: block !important;
+}
+
+.admin-interface .stat-label {
+    font-size: 0.875rem !important;
+    color: var(--avic-text-secondary) !important;
+    margin-top: 0.5rem !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .admin-interface .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .admin-interface h1 {
+        font-size: 2rem !important;
+    }
+    
+    .admin-interface #content-main {
+        padding: 1rem !important;
+    }
+}
+
+/* NUCLEAR OPTION - Completely disable hover for all dashboard buttons */
+.addlink,
+.changelink,
+.deletelink,
+.viewlink,
+.historylink {
+    pointer-events: auto !important;
+}
+
+.addlink:hover,
+.changelink:hover,
+.deletelink:hover,
+.viewlink:hover,
+.historylink:hover,
+a.addlink:hover,
+a.changelink:hover,
+a.deletelink:hover,
+a.viewlink:hover,
+a.historylink:hover,
+#content a.addlink:hover,
+#content a.changelink:hover,
+#content a.deletelink:hover,
+#content a.viewlink:hover,
+#content a.historylink:hover,
+body.admin-interface a.addlink:hover,
+body.admin-interface a.changelink:hover,
+body.admin-interface a.deletelink:hover,
+body.admin-interface a.viewlink:hover,
+body.admin-interface a.historylink:hover,
+.admin-interface a.addlink:hover,
+.admin-interface a.changelink:hover,
+.admin-interface a.deletelink:hover,
+.admin-interface a.viewlink:hover,
+.admin-interface a.historylink:hover {
+    background: #417690 !important;
+    background-color: #417690 !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    outline: none !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+    border-width: 0 !important;
+    border-style: none !important;
+    border-image: none !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-top-color: transparent !important;
+    border-right-color: transparent !important;
+    border-bottom-color: transparent !important;
+    border-left-color: transparent !important;
+    border-top-style: none !important;
+    border-right-style: none !important;
+    border-bottom-style: none !important;
+    border-left-style: none !important;
+    border-top-width: 0 !important;
+    border-right-width: 0 !important;
+    border-bottom-width: 0 !important;
+    border-left-width: 0 !important;
+}

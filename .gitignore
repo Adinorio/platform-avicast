@@ -64,7 +64,6 @@ db.sqlite3-journal
 # Django media and static files (should not be in version control)
 media/
 staticfiles/
-static/admin/
 static/rest_framework/
 
 # Scrapy stuff:
