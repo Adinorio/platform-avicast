@@ -1,0 +1,290 @@
+/* AVICAST Admin Design System v2 - Clean Approach */
+
+/* CSS Custom Properties for Theming */
+:root {
+    /* Color System */
+    --avic-primary: #1e40af;
+    --avic-primary-light: #3b82f6;
+    --avic-primary-dark: #1e3a8a;
+    --avic-secondary: #64748b;
+    --avic-success: #059669;
+    --avic-warning: #d97706;
+    --avic-danger: #dc2626;
+    --avic-info: #0ea5e9;
+    
+    /* Neutral Colors */
+    --avic-gray-50: #f8fafc;
+    --avic-gray-100: #f1f5f9;
+    --avic-gray-200: #e2e8f0;
+    --avic-gray-300: #cbd5e1;
+    --avic-gray-400: #94a3b8;
+    --avic-gray-500: #64748b;
+    --avic-gray-600: #475569;
+    --avic-gray-700: #334155;
+    --avic-gray-800: #1e293b;
+    --avic-gray-900: #0f172a;
+    
+    /* Typography */
+    --avic-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    
+    /* Spacing Scale */
+    --avic-space-1: 0.25rem;
+    --avic-space-2: 0.5rem;
+    --avic-space-3: 0.75rem;
+    --avic-space-4: 1rem;
+    --avic-space-6: 1.5rem;
+    --avic-space-8: 2rem;
+    
+    /* Border Radius */
+    --avic-radius: 0.5rem;
+    --avic-radius-lg: 0.75rem;
+    
+    /* Shadows */
+    --avic-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --avic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --avic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    
+    /* Transitions */
+    --avic-transition: all 0.15s ease-in-out;
+}
+
+/* Strategy 1: Use CSS Custom Properties to Override Django's Defaults */
+body.admin-interface {
+    /* Override Django's default colors using CSS variables */
+    --default-link-color: var(--avic-primary);
+    --default-link-hover-color: var(--avic-primary-dark);
+    --default-text-color: var(--avic-gray-700);
+    --default-heading-color: var(--avic-gray-800);
+    --default-background-color: var(--avic-gray-50);
+    --default-border-color: var(--avic-gray-200);
+    --default-button-background: var(--avic-primary);
+    --default-button-color: white;
+    --default-button-hover-background: var(--avic-primary-dark);
+    
+    /* Apply the overrides */
+    font-family: var(--avic-font-family);
+    background-color: var(--default-background-color);
+    color: var(--default-text-color);
+}
+
+/* Strategy 2: Target Specific Django Admin Elements with Higher Specificity */
+body.admin-interface #header {
+    background: linear-gradient(135deg, var(--avic-primary) 0%, var(--avic-primary-dark) 100%);
+    border-bottom: 1px solid var(--avic-primary-dark);
+}
+
+body.admin-interface #header h1,
+body.admin-interface #header h1 a {
+    color: white;
+    font-weight: 600;
+}
+
+/* Strategy 3: Use Attribute Selectors for More Specific Targeting */
+body.admin-interface [class*="module"] {
+    background: white;
+    border: 1px solid var(--avic-gray-200);
+    border-radius: var(--avic-radius-lg);
+    box-shadow: var(--avic-shadow);
+    margin-bottom: var(--avic-space-6);
+}
+
+body.admin-interface [class*="module"] h2 {
+    background: linear-gradient(135deg, var(--avic-gray-50) 0%, var(--avic-gray-100) 100%);
+    color: var(--avic-gray-800);
+    padding: var(--avic-space-4) var(--avic-space-6);
+    margin: 0;
+    border-bottom: 1px solid var(--avic-gray-200);
+    font-weight: 600;
+}
+
+/* Strategy 4: Use CSS Cascade Order Instead of !important */
+body.admin-interface .button,
+body.admin-interface input[type="submit"],
+body.admin-interface .default,
+body.admin-interface .addlink,
+body.admin-interface .deletelink,
+body.admin-interface .changelink,
+body.admin-interface .viewlink,
+body.admin-interface .historylink {
+    background: var(--avic-primary);
+    color: white;
+    border: none;
+    border-radius: var(--avic-radius);
+    padding: var(--avic-space-3) var(--avic-space-4);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--avic-transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+}
+
+body.admin-interface .button:hover,
+body.admin-interface input[type="submit"]:hover,
+body.admin-interface .default:hover,
+body.admin-interface .addlink:hover,
+body.admin-interface .deletelink:hover,
+body.admin-interface .changelink:hover,
+body.admin-interface .viewlink:hover,
+body.admin-interface .historylink:hover {
+    background: var(--avic-primary-dark);
+    color: white;
+}
+
+/* Strategy 5: Use CSS Grid and Flexbox for Layout */
+body.admin-interface #content {
+    background: var(--avic-gray-50);
+    min-height: calc(100vh - 60px);
+}
+
+body.admin-interface #nav-sidebar {
+    background: white;
+    border-right: 1px solid var(--avic-gray-200);
+    box-shadow: var(--avic-shadow);
+    padding: var(--avic-space-6);
+    width: 280px;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+    z-index: 100;
+}
+
+/* Strategy 6: Use Modern CSS Features */
+body.admin-interface .results {
+    background: white;
+    border: 1px solid var(--avic-gray-200);
+    border-radius: var(--avic-radius-lg);
+    box-shadow: var(--avic-shadow);
+    overflow: hidden;
+}
+
+body.admin-interface .results table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+body.admin-interface .results th,
+body.admin-interface .results td {
+    padding: var(--avic-space-3) var(--avic-space-4);
+    text-align: left;
+    border-bottom: 1px solid var(--avic-gray-100);
+}
+
+body.admin-interface .results th {
+    background: var(--avic-gray-50);
+    font-weight: 600;
+    color: var(--avic-gray-800);
+}
+
+body.admin-interface .results tr:hover {
+    background: var(--avic-gray-50);
+}
+
+/* Strategy 7: Use CSS Logical Properties for Better Internationalization */
+body.admin-interface .form-row {
+    margin-block-end: var(--avic-space-4);
+}
+
+body.admin-interface .form-row label {
+    display: block;
+    margin-block-end: var(--avic-space-2);
+    font-weight: 500;
+    color: var(--avic-gray-700);
+}
+
+body.admin-interface .form-row input,
+body.admin-interface .form-row select,
+body.admin-interface .form-row textarea {
+    width: 100%;
+    padding: var(--avic-space-3);
+    border: 1px solid var(--avic-gray-300);
+    border-radius: var(--avic-radius);
+    background: white;
+    color: var(--avic-gray-700);
+    transition: var(--avic-transition);
+}
+
+body.admin-interface .form-row input:focus,
+body.admin-interface .form-row select:focus,
+body.admin-interface .form-row textarea:focus {
+    outline: none;
+    border-color: var(--avic-primary);
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+/* Strategy 8: Use CSS Container Queries for Responsive Design */
+@container (max-width: 768px) {
+    body.admin-interface #nav-sidebar {
+        transform: translateX(-100%);
+        transition: transform var(--avic-transition);
+    }
+    
+    body.admin-interface #nav-sidebar.open {
+        transform: translateX(0);
+    }
+}
+
+/* Strategy 9: Use CSS Layers for Better Cascade Control */
+@layer avicast-admin, django-admin;
+
+@layer avicast-admin {
+    /* All our custom styles go here with proper cascade order */
+    body.admin-interface {
+        /* Our overrides have higher priority than Django's defaults */
+    }
+}
+
+/* Strategy 10: Use CSS Custom Properties for Dynamic Theming */
+body.admin-interface[data-theme="dark"] {
+    --avic-primary: #3b82f6;
+    --avic-gray-50: #0f172a;
+    --avic-gray-100: #1e293b;
+    --avic-gray-200: #334155;
+    --avic-gray-700: #cbd5e1;
+    --avic-gray-800: #f1f5f9;
+}
+
+/* Hamburger Menu Button */
+body.admin-interface #header-hamburger {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--avic-radius);
+    transition: var(--avic-transition);
+}
+
+body.admin-interface #header-hamburger:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Search Filter */
+body.admin-interface .sidebar-quick-filter input {
+    width: 100%;
+    padding: var(--avic-space-3);
+    border: 1px solid var(--avic-gray-200);
+    border-radius: var(--avic-radius);
+    font-size: 0.875rem;
+    margin-bottom: var(--avic-space-4);
+    background: white;
+    color: var(--avic-gray-700);
+}
+
+body.admin-interface .sidebar-quick-filter input:focus {
+    outline: none;
+    border-color: var(--avic-primary);
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
