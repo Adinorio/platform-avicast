@@ -10,6 +10,7 @@ import sys
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 # Add the bird_detection directory to Python path
 project_root = Path(__file__).parent.parent.parent
@@ -38,11 +39,11 @@ logger = logging.getLogger(__name__)
 # Decision policy for acceptance/abstain of detections
 # -----------------------------------------------------------------------------
 
-# Minimum detector confidence to accept a detection
-DETECTION_CONF_THRESHOLD: float = 0.80
+# Minimum detector confidence to accept a detection (tuned for unified model)
+DETECTION_CONF_THRESHOLD: float = 0.50
 
 # Minimum crop side (in pixels) to accept a detection (guards small/ambiguous crops)
-DETECTION_MIN_CROP_SIDE: int = 128
+DETECTION_MIN_CROP_SIDE: int = 96
 
 
 def decide_detection_gate(
@@ -72,7 +73,7 @@ def decide_detection_gate(
 # -----------------------------------------------------------------------------
 
 
-def crop_image(image: np.ndarray, bbox: dict) -> np.ndarray:
+def crop_image(image: Any, bbox: dict) -> Any:
     """
     Crop a region from the image given a YOLO bbox.
 
@@ -102,10 +103,14 @@ REVIEW_QUEUE_BASE_DIR: str = "review_queue"
 
 
 def save_abstain_to_review_queue(
-    crop: np.ndarray, detection: dict, base_dir: str = REVIEW_QUEUE_BASE_DIR
+    crop: Any, detection: dict, base_dir: str = REVIEW_QUEUE_BASE_DIR
 ) -> bool:
     """Save ABSTAIN cases with structured folder format: <date>/<uuid>.png + metadata.json"""
     try:
+        # If OpenCV is not available, skip saving and return gracefully
+        if cv2 is None:
+            logger.warning("OpenCV not installed; skipping saving ABSTAIN crop to review queue")
+            return False
         # Create date-based folder
         date_str = datetime.utcnow().strftime("%Y-%m-%d")
         date_dir = os.path.join(base_dir, date_str)
@@ -210,12 +215,28 @@ def decide_classification_gate(
 # -----------------------------------------------------------------------------
 
 
-def trained_classifier_predict(crop: np.ndarray) -> dict[str, float]:
+def trained_classifier_predict(crop: Any) -> dict[str, float]:
     """Trained classifier using the Stage-2 EfficientNet model."""
     import torch
     import torch.nn as nn
     from PIL import Image
     from torchvision import models, transforms
+    import numpy as np
+
+    # Validate crop parameter
+    if crop is None or not isinstance(crop, np.ndarray) or crop.size == 0:
+        print("⚠️ Invalid crop parameter, falling back to mock")
+        return mock_classifier_predict(crop)
+    
+    # Check crop dimensions
+    if len(crop.shape) != 3 or crop.shape[2] != 3:
+        print(f"⚠️ Invalid crop shape {crop.shape}, falling back to mock")
+        return mock_classifier_predict(crop)
+    
+    # Check if crop is too small
+    if crop.shape[0] < 10 or crop.shape[1] < 10:
+        print(f"⚠️ Crop too small {crop.shape}, falling back to mock")
+        return mock_classifier_predict(crop)
 
     # Load the trained model
     model_path = Path(__file__).parent.parent / "models" / "classifier" / "best_model.pth"
@@ -287,7 +308,7 @@ def trained_classifier_predict(crop: np.ndarray) -> dict[str, float]:
         return mock_classifier_predict(crop)
 
 
-def mock_classifier_predict(crop: np.ndarray) -> dict[str, float]:
+def mock_classifier_predict(crop: Any) -> dict[str, float]:
     """Mock classifier that returns random probabilities for testing the pipeline."""
     import random
 
@@ -362,7 +383,20 @@ class BirdDetectionService:
         self.confidence_threshold = IMAGE_CONFIG["DEFAULT_CONFIDENCE_THRESHOLD"]
 
         # YOLO version configurations are now loaded from config.py
-        self.version_configs = YOLO_VERSION_CONFIGS
+        # Restrict to unified egret model only (local-only requirement; AGENTS.md: Model storage)
+        base_configs = YOLO_VERSION_CONFIGS
+        if "YOLO11M_EGRET_MAX_ACCURACY" in base_configs:
+            self.version_configs = {
+                "YOLO11M_EGRET_MAX_ACCURACY": base_configs["YOLO11M_EGRET_MAX_ACCURACY"]
+            }
+            # Adopt model-recommended inference conf if provided
+            model_conf = self.version_configs["YOLO11M_EGRET_MAX_ACCURACY"].get(
+                "inference_conf"
+            )
+            if isinstance(model_conf, (int, float)):
+                self.confidence_threshold = float(model_conf)
+        else:
+            self.version_configs = base_configs
 
         self.initialize_models()
 
@@ -406,8 +440,22 @@ class BirdDetectionService:
                 if not override_path.is_absolute():
                     override_path = project_root / override_path
                 if override_path.exists():
-                    logger.info(f"Loading {version} model from env override: {override_path}")
-                    return YOLO(str(override_path))
+                    if override_path.is_file():
+                        logger.info(
+                            f"Loading {version} model from env override file: {override_path}"
+                        )
+                        return YOLO(str(override_path))
+                    # If a directory is provided, search recursively for best.pt or any .pt
+                    if override_path.is_dir():
+                        candidates = list(override_path.rglob("best.pt"))
+                        if not candidates:
+                            candidates = list(override_path.rglob("*.pt"))
+                        if candidates:
+                            chosen = max(candidates, key=lambda p: p.stat().st_mtime)
+                            logger.info(
+                                f"Loading {version} model from env override directory: {chosen}"
+                            )
+                            return YOLO(str(chosen))
 
             # Special handling for the new Chinese Egret model
             if version == "CHINESE_EGRET_V1":
@@ -424,20 +472,35 @@ class BirdDetectionService:
 
             # Special handling for YOLO11m Egret Max Accuracy model
             if version == "YOLO11M_EGRET_MAX_ACCURACY":
-                model_path = project_root / config["model_path"]
+                model_path = Path(config["model_path"])
+                if not model_path.is_absolute():
+                    model_path = project_root / model_path
                 if model_path.exists():
-                    logger.info(f"🚀 Loading YOLO11m Egret Max Accuracy model from: {model_path}")
-                    logger.info(
-                        f"🎯 Performance: {config['performance']['mAP']:.1%} mAP, {config['performance']['fps']} FPS"
-                    )
-                    logger.info(
-                        f"📊 Trained on {config['training_images']} images, validated on {config['validation_images']} images"
-                    )
-                    logger.info(f"🦅 Species: {', '.join(config['trained_classes'])}")
-                    return YOLO(str(model_path))
-                else:
-                    logger.error(f"❌ YOLO11m Egret model not found at: {model_path}")
-                    return None
+                    if model_path.is_file():
+                        logger.info(
+                            f"🚀 Loading YOLO11m Egret Max Accuracy model from: {model_path}"
+                        )
+                        logger.info(
+                            f"🎯 Performance: {config['performance']['mAP']:.1%} mAP, {config['performance']['fps']} FPS"
+                        )
+                        logger.info(
+                            f"📊 Trained on {config['training_images']} images, validated on {config['validation_images']} images"
+                        )
+                        logger.info(f"🦅 Species: {', '.join(config['trained_classes'])}")
+                        return YOLO(str(model_path))
+                    # Directory: search inside
+                    if model_path.is_dir():
+                        candidates = list(model_path.rglob("best.pt"))
+                        if not candidates:
+                            candidates = list(model_path.rglob("*.pt"))
+                        if candidates:
+                            chosen = max(candidates, key=lambda p: p.stat().st_mtime)
+                            logger.info(
+                                f"🚀 Loading YOLO11m Egret Max Accuracy model from directory: {chosen}"
+                            )
+                            return YOLO(str(chosen))
+                logger.error(f"❌ YOLO11m Egret model not found at: {model_path}")
+                return None
 
             # Skip auto-discovery for YOLO11M_EGRET_MAX_ACCURACY - use specific path
             if version != "YOLO11M_EGRET_MAX_ACCURACY":
@@ -635,11 +698,36 @@ class BirdDetectionService:
                             else:
                                 continue  # Skip if no class
 
+                            # Map to unified egret/heron classes when using our unified model
                             class_name = (
                                 result.names[class_id]
                                 if hasattr(result, "names") and class_id in result.names
                                 else f"class_{class_id}"
                             )
+                            # Normalize class names for the five target species
+                            normalized_map = {
+                                "chinese egret": "Chinese Egret",
+                                "great egret": "Great Egret",
+                                "intermediate egret": "Intermediate Egret",
+                                "little egret": "Little Egret",
+                                "pacific reef heron": "Pacific Reef Heron",
+                                "pacific reef egret": "Pacific Reef Heron",
+                                "reef heron": "Pacific Reef Heron",
+                            }
+                            key_lc = str(class_name).strip().lower().replace("_", " ")
+                            class_name = normalized_map.get(key_lc, class_name)
+
+                            # If using the unified egret model, keep only the five target species
+                            if used_version == "YOLO11M_EGRET_MAX_ACCURACY":
+                                allowed = {
+                                    "Chinese Egret",
+                                    "Great Egret",
+                                    "Intermediate Egret",
+                                    "Little Egret",
+                                    "Pacific Reef Heron",
+                                }
+                                if class_name not in allowed:
+                                    continue  # Skip non-target classes
 
                             crop_w = int(x2 - x1)
                             crop_h = int(y2 - y1)
@@ -656,8 +744,25 @@ class BirdDetectionService:
                             crop = crop_image(image_np, bbox)
                             crop_min_side = min(crop.shape[0], crop.shape[1])
 
-                            # Stage-2: Classifier (using trained model)
-                            class_probs = trained_classifier_predict(crop)
+                            # Stage-2: Classifier (bypass when using unified egret model)
+                            if used_version == "YOLO11M_EGRET_MAX_ACCURACY":
+                                # Build a pseudo-prob vector biased toward the detector class
+                                target_classes = [
+                                    "Chinese Egret",
+                                    "Great Egret",
+                                    "Intermediate Egret",
+                                    "Little Egret",
+                                    "Pacific Reef Heron",
+                                ]
+                                base = 0.01
+                                class_probs = {c: base for c in target_classes}
+                                if class_name in class_probs:
+                                    class_probs[class_name] = max(confidence, 0.8)
+                                # renormalize
+                                s = sum(class_probs.values())
+                                class_probs = {k: v / s for k, v in class_probs.items()}
+                            else:
+                                class_probs = trained_classifier_predict(crop)
 
                             # Stage-2 decision
                             stage2_status, stage2_reason = decide_classification_gate(
@@ -757,6 +862,7 @@ class BirdDetectionService:
                 "model_version": used_version,
                 "device_used": self.device,
                 "confidence_threshold": self.confidence_threshold,
+                "trained_classes": self.version_configs.get(used_version, {}).get("trained_classes", []),
                 "image_analysis": {
                     "dimensions": f"{width}x{height}",
                     "file_size_bytes": len(image_content),

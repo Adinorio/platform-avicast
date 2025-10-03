@@ -187,9 +187,25 @@ YOLO_VERSION_CONFIGS = {
         "custom_model": "egret_yolo11m_best.pt",
         "description": "🚀 YOLO11m Egret Max Accuracy - Multi-species Detection (85.7% mAP)",
         "performance": {"mAP": 0.857, "fps": 45},
-        "model_path": "runs/egret_detection/egret_yolo11m_50ep_resume/weights/best.pt",
+        # Use the unified egret model trained locally. If this path does not match your
+        # local file layout, you can override it at runtime by setting the
+        # AVICAST_MODEL_WEIGHTS environment variable to the absolute path of your .pt file.
+        # Example (PowerShell):
+        #   $Env:AVICAST_MODEL_WEIGHTS = "C:\\Users\\LAPIS\\Documents\\Github\\platform-avicast\\unified_egret_yolo11\\best.pt"
+        # Default to the user's provided absolute path; if this file doesn't exist,
+        # you can override via AVICAST_MODEL_WEIGHTS or move the file under models/.
+        "model_path": "C:/Users/LAPIS/Documents/Github/platform-avicast/unified_egret_yolo11/best.pt",
         "onnx_path": None,
-        "trained_classes": ["Chinese Egret", "Great Egret", "Intermediate Egret", "Little Egret"],
+        # Recommended runtime confidence for inference with the unified egret model
+        "inference_conf": 0.50,
+        # Focus on the five target species
+        "trained_classes": [
+            "Chinese Egret",
+            "Great Egret",
+            "Intermediate Egret",
+            "Little Egret",
+            "Pacific Reef Heron",
+        ],
         "training_images": 992,
         "validation_images": 283,
         "validation_accuracy": {"precision": 0.864, "recall": 0.763},
