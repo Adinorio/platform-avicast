@@ -1,0 +1,137 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:"AVICAST System Administration" }}{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+<!-- Professional Dashboard Header -->
+<div class="dashboard-header">
+    <h1 class="dashboard-title">AVICAST Wildlife Monitoring System</h1>
+    <p class="dashboard-subtitle">Manage wildlife data, monitor bird populations, and track conservation efforts</p>
+</div>
+
+<!-- Key Performance Indicators -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-content">
+            <div class="kpi-number">{{ total_users|default:"0" }}</div>
+            <div class="kpi-label">System Users</div>
+            <div class="kpi-trend">Active accounts</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon">🦅</div>
+        <div class="kpi-content">
+            <div class="kpi-number">{{ total_species|default:"0" }}</div>
+            <div class="kpi-label">Bird Species</div>
+            <div class="kpi-trend">In database</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon">📍</div>
+        <div class="kpi-content">
+            <div class="kpi-number">{{ total_sites|default:"0" }}</div>
+            <div class="kpi-label">Monitoring Sites</div>
+            <div class="kpi-trend">Locations tracked</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-content">
+            <div class="kpi-number">{{ total_images|default:"0" }}</div>
+            <div class="kpi-label">Images Processed</div>
+            <div class="kpi-trend">AI analysis complete</div>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Management Modules -->
+<div class="management-grid">
+    {% for app in app_list %}
+    <div class="management-module" data-app="{{ app.app_label }}">
+        <div class="module-header">
+            <div class="module-icon">
+                {% if app.app_label == 'auth' %}🔐
+                {% elif app.app_label == 'fauna' %}🦅
+                {% elif app.app_label == 'image_processing' %}🔍
+                {% elif app.app_label == 'locations' %}📍
+                {% elif app.app_label == 'weather' %}🌤️
+                {% elif app.app_label == 'analytics' %}📊
+                {% else %}📋{% endif %}
+            </div>
+            <div class="module-title">{{ app.name }}</div>
+            <div class="module-description">
+                {% if app.app_label == 'auth' %}User accounts and permissions
+                {% elif app.app_label == 'fauna' %}Bird species and observations
+                {% elif app.app_label == 'image_processing' %}AI bird detection and analysis
+                {% elif app.app_label == 'locations' %}Monitoring sites and census data
+                {% elif app.app_label == 'weather' %}Weather data and field conditions
+                {% elif app.app_label == 'analytics' %}Reports and data visualization
+                {% else %}System management{% endif %}
+            </div>
+        </div>
+        <div class="module-content">
+            {% if app.models %}
+                {% for model in app.models %}
+                <div class="model-item">
+                    <div class="model-info">
+                        <div class="model-name">{{ model.name }}</div>
+                        <div class="model-count">
+                            {% if model.admin_url %}
+                            <a href="{{ model.admin_url }}" class="count-link">View all</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        {% if model.add_url %}
+                        <a href="{{ model.add_url }}" class="action-btn add-btn" title="Add new {{ model.name|lower }}">
+                            <span class="btn-icon">+</span>
+                            <span class="btn-text">Add</span>
+                        </a>
+                        {% endif %}
+                        {% if model.admin_url %}
+                        <a href="{{ model.admin_url }}" class="action-btn manage-btn" title="Manage {{ model.name|lower }} records">
+                            <span class="btn-icon">⚙</span>
+                            <span class="btn-text">Manage</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-permission">
+                    <p>No access to this module</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+    <!-- Recent Actions Sidebar -->
+    <div class="recent-actions-section">
+        <h2>Recent Actions</h2>
+        <h3>My actions</h3>
+        {% if recent_actions %}
+            <div class="action-list">
+                {% for entry in recent_actions %}
+                <div class="action-item">
+                    <div class="action-description">
+                        {{ entry.content_type|capfirst }} - {{ entry.object_repr }}
+                    </div>
+                    <div class="action-meta">
+                        <span class="action-time">{{ entry.action_time|date:"M d, Y H:i" }}</span>
+                        <span class="action-type">{{ entry.get_action_flag_display }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>None available</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

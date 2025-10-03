@@ -1,0 +1,70 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ site_title|default:"AVICAST System Administration" }} | {{ site_header|default:"AVICAST Admin" }}{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/avicast-admin.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/avicast-modern-system.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/avicast-professional-forms.css' %}">
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% static 'admin/js/avicast-global-sidebar.js' %}"></script>
+    <script>
+        // Prevent theme flash - force light theme immediately (safe for early head execution)
+        (function() {
+            document.documentElement.setAttribute('data-theme', 'light');
+            function applyBodyLight() {
+                if (!document.body) return false;
+                document.body.style.backgroundColor = '#ffffff';
+                document.body.style.color = '#212529';
+                return true;
+            }
+            if (!applyBodyLight()) {
+                document.addEventListener('DOMContentLoaded', applyBodyLight, { once: true });
+            }
+        })();
+    </script>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} admin-interface{% endblock %}
+
+{% block header %}
+    <div id="header">
+        <div id="site-name">
+            <a href="/admin/">AVICAST System Administration</a>
+        </div>
+        <div id="user-tools">
+            {% if user.is_authenticated %}
+                {% block userlinks %}
+                    Welcome,
+                    <strong>{% if user.get_short_name %}{{ user.get_short_name }}{% else %}{{ user.get_username }}{% endif %}</strong>.
+                    {% block userlinks_nav %}
+                        <a href="/">View site</a> /
+                        <a href="{% url 'admin:password_change' %}">Change password</a> /
+                        <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit">Log out</button>
+                        </form>
+                    {% endblock %}
+                {% endblock %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block nav-sidebar %}
+    {% include "admin/nav_sidebar.html" %}
+{% endblock %}
+
+{% block nav-global %}
+    <!-- Ensure Django admin sidebar navigation is present -->
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+{% endblock %}
