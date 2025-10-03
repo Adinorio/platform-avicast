@@ -22,6 +22,7 @@ from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
 from django.urls import include, path
 from django.views.generic import TemplateView
+from apps.users.admin_index import custom_admin_index
 
 
 def custom_login_redirect(request):
