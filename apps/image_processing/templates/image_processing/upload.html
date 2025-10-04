@@ -1,118 +1,188 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Upload Image - AVICAST{% endblock %}
+{% block title %}Capture Images{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-0">📸 Upload New Image</h3>
-                    <p class="text-muted mb-0">Upload bird survey images for processing and storage</p>
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="avic-page-title">
+                <i class="fas fa-upload"></i>Capture Images
+            </h1>
+            <p class="avic-page-subtitle">GTD Workflow Stage 1: Upload bird images for egret species identification</p>
+        </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="badge bg-primary me-3 fs-6">CAPTURE</div>
+                            <span class="text-muted">→ Clarify → Organize → Reflect → Engage</span>
+                        </div>
+                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-camera me-2"></i>Upload Bird Image
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         {% csrf_token %}
 
-                        {% if form.errors %}
-                        <div class="alert alert-danger">
-                            <h6>Please correct the following errors:</h6>
-                            {{ form.errors }}
-                        </div>
-                        {% endif %}
-
-                        <div class="mb-3">
-                            <label for="{{ form.image_file.id_for_label }}" class="form-label">
-                                {{ form.image_file.label }}
-                            </label>
-                            {{ form.image_file }}
-                            {% if form.image_file.help_text %}
-                            <div class="form-text">{{ form.image_file.help_text }}</div>
-                            {% endif %}
-                            {% if form.image_file.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.image_file.errors %}
-                                {{ error }}
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ form.title.id_for_label }}" class="form-label">
-                                {{ form.title.label }}
+                        <div class="mb-4">
+                            <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">
+                                Image Title <span class="text-danger">*</span>
                             </label>
                             {{ form.title }}
+                            <div class="form-text">Give your image a descriptive title to help with organization</div>
                             {% if form.title.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.title.errors %}
-                                {{ error }}
-                                {% endfor %}
-                            </div>
+                                <div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>
                             {% endif %}
                         </div>
 
-                        <div class="mb-3">
-                            <label for="{{ form.description.id_for_label }}" class="form-label">
-                                {{ form.description.label }}
+                        <div class="mb-4">
+                            <label for="{{ form.image_file.id_for_label }}" class="form-label fw-bold">
+                                Bird Image <span class="text-danger">*</span>
                             </label>
-                            {{ form.description }}
-                            {% if form.description.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.description.errors %}
-                                {{ error }}
-                                {% endfor %}
+                            {{ form.image_file }}
+                            <div class="form-text">
+                                Supported formats: JPG, JPEG, PNG. Max size: 50MB.
+                                Focus on one of these egret species: Chinese Egret, Great Egret, Intermediate Egret, Little Egret, Cattle Egret, Pacific Reef Heron
                             </div>
+                            {% if form.image_file.errors %}
+                                <div class="invalid-feedback d-block">{{ form.image_file.errors.0 }}</div>
                             {% endif %}
                         </div>
 
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
-                                <i class="fas fa-upload me-2"></i>Upload Image
+                        <div class="mb-4">
+                            <label for="{{ form.site_hint.id_for_label }}" class="form-label fw-bold">
+                                Site Location (Optional)
+                            </label>
+                            {{ form.site_hint }}
+                            <div class="form-text">Optional: Mention the site location to help with later allocation to census data</div>
+                            {% if form.site_hint.errors %}
+                                <div class="invalid-feedback d-block">{{ form.site_hint.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn avic-btn-primary btn-lg">
+                                <i class="fas fa-upload me-2"></i>Capture Image
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Upload Progress -->
-            <div class="card mt-3 d-none" id="progressCard">
+    <!-- Instructions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Capture Best Practices
+                    </h5>
+                </div>
                 <div class="card-body">
-                    <h6>Upload Progress</h6>
-                    <div class="progress mb-2">
-                        <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-camera text-primary fa-2x mb-3"></i>
+                                <h6 class="fw-bold">Clear Photos</h6>
+                                <p class="text-muted small">Take clear, well-lit photos of individual birds or small groups</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-bird text-warning fa-2x mb-3"></i>
+                                <h6 class="fw-bold">Target Species</h6>
+                                <p class="text-muted small">Focus on: Chinese Egret, Great Egret, Intermediate Egret, Little Egret, Cattle Egret, Pacific Reef Heron</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-tag text-info fa-2x mb-3"></i>
+                                <h6 class="fw-bold">Descriptive Titles</h6>
+                                <p class="text-muted small">Use descriptive titles like "Little Egret at Site A - 2024-01-15"</p>
+                            </div>
+                        </div>
                     </div>
-                    <small class="text-muted" id="progressText">Preparing upload...</small>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Storage Information -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0">💾 Storage Information</h6>
+    <!-- Recent Uploads -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Your Recent Uploads
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <small class="text-muted">Supported Formats:</small>
-                            <p class="mb-1">JPG, JPEG, PNG, GIF</p>
-                        </div>
-                        <div class="col-md-6">
-                            <small class="text-muted">Maximum Size:</small>
-                            <p class="mb-1">50 MB per image</p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <small class="text-muted">Automatic Optimization:</small>
-                            <p class="mb-1">✅ Enabled (60-80% space savings)</p>
-                        </div>
-                        <div class="col-md-6">
-                            <small class="text-muted">Duplicate Detection:</small>
-                            <p class="mb-1">✅ SHA256 hash checking</p>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Uploaded</th>
+                                    <th>Size</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for upload in recent_uploads %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ upload.title }}</strong>
+                                        {% if upload.site_hint %}
+                                            <br><small class="text-muted">{{ upload.site_hint }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if upload.upload_status == 'CAPTURED' %}bg-primary{% elif upload.upload_status == 'CLARIFIED' %}bg-warning{% elif upload.upload_status == 'ORGANIZED' %}bg-info{% elif upload.upload_status == 'REFLECTED' %}bg-secondary{% else %}bg-success{% endif %}">
+                                            {{ upload.get_upload_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ upload.uploaded_at|date:"M j, Y g:i A" }}</td>
+                                    <td>{{ upload.file_size|filesizeformat }}</td>
+                                    <td>
+                                        <a href="{% url 'image_processing:list' %}?stage={{ upload.upload_status|lower }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="fas fa-camera fa-2x mb-2"></i>
+                                        <br>No uploads yet. Upload your first image above!
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -120,71 +190,16 @@
     </div>
 </div>
 
-<!-- Preview Modal -->
-<div class="modal fade" id="previewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Image Preview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <img id="previewImage" class="img-fluid" alt="Preview">
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
 <script>
+// Form validation
 document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('{{ form.image_file.id_for_label }}');
-    const uploadForm = document.getElementById('uploadForm');
-    const progressCard = document.getElementById('progressCard');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const uploadBtn = document.getElementById('uploadBtn');
-
-    // File preview
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const previewImage = document.getElementById('previewImage');
-                previewImage.src = e.target.result;
-
-                // Show preview modal
-                const modal = new bootstrap.Modal(document.getElementById('previewModal'));
-                modal.show();
-            };
-            reader.readAsDataURL(file);
-
-            // Update button text
-            uploadBtn.innerHTML = `<i class="fas fa-upload me-2"></i>Upload ${file.name}`;
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
         }
-    });
-
-    // Form submission with progress
-    uploadForm.addEventListener('submit', function(e) {
-        // Show progress
-        progressCard.classList.remove('d-none');
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
-
-        // Simulate progress (in real app, this would be AJAX with progress tracking)
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += Math.random() * 20;
-            if (progress > 90) progress = 90;
-
-            progressBar.style.width = progress + '%';
-            progressText.textContent = `Uploading... ${Math.round(progress)}%`;
-        }, 200);
-
-        // Form will submit normally
+        form.classList.add('was-validated');
     });
 });
 </script>

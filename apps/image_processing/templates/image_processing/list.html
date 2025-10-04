@@ -1,859 +1,242 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Image List - AVICAST{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* Simple, clean styling */
-    .btn:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-    }
-
-    /* Processing status styling */
-    .processing-status {
-        text-align: center;
-        margin: 1rem 0;
-    }
-
-    /* Simple progress bar styling */
-    .processing-status .progress-container {
-        text-align: center;
-        margin: 1rem 0;
-    }
-
-    .processing-status .progress-label {
-        color: #6c757d;
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-    }
-
-    .processing-status .custom-progress {
-        background: #e9ecef;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        height: 20px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .processing-status .custom-progress-bar {
-        background: #007bff;
-        height: 100%;
-        border-radius: 3px;
-        transition: width 0.5s ease;
-        position: relative;
-        min-width: 30px;
-    }
-
-    .processing-status .progress-text {
-        position: absolute;
-        right: 6px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #ffffff;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
-    }
-</style>
-{% endblock %}
+{% block title %}Organize Images{% endblock %}
 
 {% block content %}
-<!-- CSRF Token for JavaScript API calls -->
-{% csrf_token %}
-<!-- Data attributes for JavaScript -->
-<div id="url-data"
-     data-detail-url="{% url 'image_processing:detail' '00000000-0000-0000-0000-000000000000' %}"
-     style="display: none;"></div>
 <div class="container-fluid mt-4">
-    <!-- Header -->
     <div class="row mb-4">
-        <div class="col">
-            <h2>📸 Image Library</h2>
-            <p class="text-muted">Manage and view all uploaded bird survey images</p>
-        </div>
-        <div class="col-auto">
-            <a href="{% url 'image_processing:upload' %}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Upload New Image
-            </a>
-            <a href="{% url 'image_processing:model_selection' %}" class="btn btn-outline-info ms-2">
-                <i class="fas fa-robot me-2"></i>AI Models
-            </a>
+        <div class="col-12">
+            <h1 class="avic-page-title">
+                <i class="fas fa-clipboard-list"></i>Organize Images
+            </h1>
+            <p class="avic-page-subtitle">GTD Workflow Stage 3: View and organize images by workflow stage</p>
         </div>
     </div>
 
-    <!-- Storage Status -->
+    <!-- Stage Filter -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
+        <div class="col-12">
+            <div class="card avic-card">
                 <div class="card-body">
-                    <h6 class="card-title">Main Storage</h6>
-                    <h4>{{ storage_stats.main_storage.used_gb|floatformat:1 }} / {{ storage_stats.main_storage.total_gb|floatformat:1 }} GB</h4>
-                    <div class="progress bg-white bg-opacity-25">
-                        <div class="progress-bar bg-white" data-width="{{ storage_stats.main_storage.usage_percent|floatformat:1 }}"></div>
+                    <div class="row g-2">
+                        <div class="col-md-2">
+                            <a href="{% url 'image_processing:list' %}" class="btn {% if current_stage == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                                All Images ({{ stage_counts.all }})
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'image_processing:list' %}?stage=captured" class="btn {% if current_stage == 'captured' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                                Capture ({{ stage_counts.captured }})
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'image_processing:list' %}?stage=clarified" class="btn {% if current_stage == 'clarified' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">
+                                Clarify ({{ stage_counts.clarified }})
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'image_processing:list' %}?stage=organized" class="btn {% if current_stage == 'organized' %}btn-info{% else %}btn-outline-info{% endif %} w-100">
+                                Organize ({{ stage_counts.organized }})
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'image_processing:list' %}?stage=reflected" class="btn {% if current_stage == 'reflected' %}btn-secondary{% else %}btn-outline-secondary{% endif %} w-100">
+                                Reflect ({{ stage_counts.reflected }})
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'image_processing:list' %}?stage=engaged" class="btn {% if current_stage == 'engaged' %}btn-success{% else %}btn-outline-success{% endif %} w-100">
+                                Engage ({{ stage_counts.engaged }})
+                            </a>
+                        </div>
                     </div>
-                    <small>{{ storage_stats.main_storage.usage_percent|floatformat:1 }}% used</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h6 class="card-title">Archive Storage</h6>
-                    <h4>{{ storage_stats.archive_storage.used_gb|floatformat:1 }} / {{ storage_stats.archive_storage.total_gb|floatformat:1 }} GB</h4>
-                    <div class="progress bg-white bg-opacity-25">
-                        <div class="progress-bar bg-white" data-width="{{ storage_stats.archive_storage.usage_percent|floatformat:1 }}"></div>
-                    </div>
-                    <small>{{ storage_stats.archive_storage.usage_percent|floatformat:1 }}% used</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h6 class="card-title">Compression Savings</h6>
-                    <h4>{{ storage_stats.avicast_usage.compression_savings_percent|floatformat:1 }}%</h4>
-                    <small>{{ storage_stats.avicast_usage.compression_savings_mb|floatformat:1 }} MB saved</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h6 class="card-title">Total Images</h6>
-                    <h4>{{ total_images }}</h4>
-                    <small>{{ compressed_images }} compressed, {{ uncompressed_images }} uncompressed</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Upload Success Notice -->
-    {% if request.session.upload_results %}
-    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-        <i class="fas fa-check-circle me-2"></i>
-        <strong>Upload Complete!</strong> {{ request.session.upload_results.total }} image(s) uploaded successfully and ready for processing.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endif %}
-
-    <!-- Workflow Information -->
-    <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
-        <i class="fas fa-info-circle me-2"></i>
-        <strong>How Image Processing Works:</strong>
-        <ol class="mb-0 mt-2">
-            <li><strong>Upload:</strong> Images are uploaded and stored (Status: <span class="badge bg-info">Ready</span>)</li>
-            <li><strong>Process:</strong> Click "Start Processing" to begin AI analysis (Status: <span class="badge bg-warning">Processing</span>)</li>
-            <li><strong>Complete:</strong> View results after AI processing finishes (Status: <span class="badge bg-success">Complete</span>)</li>
-        </ol>
-        <div class="mt-3">
-            <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshPageStatus()">
-                <i class="fas fa-sync-alt me-1"></i>Refresh Status
-            </button>
-            <small class="text-muted ms-2">Click to refresh the page and see current status</small>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-    <!-- Search and Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-3">
-                    <input type="text" class="form-control" name="search" value="{{ search_query }}"
-                           placeholder="Search images...">
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" name="status">
-                        <option value="">All Status</option>
-                        <option value="UPLOADED" {% if status == 'UPLOADED' %}selected{% endif %}>Uploaded</option>
-                        <option value="PROCESSING" {% if status == 'PROCESSING' %}selected{% endif %}>Processing</option>
-                        <option value="PROCESSED" {% if status == 'PROCESSED' %}selected{% endif %}>Processed</option>
-                        <option value="FAILED" {% if status == 'FAILED' %}selected{% endif %}>Failed</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" name="storage_tier">
-                        <option value="">All Tiers</option>
-                        <option value="HOT" {% if storage_tier == 'HOT' %}selected{% endif %}>Hot Storage</option>
-                        <option value="WARM" {% if storage_tier == 'WARM' %}selected{% endif %}>Warm Storage</option>
-                        <option value="COLD" {% if storage_tier == 'COLD' %}selected{% endif %}>Cold Storage</option>
-                        <option value="ARCHIVE" {% if storage_tier == 'ARCHIVE' %}selected{% endif %}>Archive</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" name="compression_status">
-                        <option value="">All Images</option>
-                        <option value="compressed" {% if compression_status == 'compressed' %}selected{% endif %}>Compressed</option>
-                        <option value="uncompressed" {% if compression_status == 'uncompressed' %}selected{% endif %}>Uncompressed</option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
-                </div>
-                <div class="col-md-1">
-                    <a href="{% url 'image_processing:list' %}" class="btn btn-outline-secondary w-100">Clear</a>
-                </div>
-                <div class="col-md-1">
-                    <a href="{% url 'image_processing:upload' %}" class="btn btn-primary w-100">
-                        <i class="fas fa-plus"></i>
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Batch Actions -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="selectAll">
-                        <label class="form-check-label" for="selectAll">
-                            <strong>Select All Images</strong>
-                        </label>
-                    </div>
-                    <small class="text-muted">Select images to process in batch</small>
-                </div>
-                <div class="col-md-4 text-end">
-                    <button type="button" class="btn btn-success" id="batchProcessBtn" disabled>
-                        <i class="fas fa-cogs me-2"></i>Process Selected
-                    </button>
-                    <button type="button" class="btn btn-outline-danger" id="batchDeleteBtn" disabled>
-                        <i class="fas fa-trash me-2"></i>Delete Selected
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Image Grid -->
+    {% if images %}
+    <!-- Images Grid -->
     <div class="row">
-        {% for image in page_obj %}
-        <div class="col-md-4 col-lg-3 mb-4">
-            <div class="card h-100">
-                <!-- Checkbox for selection -->
-                <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
-                    <input class="form-check-input image-checkbox" type="checkbox" value="{{ image.pk }}"
-                           data-image-id="{{ image.pk }}" data-status="{{ image.upload_status }}">
-                </div>
-
-                <!-- Image -->
+        {% for image in images %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card h-100 border">
                 <div class="position-relative">
-                    {% if image.image_file %}
-                    <img src="{{ image.image_file.url }}" class="card-img-top" alt="{{ image.title }}"
+                    <img src="{{ image.image_file.url }}"
+                         class="card-img-top"
+                         alt="{{ image.title }}"
                          style="height: 200px; object-fit: cover;">
-                    {% else %}
-                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
-                         style="height: 200px;">
-                        <i class="fas fa-image fa-3x text-muted"></i>
-                    </div>
-                    {% endif %}
 
                     <!-- Status Badge -->
-                    <span class="position-absolute top-0 start-0 badge
-                        {% if image.upload_status == 'UPLOADED' %}bg-info
-                        {% elif image.upload_status == 'PROCESSING' %}bg-warning text-dark
-                        {% elif image.upload_status == 'PROCESSED' %}bg-success
-                        {% elif image.upload_status == 'FAILED' %}bg-danger
-                        {% else %}bg-secondary{% endif %} m-2 ms-5">
-                        {% if image.upload_status == 'UPLOADED' %}
-                            <i class="fas fa-upload me-1"></i>Ready
-                        {% elif image.upload_status == 'PROCESSING' %}
-                            <i class="fas fa-cogs me-1"></i>Processing
-                        {% elif image.upload_status == 'PROCESSED' %}
-                            <i class="fas fa-check me-1"></i>Complete
-                        {% elif image.upload_status == 'FAILED' %}
-                            <i class="fas fa-times me-1"></i>Failed
-                        {% else %}
-                            {{ image.get_upload_status_display }}
-                        {% endif %}
-                    </span>
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge fs-6 {% if image.upload_status == 'CAPTURED' %}bg-primary{% elif image.upload_status == 'CLARIFIED' %}bg-warning{% elif image.upload_status == 'ORGANIZED' %}bg-info{% elif image.upload_status == 'REFLECTED' %}bg-secondary{% else %}bg-success{% endif %}">
+                            {% if image.upload_status == 'CAPTURED' %}CAPTURE{% elif image.upload_status == 'CLARIFIED' %}CLARIFY{% elif image.upload_status == 'ORGANIZED' %}ORGANIZE{% elif image.upload_status == 'REFLECTED' %}REFLECT{% else %}ENGAGE{% endif %}
+                        </span>
+                    </div>
 
-                    <!-- Compression Badge -->
-                    {% if image.is_compressed %}
-                    <span class="position-absolute top-0 end-0 badge bg-success m-2">
-                        <i class="fas fa-compress-alt"></i>
-                    </span>
+                    <!-- Processing Result Badge -->
+                    {% if image.processing_result %}
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-dark">
+                            {{ image.processing_result.get_detected_species_display }} ({{ image.processing_result.confidence_score|floatformat:0 }}%)
+                        </span>
+                    </div>
                     {% endif %}
                 </div>
 
-                <!-- Card Body -->
-                <div class="card-body d-flex flex-column">
-                    <h6 class="card-title">{{ image.title|truncatechars:30 }}</h6>
-                    <p class="card-text small text-muted">{{ image.description|truncatechars:60 }}</p>
+                <div class="card-body">
+                    <h6 class="card-title">{{ image.title }}</h6>
+                    {% if image.site_hint %}
+                        <p class="card-text small text-muted">{{ image.site_hint }}</p>
+                    {% endif %}
 
-                    <div class="mt-auto">
-                        <div class="row text-center small text-muted mb-2">
-                            <div class="col-6">
-                                <div>Size</div>
-                                <div class="fw-bold">{{ image.file_size|filesizeformat }}</div>
-                            </div>
-                            <div class="col-6">
-                                <div>Uploaded</div>
-                                <div class="fw-bold">{{ image.uploaded_at|date:"M d" }}</div>
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">
+                            {{ image.file_size|filesizeformat }} • {{ image.uploaded_at|timesince }} ago
+                        </small>
+                    </div>
 
-                        <div class="d-grid gap-1">
-                            {% if image.upload_status == 'UPLOADED' %}
-                            <button type="button" class="btn btn-success btn-sm process-single-btn"
-                                    data-image-id="{{ image.pk }}">
-                                <i class="fas fa-play me-1"></i>Start Processing
-                            </button>
-                            <small class="text-muted text-center mt-1">
-                                <i class="fas fa-info-circle me-1"></i>Click to start AI processing
-                            </small>
-                                                         {% elif image.upload_status == 'PROCESSING' %}
-                             <div class="processing-status">
-                                 <div class="progress-container">
-                                     <div class="progress-label">
-                                         <i class="fas fa-cogs me-1"></i>AI Processing...
-                                     </div>
-                                     <div class="custom-progress">
-                                         <div class="custom-progress-bar processing-progress"
-                                              data-progress="{{ image.processing_progress|default:45 }}"
-                                              data-image-id="{{ image.pk }}">
-                                             <span class="progress-text processing-text" data-image-id="{{ image.pk }}">
-                                                 {% if image.processing_progress %}
-                                                     {{ image.processing_progress }}%
-                                                 {% else %}
-                                                     45%
-                                                 {% endif %}
-                                             </span>
-                                         </div>
-                                     </div>
-                                     <small class="text-muted text-center mt-1">AI analysis in progress</small>
-                                 </div>
-                             </div>
-                            {% elif image.upload_status == 'PROCESSED' %}
-                            <a href="{% url 'image_processing:detail' image.pk %}"
-                               class="btn btn-info btn-sm">
-                                <i class="fas fa-eye me-1"></i>View Results
-                            </a>
-                            {% elif image.upload_status == 'FAILED' %}
-                            <div class="d-grid gap-1">
-                                <button type="button" class="btn btn-warning btn-sm process-single-btn"
-                                        data-image-id="{{ image.pk }}">
-                                    <i class="fas fa-redo me-1"></i>Retry
-                                </button>
-                                <a href="{% url 'image_processing:detail' image.pk %}"
-                                   class="btn btn-outline-secondary btn-sm">
-                                    <i class="fas fa-eye me-1"></i>View Error
-                                </a>
-                            </div>
-                            {% else %}
-                            <a href="{% url 'image_processing:detail' image.pk %}"
-                               class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-eye me-1"></i>View
-                            </a>
-                            {% endif %}
-                        </div>
+                    <!-- Action Buttons -->
+                    <div class="btn-group-vertical w-100" role="group">
+                        {% if image.upload_status == 'CAPTURED' %}
+                        <a href="{% url 'image_processing:start_processing' image.id %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-search me-1"></i>Start Clarification
+                        </a>
+                        {% elif image.upload_status == 'CLARIFIED' %}
+                        <span class="btn btn-sm btn-info disabled">
+                            <i class="fas fa-cog me-1"></i>Processing...
+                        </span>
+                        {% elif image.upload_status == 'ORGANIZED' %}
+                        <a href="{% url 'image_processing:review' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-brain me-1"></i>Ready for Review
+                        </a>
+                        {% elif image.upload_status == 'REFLECTED' %}
+                        <a href="{% url 'image_processing:allocate' %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-check-circle me-1"></i>Ready for Allocation
+                        </a>
+                        {% else %}
+                        <span class="btn btn-sm btn-success disabled">
+                            <i class="fas fa-check-circle me-1"></i>Allocated
+                        </span>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="text-center py-5">
-                <i class="fas fa-images fa-3x text-muted mb-3"></i>
-                <h5>No images found</h5>
-                <p class="text-muted">
-                    {% if search_query or storage_tier or compression_status %}
-                    Try adjusting your search criteria or
-                    {% endif %}
-                    <a href="{% url 'image_processing:upload' %}">upload your first image</a>
-                </p>
             </div>
         </div>
         {% endfor %}
     </div>
 
     <!-- Pagination -->
-    {% if page_obj.has_other_pages %}
-    <nav aria-label="Image pagination" class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if storage_tier %}&storage_tier={{ storage_tier }}{% endif %}{% if compression_status %}&compression_status={{ compression_status }}{% endif %}">
-                    Previous
-                </a>
-            </li>
-            {% endif %}
+    {% if is_paginated %}
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Image pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1&stage={{ current_stage }}">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&stage={{ current_stage }}">Previous</a>
+                        </li>
+                    {% endif %}
 
-            {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-            <li class="page-item active">
-                <span class="page-link">{{ num }}</span>
-            </li>
-            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if storage_tier %}&storage_tier={{ storage_tier }}{% endif %}{% if compression_status %}&compression_status={{ compression_status }}{% endif %}">
-                    {{ num }}
-                </a>
-            </li>
-            {% endif %}
-            {% endfor %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}&stage={{ current_stage }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
 
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if storage_tier %}&storage_tier={{ storage_tier }}{% endif %}{% if compression_status %}&compression_status={{ compression_status }}{% endif %}">
-                    Next
-                </a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&stage={{ current_stage }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&stage={{ current_stage }}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
     {% endif %}
-</div>
-
-<!-- Post-Upload Modal -->
-{% if request.session.upload_results %}
-<div class="modal fade" id="uploadResultsModal" tabindex="-1" aria-labelledby="uploadResultsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="uploadResultsModalLabel">
-                    <i class="fas fa-upload me-2"></i>Upload Complete!
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    {% else %}
+    <!-- No Images Message -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card avic-card text-center">
+                <div class="card-body py-5">
+                    <i class="fas fa-images text-muted fa-4x mb-4"></i>
+                    <h4 class="text-muted">No Images Found</h4>
+                    <p class="text-muted mb-4">
+                        {% if current_stage == 'all' %}
+                            You haven't uploaded any images yet.
+                        {% else %}
+                            No images in the {{ current_stage|title }} stage.
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'image_processing:upload' %}" class="btn avic-btn-primary btn-lg">
+                        <i class="fas fa-upload me-2"></i>Upload Images
+                    </a>
+                </div>
             </div>
-            <div class="modal-body">
-                <div class="row text-center mb-4">
-                    <div class="col-md-12">
-                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                            <i class="fas fa-images text-white fa-lg"></i>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Workflow Progress Summary -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Workflow Progress Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border-end">
+                                <h3 class="text-primary">{{ stage_counts.captured }}</h3>
+                                <p class="text-muted mb-0">Captured</p>
+                                <small class="text-muted">Ready for processing</small>
+                            </div>
                         </div>
-                        <h4 class="text-primary">{{ request.session.upload_results.total }}</h4>
-                        <p class="text-muted mb-0">Images Uploaded Successfully</p>
+                        <div class="col-md-4">
+                            <div class="border-end">
+                                <h3 class="text-warning">{{ stage_counts.clarified }}</h3>
+                                <p class="text-muted mb-0">Clarified</p>
+                                <small class="text-muted">AI processing in progress</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-info">{{ stage_counts.organized }}</h3>
+                            <p class="text-muted mb-0">Organized</p>
+                            <small class="text-muted">Results ready for review</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-md-6">
+                            <h3 class="text-secondary">{{ stage_counts.reflected }}</h3>
+                            <p class="text-muted mb-0">Reflected</p>
+                            <small class="text-muted">Human review completed</small>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="text-success">{{ stage_counts.engaged }}</h3>
+                            <p class="text-muted mb-0">Engaged</p>
+                            <small class="text-muted">Allocated to census data</small>
+                        </div>
                     </div>
                 </div>
-
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    <strong>Upload Complete!</strong> Your images have been uploaded successfully and are ready for processing.
-                </div>
-
-                <div class="text-center">
-                    <p class="text-muted">What would you like to do next?</p>
-                </div>
-            </div>
-            <div class="modal-footer justify-content-center">
-                <a href="{% url 'image_processing:upload' %}" class="btn btn-primary me-2">
-                    <i class="fas fa-plus me-2"></i>Upload More Images
-                </a>
-                <button type="button" class="btn btn-success" data-bs-dismiss="modal">
-                    <i class="fas fa-list me-2"></i>Review Images
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Close
-                </button>
             </div>
         </div>
     </div>
 </div>
-{% endif %}
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Set progress bar widths from data attributes
-    const progressBars = document.querySelectorAll('[data-width]');
-    progressBars.forEach(function(bar) {
-        const width = bar.getAttribute('data-width');
-        bar.style.width = width + '%';
-    });
-
-    // Checkbox functionality
-    const selectAllCheckbox = document.getElementById('selectAll');
-    const imageCheckboxes = document.querySelectorAll('.image-checkbox');
-    const batchProcessBtn = document.getElementById('batchProcessBtn');
-    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
-    const processSingleBtns = document.querySelectorAll('.process-single-btn');
-
-    // Handle "Select All" functionality
-    selectAllCheckbox.addEventListener('change', function() {
-        const isChecked = this.checked;
-        imageCheckboxes.forEach(checkbox => {
-            if (!checkbox.disabled) {
-                checkbox.checked = isChecked;
-            }
-        });
-        updateBatchButtons();
-    });
-
-    // Handle individual checkbox changes
-    imageCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            updateSelectAllState();
-            updateBatchButtons();
-        });
-    });
-
-    // Update "Select All" checkbox state
-    function updateSelectAllState() {
-        const checkedBoxes = document.querySelectorAll('.image-checkbox:checked');
-        const enabledBoxes = document.querySelectorAll('.image-checkbox:not(:disabled)');
-
-        if (checkedBoxes.length === 0) {
-            selectAllCheckbox.checked = false;
-            selectAllCheckbox.indeterminate = false;
-        } else if (checkedBoxes.length === enabledBoxes.length) {
-            selectAllCheckbox.checked = true;
-            selectAllCheckbox.indeterminate = false;
-        } else {
-            selectAllCheckbox.checked = false;
-            selectAllCheckbox.indeterminate = true;
-        }
-    }
-
-    // Update batch action buttons
-    function updateBatchButtons() {
-        const selectedImages = document.querySelectorAll('.image-checkbox:checked');
-        const selectedCount = selectedImages.length;
-
-        batchProcessBtn.disabled = selectedCount === 0;
-        batchDeleteBtn.disabled = selectedCount === 0;
-
-        batchProcessBtn.innerHTML = `<i class="fas fa-cogs me-2"></i>Process Selected (${selectedCount})`;
-        batchDeleteBtn.innerHTML = `<i class="fas fa-trash me-2"></i>Delete Selected (${selectedCount})`;
-    }
-
-    // Handle batch processing
-    batchProcessBtn.addEventListener('click', function() {
-        const selectedImages = document.querySelectorAll('.image-checkbox:checked');
-        const imageIds = Array.from(selectedImages).map(cb => cb.value);
-
-        if (imageIds.length === 0) {
-            alert('Please select images to process.');
-            return;
-        }
-
-        if (confirm(`Process ${imageIds.length} selected image(s)?`)) {
-            processImages(imageIds);
-        }
-    });
-
-    // Handle individual image processing
-    processSingleBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const imageId = this.getAttribute('data-image-id');
-            if (confirm('Process this image?')) {
-                processImages([imageId]);
-            }
-        });
-    });
-
-            // Global variable to store polling intervals
-    let progressPollingIntervals = {};
-
-    // Function to poll progress for processing images
-    function pollProgress(imageIds) {
-        if (imageIds.length === 0) return;
-
-        fetch('{% url "image_processing:api_get_progress" %}?image_ids[]=' + imageIds.join('&image_ids[]='), {
-            method: 'GET',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                data.images.forEach(image => {
-                    updateProgressDisplay(image);
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error polling progress:', error);
-        });
-    }
-
-    // Function to update progress display for a single image
-    function updateProgressDisplay(image) {
-        const progressBar = document.querySelector(`.custom-progress-bar[data-image-id="${image.id}"]`);
-        const progressText = document.querySelector(`.progress-text[data-image-id="${image.id}"]`);
-        const card = document.querySelector(`[data-image-id="${image.id}"]`).closest('.card');
-        const progressLabel = card ? card.querySelector('.progress-label') : null;
-
-        if (progressBar && progressText) {
-            const newProgress = image.progress || 0;
-
-            // Get current progress from data attribute or style
-            let currentProgress = 0;
-            if (progressBar.getAttribute('data-progress')) {
-                currentProgress = parseFloat(progressBar.getAttribute('data-progress'));
-            } else if (progressBar.style.width) {
-                currentProgress = parseFloat(progressBar.style.width);
-            }
-
-            // Only update if progress has changed
-            if (newProgress !== currentProgress) {
-                // Update progress bar width with smooth transition
-                progressBar.style.width = newProgress + '%';
-                progressBar.setAttribute('data-progress', newProgress);
-                progressText.textContent = newProgress + '%';
-
-                console.log(`Updated progress for image ${image.id}: ${currentProgress}% -> ${newProgress}%`);
-            }
-
-            // Update progress label based on step
-            if (progressLabel && image.step_display) {
-                progressLabel.innerHTML = `<i class="fas fa-cogs me-1"></i>${image.step_display}...`;
-            }
-
-            // If processing is complete, stop polling for this image
-            if (image.status === 'PROCESSED' || image.status === 'FAILED') {
-                if (progressPollingIntervals[image.id]) {
-                    clearInterval(progressPollingIntervals[image.id]);
-                    delete progressPollingIntervals[image.id];
-                }
-
-                if (image.status === 'PROCESSED') {
-                    progressLabel.innerHTML = '<i class="fas fa-check me-1"></i>Processing Complete!';
-                    progressBar.style.width = '100%';
-                    progressText.textContent = '100%';
-                } else if (image.status === 'FAILED') {
-                    progressLabel.innerHTML = '<i class="fas fa-times me-1"></i>Processing Failed';
-                }
-            }
-        }
-    }
-
-    // Process images function
-    function processImages(imageIds) {
-        console.log('Starting processing for images:', imageIds);
-
-        // Show loading state on buttons
-        imageIds.forEach(id => {
-            const checkbox = document.querySelector(`[data-image-id="${id}"]`);
-            if (checkbox) {
-                const card = checkbox.closest('.card');
-                const btn = card.querySelector('.process-single-btn, .btn');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
-                }
-            }
-        });
-
-        // Show immediate progress bar feedback
-        imageIds.forEach(id => {
-            const checkbox = document.querySelector(`[data-image-id="${id}"]`);
-            if (checkbox) {
-                const card = checkbox.closest('.card');
-                const buttonContainer = card.querySelector('.d-grid.gap-1');
-                if (buttonContainer) {
-                    buttonContainer.innerHTML = `
-                        <div class="processing-status">
-                            <div class="progress-container">
-                                <div class="progress-label">
-                                    <i class="fas fa-cogs me-1"></i>Starting AI Processing...
-                                </div>
-                                <div class="custom-progress">
-                                    <div class="custom-progress-bar processing-progress"
-                                         data-progress="10"
-                                         data-image-id="${id}">
-                                        <span class="progress-text processing-text" data-image-id="${id}">10%</span>
-                                    </div>
-                                </div>
-                                <small class="text-muted text-center mt-1">Initializing...</small>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-        });
-
-        // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (!csrfToken) {
-            alert('CSRF token not found. Please refresh the page and try again.');
-            return;
-        }
-
-        // Start progress polling for these images
-        imageIds.forEach(id => {
-            // Poll immediately to get current status
-            pollProgress([id]);
-
-            // Set up polling interval (every 2 seconds)
-            progressPollingIntervals[id] = setInterval(() => {
-                pollProgress([id]);
-            }, 2000);
-        });
-
-        // Make API call to process images
-        fetch('{% url "image_processing:api_batch_process" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken.value
-            },
-            body: JSON.stringify({ image_ids: imageIds })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Backend processing completed:', data);
-
-                // Stop polling for all processed images
-                imageIds.forEach(id => {
-                    if (progressPollingIntervals[id]) {
-                        clearInterval(progressPollingIntervals[id]);
-                        delete progressPollingIntervals[id];
-                    }
-                });
-
-                // Get final progress status
-                pollProgress(imageIds);
-
-                // Brief delay to show completion, then refresh
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
-            } else {
-                alert('Error processing images: ' + (data.error || 'Unknown error'));
-
-                // Stop polling and reset UI
-                imageIds.forEach(id => {
-                    if (progressPollingIntervals[id]) {
-                        clearInterval(progressPollingIntervals[id]);
-                        delete progressPollingIntervals[id];
-                    }
-
-                    const card = document.querySelector(`[data-image-id="${id}"]`).closest('.card');
-                    const buttonContainer = card.querySelector('.d-grid.gap-1');
-
-                    // Restore original button
-                    buttonContainer.innerHTML = `
-                        <button type="button" class="btn btn-success btn-sm process-single-btn"
-                                data-image-id="${id}">
-                            <i class="fas fa-play me-1"></i>Start Processing
-                        </button>
-                        <small class="text-muted text-center mt-1">
-                            <i class="fas fa-info-circle me-1"></i>Click to start AI processing
-                        </small>
-                    `;
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error processing images. Please try again.');
-
-            // Stop polling and reset button states
-            imageIds.forEach(id => {
-                if (progressPollingIntervals[id]) {
-                    clearInterval(progressPollingIntervals[id]);
-                    delete progressPollingIntervals[id];
-                }
-
-                const checkbox = document.querySelector(`[data-image-id="${id}"]`);
-                if (checkbox) {
-                    const card = checkbox.closest('.card');
-                    const btn = card.querySelector('.process-single-btn, .btn');
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-cogs me-1"></i>Process';
-                    }
-                }
-            });
-        });
-    }
-
-    // Initialize batch buttons
-    updateBatchButtons();
-
-    // Progress functions removed - now using direct API response handling
-
-    // Removed progress bar initialization - no longer needed
-
-    // Auto-show upload results modal when page loads (only if modal exists)
-    const uploadModalEl = document.getElementById('uploadResultsModal');
-    if (uploadModalEl) {
-        var uploadModal = new bootstrap.Modal(uploadModalEl);
-        uploadModal.show();
-
-        // Clear session data when modal is hidden
-        uploadModalEl.addEventListener('hidden.bs.modal', function () {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-            if (!csrfToken) {
-                console.error('CSRF token not found for modal cleanup');
-                return;
-            }
-
-            fetch('{% url "image_processing:clear_upload_results" %}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken.value,
-                }
-            });
-        });
-    }
-
-    // Function to refresh page status
-    function refreshPageStatus() {
-        console.log('Manual refresh requested...'); // Debug logging
-        location.reload();
-    }
-
-    // Initialize existing progress bars
-    function initializeProgressBars() {
-        const progressBars = document.querySelectorAll('.processing-progress');
-        progressBars.forEach(bar => {
-            const progress = bar.getAttribute('data-progress');
-            if (progress) {
-                bar.style.width = progress + '%';
-                // Update the progress text element, not the bar itself
-                const progressText = bar.querySelector('.progress-text');
-                if (progressText) {
-                    progressText.textContent = progress + '%';
-                }
-            }
-        });
-    }
-
-    // Function to start polling for images that are currently processing
-    function startPollingForProcessingImages() {
-        const processingImages = document.querySelectorAll('[data-status="PROCESSING"]');
-        const processingImageIds = Array.from(processingImages).map(img => img.getAttribute('data-image-id')).filter(id => id);
-
-        if (processingImageIds.length > 0) {
-            console.log('Starting polling for existing processing images:', processingImageIds);
-
-            processingImageIds.forEach(id => {
-                // Poll immediately to get current status
-                pollProgress([id]);
-
-                // Set up polling interval (every 2 seconds)
-                progressPollingIntervals[id] = setInterval(() => {
-                    pollProgress([id]);
-                }, 2000);
-            });
-        }
-    }
-
-    // Simple page initialization
-    console.log('Page loaded, checking for processing images...'); // Debug logging
-    initializeProgressBars();
-    startPollingForProcessingImages();
-
-    // Initialize progress bars and polling on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeProgressBars();
-        startPollingForProcessingImages();
-    });
-
-    // Test function for debugging
-    window.testProgressBar = function(imageId) {
-        console.log('Testing with image:', imageId);
-        alert('Test function called with image ID: ' + imageId);
-    };
-});
-</script>
 {% endblock %}
