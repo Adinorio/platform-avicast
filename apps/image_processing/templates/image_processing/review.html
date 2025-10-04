@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+
+{% block title %}Reflect on Results{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="avic-page-title">
+                <i class="fas fa-brain"></i>Reflect on Results
+            </h1>
+            <p class="avic-page-subtitle">GTD Workflow Stage 4: Human review of AI processing results</p>
+        </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="badge bg-primary me-3 fs-6">CAPTURE</div>
+                            <div class="badge bg-warning me-3 fs-6">CLARIFY</div>
+                            <div class="badge bg-info me-3 fs-6">ORGANIZE</div>
+                            <div class="badge bg-secondary me-3 fs-6">REFLECT</div>
+                            <span class="text-muted">→ Engage</span>
+                        </div>
+                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if pending_results %}
+    <!-- Results Needing Review -->
+    <div class="row">
+        {% for result in pending_results %}
+        <div class="col-12 mb-4">
+            <div class="card avic-card">
+                <div class="row g-0">
+                    <div class="col-lg-4">
+                        <img src="{{ result.image_upload.image_file.url }}"
+                             class="img-fluid rounded-start h-100 object-fit-cover"
+                             alt="{{ result.image_upload.title }}"
+                             style="min-height: 300px;">
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title">{{ result.image_upload.title }}</h5>
+                                    {% if result.image_upload.site_hint %}
+                                        <p class="text-muted mb-2">{{ result.image_upload.site_hint }}</p>
+                                    {% endif %}
+                                </div>
+                                <span class="badge fs-6 {% if result.review_decision == 'PENDING' %}bg-secondary{% elif result.review_decision == 'APPROVED' %}bg-success{% elif result.review_decision == 'REJECTED' %}bg-danger{% else %}bg-info{% endif %}">
+                                    {{ result.get_review_decision_display }}
+                                </span>
+                            </div>
+
+                            <!-- AI Results -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3 bg-light">
+                                        <h6 class="fw-bold text-primary mb-2">
+                                            <i class="fas fa-robot me-1"></i>AI Detection
+                                        </h6>
+                                        <p class="mb-1"><strong>Species:</strong> {{ result.get_detected_species_display }}</p>
+                                        <p class="mb-1"><strong>Count:</strong> {{ result.total_detections }}</p>
+                                        <p class="mb-1"><strong>Confidence:</strong> {{ result.confidence_score|floatformat:1 }}%</p>
+                                        <p class="mb-0"><strong>Model:</strong> {{ result.ai_model_used }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="border rounded p-3">
+                                        <h6 class="fw-bold text-success mb-2">
+                                            <i class="fas fa-search me-1"></i>Detection Details
+                                        </h6>
+                                        <div class="row g-2">
+                                            <div class="col-sm-6">
+                                                <small class="text-muted">Bounding Box:</small>
+                                                <div class="bg-white p-2 rounded border">
+                                                    <code class="small">
+                                                        x: {{ result.bounding_box.x|default:"N/A" }}<br>
+                                                        y: {{ result.bounding_box.y|default:"N/A" }}<br>
+                                                        w: {{ result.bounding_box.width|default:"N/A" }}<br>
+                                                        h: {{ result.bounding_box.height|default:"N/A" }}
+                                                    </code>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <small class="text-muted">Processing Info:</small>
+                                                <div class="bg-white p-2 rounded border">
+                                                    <code class="small">
+                                                        Time: {{ result.inference_time|default:"N/A" }}s<br>
+                                                        Device: {{ result.processing_device }}<br>
+                                                        Created: {{ result.created_at|date:"M j, Y g:i A" }}
+                                                    </code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Review Actions -->
+                            {% if result.review_decision == 'PENDING' %}
+                            <div class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-clipboard-check me-1"></i>Your Decision
+                                </h6>
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <button class="btn btn-success w-100 review-btn"
+                                                data-result-id="{{ result.id }}"
+                                                data-action="approve"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#reviewModal">
+                                            <i class="fas fa-check me-1"></i>Approve
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-danger w-100 review-btn"
+                                                data-result-id="{{ result.id }}"
+                                                data-action="reject"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#reviewModal">
+                                            <i class="fas fa-times me-1"></i>Reject
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-warning w-100 review-btn"
+                                                data-result-id="{{ result.id }}"
+                                                data-action="override"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#overrideModal">
+                                            <i class="fas fa-edit me-1"></i>Override
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-secondary w-100 review-btn"
+                                                data-result-id="{{ result.id }}"
+                                                data-action="skip">
+                                            <i class="fas fa-clock me-1"></i>Review Later
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- Already Reviewed -->
+                            <div class="border rounded p-3 {% if result.review_decision == 'APPROVED' %}bg-success-subtle{% elif result.review_decision == 'REJECTED' %}bg-danger-subtle{% else %}bg-info-subtle{% endif %}">
+                                <h6 class="fw-bold mb-2">
+                                    <i class="fas fa-check-circle me-1"></i>Review Completed
+                                </h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Decision:</strong> {{ result.get_review_decision_display }}</p>
+                                        <p class="mb-1"><strong>Reviewed by:</strong> {{ result.reviewed_by.get_full_name }}</p>
+                                        <p class="mb-0"><strong>Date:</strong> {{ result.reviewed_at|date:"M j, Y g:i A" }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        {% if result.review_notes %}
+                                            <p class="mb-0"><strong>Notes:</strong> {{ result.review_notes }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- No Results Message -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card avic-card text-center">
+                <div class="card-body py-5">
+                    <i class="fas fa-brain text-muted fa-4x mb-4"></i>
+                    <h4 class="text-muted">No Results Need Review</h4>
+                    <p class="text-muted mb-4">All AI results have been reviewed. Process more images to see results here.</p>
+                    <a href="{% url 'image_processing:process' %}" class="btn btn-warning btn-lg">
+                        <i class="fas fa-search me-2"></i>Process More Images
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Review Modals -->
+    <div class="modal fade" id="reviewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Review AI Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <input type="hidden" name="result_id" id="reviewResultId">
+                        <input type="hidden" name="action" id="reviewAction">
+                        <div class="mb-3">
+                            <label for="reviewNotes" class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" name="notes" id="reviewNotes" rows="3"
+                                      placeholder="Add notes about your decision..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Override Modal -->
+    <div class="modal fade" id="overrideModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Override AI Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'image_processing:review' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <input type="hidden" name="result_id" id="overrideResultId">
+                        <div class="mb-3">
+                            <label class="form-label">Correct Species</label>
+                            <select name="new_species" class="form-select" required>
+                                <option value="">Select species...</option>
+                                <option value="CHINESE_EGRET">Chinese Egret</option>
+                                <option value="GREAT_EGRET">Great Egret</option>
+                                <option value="INTERMEDIATE_EGRET">Intermediate Egret</option>
+                                <option value="LITTLE_EGRET">Little Egret</option>
+                                <option value="CATTLE_EGRET">Cattle Egret</option>
+                                <option value="PACIFIC_REEF_HERON">Pacific Reef Heron</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correct Count</label>
+                            <input type="number" name="new_count" class="form-control" min="1" max="50" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason for Override</label>
+                            <textarea name="override_reason" class="form-control" rows="3" required
+                                      placeholder="Why are you overriding the AI result?"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Override Result</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle review buttons
+    document.querySelectorAll('.review-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const resultId = this.dataset.resultId;
+            const action = this.dataset.action;
+
+            if (action === 'skip') {
+                // Just redirect for skip
+                return;
+            }
+
+            // Set modal values
+            document.getElementById('reviewResultId').value = resultId;
+            document.getElementById('reviewAction').value = action;
+
+            // Clear notes field
+            document.getElementById('reviewNotes').value = '';
+        });
+    });
+});
+</script>
+{% endblock %}

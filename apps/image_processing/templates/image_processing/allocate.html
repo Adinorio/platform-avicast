@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}Engage Census{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="avic-page-title">
+                <i class="fas fa-check-circle"></i>Engage Census
+            </h1>
+            <p class="avic-page-subtitle">GTD Workflow Stage 5: Allocate approved results to census data</p>
+        </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="badge bg-primary me-3 fs-6">CAPTURE</div>
+                            <div class="badge bg-warning me-3 fs-6">CLARIFY</div>
+                            <div class="badge bg-info me-3 fs-6">ORGANIZE</div>
+                            <div class="badge bg-secondary me-3 fs-6">REFLECT</div>
+                            <div class="badge bg-success me-3 fs-6">ENGAGE</div>
+                        </div>
+                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if ready_results %}
+    <!-- Results Ready for Allocation -->
+    <div class="row">
+        {% for result in ready_results %}
+        <div class="col-12 mb-4">
+            <div class="card avic-card">
+                <div class="row g-0">
+                    <div class="col-lg-3">
+                        <img src="{{ result.image_upload.image_file.url }}"
+                             class="img-fluid rounded-start h-100 object-fit-cover"
+                             alt="{{ result.image_upload.title }}"
+                             style="min-height: 250px;">
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title">{{ result.image_upload.title }}</h5>
+                                    {% if result.image_upload.site_hint %}
+                                        <p class="text-muted mb-2">{{ result.image_upload.site_hint }}</p>
+                                    {% endif %}
+                                </div>
+                                <span class="badge fs-6 bg-success">
+                                    <i class="fas fa-check me-1"></i>{{ result.get_review_decision_display }}
+                                </span>
+                            </div>
+
+                            <!-- Final Results -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="border rounded p-3 bg-success-subtle">
+                                        <h6 class="fw-bold text-success mb-2">
+                                            <i class="fas fa-check-circle me-1"></i>Final Classification
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <p class="mb-1"><strong>Species:</strong> {{ result.get_final_species_display }}</p>
+                                                <p class="mb-1"><strong>Count:</strong> {{ result.final_count }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p class="mb-1"><strong>AI Confidence:</strong> {{ result.confidence_score|floatformat:1 }}%</p>
+                                                <p class="mb-0"><strong>Reviewed by:</strong> {{ result.reviewed_by.get_full_name }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                {% if result.review_notes %}
+                                                    <p class="mb-0"><strong>Notes:</strong> {{ result.review_notes }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Allocation Form -->
+                            {% if not result.allocated_to_census %}
+                            <div class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Allocate to Census
+                                </h6>
+                                <form method="post" class="row g-3">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="result_id" value="{{ result.id }}">
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Target Site <span class="text-danger">*</span></label>
+                                        <select name="site_id" class="form-select" required>
+                                            <option value="">Select a site...</option>
+                                            {% for site in available_sites %}
+                                                <option value="{{ site.id }}">{{ site.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Observation Date <span class="text-danger">*</span></label>
+                                        <input type="date" name="observation_date" class="form-control" required>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Allocation Notes</label>
+                                        <textarea name="allocation_notes" class="form-control" rows="2"
+                                                  placeholder="Optional notes about this allocation..."></textarea>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-check-circle me-2"></i>Allocate to Census
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary ms-2" onclick="skipAllocation({{ result.id }})">
+                                            <i class="fas fa-clock me-1"></i>Allocate Later
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            {% else %}
+                            <!-- Already Allocated -->
+                            <div class="border rounded p-3 bg-success-subtle">
+                                <h6 class="fw-bold text-success mb-2">
+                                    <i class="fas fa-check-circle me-1"></i>Already Allocated
+                                </h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Site:</strong> {{ result.allocated_to_site.name }}</p>
+                                        <p class="mb-0"><strong>Date:</strong> {{ result.allocated_at|date:"M j, Y g:i A" }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        {% if result.allocated_to_census %}
+                                            <p class="mb-0"><strong>Census ID:</strong> {{ result.allocated_to_census.id }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- No Results Message -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card avic-card text-center">
+                <div class="card-body py-5">
+                    <i class="fas fa-check-circle text-muted fa-4x mb-4"></i>
+                    <h4 class="text-muted">No Results Ready for Allocation</h4>
+                    <p class="text-muted mb-4">Review and approve some AI results first to see them here.</p>
+                    <a href="{% url 'image_processing:review' %}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-brain me-2"></i>Review Results
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Allocation Instructions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Census Allocation Guide
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-map-marker-alt text-success fa-2x mb-3"></i>
+                                <h6 class="fw-bold">Select Site</h6>
+                                <p class="text-muted small">Choose the observation site where these birds were seen</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-calendar text-primary fa-2x mb-3"></i>
+                                <h6 class="fw-bold">Set Date</h6>
+                                <p class="text-muted small">Specify when the observation was made</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-database text-info fa-2x mb-3"></i>
+                                <h6 class="fw-bold">Update Census</h6>
+                                <p class="text-muted small">Results are automatically added to the site's census data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function skipAllocation(resultId) {
+    // In a real implementation, this would mark the result for later allocation
+    // For now, just show a message
+    alert('Allocation skipped. You can allocate this result later from the dashboard.');
+}
+</script>
+{% endblock %}

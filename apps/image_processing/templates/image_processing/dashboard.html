@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Image Processing Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="avic-page-title">
+                <i class="fas fa-camera"></i>Image Processing Dashboard
+            </h1>
+            <p class="avic-page-subtitle">GTD Workflow: Capture → Clarify → Organize → Reflect → Engage</p>
+        </div>
+    </div>
+
+    <!-- GTD Workflow Status Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card avic-card text-center">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-upload text-primary fa-2x"></i>
+                    </div>
+                    <h3 class="card-title h5">Capture</h3>
+                    <h4 class="text-primary">{{ capture_count }}</h4>
+                    <small class="text-muted">Images uploaded</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card avic-card text-center">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-search text-warning fa-2x"></i>
+                    </div>
+                    <h3 class="card-title h5">Clarify</h3>
+                    <h4 class="text-warning">{{ clarify_count }}</h4>
+                    <small class="text-muted">Being processed</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card avic-card text-center">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-clipboard-list text-info fa-2x"></i>
+                    </div>
+                    <h3 class="card-title h5">Organize</h3>
+                    <h4 class="text-info">{{ organize_count }}</h4>
+                    <small class="text-muted">AI results ready</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card avic-card text-center">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-brain text-secondary fa-2x"></i>
+                    </div>
+                    <h3 class="card-title h5">Reflect</h3>
+                    <h4 class="text-secondary">{{ reflect_count }}</h4>
+                    <small class="text-muted">Need review</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card avic-card text-center">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle text-success fa-2x"></i>
+                    </div>
+                    <h3 class="card-title h5">Engage</h3>
+                    <h4 class="text-success">{{ engage_count }}</h4>
+                    <small class="text-muted">Allocated to census</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card avic-card text-center">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-line text-muted fa-2x"></i>
+                    </div>
+                    <h3 class="card-title h5">📊 Total</h3>
+                    <h4 class="text-muted">{{ capture_count|add:clarify_count|add:organize_count|add:reflect_count|add:engage_count }}</h4>
+                    <small class="text-muted">All images</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-play me-2"></i>Workflow Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{% url 'image_processing:upload' %}" class="btn avic-btn-primary w-100">
+                                <i class="fas fa-upload me-2"></i>Capture Images
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'image_processing:process' %}" class="btn btn-warning w-100">
+                                <i class="fas fa-search me-2"></i>Clarify with AI
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'image_processing:review' %}" class="btn btn-info w-100">
+                                <i class="fas fa-brain me-2"></i>Reflect & Review
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'image_processing:allocate' %}" class="btn btn-success w-100">
+                                <i class="fas fa-check-circle me-2"></i>Engage Census
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Recent Uploads
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_uploads %}
+                        {% for upload in recent_uploads %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ upload.title }}</strong>
+                                <br><small class="text-muted">{{ upload.get_upload_status_display }}</small>
+                            </div>
+                            <small class="text-muted">{{ upload.uploaded_at|timesince }} ago</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">No recent uploads</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>Recent Results
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_results %}
+                        {% for result in recent_results %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ result.image_upload.title }}</strong>
+                                <br><small class="text-muted">{{ result.get_detected_species_display }}</small>
+                            </div>
+                            <span class="badge {% if result.review_decision == 'APPROVED' %}bg-success{% elif result.review_decision == 'REJECTED' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ result.get_review_decision_display }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">No recent results</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GTD Workflow Explanation -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>GTD Workflow Guide
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-upload text-primary fa-3x mb-3"></i>
+                                <h6 class="fw-bold">1. Capture</h6>
+                                <p class="text-muted small">Upload bird images for processing. All images go here first.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-search text-warning fa-3x mb-3"></i>
+                                <h6 class="fw-bold">2. Clarify</h6>
+                                <p class="text-muted small">AI processes images to identify egret species and count.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-clipboard-list text-info fa-3x mb-3"></i>
+                                <h6 class="fw-bold">3. Organize</h6>
+                                <p class="text-muted small">Results are organized and categorized for review.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="text-center">
+                                <i class="fas fa-brain text-secondary fa-3x mb-3"></i>
+                                <h6 class="fw-bold">4. Reflect</h6>
+                                <p class="text-muted small">Human review: approve, reject, or override AI results.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-center">
+                                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                                <h6 class="fw-bold">5. Engage</h6>
+                                <p class="text-muted small">Allocate approved results to census data and sites.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
