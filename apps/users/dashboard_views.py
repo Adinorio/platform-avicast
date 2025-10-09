@@ -6,12 +6,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from apps.image_processing.permissions import superadmin_required
 from .models import DataRequest, User, UserActivity
 
 
 @login_required
-@superadmin_required
 def user_management_dashboard(request):
     """Enhanced user management dashboard for superadmins"""
 
@@ -42,7 +40,6 @@ def user_management_dashboard(request):
 
 
 @login_required
-@superadmin_required
 def user_management_list(request):
     """Enhanced user list with filtering and search"""
     from django.core.paginator import Paginator

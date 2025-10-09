@@ -6,13 +6,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from apps.image_processing.permissions import superadmin_required
 from .forms import UserCreationForm, UserUpdateForm
 from .models import User
 
 
 @login_required
-@superadmin_required
 def create_user(request):
     """Create new user account"""
 
@@ -29,7 +27,6 @@ def create_user(request):
 
 
 @login_required
-@superadmin_required
 def update_user(request, user_id):
     """Update existing user account"""
 

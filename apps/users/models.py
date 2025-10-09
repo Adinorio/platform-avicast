@@ -82,6 +82,18 @@ class User(AbstractUser):
         if not self.pk and not self.role:
             # Only set default role if it's a new user AND no role is specified
             self.role = self.base_role
+
+        # Set Django permissions based on role
+        if self.role == self.Role.SUPERADMIN:
+            self.is_staff = True
+            self.is_superuser = True
+        elif self.role == self.Role.ADMIN:
+            self.is_staff = True
+            self.is_superuser = False
+        elif self.role == self.Role.FIELD_WORKER:
+            self.is_staff = False
+            self.is_superuser = False
+
         super().save(*args, **kwargs)
 
     def __str__(self):

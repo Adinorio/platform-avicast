@@ -271,18 +271,28 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'locations:site_list' %}">
-                        <i class="fas fa-map-marker-alt me-2"></i> Site Management
+                    <a class="nav-link" href="{% url 'locations:dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i> Site Management
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'analytics:dashboard' %}">
+                    <a class="nav-link" href="{% url 'locations:census_dashboard' %}">
+                        <i class="fas fa-binoculars me-2"></i> Bird Census
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'locations:sites_map' %}">
+                        <i class="fas fa-map-marked-alt me-2"></i> Interactive Map
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'analytics_new:dashboard' %}">
                         <i class="fas fa-chart-line me-2"></i> Analytics Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'analytics:chart_gallery' %}">
-                        <i class="fas fa-chart-bar me-2"></i> Chart Gallery
+                    <a class="nav-link" href="{% url 'analytics_new:species_analytics' %}">
+                        <i class="fas fa-chart-bar me-2"></i> Species Analytics
                     </a>
                 </li>
 
@@ -299,22 +309,23 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin:users_datarequest_changelist' %}">
-                        <i class="fas fa-clipboard-list me-2"></i> Data Requests
+                    <a class="nav-link" href="{% url 'locations:request_list' %}">
+                        <i class="fas fa-clipboard-check me-2"></i> Data Requests
                     </a>
                 </li>
                 {% endif %}
 
-                {% if user.role == 'FIELD_WORKER' %}
-                <!-- Field Worker features -->
+
+                <!-- Admin Data Management -->
+                {% if user.role in 'ADMIN,SUPERADMIN' %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin:users_datarequest_changelist' %}">
-                        <i class="fas fa-clipboard-list me-2"></i> Submit Requests
+                    <a class="nav-link" href="{% url 'locations:mobile_import_list' %}">
+                        <i class="fas fa-mobile-alt me-2"></i> Mobile Data Import
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin:users_useractivity_changelist' %}">
-                        <i class="fas fa-history me-2"></i> Activity Log
+                    <a class="nav-link" href="{% url 'locations:request_list' %}">
+                        <i class="fas fa-clipboard-check me-2"></i> Data Requests
                     </a>
                 </li>
                 {% endif %}

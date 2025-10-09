@@ -11,7 +11,6 @@ from django.db.models import Count
 from django.contrib.auth import get_user_model
 
 from apps.fauna.models import Species
-from apps.image_processing.models import ImageProcessingResult
 from apps.locations.models import Site
 
 User = get_user_model()
@@ -44,10 +43,7 @@ def custom_admin_index(request):
     except:
         total_observations = 0
     
-    try:
-        total_images = ImageProcessingResult.objects.count()
-    except:
-        total_images = 0
+    # Image processing temporarily removed for remake
     
     # Get recent actions
     from django.contrib.admin.models import LogEntry
@@ -59,7 +55,6 @@ def custom_admin_index(request):
         'total_users': total_users,
         'total_species': total_species,
         'total_sites': total_observations,
-        'total_images': total_images,
         'recent_actions': recent_actions,
     }
     # Include admin site context so base.html conditions (e.g., is_nav_sidebar_enabled)

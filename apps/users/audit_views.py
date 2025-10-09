@@ -7,12 +7,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
 
-from apps.image_processing.permissions import superadmin_required
 from .models import UserActivity
 
 
 @login_required
-@superadmin_required
 def system_logs(request):
     """View system activity logs"""
 
