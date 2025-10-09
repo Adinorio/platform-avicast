@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from apps.image_processing.permissions import staff_required
+from django.contrib.admin.views.decorators import staff_member_required as staff_required
 from apps.locations.models import Site
 from .models import FieldWorkSchedule, WeatherForecast
 from .weather_service import get_field_work_optimizer, get_weather_service

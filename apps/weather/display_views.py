@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
-from apps.image_processing.permissions import staff_required
+from django.contrib.admin.views.decorators import staff_member_required as staff_required
 from apps.locations.models import Site
 from .models import FieldWorkSchedule, WeatherAlert, WeatherForecast
 
