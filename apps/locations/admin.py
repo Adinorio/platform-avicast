@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CensusObservation, Site, SpeciesObservation
+from .models import CensusObservation, Site, SpeciesObservation, SiteSpeciesCount, DataChangeRequest
 
 
 class SpeciesObservationInline(admin.TabularInline):
@@ -83,3 +83,74 @@ class SpeciesObservationAdmin(admin.ModelAdmin):
         return obj.species.name if obj.species else obj.species_name
     get_species_name.short_description = "Species"
     get_species_name.admin_order_field = "species__name"
+
+
+@admin.register(SiteSpeciesCount)
+class SiteSpeciesCountAdmin(admin.ModelAdmin):
+    list_display = [
+        "site",
+        "get_species_name",
+        "total_count",
+        "observation_count",
+        "last_observation_date",
+        "is_verified",
+        "verified_by",
+    ]
+    list_filter = ["is_verified", "site", "species", "last_observation_date"]
+    search_fields = ["site__name", "species__name", "species__scientific_name"]
+    readonly_fields = ["id", "created_at", "updated_at", "last_updated_from_census"]
+    fieldsets = (
+        ("Site and Species", {"fields": ("site", "species")}),
+        ("Count Data", {"fields": ("total_count", "observation_count", "last_observation_date")}),
+        ("Monthly/Yearly Breakdown", {"fields": ("monthly_counts", "yearly_counts")}),
+        (
+            "Verification Status",
+            {"fields": ("is_verified", "verified_by", "verified_at")},
+        ),
+        (
+            "Metadata",
+            {"fields": ("created_at", "updated_at", "last_updated_from_census"), "classes": ("collapse",)},
+        ),
+    )
+    
+    def get_species_name(self, obj):
+        """Display species name"""
+        return obj.species.name if obj.species else "Unknown"
+    get_species_name.short_description = "Species"
+    get_species_name.admin_order_field = "species__name"
+
+
+@admin.register(DataChangeRequest)
+class DataChangeRequestAdmin(admin.ModelAdmin):
+    list_display = [
+        "get_request_summary",
+        "requested_by",
+        "site",
+        "status",
+        "requested_at",
+        "reviewed_by",
+        "reviewed_at",
+    ]
+    list_filter = ["status", "request_type", "requested_at", "reviewed_at"]
+    search_fields = [
+        "requested_by__first_name",
+        "requested_by__last_name",
+        "requested_by__employee_id",
+        "site__name",
+        "reason",
+    ]
+    readonly_fields = ["id", "requested_at", "reviewed_at", "completed_at"]
+    fieldsets = (
+        ("Request Information", {"fields": ("request_type", "status", "site", "census")}),
+        ("Request Details", {"fields": ("request_data", "reason")}),
+        ("Requester Information", {"fields": ("requested_by", "requested_at")}),
+        ("Review Information", {"fields": ("reviewed_by", "reviewed_at", "review_notes")}),
+        ("Completion", {"fields": ("completed_at",)}),
+        ("Metadata", {"fields": ("id",), "classes": ("collapse",)}),
+    )
+    
+    def get_request_summary(self, obj):
+        """Display request type and summary"""
+        return f"{obj.get_request_type_display()}"
+    get_request_summary.short_description = "Request Type"
+    get_request_summary.admin_order_field = "request_type"

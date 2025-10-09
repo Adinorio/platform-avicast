@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review Request - AVICAST System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-clipboard-check text-primary"></i>
+                        Review Data Change Request
+                    </h2>
+                    <p class="text-muted mb-0">{{ change_request.get_request_type_display }}</p>
+                </div>
+                <a href="{% url 'locations:request_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Requests
+                </a>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Request Status Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header {% if change_request.status == 'pending' %}bg-warning text-dark{% elif change_request.status == 'approved' %}bg-success text-white{% elif change_request.status == 'completed' %}bg-info text-white{% else %}bg-danger text-white{% endif %}">
+                    <h5 class="mb-0">
+                        {% if change_request.status == 'pending' %}
+                        <i class="fas fa-clock me-2"></i>Pending Review
+                        {% elif change_request.status == 'approved' %}
+                        <i class="fas fa-check me-2"></i>Approved - Ready to Execute
+                        {% elif change_request.status == 'completed' %}
+                        <i class="fas fa-check-double me-2"></i>Completed
+                        {% else %}
+                        <i class="fas fa-times me-2"></i>Rejected
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Request Information</h6>
+                            <div class="mb-2">
+                                <strong>Type:</strong> {{ change_request.get_request_type_display }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Site:</strong> 
+                                <a href="{% url 'locations:site_detail' change_request.site.id %}">
+                                    {{ change_request.site.name }}
+                                </a>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Requested By:</strong> {{ change_request.requested_by.get_full_name }} 
+                                ({{ change_request.requested_by.employee_id }})
+                            </div>
+                            <div class="mb-2">
+                                <strong>Requested On:</strong> {{ change_request.requested_at|date:"F d, Y H:i" }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Review Status</h6>
+                            {% if change_request.reviewed_by %}
+                            <div class="mb-2">
+                                <strong>Reviewed By:</strong> {{ change_request.reviewed_by.get_full_name }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Reviewed On:</strong> {{ change_request.reviewed_at|date:"F d, Y H:i" }}
+                            </div>
+                            {% if change_request.review_notes %}
+                            <div class="mb-2">
+                                <strong>Review Notes:</strong><br>
+                                <p class="ms-3 mb-0">{{ change_request.review_notes }}</p>
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <p class="text-muted"><em>Not yet reviewed</em></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Request Data Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-database me-2"></i>Requested Changes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-primary">Reason for Request:</h6>
+                        <p class="p-3 bg-light rounded">{{ change_request.reason }}</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="text-primary">Request Data (JSON):</h6>
+                        <pre class="p-3 bg-dark text-light rounded" style="max-height: 400px; overflow-y: auto;">{{ request_data_json }}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Actions -->
+            {% if is_admin and can_edit %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Admin Actions</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="review_notes" class="form-label"><strong>Review Notes (Optional)</strong></label>
+                            <textarea name="review_notes" id="review_notes" class="form-control" rows="4" 
+                                placeholder="Add notes about your decision (especially important for rejections)"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" name="action" value="reject" class="btn btn-danger btn-lg"
+                                onclick="return confirm('Are you sure you want to reject this request?')">
+                                <i class="fas fa-times me-2"></i>Reject Request
+                            </button>
+                            <button type="submit" name="action" value="approve" class="btn btn-success btn-lg">
+                                <i class="fas fa-check me-2"></i>Approve Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% elif is_admin and change_request.status == 'approved' %}
+            <div class="card border-0 shadow-sm bg-success bg-opacity-10 mb-4">
+                <div class="card-body text-center">
+                    <h5 class="text-success mb-3">
+                        <i class="fas fa-check-circle fa-2x mb-2 d-block"></i>
+                        Request Approved - Ready to Execute
+                    </h5>
+                    <p class="mb-4">This request has been approved and is ready to be executed. 
+                        Click the button below to apply the changes to the database.</p>
+                    
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" name="action" value="execute" class="btn btn-success btn-lg"
+                            onclick="return confirm('Are you sure you want to execute this request? This will make changes to the database.')">
+                            <i class="fas fa-play me-2"></i>Execute Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% elif change_request.status == 'completed' %}
+            <div class="card border-0 shadow-sm bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <h5 class="text-info mb-2">
+                        <i class="fas fa-check-double fa-2x mb-2 d-block"></i>
+                        Request Completed
+                    </h5>
+                    <p class="mb-0">This request has been successfully executed and the changes have been applied.</p>
+                </div>
+            </div>
+            {% elif change_request.status == 'rejected' %}
+            <div class="card border-0 shadow-sm bg-danger bg-opacity-10">
+                <div class="card-body text-center">
+                    <h5 class="text-danger mb-2">
+                        <i class="fas fa-times-circle fa-2x mb-2 d-block"></i>
+                        Request Rejected
+                    </h5>
+                    {% if change_request.review_notes %}
+                    <p class="mb-0"><strong>Reason:</strong> {{ change_request.review_notes }}</p>
+                    {% else %}
+                    <p class="mb-0">This request was rejected by an administrator.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Help Text for Field Workers -->
+            {% if not is_admin %}
+            <div class="alert alert-info">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>What Happens Next?</h6>
+                <ul class="mb-0">
+                    <li>An administrator will review your request</li>
+                    <li>They may approve or reject it based on the information provided</li>
+                    <li>You'll be able to see the status in the requests list</li>
+                    <li>If approved, an admin will execute the request to apply the changes</li>
+                    <li>You can return to this page anytime to check the status</li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Archive Census Observation - {{ census.site.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-archive text-warning"></i>
+                        Archive Census Observation
+                    </h2>
+                    <p class="text-muted mb-0">Site: {{ census.site.name }} | Date: {{ census.observation_date|date:"M d, Y" }}</p>
+                </div>
+                <a href="{% url 'locations:site_detail' census.site.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Site
+                </a>
+            </div>
+
+            <!-- Census Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Census Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Observation Date:</strong><br>
+                                {{ census.observation_date|date:"F d, Y" }}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Species Count:</strong><br>
+                                {{ census.get_total_species_count }} species
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Total Birds:</strong><br>
+                                {{ census.get_total_birds_count }} birds
+                            </div>
+                            <div class="mb-3">
+                                <strong>Observer:</strong><br>
+                                {% if census.observer %}
+                                    {{ census.observer.get_full_name|default:census.observer.username }}
+                                {% else %}
+                                    System Import
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if census.weather_conditions %}
+                    <div class="mb-3">
+                        <strong>Weather Conditions:</strong><br>
+                        {{ census.weather_conditions }}
+                    </div>
+                    {% endif %}
+
+                    {% if census.notes %}
+                    <div class="mb-3">
+                        <strong>Notes:</strong><br>
+                        {{ census.notes }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Archive Form -->
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Archive Confirmation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> Archiving this census record will hide it from active data views. You can restore it later if needed.
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="archive_reason" class="form-label">
+                                <strong>Reason for Archiving (Optional)</strong>
+                            </label>
+                            <textarea class="form-control" name="archive_reason" id="archive_reason" rows="3"
+                                      placeholder="Explain why this census record is being archived..."></textarea>
+                            <div class="form-text">This reason will be recorded for audit purposes.</div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'locations:site_detail' census.site.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-archive"></i> Archive Census Record
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

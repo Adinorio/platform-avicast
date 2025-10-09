@@ -52,9 +52,10 @@ class CensusObservationForm(forms.ModelForm):
 class SpeciesObservationForm(forms.ModelForm):
     class Meta:
         model = SpeciesObservation
-        fields = ["species", "count", "behavior_notes"]
+        fields = ["species", "species_name", "count", "behavior_notes"]
         widgets = {
             "species": forms.Select(attrs={"class": "form-control"}),
+            "species_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter species name..."}),
             "count": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
             "behavior_notes": forms.Textarea(
                 attrs={
@@ -70,6 +71,17 @@ class SpeciesObservationForm(forms.ModelForm):
         # Populate species choices with non-archived species
         self.fields["species"].queryset = Species.objects.filter(is_archived=False).order_by("name")
         self.fields["species"].empty_label = "Select a species..."
+
+    def clean(self):
+        cleaned_data = super().clean()
+        species = cleaned_data.get("species")
+        species_name = cleaned_data.get("species_name")
+
+        # Ensure at least one of species or species_name is provided
+        if not species and not species_name:
+            raise forms.ValidationError("Please either select a species from the list or enter a species name.")
+
+        return cleaned_data
 
 
 # Create inline formset for species observations

@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+
+{% block title %}Site Management Dashboard - AVICAST System{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header with Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Site Management</li>
+        </ol>
+    </nav>
+
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5 fw-bold text-primary mb-2">
+                        <i class="fas fa-map-marker-alt me-3"></i>Site Management Dashboard
+                    </h1>
+                    <p class="lead text-muted mb-0">Comprehensive platform for managing observation sites and biodiversity monitoring</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{% url 'locations:site_create' %}" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="fas fa-plus me-2"></i>Add New Site
+                    </a>
+                    <a href="{% url 'locations:sites_map' %}" class="btn btn-info btn-lg shadow-sm">
+                        <i class="fas fa-map-marked-alt me-2"></i>View Map
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Overview Cards -->
+    <div class="row mb-5">
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center p-4">
+                    <div class="p-4 bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-map-marker-alt text-primary fa-3x"></i>
+                    </div>
+                    <h2 class="text-primary mb-2 fw-bold">{{ total_sites }}</h2>
+                    <p class="text-muted mb-0 fw-medium">Total Sites</p>
+                    <small class="text-muted d-block mt-1">All observation locations</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center p-4">
+                    <div class="p-4 bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-check-circle text-success fa-3x"></i>
+                    </div>
+                    <h2 class="text-success mb-2 fw-bold">{{ active_sites }}</h2>
+                    <p class="text-muted mb-0 fw-medium">Active Sites</p>
+                    <small class="text-muted d-block mt-1">Currently monitoring</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center p-4">
+                    <div class="p-4 bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-binoculars text-info fa-3x"></i>
+                    </div>
+                    <h2 class="text-info mb-2 fw-bold">{{ recent_observations }}</h2>
+                    <p class="text-muted mb-0 fw-medium">Recent Observations</p>
+                    <small class="text-muted d-block mt-1">Last 30 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center p-4">
+                    <div class="p-4 bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-paw text-warning fa-3x"></i>
+                    </div>
+                    <h2 class="text-warning mb-2 fw-bold">{{ total_species }}</h2>
+                    <p class="text-muted mb-0 fw-medium">Species Observed</p>
+                    <small class="text-muted d-block mt-1">Unique species recorded</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white border-0">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-rocket me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'locations:site_create' %}" class="btn btn-primary btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4 hover-lift">
+                                <i class="fas fa-plus-circle fa-3x mb-3 text-white"></i>
+                                <span class="fw-bold text-white">Add New Site</span>
+                                <small class="opacity-75 text-white">Create observation site</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'locations:sites_map' %}" class="btn btn-info btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4 hover-lift">
+                                <i class="fas fa-map-marked-alt fa-3x mb-3 text-white"></i>
+                                <span class="fw-bold text-white">Interactive Map</span>
+                                <small class="opacity-75 text-white">View all sites</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'locations:site_list' %}" class="btn btn-success btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4 hover-lift">
+                                <i class="fas fa-list fa-3x mb-3 text-white"></i>
+                                <span class="fw-bold text-white">Browse Sites</span>
+                                <small class="opacity-75 text-white">List all sites</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'locations:site_list' %}" class="btn btn-warning btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4 hover-lift">
+                                <i class="fas fa-search fa-3x mb-3 text-white"></i>
+                                <span class="fw-bold text-white">Browse Sites</span>
+                                <small class="opacity-75 text-white">Find and manage sites</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <ul class="nav nav-tabs card-header-tabs" id="dashboardTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                                <i class="fas fa-chart-line me-2"></i>Overview
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="sites-tab" data-bs-toggle="tab" data-bs-target="#sites" type="button" role="tab">
+                                <i class="fas fa-list me-2"></i>Sites List
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map" type="button" role="tab">
+                                <i class="fas fa-map-marked-alt me-2"></i>Map View
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">
+                                <i class="fas fa-clock me-2"></i>Recent Activity
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="tab-content" id="dashboardTabsContent">
+                        <!-- Overview Tab -->
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                            <div class="p-4">
+                                <div class="row">
+                                    <div class="col-lg-8">
+                                        <!-- Recent Sites -->
+                                        <div class="card border-0 shadow-sm mb-4">
+                                            <div class="card-header bg-light border-0">
+                                                <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Recently Updated Sites</h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <div class="list-group list-group-flush">
+                                                    {% for site in recent_sites %}
+                                                    <div class="list-group-item d-flex align-items-center">
+                                                        <div class="flex-grow-1">
+                                                            <div class="d-flex w-100 justify-content-between">
+                                                                <h6 class="mb-1">{{ site.name }}</h6>
+                                                                <small class="text-muted">{{ site.updated_at|timesince }} ago</small>
+                                                            </div>
+                                                            <p class="mb-1 text-muted">{{ site.get_site_type_display }}</p>
+                                                        </div>
+                                                        <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye me-1"></i>View
+                                                        </a>
+                                                    </div>
+                                                    {% empty %}
+                                                    <div class="list-group-item text-center py-4">
+                                                        <i class="fas fa-inbox text-muted fa-2x mb-3 d-block"></i>
+                                                        <p class="text-muted mb-0">No recent site updates</p>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <!-- Quick Actions -->
+                                        <div class="card border-0 shadow-sm">
+                                            <div class="card-header bg-light border-0">
+                                                <h6 class="mb-0"><i class="fas fa-rocket me-2"></i>Quick Actions</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="d-grid gap-2">
+                                                    <a href="{% url 'locations:site_create' %}" class="btn btn-primary">
+                                                        <i class="fas fa-plus me-2"></i>Add New Site
+                                                    </a>
+                                                    <a href="{% url 'locations:mobile_import_list' %}" class="btn btn-info">
+                                                        <i class="fas fa-mobile-alt me-2"></i>Mobile Data Import
+                                                    </a>
+                                                    <a href="{% url 'locations:request_list' %}" class="btn btn-warning">
+                                                        <i class="fas fa-clipboard-check me-2"></i>Data Requests
+                                                    </a>
+                                                    <a href="{% url 'locations:sites_map' %}" class="btn btn-success">
+                                                        <i class="fas fa-map-marked-alt me-2"></i>Interactive Map
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sites List Tab -->
+                        <div class="tab-pane fade" id="sites" role="tabpanel">
+                            <div class="p-4">
+                                {% if sites_list_data %}
+                                    <!-- Use the sites list data from the dashboard view -->
+                                    {% with page_obj=sites_list_data.page_obj search_query=sites_list_data.search_query site_type=sites_list_data.site_type status=sites_list_data.status site_types=sites_list_data.site_types site_statuses=sites_list_data.site_statuses current_tab=sites_list_data.current_tab %}
+                                        {% include 'locations/site_list_content.html' %}
+                                    {% endwith %}
+                                {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                                        <h5 class="text-muted">Sites List Unavailable</h5>
+                                        <p class="text-muted">Please try refreshing the page or contact support if this issue persists.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Map Tab -->
+                        <div class="tab-pane fade" id="map" role="tabpanel">
+                            <div class="p-4">
+                                <div class="text-center mb-4">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-map-marked-alt me-2"></i>Interactive Site Map
+                                    </h5>
+                                    <p class="text-muted">View all observation sites on an interactive map</p>
+                                    <a href="{% url 'locations:sites_map' %}" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-external-link-alt me-2"></i>Open Full Map
+                                    </a>
+                                </div>
+                                <!-- Mini map preview could go here -->
+                            </div>
+                        </div>
+
+                        <!-- Activity Tab -->
+                        <div class="tab-pane fade" id="activity" role="tabpanel">
+                            <div class="p-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-light border-0">
+                                        <h6 class="mb-0"><i class="fas fa-history me-2"></i>Recent Site Activity</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="timeline">
+                                            {% for activity in recent_activity %}
+                                            <div class="timeline-item">
+                                                <div class="timeline-marker bg-{% if activity.type == 'site_created' %}success{% elif activity.type == 'census_added' %}info{% elif activity.type == 'species_verified' %}warning{% else %}primary{% endif %}"></div>
+                                                <div class="timeline-content">
+                                                    <h6 class="timeline-title">{{ activity.title }}</h6>
+                                                    <p class="timeline-text text-muted">{{ activity.description }}</p>
+                                                    <small class="timeline-time text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                                </div>
+                                            </div>
+                                            {% empty %}
+                                            <div class="text-center py-4">
+                                                <i class="fas fa-inbox text-muted fa-2x mb-3 d-block"></i>
+                                                <p class="text-muted mb-0">No recent activity</p>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="row mb-4">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}{{ block.super }}
+<style>
+/* Design System - Location Management */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.hover-lift {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #007bff;
+    color: white;
+    border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.nav-tabs .nav-link:hover {
+    border: none;
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -23px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-content {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #495057;
+}
+
+.timeline-text {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-time {
+    font-size: 0.75rem;
+}
+
+/* Card enhancements */
+.card {
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+/* Button enhancements */
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .nav-tabs {
+        flex-direction: column;
+    }
+
+    .nav-tabs .nav-link {
+        border-radius: 0.375rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline {
+        padding-left: 20px;
+    }
+
+    .timeline-marker {
+        left: -13px;
+    }
+
+    .display-5 {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+<script>
+// Tab switching functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('#dashboardTabs .nav-link');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active'));
+
+            // Add active class to clicked tab
+            this.classList.add('active');
+
+            // Hide all tab panes
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            tabPanes.forEach(pane => pane.classList.remove('show', 'active'));
+
+            // Show target tab pane
+            const targetId = this.getAttribute('data-bs-target');
+            const targetPane = document.querySelector(targetId);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+            }
+        });
+    });
+
+    // Auto-refresh dashboard data every 30 seconds (optional)
+    // setInterval(() => {
+    //     // Could implement auto-refresh here
+    // }, 30000);
+
+    console.log('Site management dashboard loaded');
+});
+</script>
+{% endblock %}
+

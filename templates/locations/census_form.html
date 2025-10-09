@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ action }} Census Observation - {{ site.name }}{% endblock %}
+{% block title %}{{ action }} Census Observation{% if site %} - {{ site.name }}{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -23,11 +23,24 @@
 
             <!-- Census Form -->
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-calendar-alt text-primary"></i>
                         Observation Details
+                        {% if action == "Update" %}
+                            <small class="text-muted ms-2">(Editing existing record)</small>
+                        {% endif %}
                     </h5>
+                    {% if action == "Update" %}
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#changeHistoryModal">
+                            <i class="fas fa-history me-1"></i>View Changes
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="compareToggle">
+                            <i class="fas fa-exchange-alt me-1"></i>Compare Values
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <form method="post" id="censusForm">
@@ -46,6 +59,14 @@
                                             {{ census_form.observation_date.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% if action == "Update" %}
+                                    <div class="compare-original" style="display: none;">
+                                        <small class="text-muted">
+                                            <i class="fas fa-history me-1"></i>
+                                            Original: {{ census.observation_date|date:"M d, Y" }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
                                     <div class="form-text">Select the date when this census was conducted</div>
                                 </div>
                             </div>
@@ -59,6 +80,14 @@
                                         <div class="invalid-feedback d-block">
                                             {{ census_form.weather_conditions.errors.0 }}
                                         </div>
+                                    {% endif %}
+                                    {% if action == "Update" %}
+                                    <div class="compare-original" style="display: none;">
+                                        <small class="text-muted">
+                                            <i class="fas fa-history me-1"></i>
+                                            Original: {{ census.weather_conditions|default:"Not recorded" }}
+                                        </small>
+                                    </div>
                                     {% endif %}
                                     <div class="form-text">e.g., Sunny, 25°C, Light breeze</div>
                                 </div>
@@ -74,6 +103,14 @@
                                 <div class="invalid-feedback d-block">
                                     {{ census_form.notes.errors.0 }}
                                 </div>
+                            {% endif %}
+                            {% if action == "Update" %}
+                            <div class="compare-original" style="display: none;">
+                                <small class="text-muted">
+                                    <i class="fas fa-history me-1"></i>
+                                    Original: {{ census.notes|default:"No notes" }}
+                                </small>
+                            </div>
                             {% endif %}
                             <div class="form-text">Any general observations or notes about this census session</div>
                         </div>
@@ -94,8 +131,20 @@
                                 <div class="species-form-row border rounded p-3 mb-3 bg-light">
                                     <div class="row">
                                         <div class="col-md-4">
+                                            <label for="{{ form.species.id_for_label }}" class="form-label">
+                                                <strong>Species *</strong>
+                                            </label>
+                                            {{ form.species }}
+                                            {% if form.species.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.species.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                            <div class="form-text">Select from existing species or leave blank for manual entry</div>
+                                        </div>
+                                        <div class="col-md-4">
                                             <label for="{{ form.species_name.id_for_label }}" class="form-label">
-                                                <strong>Species Name *</strong>
+                                                <strong>Or Enter Species Name</strong>
                                             </label>
                                             {{ form.species_name }}
                                             {% if form.species_name.errors %}
@@ -103,8 +152,9 @@
                                                     {{ form.species_name.errors.0 }}
                                                 </div>
                                             {% endif %}
+                                            <div class="form-text">Enter species name manually if not in the list above</div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <label for="{{ form.count.id_for_label }}" class="form-label">
                                                 <strong>Count *</strong>
                                             </label>
@@ -219,37 +269,149 @@ $(document).ready(function() {
         // Add to form
         $('#speciesForms').append(row);
         $('#id_species_observations-TOTAL_FORMS').val(formCount + 1);
+
+        // Reinitialize species selection logic for the new row
+        initializeSpeciesSelection();
     });
+
+    // Initialize species selection logic
+    function initializeSpeciesSelection() {
+        $('.species-form-row').each(function() {
+            var $row = $(this);
+            var $speciesSelect = $row.find('select[name*="species"]');
+            var $speciesNameInput = $row.find('input[name*="species_name"]');
+
+            // Remove existing event handlers to avoid duplicates
+            $speciesSelect.off('change.speciesSelect');
+            $speciesNameInput.off('keyup.speciesName');
+
+            // When species is selected, disable manual entry
+            $speciesSelect.on('change.speciesSelect', function() {
+                if ($(this).val()) {
+                    $speciesNameInput.val('').prop('disabled', true).addClass('text-muted');
+                } else {
+                    $speciesNameInput.prop('disabled', false).removeClass('text-muted');
+                }
+            });
+
+            // When manual entry has value, clear species selection
+            $speciesNameInput.on('keyup.speciesName', function() {
+                if ($(this).val().trim()) {
+                    $speciesSelect.val('');
+                }
+            });
+
+            // Initial state
+            if ($speciesSelect.val()) {
+                $speciesNameInput.prop('disabled', true).addClass('text-muted');
+            }
+        });
+    }
+
+    // Initialize on page load
+    initializeSpeciesSelection();
 
     // Handle form submission
     $('#censusForm').submit(function() {
         // Basic validation
         var hasSpecies = false;
         $('.species-form-row:not(:has(:checkbox:checked))').each(function() {
+            var speciesSelect = $(this).find('select[name*="species"]').val();
             var speciesName = $(this).find('input[name*="species_name"]').val();
             var count = $(this).find('input[name*="count"]').val();
 
-            if (speciesName && count) {
+            if ((speciesSelect || speciesName) && count) {
                 hasSpecies = true;
             }
         });
 
         if (!hasSpecies) {
-            alert('Please add at least one species observation.');
+            alert('Please add at least one species observation with both species and count.');
             return false;
         }
 
         return true;
     });
 
-    // Auto-hide deleted forms
-    $('input[name*="DELETE"]').change(function() {
-        if ($(this).is(':checked')) {
-            $(this).closest('.species-form-row').fadeOut();
-        } else {
-            $(this).closest('.species-form-row').fadeIn();
-        }
+        // Auto-hide deleted forms
+        $('input[name*="DELETE"]').change(function() {
+            if ($(this).is(':checked')) {
+                $(this).closest('.species-form-row').fadeOut();
+            } else {
+                $(this).closest('.species-form-row').fadeIn();
+            }
+        });
+
+        // Compare values toggle (for editing mode)
+        $('#compareToggle').click(function() {
+            $('.compare-original').toggle();
+            $('.form-text').toggle();
+
+            var $icon = $(this).find('i');
+            if ($icon.hasClass('fa-exchange-alt')) {
+                $icon.removeClass('fa-exchange-alt').addClass('fa-times');
+                $(this).removeClass('btn-outline-secondary').addClass('btn-secondary');
+            } else {
+                $icon.removeClass('fa-times').addClass('fa-exchange-alt');
+                $(this).removeClass('btn-secondary').addClass('btn-outline-secondary');
+            }
+        });
+
     });
-});
 </script>
+
+<!-- Change History Modal (for editing) -->
+{% if action == "Update" %}
+<div class="modal fade" id="changeHistoryModal" tabindex="-1" aria-labelledby="changeHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeHistoryModalLabel">
+                    <i class="fas fa-history text-info me-2"></i>Change History
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> Full audit trail will be implemented in the next phase. Currently showing basic change information.
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Original Values</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Date:</strong></td>
+                                <td>{{ census.observation_date|date:"M d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Weather:</strong></td>
+                                <td>{{ census.weather_conditions|default:"Not recorded" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Species Count:</strong></td>
+                                <td>{{ census.get_total_species_count }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Birds:</strong></td>
+                                <td>{{ census.get_total_birds_count }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success">Current Changes</h6>
+                        <div id="currentChanges">
+                            <p class="text-muted">Changes will appear here as you modify the form...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

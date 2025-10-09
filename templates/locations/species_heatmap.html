@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Species Heatmap - AVICAST System{% endblock %}
+
+{% block extra_css %}{{ block.super }}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+    #heatmap {
+        height: 650px;
+        width: 100%;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+    }
+
+    .heatmap-controls {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .intensity-legend {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .intensity-gradient {
+        height: 20px;
+        background: linear-gradient(to right, 
+            rgba(0, 0, 255, 0.3), 
+            rgba(0, 255, 0, 0.5), 
+            rgba(255, 255, 0, 0.7), 
+            rgba(255, 0, 0, 0.9)
+        );
+        border-radius: 0.25rem;
+        margin: 0.5rem 0;
+    }
+
+    .intensity-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header with Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Site Management</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'locations:sites_map' %}">Interactive Map</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Species Heatmap</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5 fw-bold text-primary mb-2">
+                        <i class="fas fa-fire me-3"></i>Species Distribution Heatmap
+                    </h1>
+                    <p class="lead text-muted mb-0">Visualize species density across observation sites</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{% url 'locations:sites_map' %}" class="btn btn-info">
+                        <i class="fas fa-map-marked-alt me-2"></i>Sites Map
+                    </a>
+                    <a href="{% url 'locations:site_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i>List View
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Species Selection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="heatmap-controls">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label class="form-label mb-2">
+                            <i class="fas fa-dove me-2"></i>Select Species (or leave blank for all species)
+                        </label>
+                        <select id="speciesSelect" class="form-select form-select-lg">
+                            <option value="">All Species (Aggregated)</option>
+                            {% for species in species_list %}
+                            <option value="{{ species.id }}" {% if selected_species_id == species.id|stringformat:"s" %}selected{% endif %}>
+                                {{ species.name }} - {{ species.scientific_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-2">&nbsp;</label>
+                        <button id="updateHeatmap" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-sync-alt me-2"></i>Update Heatmap
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="text-primary mb-1" id="dataPointCount">0</h5>
+                                <small class="text-muted">Data Points</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Heatmap and Legend -->
+    <div class="row mb-4">
+        <div class="col-lg-9">
+            <div id="heatmap"></div>
+        </div>
+        <div class="col-lg-3">
+            <div class="intensity-legend">
+                <h6 class="mb-3"><i class="fas fa-palette me-2"></i>Intensity Scale</h6>
+                <div class="intensity-gradient"></div>
+                <div class="intensity-labels">
+                    <span>Low</span>
+                    <span>High</span>
+                </div>
+                <hr>
+                <p class="small text-muted mb-0">
+                    Colors indicate bird count density at each location. 
+                    Red areas have the highest concentrations.
+                </p>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-light border-0">
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>How to Use</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0 ps-3">
+                        <li class="mb-2">Select a specific species to see its distribution pattern</li>
+                        <li class="mb-2">Leave blank to see overall bird density across all species</li>
+                        <li class="mb-2">Zoom in to see more detailed concentration areas</li>
+                        <li class="mb-2">Red/yellow areas indicate high bird counts</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-info text-white border-0">
+                    <h6 class="mb-0 text-white"><i class="fas fa-lightbulb me-2"></i>Conservation Insights</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-0">
+                        Use this heatmap to identify:
+                    </p>
+                    <ul class="small ps-3 mb-0">
+                        <li>Critical habitats with high bird density</li>
+                        <li>Migration patterns and corridors</li>
+                        <li>Areas requiring conservation efforts</li>
+                        <li>Potential research sites</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Summary -->
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-success border-0">
+                <h6 class="alert-heading"><i class="fas fa-chart-area me-2"></i>Heatmap Features</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Real-time Data</strong>
+                        <p class="small mb-0">Based on verified species counts from census observations</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Interactive</strong>
+                        <p class="small mb-0">Zoom and pan to explore different regions</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Species-Specific</strong>
+                        <p class="small mb-0">Filter by individual species to track their distribution</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Conservation Tool</strong>
+                        <p class="small mb-0">Identify critical habitats and migration patterns</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet Heatmap Plugin -->
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<script>
+// Heatmap data from Django
+let heatData = {{ heat_data_json|safe }};
+
+// Initialize map
+const map = L.map('heatmap').setView([14.5995, 120.9842], 6); // Philippines center
+
+// Add tile layer
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19
+}).addTo(map);
+
+// Heat layer variable
+let heatLayer = null;
+
+// Function to update heatmap
+function updateHeatmap(data) {
+    // Remove existing heat layer
+    if (heatLayer) {
+        map.removeLayer(heatLayer);
+    }
+
+    // Prepare data for heatmap: [lat, lon, intensity]
+    const heatPoints = data.map(point => [
+        point.lat,
+        point.lon,
+        point.intensity
+    ]);
+
+    // Update data point count
+    document.getElementById('dataPointCount').textContent = heatPoints.length;
+
+    if (heatPoints.length > 0) {
+        // Create heat layer
+        heatLayer = L.heatLayer(heatPoints, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+            max: Math.max(...data.map(p => p.intensity)),
+            gradient: {
+                0.0: 'blue',
+                0.3: 'cyan',
+                0.5: 'lime',
+                0.7: 'yellow',
+                1.0: 'red'
+            }
+        }).addTo(map);
+
+        // Fit map to show all points
+        const bounds = L.latLngBounds(heatPoints.map(p => [p[0], p[1]]));
+        map.fitBounds(bounds, { padding: [50, 50] });
+    } else {
+        alert('No data available for the selected species. Try selecting a different species or viewing all species.');
+    }
+}
+
+// Initial heatmap load
+updateHeatmap(heatData);
+
+// Update button handler
+document.getElementById('updateHeatmap').addEventListener('click', function() {
+    const speciesId = document.getElementById('speciesSelect').value;
+    
+    // Build URL with species parameter
+    let url = '{% url "locations:species_heatmap" %}';
+    if (speciesId) {
+        url += `?species_id=${speciesId}`;
+    }
+    
+    // Redirect to update heatmap
+    window.location.href = url;
+});
+
+// Make enter key work for species select
+document.getElementById('speciesSelect').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('updateHeatmap').click();
+    }
+});
+</script>
+{% endblock %}
+

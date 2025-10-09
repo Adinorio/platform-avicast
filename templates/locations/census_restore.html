@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Restore Census Observation - {{ census.site.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-undo text-success"></i>
+                        Restore Census Observation
+                    </h2>
+                    <p class="text-muted mb-0">Site: {{ census.site.name }} | Date: {{ census.observation_date|date:"M d, Y" }}</p>
+                </div>
+                <a href="{% url 'locations:site_detail' census.site.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Site
+                </a>
+            </div>
+
+            <!-- Census Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Census Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Observation Date:</strong><br>
+                                {{ census.observation_date|date:"F d, Y" }}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Species Count:</strong><br>
+                                {{ census.get_total_species_count }} species
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Total Birds:</strong><br>
+                                {{ census.get_total_birds_count }} birds
+                            </div>
+                            <div class="mb-3">
+                                <strong>Observer:</strong><br>
+                                {% if census.observer %}
+                                    {{ census.observer.get_full_name|default:census.observer.username }}
+                                {% else %}
+                                    System Import
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if census.weather_conditions %}
+                    <div class="mb-3">
+                        <strong>Weather Conditions:</strong><br>
+                        {{ census.weather_conditions }}
+                    </div>
+                    {% endif %}
+
+                    {% if census.notes %}
+                    <div class="mb-3">
+                        <strong>Notes:</strong><br>
+                        {{ census.notes }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Archive Information -->
+                    <div class="border-top pt-3 mt-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <strong>Archived By:</strong><br>
+                                    {% if census.archived_by %}
+                                        {{ census.archived_by.get_full_name|default:census.archived_by.username }}
+                                    {% else %}
+                                        System
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <strong>Archived At:</strong><br>
+                                    {{ census.archived_at|date:"F d, Y H:i" }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if census.archived_reason %}
+                        <div class="mb-2">
+                            <strong>Archive Reason:</strong><br>
+                            {{ census.archived_reason }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restore Form -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-undo"></i>
+                        Restore Confirmation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="alert alert-success">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Restore:</strong> This will make the census record visible in active data views and restore it to the species count tracking system.
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'locations:site_detail' census.site.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-undo"></i> Restore Census Record
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -101,16 +101,82 @@
                 </div>
             </div>
 
-            <!-- Import Data Preview -->
-            <div class="card">
-                <div class="card-header bg-info text-white">
+            <!-- Data Comparison and Preview -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-database"></i>
-                        Import Data Preview
+                        Data Comparison & Preview
                     </h5>
+                    <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#dataComparisonModal">
+                        <i class="fas fa-exchange-alt me-1"></i>Compare with Existing
+                    </button>
                 </div>
                 <div class="card-body">
-                    <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code>{{ import_data|escape }}</code></pre>
+                    <!-- Species Data Table -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-paw me-2"></i>Imported Species Data
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Species</th>
+                                        <th class="text-center">Count</th>
+                                        <th class="text-center">Status</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for species in species_data %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ species.species_name }}</strong>
+                                            {% if species.species %}
+                                                <br><small class="text-muted">{{ species.species.scientific_name }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success fs-6">{{ species.count }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if species.conflict %}
+                                                <span class="badge bg-warning text-dark">Conflict</span>
+                                            {% else %}
+                                                <span class="badge bg-info">New</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if species.behavior_notes %}
+                                                <small class="text-muted">{{ species.behavior_notes }}</small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-3">
+                                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                            <p>No species data found in import.</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Raw Data Preview (Collapsible) -->
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="collapse" data-bs-target="#rawDataPreview">
+                            <i class="fas fa-code me-1"></i>View Raw JSON Data
+                        </button>
+                    </div>
+                    <div class="collapse" id="rawDataPreview">
+                        <pre class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto; font-size: 0.875rem;"><code>{{ import_data_json|escape }}</code></pre>
+                    </div>
                 </div>
             </div>
         </div>
@@ -216,6 +282,160 @@
     </div>
 </div>
 {% endblock %}
+
+<!-- Data Comparison Modal -->
+<div class="modal fade" id="dataComparisonModal" tabindex="-1" aria-labelledby="dataComparisonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dataComparisonModalLabel">
+                    <i class="fas fa-exchange-alt text-primary me-2"></i>Data Comparison Analysis
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Comparison Analysis:</strong> Comparing imported data with existing census records for {{ mobile_import.site.name }} on {{ observation_date }}.
+                </div>
+
+                <!-- Existing vs Imported Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-primary">Existing Census Data</h6>
+                                <div class="row text-center mt-3">
+                                    <div class="col-6">
+                                        <h3 class="text-success">{{ existing_species_count|default:0 }}</h3>
+                                        <small class="text-muted">Species</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <h3 class="text-info">{{ existing_birds_count|default:0 }}</h3>
+                                        <small class="text-muted">Total Birds</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-warning">Imported Data</h6>
+                                <div class="row text-center mt-3">
+                                    <div class="col-6">
+                                        <h3 class="text-success">{{ total_species }}</h3>
+                                        <small class="text-muted">Species</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <h3 class="text-info">{{ total_birds }}</h3>
+                                        <small class="text-muted">Total Birds</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conflict Analysis -->
+                {% if conflicts %}
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Potential Conflicts Detected
+                    </h6>
+                    <p class="mb-2">{{ conflicts|length }} species have different counts between existing and imported data.</p>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-warning">
+                            <tr>
+                                <th>Species</th>
+                                <th class="text-center">Existing Count</th>
+                                <th class="text-center">Imported Count</th>
+                                <th class="text-center">Difference</th>
+                                <th>Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conflict in conflicts %}
+                            <tr>
+                                <td><strong>{{ conflict.species_name }}</strong></td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ conflict.existing_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">{{ conflict.imported_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if conflict.difference > 0 %}
+                                        <span class="badge bg-success">+{{ conflict.difference }}</span>
+                                    {% elif conflict.difference < 0 %}
+                                        <span class="badge bg-danger">{{ conflict.difference }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if conflict.difference > 0 %}
+                                        <small class="text-success">Accept imported count (higher)</small>
+                                    {% elif conflict.difference < 0 %}
+                                        <small class="text-danger">Review carefully (lower count)</small>
+                                    {% else %}
+                                        <small class="text-muted">No change needed</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>No Conflicts:</strong> All imported species are new or match existing counts exactly.
+                </div>
+                {% endif %}
+
+                <!-- New Species -->
+                {% if new_species %}
+                <div class="mt-4">
+                    <h6 class="text-success">
+                        <i class="fas fa-plus-circle me-2"></i>New Species in Import
+                    </h6>
+                    <div class="row">
+                        {% for species in new_species %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <strong>{{ species.species_name }}</strong>
+                                    <span class="badge bg-success float-end">{{ species.count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="acceptAllConflicts()">
+                    <i class="fas fa-check me-1"></i>Accept All Imported Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function acceptAllConflicts() {
+    if (confirm('This will accept all imported data, potentially overwriting existing counts. Continue?')) {
+        // In a real implementation, this would submit a form to process all conflicts
+        alert('This feature will be implemented in the next phase.');
+    }
+}
+</script>
 
 {% block extra_js %}
 <script>

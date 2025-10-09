@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sites Map - AVICAST System{% endblock %}
+
+{% block extra_css %}{{ block.super }}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+    }
+
+    .map-controls {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .site-popup {
+        min-width: 250px;
+    }
+
+    .site-popup h6 {
+        color: #0d6efd;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .site-popup .stat {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .site-popup .stat:last-child {
+        border-bottom: none;
+    }
+
+    .site-popup .stat-label {
+        font-weight: 500;
+        color: #6c757d;
+    }
+
+    .site-popup .stat-value {
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .species-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        margin: 0.125rem;
+        background: #e7f3ff;
+        border-radius: 0.25rem;
+        font-size: 0.85rem;
+    }
+
+    .legend {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+        border: 2px solid white;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.25rem 1rem rgba(102, 126, 234, 0.3);
+    }
+
+    .stats-card h3 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-card p {
+        margin-bottom: 0;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header with Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Site Management</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Interactive Map</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5 fw-bold text-primary mb-2">
+                        <i class="fas fa-map-marked-alt me-3"></i>Sites Map
+                    </h1>
+                    <p class="lead text-muted mb-0">Interactive map of all observation sites</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{% url 'locations:species_heatmap' %}" class="btn btn-info">
+                        <i class="fas fa-fire me-2"></i>Species Heatmap
+                    </a>
+                    <a href="{% url 'locations:site_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i>List View
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ site_count }}</h3>
+                <p><i class="fas fa-map-marker-alt me-2"></i>Total Sites</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-dove text-success fa-2x mb-2"></i>
+                    <h4 id="totalBirds" class="mb-0">-</h4>
+                    <small class="text-muted">Total Birds</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-paw text-primary fa-2x mb-2"></i>
+                    <h4 id="totalSpecies" class="mb-0">-</h4>
+                    <small class="text-muted">Species Observed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-binoculars text-warning fa-2x mb-2"></i>
+                    <h4 id="activeSites" class="mb-0">{{ site_count }}</h4>
+                    <small class="text-muted">Active Sites</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Controls -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="map-controls">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label mb-2"><i class="fas fa-filter me-2"></i>Filter by Type</label>
+                        <select id="siteTypeFilter" class="form-select">
+                            <option value="">All Types</option>
+                            {% for type_code, type_name in site_types %}
+                            <option value="{{ type_code }}">{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-2"><i class="fas fa-paw me-2"></i>Filter by Species</label>
+                        <select id="speciesFilter" class="form-select">
+                            <option value="">All Species</option>
+                            {% for species in species_list %}
+                            <option value="{{ species.id }}">{{ species.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label mb-2"><i class="fas fa-hashtag me-2"></i>Min Species</label>
+                        <input type="number" id="minSpecies" class="form-control" placeholder="0" min="0" value="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label mb-2">&nbsp;</label>
+                        <button id="applyFilters" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label mb-2">&nbsp;</label>
+                        <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-redo me-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="row mb-4">
+        <div class="col-lg-9">
+            <div id="map"></div>
+        </div>
+        <div class="col-lg-3">
+            <div class="legend">
+                <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Map Legend</h6>
+                
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #28a745;"></div>
+                    <span>High Activity (10+ species)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ffc107;"></div>
+                    <span>Medium Activity (5-9 species)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #0d6efd;"></div>
+                    <span>Low Activity (1-4 species)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #6c757d;"></div>
+                    <span>No Data</span>
+                </div>
+
+                <hr>
+
+                <h6 class="mb-3"><i class="fas fa-question-circle me-2"></i>Map Features</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><i class="fas fa-mouse-pointer text-primary me-2"></i>Click markers for details</li>
+                    <li class="mb-2"><i class="fas fa-search-plus text-success me-2"></i>Scroll to zoom</li>
+                    <li class="mb-2"><i class="fas fa-hand-paper text-info me-2"></i>Drag to pan</li>
+                    <li class="mb-2"><i class="fas fa-layer-group text-warning me-2"></i>Clusters show multiple sites</li>
+                </ul>
+            </div>
+
+            <!-- Site Count Display -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-body text-center">
+                    <h5 class="text-primary mb-2">Sites on Map</h5>
+                    <h2 id="filteredSiteCount" class="mb-0">{{ site_count }}</h2>
+                    <small class="text-muted">Currently displayed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Tips -->
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info border-0">
+                <h6 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>Quick Tips</h6>
+                <ul class="mb-0">
+                    <li>Use filters to narrow down sites by type, species presence, or activity level</li>
+                    <li>Click on a marker to see detailed site information and statistics</li>
+                    <li>Clustered markers (with numbers) can be clicked to zoom in</li>
+                    <li>Visit the <a href="{% url 'locations:species_heatmap' %}" class="alert-link">Species Heatmap</a> to see species distribution patterns</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<script>
+// Site data from Django
+const sitesData = {{ sites_json|safe }};
+
+// Initialize map
+const map = L.map('map').setView([14.5995, 120.9842], 6); // Philippines center
+
+// Add tile layer (OpenStreetMap)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19
+}).addTo(map);
+
+// Create marker cluster group
+const markers = L.markerClusterGroup({
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    spiderfyOnMaxZoom: true,
+    removeOutsideVisibleBounds: true
+});
+
+// Function to get marker color based on species diversity
+function getMarkerColor(speciesDiversity) {
+    if (speciesDiversity >= 10) return '#28a745'; // Green - high
+    if (speciesDiversity >= 5) return '#ffc107';  // Yellow - medium
+    if (speciesDiversity >= 1) return '#0d6efd';  // Blue - low
+    return '#6c757d';                             // Gray - no data
+}
+
+// Function to create marker icon
+function createMarkerIcon(color) {
+    return L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+    });
+}
+
+// Function to create popup content
+function createPopupContent(site) {
+    let topSpeciesHTML = '';
+    if (site.top_species && site.top_species.length > 0) {
+        topSpeciesHTML = site.top_species.map(sp => 
+            `<span class="species-badge">${sp.name}: ${sp.count}</span>`
+        ).join('');
+    } else {
+        topSpeciesHTML = '<em class="text-muted">No species data</em>';
+    }
+
+    return `
+        <div class="site-popup">
+            <h6><i class="fas fa-map-marker-alt me-2"></i>${site.name}</h6>
+            <div class="stat">
+                <span class="stat-label">Type:</span>
+                <span class="stat-value">${site.site_type}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Total Birds:</span>
+                <span class="stat-value text-success">${site.total_birds.toLocaleString()}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Species Diversity:</span>
+                <span class="stat-value text-primary">${site.species_diversity}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Census Records:</span>
+                <span class="stat-value">${site.recent_census}</span>
+            </div>
+            ${site.area_hectares ? `
+            <div class="stat">
+                <span class="stat-label">Area:</span>
+                <span class="stat-value">${site.area_hectares} ha</span>
+            </div>
+            ` : ''}
+            <hr style="margin: 0.5rem 0;">
+            <small class="text-muted d-block mb-2"><strong>Top Species:</strong></small>
+            ${topSpeciesHTML}
+            <hr style="margin: 0.5rem 0;">
+            <a href="/locations/sites/${site.id}/" class="btn btn-sm btn-primary w-100 mt-2">
+                <i class="fas fa-eye me-1"></i>View Details
+            </a>
+        </div>
+    `;
+}
+
+// Function to add markers to map
+function addMarkersToMap(sites) {
+    markers.clearLayers();
+    
+    let totalBirds = 0;
+    let totalSpecies = new Set();
+
+    sites.forEach(site => {
+        const color = getMarkerColor(site.species_diversity);
+        const icon = createMarkerIcon(color);
+        
+        const marker = L.marker([site.lat, site.lon], { icon: icon });
+        marker.bindPopup(createPopupContent(site), { maxWidth: 300 });
+        
+        markers.addLayer(marker);
+
+        totalBirds += site.total_birds;
+        totalSpecies.add(site.species_diversity);
+    });
+
+    map.addLayer(markers);
+
+    // Update statistics
+    document.getElementById('filteredSiteCount').textContent = sites.length;
+    document.getElementById('totalBirds').textContent = totalBirds.toLocaleString();
+    document.getElementById('totalSpecies').textContent = totalSpecies.size;
+
+    // Fit map to markers if any exist
+    if (sites.length > 0) {
+        map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+    }
+}
+
+// Initial map load
+addMarkersToMap(sitesData);
+
+// Filter functionality
+document.getElementById('applyFilters').addEventListener('click', function() {
+    const siteType = document.getElementById('siteTypeFilter').value;
+    const species = document.getElementById('speciesFilter').value;
+    const minSpecies = document.getElementById('minSpecies').value || 0;
+
+    let filtered = sitesData;
+
+    if (siteType) {
+        filtered = filtered.filter(site => site.site_type.toLowerCase().includes(siteType.toLowerCase()));
+    }
+
+    if (minSpecies > 0) {
+        filtered = filtered.filter(site => site.species_diversity >= parseInt(minSpecies));
+    }
+
+    // For species filter, we'd need to check if site has that species
+    // This would require additional data or an API call
+    if (species) {
+        // Simplified: just show sites with any species
+        filtered = filtered.filter(site => site.species_diversity > 0);
+    }
+
+    addMarkersToMap(filtered);
+});
+
+document.getElementById('resetFilters').addEventListener('click', function() {
+    document.getElementById('siteTypeFilter').value = '';
+    document.getElementById('speciesFilter').value = '';
+    document.getElementById('minSpecies').value = '0';
+    addMarkersToMap(sitesData);
+});
+</script>
+{% endblock %}
+
