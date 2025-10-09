@@ -44,7 +44,7 @@ urlpatterns = [
     path("users/", include("apps.users.urls", namespace="users")),
     path("fauna/", include("apps.fauna.urls", namespace="fauna")),
     path("locations/", include("apps.locations.urls", namespace="locations")),
-    path("analytics/", include("apps.analytics.urls", namespace="analytics")),
+    path("analytics/", include("apps.analytics_new.urls", namespace="analytics_new")),
     path("image-processing/", include("apps.image_processing.urls", namespace="image_processing")),
     path("weather/", include("apps.weather.urls", namespace="weather")),
 ]

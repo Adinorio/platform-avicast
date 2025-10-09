@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     "apps.users.apps.UsersConfig",
     "apps.fauna.apps.FaunaConfig",
     "apps.locations.apps.LocationsConfig",
-    "apps.analytics.apps.AnalyticsConfig",
+    "apps.analytics_new.apps.AnalyticsNewConfig",
     "apps.image_processing.apps.ImageProcessingConfig",
     "apps.weather.apps.WeatherConfig",
 ]

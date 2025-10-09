@@ -26,10 +26,14 @@ def check_database_data():
 
     try:
         # Import models
-        from apps.analytics.models import Chart
         from apps.fauna.models import Species
         from apps.locations.models import CensusObservation, Site, SpeciesObservation
         from apps.users.models import User
+        try:
+            from apps.analytics_new.models import BirdSpeciesAnalytics, SiteAnalytics, CensusRecord
+        except ImportError:
+            # Fallback if new analytics not available
+            BirdSpeciesAnalytics = SiteAnalytics = CensusRecord = None
 
         print("\n📊 DATABASE OVERVIEW:")
         print("-" * 30)
@@ -83,8 +87,16 @@ def check_database_data():
         print(f"\n🐦 Fauna Species: {fauna_count}")
 
         # Analytics data
-        chart_count = Chart.objects.count()
-        print(f"\n📈 Charts: {chart_count}")
+        if BirdSpeciesAnalytics and SiteAnalytics and CensusRecord:
+            species_analytics_count = BirdSpeciesAnalytics.objects.count()
+            site_analytics_count = SiteAnalytics.objects.count()
+            census_records_count = CensusRecord.objects.count()
+            print(f"\n📈 Analytics Data:")
+            print(f"   Species Analytics: {species_analytics_count}")
+            print(f"   Site Analytics: {site_analytics_count}")
+            print(f"   Census Records: {census_records_count}")
+        else:
+            print(f"\n📈 Analytics: New analytics system not available")
 
         print("\n" + "=" * 50)
 
