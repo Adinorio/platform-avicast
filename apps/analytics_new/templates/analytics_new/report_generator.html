@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Generator - AVICAST System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="avic-page-header">
+        <h1 class="avic-page-title">
+            <i class="fas fa-file-alt"></i>Report Generator
+        </h1>
+        <p class="avic-page-subtitle">Generate comprehensive analytics reports</p>
+    </div>
+
+    <!-- Report Configurations -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Available Report Types
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            {% for config in configurations %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card border">
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                   name="configuration" value="{{ config.id }}"
+                                                   id="config_{{ config.id }}" required>
+                                            <label class="form-check-label" for="config_{{ config.id }}">
+                                                <strong>{{ config.name }}</strong>
+                                            </label>
+                                        </div>
+                                        <p class="small text-muted mt-2">{{ config.description }}</p>
+                                        <div class="small">
+                                            <span class="badge bg-secondary">{{ config.get_report_type_display }}</span>
+                                            {% if config.include_charts %}
+                                            <span class="badge bg-info">Charts</span>
+                                            {% endif %}
+                                            {% if config.include_maps %}
+                                            <span class="badge bg-success">Maps</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        {% if configurations %}
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn avic-btn-primary">
+                                <i class="fas fa-play me-2"></i>Generate Selected Report
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="text-center p-4 text-muted">
+                            <i class="fas fa-info-circle fa-2x mb-3"></i>
+                            <p>No report configurations available.</p>
+                            <p>Contact an administrator to set up report templates.</p>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card avic-card">
+                <div class="card-header avic-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Report Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>Available Report Types:</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong>Species Summary:</strong><br>
+                            <small class="text-muted">Population data and trends for each target species</small>
+                        </li>
+                        <li class="mb-2">
+                            <strong>Site Comparison:</strong><br>
+                            <small class="text-muted">Compare bird populations across different sites</small>
+                        </li>
+                        <li class="mb-2">
+                            <strong>Population Trends:</strong><br>
+                            <small class="text-muted">Long-term population trend analysis</small>
+                        </li>
+                        <li class="mb-2">
+                            <strong>Monthly Summary:</strong><br>
+                            <small class="text-muted">Monthly census data aggregation</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card avic-card">
+                <div class="card-body text-center">
+                    <a href="{% url 'analytics_new:dashboard' %}" class="btn avic-btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+

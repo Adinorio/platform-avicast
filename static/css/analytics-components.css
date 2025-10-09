@@ -1,0 +1,486 @@
+/**
+ * AVICAST Analytics Components - Modern UX/UI
+ * 
+ * Reference: Technical Audit Report - UX/UI Redesign
+ * Purpose: Government-grade analytics dashboard components
+ * Mobile-first responsive design
+ */
+
+@import url('custom-variables.css');
+
+/* ========================================
+   METRIC CARD COMPONENT
+   ======================================== */
+
+.metric-card {
+  background: linear-gradient(135deg, var(--gray-50) 0%, #ffffff 100%);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.metric-card--hero {
+  padding: var(--space-xl);
+  min-height: 240px;
+  background: linear-gradient(135deg, #ffffff 0%, var(--gray-50) 100%);
+}
+
+.metric-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.metric-card__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-card__info {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--gray-300);
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.metric-card__info:hover {
+  background: var(--gray-100);
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+}
+
+.metric-card__value {
+  font-size: var(--text-6xl);
+  font-weight: var(--font-bold);
+  color: var(--success-green);
+  line-height: var(--leading-tight);
+  margin-bottom: var(--space-sm);
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+}
+
+.metric-card__suffix {
+  font-size: var(--text-2xl);
+  color: var(--gray-500);
+  margin-left: var(--space-xs);
+  font-weight: var(--font-medium);
+}
+
+.metric-card__trend {
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.metric-card__trend--up {
+  color: var(--success-green);
+}
+
+.metric-card__trend--down {
+  color: var(--danger-red);
+}
+
+.metric-card__trend--neutral {
+  color: var(--gray-500);
+}
+
+.metric-card__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: 12px 24px;
+  background: var(--primary-navy);
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-medium);
+  font-size: var(--text-base);
+  transition: background var(--transition-base);
+  border: none;
+  cursor: pointer;
+}
+
+.metric-card__action:hover,
+.metric-card__action:focus {
+  background: #002d5f;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* ========================================
+   CHART CONTAINER COMPONENT
+   ======================================== */
+
+.chart-container {
+  background: #ffffff;
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
+}
+
+.chart-container:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.chart-container__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--gray-50);
+}
+
+.chart-container__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
+  color: var(--gray-800);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.chart-container__title i {
+  color: var(--primary-blue);
+}
+
+.chart-container__actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.chart-container__actions button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-300);
+  background: #ffffff;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.chart-container__actions button:hover {
+  background: var(--gray-50);
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+}
+
+.chart-container__body {
+  position: relative;
+  padding: var(--space-lg);
+}
+
+.chart-container__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-md);
+}
+
+.skeleton-loader {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--gray-100) 0%,
+    var(--gray-50) 50%,
+    var(--gray-100) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.chart-container__loading-text {
+  color: var(--gray-500);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+.chart-container__chart {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-container__empty,
+.chart-container__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-md);
+  color: var(--gray-500);
+  text-align: center;
+}
+
+.chart-container__empty i,
+.chart-container__error i {
+  color: var(--gray-400);
+}
+
+/* ========================================
+   ANALYTICS DASHBOARD LAYOUT
+   ======================================== */
+
+.analytics-dashboard {
+  padding: var(--space-lg) 0;
+}
+
+.hero-section {
+  margin-bottom: var(--space-xl);
+}
+
+.key-insights {
+  margin-bottom: var(--space-xl);
+}
+
+.detailed-analytics {
+  margin-bottom: var(--space-xl);
+}
+
+.quick-actions {
+  margin-bottom: var(--space-lg);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN - MOBILE FIRST
+   ======================================== */
+
+/* Mobile Devices (< 768px) */
+@media (max-width: 767px) {
+  .analytics-dashboard {
+    padding: var(--space-md) 0;
+  }
+  
+  /* Sticky Quick Actions on Mobile */
+  .quick-actions {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-sticky);
+    margin: 0 calc(-1 * var(--space-sm));
+    background: #ffffff;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--gray-100);
+  }
+  
+  .quick-actions .card {
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+  }
+  
+  .quick-actions .card-body {
+    padding: var(--space-sm);
+  }
+  
+  .quick-actions .btn {
+    font-size: var(--text-xs);
+    padding: 10px;
+  }
+  
+  .quick-actions .btn i {
+    font-size: 1.25rem;
+    margin-bottom: 4px;
+  }
+  
+  /* Optimize hero section for mobile */
+  .hero-section {
+    margin-bottom: var(--space-lg);
+  }
+  
+  .hero-section .metric-card--hero {
+    min-height: 180px;
+    padding: var(--space-lg);
+  }
+  
+  .hero-section .metric-card__value {
+    font-size: var(--text-5xl);
+  }
+  
+  /* Stack secondary metrics */
+  .hero-section .metric-card {
+    padding: var(--space-md);
+    min-height: 100px;
+  }
+  
+  .hero-section .metric-card__value {
+    font-size: var(--text-4xl);
+  }
+  
+  .hero-section .metric-card__label {
+    font-size: 0.7rem;
+  }
+  
+  /* Optimize chart containers */
+  .chart-container {
+    margin-bottom: var(--space-md);
+  }
+  
+  .chart-container__header {
+    padding: var(--space-md);
+  }
+  
+  .chart-container__title {
+    font-size: var(--text-base);
+  }
+  
+  .chart-container__body {
+    padding: var(--space-sm);
+    height: auto !important;
+    min-height: 250px;
+  }
+  
+  /* Collapse detailed analytics by default on mobile */
+  #detailedCharts.show {
+    display: block;
+  }
+  
+  /* Touch-friendly buttons */
+  .chart-container__actions button,
+  .metric-card__info {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Tablet Devices (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .hero-section .metric-card--hero {
+    min-height: 220px;
+    padding: 28px;
+  }
+  
+  .hero-section .metric-card__value {
+    font-size: var(--text-5xl);
+  }
+  
+  .chart-container__body {
+    min-height: 300px;
+  }
+}
+
+/* Large Screens (> 1400px) */
+@media (min-width: 1400px) {
+  .container-fluid {
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  
+  .hero-section .metric-card--hero {
+    min-height: 260px;
+  }
+}
+
+/* ========================================
+   PRINT OPTIMIZATION
+   ======================================== */
+
+@media print {
+  .quick-actions,
+  .chart-container__actions,
+  .btn,
+  button {
+    display: none !important;
+  }
+  
+  .chart-container {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 2px solid var(--gray-800);
+  }
+  
+  .metric-card {
+    border: 2px solid var(--gray-800);
+    box-shadow: none;
+  }
+  
+  .analytics-dashboard {
+    padding: 0;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY ENHANCEMENTS
+   ======================================== */
+
+/* Focus visible for keyboard navigation */
+.metric-card__action:focus-visible,
+.chart-container__actions button:focus-visible,
+.metric-card__info:focus-visible {
+  outline: 3px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .skeleton-loader {
+    animation: none;
+    background: var(--gray-100);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .metric-card,
+  .chart-container {
+    border-width: 2px;
+  }
+  
+  .metric-card__action {
+    border: 2px solid #ffffff;
+  }
+}
+
