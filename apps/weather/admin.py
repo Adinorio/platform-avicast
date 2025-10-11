@@ -9,7 +9,7 @@ from .models import FieldWorkSchedule, WeatherAlert, WeatherForecast
 @admin.register(WeatherForecast)
 class WeatherForecastAdmin(admin.ModelAdmin):
     list_display = (
-        "site",
+        # "site",  # Temporarily disabled during locations revamp
         "forecast_date",
         "forecast_time",
         "temperature",
@@ -18,13 +18,13 @@ class WeatherForecastAdmin(admin.ModelAdmin):
         "field_work_recommendation",
         "api_source",
     )
-    list_filter = ("site", "weather_condition", "api_source", "forecast_date", "tide_condition")
-    search_fields = ("site__name", "site__location", "api_source")
+    list_filter = ("weather_condition", "api_source", "forecast_date", "tide_condition")  # "site" temporarily disabled during locations revamp
+    search_fields = ("api_source",)  # "site__name", "site__location" temporarily disabled during locations revamp
     readonly_fields = ("created_at", "updated_at", "field_work_score", "field_work_recommendation")
     ordering = ("-forecast_date", "-forecast_time")
 
     fieldsets = (
-        ("Location & Timing", {"fields": ("site", "forecast_date", "forecast_time")}),
+        ("Location & Timing", {"fields": ("forecast_date", "forecast_time")}),  # "site" temporarily disabled during locations revamp
         (
             "Weather Data",
             {
@@ -108,7 +108,7 @@ class WeatherForecastAdmin(admin.ModelAdmin):
 class FieldWorkScheduleAdmin(admin.ModelAdmin):
     list_display = (
         "title",
-        "site",
+        # "site",  # Temporarily disabled during locations revamp
         "planned_date",
         "planned_time_range",
         "status",
@@ -116,8 +116,8 @@ class FieldWorkScheduleAdmin(admin.ModelAdmin):
         "weather_optimization",
         "created_by",
     )
-    list_filter = ("status", "planned_date", "site", "created_by__role")
-    search_fields = ("title", "description", "site__name", "created_by__employee_id")
+    list_filter = ("status", "planned_date", "created_by__role")  # "site" temporarily disabled during locations revamp
+    search_fields = ("title", "description", "created_by__employee_id")  # "site__name" temporarily disabled during locations revamp
     readonly_fields = (
         "created_by",
         "created_at",
@@ -128,7 +128,7 @@ class FieldWorkScheduleAdmin(admin.ModelAdmin):
     ordering = ("-planned_date", "-planned_start_time")
 
     fieldsets = (
-        ("Schedule Information", {"fields": ("title", "description", "site", "status")}),
+        ("Schedule Information", {"fields": ("title", "description", "status")}),  # "site" temporarily disabled during locations revamp
         (
             "Timing",
             {
@@ -212,7 +212,7 @@ class WeatherAlertAdmin(admin.ModelAdmin):
         "alert_type",
         "severity",
         "valid_period",
-        "affected_sites_count",
+        # "affected_sites_count",  # Temporarily disabled during locations revamp
         "is_active",
         "issued_at",
     )
@@ -224,7 +224,8 @@ class WeatherAlertAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Alert Information", {"fields": ("title", "description", "alert_type", "severity")}),
         ("Timing", {"fields": ("valid_from", "valid_until", "issued_at")}),
-        ("Affected Areas", {"fields": ("sites",)}),
+        ("Affected Areas", {"fields": (# "sites",  # Temporarily disabled during locations revamp
+                                       )}),
         (
             "Source Information",
             {"fields": ("source", "external_id", "metadata"), "classes": ("collapse",)},
@@ -237,11 +238,11 @@ class WeatherAlertAdmin(admin.ModelAdmin):
 
     valid_period.short_description = "Valid Period"
 
-    def affected_sites_count(self, obj):
-        count = obj.sites.count()
-        return f"{count} site(s)"
+    # def affected_sites_count(self, obj):  # Temporarily disabled during locations revamp
+    #     count = obj.sites.count()
+    #     return f"{count} site(s)"
 
-    affected_sites_count.short_description = "Affected Sites"
+    # affected_sites_count.short_description = "Affected Sites"
 
     def is_active(self, obj):
         if obj.is_active:

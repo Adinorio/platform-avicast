@@ -1,1 +1,0 @@
-# Locations app template tags

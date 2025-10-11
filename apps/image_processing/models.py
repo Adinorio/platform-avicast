@@ -192,21 +192,21 @@ class ProcessingResult(models.Model):
     override_reason = models.TextField(blank=True)
 
     # Allocation (Engage stage)
-    allocated_to_site = models.ForeignKey(
-        "locations.Site",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="allocated_images"
-    )
-    allocated_to_census = models.ForeignKey(
-        "locations.CensusObservation",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="allocated_images"
-    )
-    allocated_at = models.DateTimeField(null=True, blank=True)
+    # allocated_to_site = models.ForeignKey(  # Temporarily disabled during locations revamp
+    #     "locations.Site",
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name="allocated_images"
+    # )
+    # allocated_to_census = models.ForeignKey(  # Temporarily disabled during locations revamp
+    #     "locations.CensusObservation",
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name="allocated_images"
+    # )
+    # allocated_at = models.DateTimeField(null=True, blank=True)  # Temporarily disabled during locations revamp
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

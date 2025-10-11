@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
 from django.contrib.admin.views.decorators import staff_member_required as staff_required
-from apps.locations.models import Site
+# from apps.locations.models import Site  # Temporarily disabled during revamp
 from .models import FieldWorkSchedule, WeatherAlert, WeatherForecast
 
 
@@ -48,10 +48,12 @@ def alerts_view(request):
 def forecast_view(request, site_id=None):
     """Weather forecast view for specific site or all sites"""
     if site_id:
-        site = get_object_or_404(Site, id=site_id)
+        # site = get_object_or_404(Site, id=site_id)  # Temporarily disabled during revamp
+        return JsonResponse({"error": "Site management is being updated"}, status=503)
         sites = [site]
     else:
-        sites = Site.objects.filter(status="active")
+        # sites = Site.objects.filter(status="active")  # Temporarily disabled during revamp
+        sites = []
 
     # Get date range (today + 7 days)
     today = timezone.now().date()
@@ -106,7 +108,8 @@ def schedule_view(request):
     page_obj = paginator.get_page(page_number)
 
     # Get sites for filter dropdown
-    sites = Site.objects.filter(status="active")
+    # sites = Site.objects.filter(status="active")  # Temporarily disabled during revamp
+    sites = []
 
     context = {
         "page_obj": page_obj,

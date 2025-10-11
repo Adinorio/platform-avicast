@@ -8,7 +8,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("fauna", "0001_initial"),
-        ("locations", "0002_update_site_and_add_census"),
         ("users", "0001_initial"),
     ]
 
@@ -217,15 +216,15 @@ class Migration(migrations.Migration):
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
-                (
-                    "related_site",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to="locations.site",
-                    ),
-                ),
+                # (
+                #     "related_site",
+                #     models.ForeignKey(
+                #         blank=True,
+                #         null=True,
+                #         on_delete=django.db.models.deletion.SET_NULL,
+                #         to="locations.site",
+                #     ),
+                # ),
                 (
                     "related_species",
                     models.ForeignKey(

@@ -88,16 +88,16 @@ class SpeciesAnalytics(models.Model):
         self.save(update_fields=["total_count", "last_updated"])
 
 
-class SiteAnalytics(models.Model):
-    """Computed analytics for observation sites (reads from locations.Site)"""
-
-    # Link to actual site data
-    site = models.OneToOneField(
-        "locations.Site",
-        on_delete=models.CASCADE,
-        related_name="analytics",
-        help_text="Link to main site record"
-    )
+# class SiteAnalytics(models.Model):  # Temporarily disabled during locations revamp
+#     """Computed analytics for observation sites (reads from locations.Site)"""
+#
+#     # Link to actual site data
+#     site = models.OneToOneField(
+#         "locations.Site",
+#         on_delete=models.CASCADE,
+#         related_name="analytics",
+#         help_text="Link to main site record"
+#     )
 
     # Computed bird population data
     total_birds_recorded = models.PositiveIntegerField(default=0, help_text="Total birds recorded at this site")
@@ -171,16 +171,16 @@ class SiteAnalytics(models.Model):
         self.save()
 
 
-class CensusAnalytics(models.Model):
-    """Computed analytics for census observations (reads from locations.CensusObservation)"""
-
-    # Link to actual census data
-    census_observation = models.OneToOneField(
-        "locations.CensusObservation",
-        on_delete=models.CASCADE,
-        related_name="analytics",
-        help_text="Link to main census observation"
-    )
+# class CensusAnalytics(models.Model):  # Temporarily disabled during locations revamp
+#     """Computed analytics for census observations (reads from locations.CensusObservation)"""
+#
+#     # Link to actual census data
+#     census_observation = models.OneToOneField(
+#         "locations.CensusObservation",
+#         on_delete=models.CASCADE,
+#         related_name="analytics",
+#         help_text="Link to main census observation"
+#     )
 
     # Computed totals and analytics
     total_birds = models.PositiveIntegerField(default=0, help_text="Total birds observed")
@@ -199,42 +199,42 @@ class CensusAnalytics(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-census_observation__observation_date"]
+        # ordering = ["-census_observation__observation_date"]  # Temporarily disabled during locations revamp
         verbose_name = "Census Analytics"
         verbose_name_plural = "Census Analytics"
 
-    def __str__(self):
-        return f"Census Analytics - {self.census_observation.observation_date}"
+    # def __str__(self):  # Temporarily disabled during locations revamp
+    #     return f"Census Analytics - {self.census_observation.observation_date}"
 
-    def update_from_species_observations(self):
-        """Update analytics from associated SpeciesObservation records"""
-        from apps.locations.models import SpeciesObservation
+    # def update_from_species_observations(self):  # Temporarily disabled during locations revamp
+    #     """Update analytics from associated SpeciesObservation records"""
+    #     from apps.locations.models import SpeciesObservation
 
-        # Get all species observations for this census
-        species_observations = SpeciesObservation.objects.filter(census=self.census_observation)
-
-        if not species_observations.exists():
-            return
-
-        # Calculate totals
-        self.total_birds = species_observations.aggregate(total=Sum('count'))['total'] or 0
-        self.species_richness = species_observations.count()
-
-        # Calculate species breakdown
-        species_data = {}
-        for obs in species_observations:
-            species_name = obs.species.name if obs.species else obs.species_name
-            species_data[species_name] = obs.count
-
-        if species_data:
-            self.dominant_species = max(species_data.items(), key=lambda x: x[1])[0]
-            self.species_breakdown = species_data
-
-        # Calculate data quality (basic implementation)
-        # Could be enhanced with more sophisticated quality metrics
-        self.data_quality_score = min(1.0, self.species_richness / 10.0)  # Simple heuristic
-
-        self.save()
+        # Get all species observations for this census (temporarily disabled during locations revamp)
+        # species_observations = SpeciesObservation.objects.filter(census=self.census_observation)
+        #
+        # if not species_observations.exists():
+        #     return
+        #
+        # # Calculate totals
+        # self.total_birds = species_observations.aggregate(total=Sum('count'))['total'] or 0
+        # self.species_richness = species_observations.count()
+        #
+        # # Calculate species breakdown
+        # species_data = {}
+        # for obs in species_observations:
+        #     species_name = obs.species.name if obs.species else obs.species_name
+        #     species_data[species_name] = obs.count
+        #
+        # if species_data:
+        #     self.dominant_species = max(species_data.items(), key=lambda x: x[1])[0]
+        #     self.species_breakdown = species_data
+        #
+        # # Calculate data quality (basic implementation)
+        # # Could be enhanced with more sophisticated quality metrics
+        # self.data_quality_score = min(1.0, self.species_richness / 10.0)  # Simple heuristic
+        #
+        # self.save()
 
 
 class PopulationTrend(models.Model):
