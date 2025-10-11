@@ -50,7 +50,8 @@ class ProcessingResultAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         "detected_species", "review_decision", "is_overridden",
-        "allocated_to_site", "created_at"
+        # "allocated_to_site",  # Temporarily disabled during locations revamp
+        "created_at"
     ]
     search_fields = [
         "image_upload__title", "detected_species",
@@ -83,7 +84,8 @@ class ProcessingResultAdmin(admin.ModelAdmin):
             "classes": ("collapse",)
         }),
         ("Allocation", {
-            "fields": ("allocated_to_site", "allocated_to_census", "allocated_at"),
+            "fields": (# "allocated_to_site",  # Temporarily disabled during locations revamp
+                       "allocated_to_census", "allocated_at"),
             "classes": ("collapse",)
         }),
     )

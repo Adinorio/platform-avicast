@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("locations", "0002_update_site_and_add_census"),
         ("users", "0002_user_account_status_user_archived_by_and_more"),
     ]
 
@@ -125,14 +124,14 @@ class Migration(migrations.Migration):
                 ("api_response_data", models.JSONField(blank=True, default=dict)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                (
-                    "site",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="weather_forecasts",
-                        to="locations.site",
-                    ),
-                ),
+                # (
+                #     "site",
+                #     models.ForeignKey(
+                #         on_delete=django.db.models.deletion.CASCADE,
+                #         related_name="weather_forecasts",
+                #         to="locations.site",
+                #     ),
+                # ),
             ],
             options={
                 "verbose_name": "Weather Forecast",
@@ -210,14 +209,14 @@ class Migration(migrations.Migration):
                         to="users.user",
                     ),
                 ),
-                (
-                    "site",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="field_work_schedules",
-                        to="locations.site",
-                    ),
-                ),
+                # (
+                #     "site",
+                #     models.ForeignKey(
+                #         on_delete=django.db.models.deletion.CASCADE,
+                #         related_name="field_work_schedules",
+                #         to="locations.site",
+                #     ),
+                # ),
                 (
                     "supervisor",
                     models.ForeignKey(
@@ -277,10 +276,10 @@ class Migration(migrations.Migration):
                 ("source", models.CharField(blank=True, max_length=50)),
                 ("external_id", models.CharField(blank=True, max_length=100)),
                 ("metadata", models.JSONField(blank=True, default=dict)),
-                (
-                    "sites",
-                    models.ManyToManyField(related_name="weather_alerts", to="locations.site"),
-                ),
+                # (
+                #     "sites",
+                #     models.ManyToManyField(related_name="weather_alerts", to="locations.site"),
+                # ),
             ],
             options={
                 "verbose_name": "Weather Alert",

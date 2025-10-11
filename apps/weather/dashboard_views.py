@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from django.contrib.admin.views.decorators import staff_member_required as staff_required
-from apps.locations.models import Site
+# from apps.locations.models import Site  # Temporarily disabled during revamp
 from .models import FieldWorkSchedule, WeatherAlert, WeatherAPI, WeatherForecast
 
 
@@ -16,10 +16,12 @@ from .models import FieldWorkSchedule, WeatherAlert, WeatherAPI, WeatherForecast
 def dashboard(request):
     """Weather dashboard with forecasts and optimization"""
     # Get all sites
-    sites = Site.objects.filter(status="active")
+    # sites = Site.objects.filter(status="active")  # Temporarily disabled during revamp
+    sites = []
 
     # Get recent forecasts
-    recent_forecasts = WeatherForecast.objects.select_related("site").order_by("-created_at")[:10]
+    # recent_forecasts = WeatherForecast.objects.select_related("site").order_by("-created_at")[:10]  # Temporarily disabled during revamp
+    recent_forecasts = []
 
     # Get active alerts
     active_alerts = WeatherAlert.objects.filter(

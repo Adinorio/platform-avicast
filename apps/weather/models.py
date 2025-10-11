@@ -53,9 +53,9 @@ class WeatherForecast(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # Location and timing
-    site = models.ForeignKey(
-        "locations.Site", on_delete=models.CASCADE, related_name="weather_forecasts"
-    )
+    # site = models.ForeignKey(  # Temporarily disabled during locations revamp
+    #     "locations.Site", on_delete=models.CASCADE, related_name="weather_forecasts"
+    # )
     forecast_date = models.DateField()
     forecast_time = models.TimeField()
 
@@ -113,20 +113,21 @@ class WeatherForecast(models.Model):
         ordering = ["forecast_date", "forecast_time"]
         verbose_name = "Weather Forecast"
         verbose_name_plural = "Weather Forecasts"
-        unique_together = ["site", "forecast_date", "forecast_time"]
+        # unique_together = ["site", "forecast_date", "forecast_time"]  # Temporarily disabled during locations revamp
         indexes = [
-            models.Index(fields=["site", "forecast_date"]),
+            # models.Index(fields=["site", "forecast_date"]),  # Temporarily disabled during locations revamp
             models.Index(fields=["forecast_date", "weather_condition"]),
             models.Index(fields=["api_source", "created_at"]),
         ]
 
     def __str__(self):
-        return f"{self.site.name} - {self.forecast_date} {self.forecast_time}"
+        # return f"{self.site.name} - {self.forecast_date} {self.forecast_time}"  # Temporarily disabled during locations revamp
+        return f"Forecast - {self.forecast_date} {self.forecast_time}"
 
-    @property
-    def is_coastal_site(self):
-        """Check if this is a coastal site with tide data"""
-        return self.site.site_type == "coastal"
+    # @property
+    # def is_coastal_site(self):  # Temporarily disabled during locations revamp
+    #     """Check if this is a coastal site with tide data"""
+    #     return self.site.site_type == "coastal"
 
     @property
     def field_work_score(self):
@@ -163,10 +164,10 @@ class WeatherForecast(models.Model):
         elif self.visibility < 10:
             score -= 10
 
-        # Tide penalty for coastal sites
-        if self.is_coastal_site and self.tide_condition:
-            if self.tide_condition in [self.TideCondition.HIGH_TIDE, self.TideCondition.LOW_TIDE]:
-                score -= 10
+        # Tide penalty for coastal sites (temporarily disabled during locations revamp)
+        # if self.is_coastal_site and self.tide_condition:
+        #     if self.tide_condition in [self.TideCondition.HIGH_TIDE, self.TideCondition.LOW_TIDE]:
+        #         score -= 10
 
         return max(0, score)
 
@@ -202,9 +203,9 @@ class FieldWorkSchedule(models.Model):
     # Schedule details
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    site = models.ForeignKey(
-        "locations.Site", on_delete=models.CASCADE, related_name="field_work_schedules"
-    )
+    # site = models.ForeignKey(  # Temporarily disabled during locations revamp
+    #     "locations.Site", on_delete=models.CASCADE, related_name="field_work_schedules"
+    # )
 
     # Timing
     planned_date = models.DateField()
@@ -247,13 +248,14 @@ class FieldWorkSchedule(models.Model):
         verbose_name = "Field Work Schedule"
         verbose_name_plural = "Field Work Schedules"
         indexes = [
-            models.Index(fields=["site", "planned_date"]),
+            # models.Index(fields=["site", "planned_date"]),  # Temporarily disabled during locations revamp
             models.Index(fields=["status", "planned_date"]),
             # Removed invalid index on ManyToMany field 'assigned_personnel'
         ]
 
     def __str__(self):
-        return f"{self.title} - {self.site.name} - {self.planned_date}"
+        # return f"{self.title} - {self.site.name} - {self.planned_date}"  # Temporarily disabled during locations revamp
+        return f"{self.title} - {self.planned_date}"
 
     def update_weather_optimization(self, weather_forecast):
         """Update weather optimization data based on forecast"""
@@ -323,7 +325,7 @@ class WeatherAlert(models.Model):
     severity = models.CharField(max_length=20, choices=AlertSeverity.choices)
 
     # Affected areas
-    sites = models.ManyToManyField("locations.Site", related_name="weather_alerts")
+    # sites = models.ManyToManyField("locations.Site", related_name="weather_alerts")  # Temporarily disabled during locations revamp
 
     # Timing
     valid_from = models.DateTimeField()
@@ -342,7 +344,7 @@ class WeatherAlert(models.Model):
         indexes = [
             models.Index(fields=["alert_type", "severity"]),
             models.Index(fields=["valid_from", "valid_until"]),
-            # Removed invalid index on ManyToMany field 'sites'
+            # Removed invalid index on ManyToMany field 'sites' - Temporarily disabled during locations revamp
         ]
 
     def __str__(self):

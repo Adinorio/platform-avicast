@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Observation{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        Delete Observation
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-binoculars fa-3x text-muted mb-3"></i>
+                        <h5>Delete Observation?</h5>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+
+                    <div class="bg-light p-3 rounded mb-4">
+                        <h6>Observation Details:</h6>
+                        <p><strong>Species:</strong> {{ observation.species.name|default:observation.species_name }}</p>
+                        <p><strong>Count:</strong> {{ observation.count }}</p>
+                        {% if observation.behavior_notes %}
+                        <p><strong>Notes:</strong> {{ observation.behavior_notes }}</p>
+                        {% endif %}
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Delete Observation
+                            </button>
+                            <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

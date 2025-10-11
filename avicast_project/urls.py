@@ -25,6 +25,8 @@ from django.views.generic import TemplateView
 from apps.users.admin_index import custom_admin_index
 
 
+
+
 def custom_login_redirect(request):
     """Custom login view that redirects based on user role"""
     if request.user.is_authenticated:

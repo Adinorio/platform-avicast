@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ site.name }} - Census Years{% endblock %}
+
+{% block extra_css %}
+<style>
+.year-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.year-table th {
+    background: #f8f9fa;
+    border: none;
+    font-weight: 600;
+    color: #495057;
+    padding: 1rem;
+}
+
+.year-table td {
+    border: none;
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.year-row:hover {
+    background: #f8f9fa;
+}
+
+.year-number {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.stats-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.25rem;
+    display: inline-block;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 2rem;
+}
+
+.breadcrumb-item a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: #718096;
+}
+
+.site-info {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">
+                    <i class="fas fa-home me-1"></i>Sites
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:site_detail' site.id %}">
+                    {{ site.name }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Census Years</li>
+        </ol>
+    </nav>
+
+    <!-- Site Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-calendar-alt text-primary me-2"></i>
+                        {{ site.name }} - Census Years
+                    </h2>
+                    <p class="text-muted mb-0">{{ site.description|default:"No description available" }}</p>
+                </div>
+                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Census Year
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Info Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="site-info">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Type:</strong> {{ site.get_site_type_display }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Status:</strong> {{ site.get_status_display }}
+                    </div>
+                    {% if site.coordinates %}
+                    <div class="col-md-3">
+                        <strong>Coordinates:</strong> {{ site.get_coordinates_display }}
+                    </div>
+                    {% endif %}
+                    <div class="col-md-3">
+                        <strong>Created:</strong> {{ site.created_at|date:"M d, Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Years Table -->
+    <div class="row">
+        <div class="col-12">
+            {% if years %}
+            <div class="card year-table">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Census Years for {{ site.name }}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Census Records</th>
+                                    <th>Total Birds</th>
+                                    <th>Total Species</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for year in years %}
+                                <tr class="year-row">
+                                    <td>
+                                        <div class="year-number">{{ year.year }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="stats-badge">{{ year.total_census_count }} census</span>
+                                    </td>
+                                    <td>
+                                        <span class="stats-badge">{{ year.total_birds_recorded }} birds</span>
+                                    </td>
+                                    <td>
+                                        <span class="stats-badge">{{ year.total_species_recorded }} species</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'locations:year_detail' site.id year.year %}"
+                                               class="btn btn-sm btn-outline-primary" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'locations:year_edit' site.id year.year %}"
+                                               class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'locations:year_delete' site.id year.year %}"
+                                               class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No census years yet</h4>
+                <p class="text-muted">Add your first census year to start recording data for {{ site.name }}</p>
+                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add First Year
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

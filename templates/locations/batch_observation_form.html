@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        {{ title }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <script>
+                        let observationCount = 1; // Start with 1 row
+
+                        function toggleSpeciesName(rowNum) {
+                            const speciesSelect = document.querySelector(`select[name="species_${rowNum}"]`);
+                            const speciesNameInput = document.querySelector(`input[name="species_name_${rowNum}"]`);
+
+                            if (speciesSelect && speciesNameInput) {
+                                if (speciesSelect.value) {
+                                    // Species selected, hide and disable species name field
+                                    speciesNameInput.style.display = 'none';
+                                    speciesNameInput.disabled = true;
+                                    speciesNameInput.value = '';
+                                    speciesNameInput.required = false;
+                                    speciesSelect.disabled = false;
+                                } else {
+                                    // No species selected, show species name field
+                                    speciesNameInput.style.display = 'block';
+                                    speciesNameInput.disabled = false;
+                                    speciesSelect.disabled = false;
+                                }
+                            }
+                        }
+
+                        function toggleSpeciesSelect(rowNum) {
+                            const speciesSelect = document.querySelector(`select[name="species_${rowNum}"]`);
+                            const speciesNameInput = document.querySelector(`input[name="species_name_${rowNum}"]`);
+
+                            if (speciesSelect && speciesNameInput) {
+                                if (speciesNameInput.value.trim()) {
+                                    // Species name filled, disable species dropdown
+                                    speciesSelect.disabled = true;
+                                    speciesSelect.value = '';
+                                    speciesNameInput.style.display = 'block';
+                                    speciesNameInput.disabled = false;
+                                } else {
+                                    // Species name empty, enable species dropdown
+                                    speciesSelect.disabled = false;
+                                    speciesNameInput.style.display = 'block';
+                                    speciesNameInput.disabled = false;
+                                }
+                            }
+                        }
+
+                        function addObservationRow() {
+                            observationCount++;
+
+                            const tbody = document.querySelector('#observation-rows');
+                            const newRow = document.createElement('tr');
+
+                            newRow.innerHTML = `
+                                <td><strong>${observationCount}</strong></td>
+                                <td>
+                                    <select name="species_${observationCount-1}" class="form-control" onchange="toggleSpeciesName(${observationCount-1})">
+                                        <option value="">Select Species</option>
+                                        {% for species in form.species_0.field.choices %}
+                                            <option value="{{ species.0 }}">{{ species.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" name="species_name_${observationCount-1}" class="form-control"
+                                           placeholder="Enter species name if not in list" style="display: block;">
+                                </td>
+                                <td>
+                                    <input type="number" name="count_${observationCount-1}" class="form-control"
+                                           min="1" placeholder="Count">
+                                </td>
+                            `;
+
+                            tbody.appendChild(newRow);
+
+                            // Add event listener for the new species name input
+                            const newSpeciesNameInput = document.querySelector(`input[name="species_name_${observationCount-1}"]`);
+                            if (newSpeciesNameInput) {
+                                newSpeciesNameInput.addEventListener('input', () => toggleSpeciesSelect(observationCount-1));
+                            }
+
+                            // Update form fields count for validation
+                            updateFormFields();
+                        }
+
+                        function updateFormFields() {
+                            // Update any form field references if needed
+                            console.log('Form fields updated for', observationCount, 'observations');
+                        }
+
+                        // Initialize on page load
+                        document.addEventListener('DOMContentLoaded', function() {
+                            for (let i = 0; i < observationCount; i++) {
+                                toggleSpeciesName(i);
+                                
+                                // Add event listener for species name input
+                                const speciesNameInput = document.querySelector(`input[name="species_name_${i}"]`);
+                                if (speciesNameInput) {
+                                    speciesNameInput.addEventListener('input', () => toggleSpeciesSelect(i));
+                                }
+                            }
+                        });
+                        </script>
+
+                        <!-- Context info (readonly) -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label class="form-label text-muted">Site</label>
+                                <input type="text" class="form-control" value="{{ site.name }}" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted">Year</label>
+                                <input type="text" class="form-control" value="{{ year.year }}" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted">Month</label>
+                                <input type="text" class="form-control" value="{{ month.get_month_display }}" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted">Census Date</label>
+                                <input type="text" class="form-control" value="{{ census.census_date|date:'M d, Y' }}" readonly>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Species</th>
+                                        <th>Species Name</th>
+                                        <th>Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="observation-rows">
+                                    <!-- Initial row -->
+                                    <tr>
+                                        <td><strong>1</strong></td>
+                                        <td>{{ form.species_0 }}</td>
+                                        <td>{{ form.species_name_0 }}</td>
+                                        <td>{{ form.count_0 }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-outline-primary" onclick="addObservationRow()">
+                                    <i class="fas fa-plus me-2"></i>Add Another Observation
+                                </button>
+                            </div>
+                        </div>
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger mt-3">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Add All Observations
+                            </button>
+                            <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Census
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

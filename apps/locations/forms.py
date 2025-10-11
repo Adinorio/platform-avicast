@@ -1,142 +1,248 @@
+"""
+Forms for locations app
+"""
+
 from django import forms
 from django.contrib.auth import get_user_model
-from django.forms import inlineformset_factory
-from django.utils import timezone
-
-from .models import CensusObservation, Site, SpeciesObservation
-from apps.fauna.models import Species
+from .models import Site, CensusYear, CensusMonth, Census, CensusObservation
 
 User = get_user_model()
 
 
 class SiteForm(forms.ModelForm):
+    """Form for creating and editing sites"""
+
     class Meta:
         model = Site
-        fields = ["name", "site_type", "coordinates", "description", "status"]
+        fields = ['name', 'site_type', 'coordinates', 'description', 'image', 'status']
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "site_type": forms.Select(attrs={"class": "form-control"}),
-            "coordinates": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Latitude, Longitude"}
-            ),
-            "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "status": forms.Select(attrs={"class": "form-control"}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter site name'}),
+            'site_type': forms.Select(attrs={'class': 'form-control'}),
+            'coordinates': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 14.5995, 120.9842'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Describe the site location and characteristics'
+            }),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+        }
+        help_texts = {
+            'coordinates': 'Enter coordinates as "latitude, longitude" (e.g., 14.5995, 120.9842)',
+            'image': 'Upload an image of the site for better identification',
+        }
+
+
+class CensusYearForm(forms.ModelForm):
+    """Form for creating and editing census years"""
+
+    class Meta:
+        model = CensusYear
+        fields = ['site', 'year']
+        widgets = {
+            'site': forms.Select(attrs={'class': 'form-control'}),
+            'year': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 2000,
+                'max': 2030
+            }),
+        }
+
+
+class CensusMonthForm(forms.ModelForm):
+    """Form for creating and editing census months"""
+
+    class Meta:
+        model = CensusMonth
+        fields = ['month']  # Only month field, year is set programmatically
+        widgets = {
+            'month': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+
+class CensusForm(forms.ModelForm):
+    """Form for creating and editing census records"""
+
+    class Meta:
+        model = Census
+        fields = [
+            'census_date', 'lead_observer', 'field_team',
+            'weather_conditions', 'notes'
+        ]
+        widgets = {
+            'census_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'lead_observer': forms.Select(attrs={'class': 'form-control'}),
+            'field_team': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'weather_conditions': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., Sunny, 25°C, light wind'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes about the census'
+            }),
         }
 
 
 class CensusObservationForm(forms.ModelForm):
+    """Form for creating and editing census observations"""
+
     class Meta:
         model = CensusObservation
-        fields = ["observation_date", "weather_conditions", "notes"]
+        fields = ['species', 'species_name', 'count']
         widgets = {
-            "observation_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-            "weather_conditions": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "e.g., Sunny, 25°C, Light breeze"}
-            ),
-            "notes": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 3,
-                    "placeholder": "General observation notes...",
-                }
-            ),
-        }
-
-    def __init__(self, *args, **kwargs):
-        self.site = kwargs.pop("site", None)
-        super().__init__(*args, **kwargs)
-        if self.site:
-            self.fields["observation_date"].widget.attrs["max"] = timezone.now().date().isoformat()
-
-
-class SpeciesObservationForm(forms.ModelForm):
-    class Meta:
-        model = SpeciesObservation
-        fields = ["species", "species_name", "count", "behavior_notes"]
-        widgets = {
-            "species": forms.Select(attrs={"class": "form-control"}),
-            "species_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter species name..."}),
-            "count": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
-            "behavior_notes": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 2,
-                    "placeholder": "Behavior, age, sex, etc.",
-                }
-            ),
+            'species': forms.Select(attrs={
+                'class': 'form-control',
+                'onchange': 'toggleSpeciesName()'
+            }),
+            'species_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter species name if not in list'
+            }),
+            'count': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1
+            }),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Populate species choices with non-archived species
-        self.fields["species"].queryset = Species.objects.filter(is_archived=False).order_by("name")
-        self.fields["species"].empty_label = "Select a species..."
+
+        # Populate species choices from fauna app
+        from apps.fauna.models import Species
+        species_choices = [('', 'Select Species')] + [(species.id, species.name) for species in Species.objects.all()]
+        self.fields['species'].choices = species_choices
+
+        # Set initial visibility and requirement of species_name field
+        species_selected = False
+        if self.instance and self.instance.species:
+            species_selected = True
+            self.fields['species_name'].widget.attrs['style'] = 'display: none;'
+            self.fields['species_name'].required = False
+        elif self.data.get('species'):
+            species_selected = True
+            self.fields['species_name'].widget.attrs['style'] = 'display: none;'
+            self.fields['species_name'].required = False
+        else:
+            # No species selected initially, show species_name field
+            self.fields['species_name'].widget.attrs['style'] = 'display: block;'
 
     def clean(self):
         cleaned_data = super().clean()
-        species = cleaned_data.get("species")
-        species_name = cleaned_data.get("species_name")
+        species = cleaned_data.get('species')
+        species_name = cleaned_data.get('species_name')
 
-        # Ensure at least one of species or species_name is provided
         if not species and not species_name:
-            raise forms.ValidationError("Please either select a species from the list or enter a species name.")
+            raise forms.ValidationError("Either select a species or enter a species name.")
+
+        # If species is selected, clear species_name
+        if species:
+            cleaned_data['species_name'] = ''
 
         return cleaned_data
 
 
-# Create inline formset for species observations
-SpeciesObservationFormSet = inlineformset_factory(
-    CensusObservation,
-    SpeciesObservation,
-    form=SpeciesObservationForm,
-    extra=3,  # Start with 3 empty species fields
-    can_delete=True,
-    min_num=1,  # At least one species must be observed
-    validate_min=True,
-)
+class BatchObservationForm(forms.Form):
+    """Form for batch adding multiple observations"""
 
+    def __init__(self, *args, **kwargs):
+        census = kwargs.pop('census', None)
+        super().__init__(*args, **kwargs)
 
-class CensusImportForm(forms.Form):
-    file = forms.FileField(
-        label="Select File",
-        help_text="Upload CSV or Excel file with census data",
-        widget=forms.FileInput(attrs={"class": "form-control"}),
-    )
-    observation_date = forms.DateField(
-        label="Observation Date",
-        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-        help_text="Date for this census observation",
-    )
-    weather_conditions = forms.CharField(
-        max_length=200,
-        required=False,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Weather conditions during observation"}
-        ),
-        help_text="Optional weather information",
-    )
-    notes = forms.CharField(
-        max_length=500,
-        required=False,
-        widget=forms.Textarea(
-            attrs={
-                "class": "form-control",
-                "rows": 3,
-                "placeholder": "General notes about this census",
-            }
-        ),
-        help_text="Optional general notes",
-    )
+        # Populate species choices from fauna app
+        from apps.fauna.models import Species
+        species_choices = [('', 'Select Species')] + [(species.id, species.name) for species in Species.objects.all()]
 
-    def clean_file(self):
-        file = self.cleaned_data["file"]
-        if file:
-            # Check file extension
-            if not file.name.endswith((".csv", ".xlsx", ".xls")):
-                raise forms.ValidationError("Please upload a CSV or Excel file (.csv, .xlsx, .xls)")
+        # Create initial observation forms (start with 1, add more dynamically)
+        for i in range(1):
+            self.fields[f'species_{i}'] = forms.ChoiceField(
+                choices=species_choices,
+                required=False,
+                widget=forms.Select(attrs={
+                    'class': 'form-control',
+                    'onchange': f'toggleSpeciesName({i})'
+                })
+            )
+            self.fields[f'species_name_{i}'] = forms.CharField(
+                max_length=200,
+                required=False,
+                widget=forms.TextInput(attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Enter species name if not in list',
+                    'style': 'display: block;'
+                })
+            )
+            self.fields[f'count_{i}'] = forms.IntegerField(
+                min_value=1,
+                required=False,
+                widget=forms.NumberInput(attrs={
+                    'class': 'form-control',
+                    'min': 1
+                })
+            )
 
-            # Check file size (max 5MB)
-            if file.size > 5 * 1024 * 1024:
-                raise forms.ValidationError("File size must be less than 5MB")
+    def get_field_groups(self):
+        """Return field groups for template rendering"""
+        groups = []
+        # Check how many observation groups we have (dynamically created)
+        max_groups = 0
+        for field_name in self.fields:
+            # Only look for species fields that match pattern species_0, species_1, etc.
+            # (not species_name_0)
+            if field_name.startswith('species_') and not field_name.startswith('species_name_'):
+                parts = field_name.split('_')
+                if len(parts) >= 2 and parts[1].isdigit():
+                    index = int(parts[1])
+                    max_groups = max(max_groups, index + 1)
 
-        return file
+        for i in range(max_groups):
+            if f'species_{i}' in self.fields:
+                groups.append({
+                    'species': self[f'species_{i}'],
+                    'species_name': self[f'species_name_{i}'],
+                    'count': self[f'count_{i}'],
+                    'index': i
+                })
+        return groups
+
+    def clean(self):
+        cleaned_data = super().clean()
+        observations = []
+
+        # Check how many observation groups we have
+        max_groups = 0
+        for field_name in self.fields:
+            # Only look for species fields that match pattern species_0, species_1, etc.
+            # (not species_name_0)
+            if field_name.startswith('species_') and not field_name.startswith('species_name_'):
+                parts = field_name.split('_')
+                if len(parts) >= 2 and parts[1].isdigit():
+                    index = int(parts[1])
+                    max_groups = max(max_groups, index + 1)
+
+        for i in range(max_groups):
+            if f'species_{i}' in cleaned_data:
+                species = cleaned_data.get(f'species_{i}')
+                species_name = cleaned_data.get(f'species_name_{i}')
+                count = cleaned_data.get(f'count_{i}')
+
+                if count and count > 0:
+                    if not species and not species_name:
+                        raise forms.ValidationError(f"Row {i+1}: Either select a species or enter a species name.")
+                    observations.append({
+                        'species': species,
+                        'species_name': species_name,
+                        'count': count
+                    })
+
+        if not observations:
+            raise forms.ValidationError("Please add at least one observation.")
+
+        return cleaned_data

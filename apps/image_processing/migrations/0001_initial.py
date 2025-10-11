@@ -12,7 +12,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('locations', '0007_populate_species_foreign_key'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -81,8 +80,8 @@ class Migration(migrations.Migration):
                 ('allocated_at', models.DateTimeField(blank=True, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('allocated_to_census', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='allocated_images', to='locations.censusobservation')),
-                ('allocated_to_site', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='allocated_images', to='locations.site')),
+                # ('allocated_to_census', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='allocated_images', to='locations.censusobservation')),
+                # ('allocated_to_site', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='allocated_images', to='locations.site')),
                 ('image_upload', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='processing_result', to='image_processing.imageupload')),
                 ('reviewed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reviewed_images', to=settings.AUTH_USER_MODEL)),
             ],

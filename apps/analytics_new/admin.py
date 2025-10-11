@@ -5,11 +5,11 @@ Admin configuration for new analytics app
 from django.contrib import admin
 
 from .models import (
-    CensusAnalytics,
+    # CensusAnalytics,  # Temporarily disabled during locations revamp
     GeneratedReport,
     PopulationTrend,
     ReportConfiguration,
-    SiteAnalytics,
+    # SiteAnalytics,  # Temporarily disabled during locations revamp
     SpeciesAnalytics,
 )
 
@@ -62,111 +62,113 @@ class SpeciesAnalyticsAdmin(admin.ModelAdmin):
         return request.user.role == "SUPERADMIN"
 
 
-@admin.register(SiteAnalytics)
-class SiteAnalyticsAdmin(admin.ModelAdmin):
-    """Admin for site analytics"""
+# Temporarily disabled SiteAnalytics admin during locations revamp
+# @admin.register(SiteAnalytics)
+# class SiteAnalyticsAdmin(admin.ModelAdmin):
+#     """Admin for site analytics"""
+#
+#     list_display = (
+#         "get_site_code",
+#         "get_site_name",
+#         "total_birds_recorded",
+#         "species_diversity",
+#         "last_survey_date",
+#         "is_active",
+#     )
+#     list_filter = ("is_active",)
+#     search_fields = ("site__name", "site__coordinates")
+#     readonly_fields = ("created_at",)
+#
+#     fieldsets = (
+#         ("Site Information", {
+#             "fields": ("site", "total_birds_recorded", "species_diversity")
+#         }),
+#         ("Species Composition", {
+#             "fields": ("dominant_species", "species_composition"),
+#             "classes": ("collapse",),
+#         }),
+#         ("Monitoring Data", {
+#             "fields": ("total_census_observations", "last_survey_date", "survey_frequency_days"),
+#             "classes": ("collapse",),
+#         }),
+#         ("Environmental Data", {
+#             "fields": ("avg_temperature", "avg_humidity"),
+#             "classes": ("collapse",),
+#         }),
+#         ("Metadata", {
+#             "fields": ("created_at", "is_active"),
+#             "classes": ("collapse",),
+#         }),
+#     )
+#
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).select_related("site")
+#
+#     def get_site_code(self, obj):
+#         return obj.site.name if obj.site else "No Site"
+#     get_site_code.short_description = "Site"
+#     get_site_code.admin_order_field = "site__name"
+#
+#     def get_site_name(self, obj):
+#         return obj.site.name if obj.site else "No Site"
+#     get_site_name.short_description = "Site Name"
+#     get_site_name.admin_order_field = "site__name"
+#
+#     def has_add_permission(self, request):
+#         return request.user.role in ["SUPERADMIN", "ADMIN"]
+#
+#     def has_change_permission(self, request, obj=None):
+#         return request.user.role in ["SUPERADMIN", "ADMIN"]
+#
+#     def has_delete_permission(self, request, obj=None):
+#         return request.user.role == "SUPERADMIN"
 
-    list_display = (
-        "get_site_code",
-        "get_site_name",
-        "total_birds_recorded",
-        "species_diversity",
-        "last_survey_date",
-        "is_active",
-    )
-    list_filter = ("is_active",)
-    search_fields = ("site__name", "site__coordinates")
-    readonly_fields = ("created_at",)
 
-    fieldsets = (
-        ("Site Information", {
-            "fields": ("site", "total_birds_recorded", "species_diversity")
-        }),
-        ("Species Composition", {
-            "fields": ("dominant_species", "species_composition"),
-            "classes": ("collapse",),
-        }),
-        ("Monitoring Data", {
-            "fields": ("total_census_observations", "last_survey_date", "survey_frequency_days"),
-            "classes": ("collapse",),
-        }),
-        ("Environmental Data", {
-            "fields": ("avg_temperature", "avg_humidity"),
-            "classes": ("collapse",),
-        }),
-        ("Metadata", {
-            "fields": ("created_at", "is_active"),
-            "classes": ("collapse",),
-        }),
-    )
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("site")
-
-    def get_site_code(self, obj):
-        return obj.site.name if obj.site else "No Site"
-    get_site_code.short_description = "Site"
-    get_site_code.admin_order_field = "site__name"
-
-    def get_site_name(self, obj):
-        return obj.site.name if obj.site else "No Site"
-    get_site_name.short_description = "Site Name"
-    get_site_name.admin_order_field = "site__name"
-
-    def has_add_permission(self, request):
-        return request.user.role in ["SUPERADMIN", "ADMIN"]
-
-    def has_change_permission(self, request, obj=None):
-        return request.user.role in ["SUPERADMIN", "ADMIN"]
-
-    def has_delete_permission(self, request, obj=None):
-        return request.user.role == "SUPERADMIN"
-
-
-@admin.register(CensusAnalytics)
-class CensusAnalyticsAdmin(admin.ModelAdmin):
-    """Admin for census analytics"""
-
-    list_display = (
-        "census_observation",
-        "total_birds",
-        "species_richness",
-        "dominant_species",
-        "data_quality_score",
-    )
-    list_filter = ("data_quality_score", "verification_status")
-    search_fields = ("census_observation__site__name", "dominant_species")
-    readonly_fields = ("created_at", "last_updated")
-
-    fieldsets = (
-        ("Census Information", {
-            "fields": ("census_observation", "total_birds", "species_richness")
-        }),
-        ("Species Analysis", {
-            "fields": ("dominant_species", "species_breakdown"),
-            "classes": ("collapse",),
-        }),
-        ("Data Quality", {
-            "fields": ("data_quality_score", "verification_status"),
-            "classes": ("collapse",),
-        }),
-        ("Metadata", {
-            "fields": ("created_at", "last_updated"),
-            "classes": ("collapse",),
-        }),
-    )
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("census_observation__site", "census_observation__observer")
-
-    def has_add_permission(self, request):
-        return False  # Analytics are computed, not manually created
-
-    def has_change_permission(self, request, obj=None):
-        return request.user.role in ["SUPERADMIN", "ADMIN"]
-
-    def has_delete_permission(self, request, obj=None):
-        return request.user.role == "SUPERADMIN"
+# Temporarily disabled CensusAnalytics admin during locations revamp
+# @admin.register(CensusAnalytics)
+# class CensusAnalyticsAdmin(admin.ModelAdmin):
+#     """Admin for census analytics"""
+#
+#     list_display = (
+#         "census_observation",
+#         "total_birds",
+#         "species_richness",
+#         "dominant_species",
+#         "data_quality_score",
+#     )
+#     list_filter = ("data_quality_score", "verification_status")
+#     search_fields = ("census_observation__site__name", "dominant_species")
+#     readonly_fields = ("created_at", "last_updated")
+#
+#     fieldsets = (
+#         ("Census Information", {
+#             "fields": ("census_observation", "total_birds", "species_richness")
+#         }),
+#         ("Species Analysis", {
+#             "fields": ("dominant_species", "species_breakdown"),
+#             "classes": ("collapse",),
+#         }),
+#         ("Data Quality", {
+#             "fields": ("data_quality_score", "verification_status"),
+#             "classes": ("collapse",),
+#         }),
+#         ("Metadata", {
+#             "fields": ("created_at", "last_updated"),
+#             "classes": ("collapse",),
+#         }),
+#     )
+#
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).select_related("census_observation__site", "census_observation__observer")
+#
+#     def has_add_permission(self, request):
+#         return False  # Analytics are computed, not manually created
+#
+#     def has_change_permission(self, request, obj=None):
+#         return request.user.role in ["SUPERADMIN", "ADMIN"]
+#
+#     def has_delete_permission(self, request, obj=None):
+#         return request.user.role == "SUPERADMIN"
 
 
 @admin.register(PopulationTrend)

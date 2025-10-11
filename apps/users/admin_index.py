@@ -11,7 +11,7 @@ from django.db.models import Count
 from django.contrib.auth import get_user_model
 
 from apps.fauna.models import Species
-from apps.locations.models import Site
+# from apps.locations.models import Site  # Temporarily disabled during revamp
 
 User = get_user_model()
 
@@ -39,7 +39,8 @@ def custom_admin_index(request):
         total_species = 0
     
     try:
-        total_observations = Site.objects.count()
+        # total_observations = Site.objects.count()  # Temporarily disabled during revamp
+        total_observations = 0
     except:
         total_observations = 0
     

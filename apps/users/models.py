@@ -309,9 +309,9 @@ class DataRequest(models.Model):
     related_species = models.ForeignKey(
         "fauna.Species", on_delete=models.SET_NULL, null=True, blank=True
     )
-    related_site = models.ForeignKey(
-        "locations.Site", on_delete=models.SET_NULL, null=True, blank=True
-    )
+    # related_site = models.ForeignKey(  # Temporarily disabled during locations revamp
+    #     "locations.Site", on_delete=models.SET_NULL, null=True, blank=True
+    # )
 
     class Meta:
         ordering = ["-requested_at"]

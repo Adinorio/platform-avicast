@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Delete Census: {{ census.census_date }}{% endblock %}
+{% block title %}Delete Year: {{ year_obj.year }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -10,21 +10,21 @@
                 <div class="card-header bg-danger text-white">
                     <h4 class="mb-0">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        Delete Census Record
+                        Delete Census Year
                     </h4>
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-4">
-                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-                        <h5>Delete census record for {{ census.census_date }}?</h5>
-                        <p class="text-muted">This will delete all bird observations for this census.</p>
+                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                        <h5>Delete {{ year_obj.year }} census year?</h5>
+                        <p class="text-muted">This will delete all months and census records for this year.</p>
                     </div>
 
                     <form method="post">
                         {% csrf_token %}
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger">Delete Census</button>
-                            <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Delete Year</button>
+                            <a href="{% url 'locations:year_detail' site.id year_obj.year %}" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>

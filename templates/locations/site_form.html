@@ -1,155 +1,220 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-    {% if form.instance.pk %}Edit Site{% else %}Create New Site{% endif %} - AVICAST System
+{% block title %}{% if site %}Edit Site: {{ site.name }}{% else %}Create New Site{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.form-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.form-body {
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+}
+
+.btn-outline-secondary {
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+}
+
+.coordinates-help {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="display-5">
-                        {% if form.instance.pk %}
-                            <i class="fas fa-edit"></i> Edit Site
-                        {% else %}
-                            <i class="fas fa-plus"></i> Create New Site
-                        {% endif %}
-                    </h1>
-                    <p class="lead text-muted">
-                        {% if form.instance.pk %}
-                            Update the observation site information
-                        {% else %}
-                            Add a new observation site for biodiversity monitoring
-                        {% endif %}
-                    </p>
+        <div class="col-lg-8">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2 class="mb-2">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        {% if site %}Edit Site{% else %}Create New Site{% endif %}
+                    </h2>
+                    <p class="mb-0">{% if site %}Update site information{% else %}Add a new wildlife monitoring site{% endif %}</p>
                 </div>
-                <a href="{% url 'locations:site_list' %}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Sites
-                </a>
-            </div>
 
-            <!-- Form Card -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <form method="post" novalidate>
+                <div class="form-body">
+                    <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
 
-                        <!-- Site Name -->
-                        <div class="mb-3">
-                            <label for="{{ form.name.id_for_label }}" class="form-label">
-                                <strong>Site Name *</strong>
-                            </label>
-                            {{ form.name }}
-                            {% if form.name.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.name.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        Site Name *
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.name.errors %}
+                                        <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
-                            <div class="form-text">Enter a descriptive, unique name for the site</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.site_type.id_for_label }}" class="form-label">
+                                        Site Type
+                                    </label>
+                                    {{ form.site_type }}
+                                    {% if form.site_type.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.site_type.errors %}
+                                        <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Site Type -->
-                        <div class="mb-3">
-                            <label for="{{ form.site_type.id_for_label }}" class="form-label">
-                                <strong>Site Type *</strong>
-                            </label>
-                            {{ form.site_type }}
-                            {% if form.site_type.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.site_type.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">Select the primary habitat type of this site</div>
-                        </div>
-
-                        <!-- Coordinates -->
-                        <div class="mb-3">
+                        <div class="form-group">
                             <label for="{{ form.coordinates.id_for_label }}" class="form-label">
-                                <strong>Coordinates</strong>
+                                Coordinates
                             </label>
                             {{ form.coordinates }}
+                            <div class="coordinates-help">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Enter coordinates as "latitude, longitude" (e.g., 14.5995, 120.9842)
+                            </div>
                             {% if form.coordinates.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.coordinates.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
+                            <div class="text-danger mt-1">
+                                {% for error in form.coordinates.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
                             {% endif %}
-                            <div class="form-text">Enter latitude and longitude (e.g., 14.5995, 121.0223)</div>
                         </div>
 
-                        <!-- Description -->
-                        <div class="mb-3">
+                        <div class="form-group">
                             <label for="{{ form.description.id_for_label }}" class="form-label">
-                                <strong>Description</strong>
+                                Description
                             </label>
                             {{ form.description }}
                             {% if form.description.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.description.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
+                            <div class="text-danger mt-1">
+                                {% for error in form.description.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
                             {% endif %}
-                            <div class="form-text">Describe the site location, accessibility, and notable features</div>
                         </div>
 
-                        <!-- Status -->
-                        <div class="mb-3">
-                            <label for="{{ form.status.id_for_label }}" class="form-label">
-                                <strong>Status *</strong>
-                            </label>
-                            {{ form.status }}
-                            {% if form.status.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.status.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.image.id_for_label }}" class="form-label">
+                                        Site Image
+                                    </label>
+                                    {{ form.image }}
+                                    {% if form.image.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.image.errors %}
+                                        <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    {% if site.image %}
+                                    <div class="image-preview-container">
+                                        <img src="{{ site.image.url }}" alt="Current site image" class="image-preview">
+                                        <small class="text-muted d-block mt-1">Current image</small>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
-                            <div class="form-text">Current operational status of the site</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                                        Status
+                                    </label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.status.errors %}
+                                        <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Form Actions -->
-                        <div class="d-flex justify-content-between align-items-center pt-3">
-                            <a href="{% url 'locations:site_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancel
-                            </a>
+                        <div class="form-group d-flex gap-2 pt-3">
                             <button type="submit" class="btn btn-primary">
-                                {% if form.instance.pk %}
-                                    <i class="fas fa-save"></i> Update Site
-                                {% else %}
-                                    <i class="fas fa-plus"></i> Create Site
-                                {% endif %}
+                                <i class="fas fa-save me-2"></i>
+                                {% if site %}Update Site{% else %}Create Site{% endif %}
                             </button>
+                            <a href="{% if site %}{% url 'locations:site_detail' site.id %}{% else %}{% url 'locations:dashboard' %}{% endif %}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
                         </div>
                     </form>
-                </div>
-            </div>
-
-            <!-- Help Information -->
-            <div class="card mt-4 bg-light">
-                <div class="card-body">
-                    <h6 class="card-title">
-                        <i class="fas fa-info-circle"></i> Tips for Site Information
-                    </h6>
-                    <ul class="mb-0">
-                        <li><strong>Site Name:</strong> Use descriptive, unique names that are easy to identify</li>
-                        <li><strong>Site Type:</strong> Choose the primary habitat type that best describes the site</li>
-                        <li><strong>Coordinates:</strong> Use decimal degrees format (latitude, longitude)</li>
-                        <li><strong>Description:</strong> Include landmarks, accessibility details, and habitat characteristics</li>
-                        <li><strong>Status:</strong> Set to 'Active' for sites currently being monitored</li>
-                    </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
+
+
+
+

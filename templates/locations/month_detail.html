@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ site.name }} - {{ month.get_month_display }} {{ year.year }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.year-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 100%;
+    cursor: pointer;
+}
+
+.year-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.year-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.year-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.year-stats {
+    padding: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* List view styles */
+.census-row:hover {
+    background-color: #f8f9fa;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.avatar-title {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 2rem;
+}
+
+.breadcrumb-item a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: #718096;
+}
+
+.action-buttons {
+    position: sticky;
+    top: 2rem;
+    z-index: 100;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">
+                    <i class="fas fa-home me-1"></i>Sites
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:site_detail' site.id %}">
+                    {{ site.name }}
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:year_detail' site.id year.year %}">
+                    {{ year.year }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active">{{ month.get_month_display }}</li>
+        </ol>
+    </nav>
+
+    <!-- Month Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="mb-2">{{ site.name }}</h1>
+                            <p class="text-muted mb-3">{{ site.description|default:"No description available" }}</p>
+                            <div class="d-flex gap-3">
+                                <span class="badge bg-primary">{{ site.get_site_type_display }}</span>
+                                <span class="badge bg-secondary">{{ site.get_status_display }}</span>
+                                {% if site.coordinates %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-map-pin me-1"></i>{{ site.get_coordinates_display }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'locations:month_edit' site.id year.year month.month %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-1"></i>Edit Month
+                                </a>
+                                <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>Add Census
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Census Cards -->
+    <div class="row">
+        <div class="col-12 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">
+                    <i class="fas fa-clipboard-list text-primary me-2"></i>
+                    Census Records ({{ total_census }})
+                </h3>
+                
+                <!-- View Toggle and Sorting -->
+                <div class="d-flex gap-2">
+                    <!-- View Toggle -->
+                    <div class="btn-group" role="group" aria-label="View toggle">
+                        <a href="?view=card{% if current_sort %}&sort={{ current_sort }}{% endif %}" 
+                           class="btn {% if current_view == 'card' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">
+                            <i class="fas fa-th-large me-1"></i>Cards
+                        </a>
+                        <a href="?view=list{% if current_sort %}&sort={{ current_sort }}{% endif %}" 
+                           class="btn {% if current_view == 'list' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">
+                            <i class="fas fa-list me-1"></i>List
+                        </a>
+                    </div>
+                    
+                    <!-- Sorting Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-sort me-1"></i>Sort
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                            <li><a class="dropdown-item {% if current_sort == '-census_date' %}active{% endif %}" href="?sort=-census_date{% if current_view != 'card' %}&view={{ current_view }}{% endif %}">
+                                <i class="fas fa-calendar-alt me-2"></i>Date (Newest First)
+                            </a></li>
+                            <li><a class="dropdown-item {% if current_sort == 'census_date' %}active{% endif %}" href="?sort=census_date{% if current_view != 'card' %}&view={{ current_view }}{% endif %}">
+                                <i class="fas fa-calendar-alt me-2"></i>Date (Oldest First)
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if current_sort == '-total_birds' %}active{% endif %}" href="?sort=-total_birds{% if current_view != 'card' %}&view={{ current_view }}{% endif %}">
+                                <i class="fas fa-feather me-2"></i>Most Birds
+                            </a></li>
+                            <li><a class="dropdown-item {% if current_sort == 'total_birds' %}active{% endif %}" href="?sort=total_birds{% if current_view != 'card' %}&view={{ current_view }}{% endif %}">
+                                <i class="fas fa-feather me-2"></i>Fewest Birds
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if current_sort == '-total_species' %}active{% endif %}" href="?sort=-total_species{% if current_view != 'card' %}&view={{ current_view }}{% endif %}">
+                                <i class="fas fa-list me-2"></i>Most Species
+                            </a></li>
+                            <li><a class="dropdown-item {% if current_sort == 'total_species' %}active{% endif %}" href="?sort=total_species{% if current_view != 'card' %}&view={{ current_view }}{% endif %}">
+                                <i class="fas fa-list me-2"></i>Fewest Species
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if current_sort == 'lead_observer' %}active{% endif %}" href="?sort=lead_observer{% if current_view != 'card' %}&view={{ current_view }}{% endif %}">
+                                <i class="fas fa-user me-2"></i>Observer (A-Z)
+                            </a></li>
+                            <li><a class="dropdown-item {% if current_sort == '-lead_observer' %}active{% endif %}" href="?sort=-lead_observer{% if current_view != 'card' %}&view={{ current_view }}{% endif %}">
+                                <i class="fas fa-user me-2"></i>Observer (Z-A)
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if current_view == 'card' %}
+            <!-- Card View -->
+            {% for census in census_records %}
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}" style="text-decoration: none; color: inherit;">
+                    <div class="card year-card h-100">
+                        <div class="year-header">
+                            <div class="year-number">{{ census.census_date|date:"d" }}</div>
+                            <small>{{ census.census_date|date:"F Y" }}</small>
+                        </div>
+
+                        <div class="year-stats">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="stat-item bg-light">
+                                        <div class="stat-value">{{ census.total_birds|default:"0" }}</div>
+                                        <div class="stat-label">Birds</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item bg-light">
+                                        <div class="stat-value">{{ census.total_species|default:"0" }}</div>
+                                        <div class="stat-label">Species</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item bg-light">
+                                        <div class="stat-value">{{ census.field_team.count }}</div>
+                                        <div class="stat-label">Team</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No census records yet</h4>
+                    <p class="text-muted">Add your first census record to start recording data</p>
+                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add First Census
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- List View -->
+            <div class="col-12">
+                {% if census_records %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0">Date</th>
+                                        <th class="border-0">Lead Observer</th>
+                                        <th class="border-0">Field Team</th>
+                                        <th class="border-0">Birds</th>
+                                        <th class="border-0">Species</th>
+                                        <th class="border-0">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for census in census_records %}
+                                    <tr class="census-row">
+                                        <td>
+                                            <strong>{{ census.census_date|date:"M d, Y" }}</strong>
+                                        </td>
+                                        <td>
+                                            {% if census.lead_observer %}
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm me-2">
+                                                    <span class="avatar-title bg-primary rounded-circle text-white">
+                                                        {{ census.lead_observer.get_initials }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <div class="font-weight-medium">{{ census.lead_observer.get_full_name }}</div>
+                                                    <small class="text-muted">{{ census.lead_observer.employee_id }}</small>
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                            <span class="text-muted">Not assigned</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                {% for member in census.field_team.all %}
+                                                <span class="badge bg-light text-dark">{{ member.get_initials }}</span>
+                                                {% empty %}
+                                                <span class="text-muted">No team</span>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ census.total_birds|default:"0" }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ census.total_species|default:"0" }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}"
+                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'locations:census_edit' site.id year.year month.month census.id %}"
+                                                   class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'locations:census_delete' site.id year.year month.month census.id %}"
+                                                   class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No census records yet</h4>
+                    <p class="text-muted">Add your first census record to start recording data</p>
+                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add First Census
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
