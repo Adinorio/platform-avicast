@@ -236,7 +236,7 @@
                                 <div class="card-body">
                                     <h6 class="card-title">{{ schedule.title }}</h6>
                                     <p class="card-text">
-                                        <strong>Site:</strong> {{ schedule.site.name }}<br>
+                                        {% if schedule.site %}<strong>Site:</strong> {{ schedule.site.name }}<br>{% endif %}
                                         <strong>Date:</strong> {{ schedule.planned_date }}<br>
                                         <strong>Time:</strong> {{ schedule.planned_start_time|time:"H:i" }} - {{ schedule.planned_end_time|time:"H:i" }}
                                     </p>
