@@ -9,8 +9,44 @@ from .models import Site, CensusYear, CensusMonth, Census, CensusObservation
 User = get_user_model()
 
 
+class CoordinateInputWidget(forms.TextInput):
+    """Custom widget for coordinate input with validation"""
+    
+    def __init__(self, attrs=None):
+        default_attrs = {
+            'class': 'form-control coordinate-input',
+            'placeholder': 'e.g., 14.5995, 120.9842 or 14°35\'58.2"N, 120°59\'3.1"E',
+            'pattern': r'^-?\d+(\.\d+)?\s*[,;|]\s*-?\d+(\.\d+)?$|^\d+°\d+\'[\d.]+\"[NS]\s*,\s*\d+°\d+\'[\d.]+\"[EW]$',
+            'title': 'Enter coordinates as "latitude, longitude" (decimal) or "degrees°minutes\'seconds\"N/S, degrees°minutes\'seconds\"E/W"'
+        }
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(default_attrs)
+
+
 class SiteForm(forms.ModelForm):
     """Form for creating and editing sites"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make coordinates required
+        self.fields['coordinates'].required = True
+        self.fields['coordinates'].error_messages = {
+            'required': 'Coordinates are required for site location mapping.',
+        }
+
+    def clean_coordinates(self):
+        """Validate and normalize coordinates"""
+        coordinates = self.cleaned_data.get('coordinates')
+        if not coordinates:
+            raise forms.ValidationError('Coordinates are required.')
+        
+        try:
+            # Use the model's coordinate parsing method
+            normalized_coords = Site.parse_coordinate_input(coordinates)
+            return normalized_coords
+        except ValueError as e:
+            raise forms.ValidationError(f'Invalid coordinates: {str(e)}')
 
     class Meta:
         model = Site
@@ -18,10 +54,7 @@ class SiteForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter site name'}),
             'site_type': forms.Select(attrs={'class': 'form-control'}),
-            'coordinates': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g., 14.5995, 120.9842'
-            }),
+            'coordinates': CoordinateInputWidget(),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
@@ -31,7 +64,7 @@ class SiteForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
         help_texts = {
-            'coordinates': 'Enter coordinates as "latitude, longitude" (e.g., 14.5995, 120.9842)',
+            'coordinates': 'Enter coordinates as "latitude, longitude" (e.g., 14.5995, 120.9842) or DMS format (e.g., 14°35\'58.2"N, 120°59\'3.1"E)',
             'image': 'Upload an image of the site for better identification',
         }
 
