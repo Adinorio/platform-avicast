@@ -16,6 +16,7 @@ urlpatterns = [
     path("sites/", views.site_list, name="site_list"),
     path("sites/create/", views.site_create, name="site_create"),
     path("sites/<uuid:site_id>/", views.site_detail, name="site_detail"),
+    path("sites/<uuid:site_id>/map/", views.site_map, name="site_map"),
     path("sites/<uuid:site_id>/edit/", views.site_edit, name="site_edit"),
     path("sites/<uuid:site_id>/delete/", views.site_delete, name="site_delete"),
 
@@ -49,4 +50,5 @@ urlpatterns = [
     # API endpoints for AJAX operations
     path("api/sites/<uuid:site_id>/coordinates/", views.update_coordinates, name="update_coordinates"),
     path("api/census/<uuid:census_id>/observations/", views.get_observations, name="get_observations"),
+    path("api/sites/<uuid:site_id>/map-data/", views.get_site_map_data, name="get_site_map_data"),
 ]
