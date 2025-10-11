@@ -276,16 +276,6 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'locations:census_dashboard' %}">
-                        <i class="fas fa-binoculars me-2"></i> Bird Census
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'locations:sites_map' %}">
-                        <i class="fas fa-map-marked-alt me-2"></i> Interactive Map
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{% url 'analytics_new:dashboard' %}">
                         <i class="fas fa-chart-line me-2"></i> Analytics Dashboard
                     </a>
@@ -309,7 +299,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'locations:request_list' %}">
+                    <a class="nav-link" href="# Data Requests not implemented in current revamp">
                         <i class="fas fa-clipboard-check me-2"></i> Data Requests
                     </a>
                 </li>
@@ -319,12 +309,12 @@
                 <!-- Admin Data Management -->
                 {% if user.role in 'ADMIN,SUPERADMIN' %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'locations:mobile_import_list' %}">
+                    <a class="nav-link" href="# Mobile Data Import not implemented in current revamp">
                         <i class="fas fa-mobile-alt me-2"></i> Mobile Data Import
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'locations:request_list' %}">
+                    <a class="nav-link" href="# Data Requests not implemented in current revamp">
                         <i class="fas fa-clipboard-check me-2"></i> Data Requests
                     </a>
                 </li>

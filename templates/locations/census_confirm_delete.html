@@ -1,111 +1,39 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}Delete Census Observation{% endblock %}
+{% block title %}Delete Census: {{ census.census_date }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-lg-6">
-            <!-- Header -->
-            <div class="text-center mb-4">
-                <h2 class="text-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Delete Census Observation
-                </h2>
-                <p class="text-muted">Are you sure you want to delete this census observation?</p>
-            </div>
-
-            <!-- Warning Card -->
-            <div class="card border-danger">
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-trash"></i>
-                        Warning: This action cannot be undone
-                    </h5>
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Delete Census Record
+                    </h4>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Warning:</strong> Deleting this census observation will permanently remove:
+                    <div class="text-center mb-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <h5>Delete census record for {{ census.census_date }}?</h5>
+                        <p class="text-muted">This will delete all bird observations for this census.</p>
                     </div>
 
-                    <ul class="list-group list-group-flush mb-3">
-                        <li class="list-group-item">
-                            <i class="fas fa-calendar text-primary"></i>
-                            <strong>Observation Date:</strong> {{ census.observation_date|date:"F d, Y" }}
-                        </li>
-                        <li class="list-group-item">
-                            <i class="fas fa-paw text-success"></i>
-                            <strong>Species Count:</strong> {{ census.get_total_species_count }} species
-                        </li>
-                        <li class="list-group-item">
-                            <i class="fas fa-hashtag text-info"></i>
-                            <strong>Total Birds:</strong> {{ census.get_total_birds_count }} birds
-                        </li>
-                        <li class="list-group-item">
-                            <i class="fas fa-map-marker-alt text-secondary"></i>
-                            <strong>Site:</strong> {{ census.site.name }}
-                        </li>
-                        {% if census.weather_conditions %}
-                        <li class="list-group-item">
-                            <i class="fas fa-cloud text-muted"></i>
-                            <strong>Weather:</strong> {{ census.weather_conditions }}
-                        </li>
-                        {% endif %}
-                        {% if census.notes %}
-                        <li class="list-group-item">
-                            <i class="fas fa-sticky-note text-warning"></i>
-                            <strong>Notes:</strong> {{ census.notes|truncatewords:20 }}
-                        </li>
-                        {% endif %}
-                    </ul>
-
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Note:</strong> This will also delete all associated species observations for this census.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="card mt-4">
-                <div class="card-body text-center">
                     <form method="post">
                         {% csrf_token %}
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                            <a href="{% url 'locations:site_detail' census.site.id %}" class="btn btn-secondary btn-lg me-md-2">
-                                <i class="fas fa-times"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-danger btn-lg">
-                                <i class="fas fa-trash"></i> Delete Permanently
-                            </button>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">Delete Census</button>
+                            <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>
-            </div>
-
-            <!-- Back to Site -->
-            <div class="text-center mt-4">
-                <a href="{% url 'locations:site_detail' census.site.id %}" class="btn btn-outline-primary">
-                    <i class="fas fa-arrow-left"></i> Back to {{ census.site.name }}
-                </a>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-$(document).ready(function() {
-    // Add confirmation dialog
-    $('form').submit(function(e) {
-        if (!confirm('Are you absolutely sure you want to delete this census observation? This action cannot be undone.')) {
-            e.preventDefault();
-            return false;
-        }
-    });
-});
-</script>
-{% endblock %}
+
+
+
