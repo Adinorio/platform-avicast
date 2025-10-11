@@ -58,24 +58,24 @@ class SpeciesAnalytics(models.Model):
     def update_from_census_data(self):
         """Update analytics from census observations"""
         from django.db.models import Sum, Count
-        from apps.locations.models import SpeciesObservation
+        from apps.locations.models import CensusObservation
 
         # Get all observations for this species
-        observations = SpeciesObservation.objects.filter(species=self.species)
+        observations = CensusObservation.objects.filter(species=self.species)
 
         # Calculate totals
         self.total_count = observations.aggregate(total=Sum('count'))['total'] or 0
-        self.sites_with_presence = observations.values('census__site').distinct().count()
+        self.sites_with_presence = observations.values('census__month__year__site').distinct().count()
 
         # Get most recent observation
-        recent_obs = observations.order_by('-census__observation_date').first()
+        recent_obs = observations.order_by('-census__census_date').first()
         if recent_obs:
-            self.last_observation_date = recent_obs.census.observation_date
+            self.last_observation_date = recent_obs.census.census_date
 
         # Calculate site distribution
         site_data = {}
         for obs in observations:
-            site_name = obs.census.site.name
+            site_name = obs.census.month.year.site.name
             site_data[site_name] = site_data.get(site_name, 0) + obs.count
         self.site_distribution = site_data
 
@@ -288,14 +288,14 @@ class PopulationTrend(models.Model):
 
     def calculate_trend_from_census_data(self):
         """Calculate population trend from historical census data"""
-        from apps.locations.models import SpeciesObservation
+        from apps.locations.models import CensusObservation
         from datetime import timedelta
 
         # Get species observations within the period
-        observations = SpeciesObservation.objects.filter(
+        observations = CensusObservation.objects.filter(
             species=self.species_analytics.species,
-            census__observation_date__gte=self.period_start,
-            census__observation_date__lte=self.period_end
+            census__census_date__gte=self.period_start,
+            census__census_date__lte=self.period_end
         )
 
         if not observations.exists():
@@ -344,9 +344,9 @@ class PopulationTrend(models.Model):
         self.data_sources = [
             {
                 'census_id': str(obs.census.id),
-                'date': obs.census.observation_date.isoformat(),
+                'date': obs.census.census_date.isoformat(),
                 'count': obs.count,
-                'site': obs.census.site.name
+                'site': obs.census.month.year.site.name
             }
             for obs in observations
         ]

@@ -21,26 +21,26 @@ def dashboard_view(request):
 
     # Get summary statistics from census observations
     from django.db.models import Sum, Count
-    from apps.locations.models import CensusObservation, SpeciesObservation, Site
+    from apps.locations.models import CensusObservation, Census, Site
 
     # Total birds from recent census observations (last 60 days)
     sixty_days_ago = timezone.now().date() - timezone.timedelta(days=60)
-    total_birds = SpeciesObservation.objects.filter(
-        census__observation_date__gte=sixty_days_ago
+    total_birds = CensusObservation.objects.filter(
+        census__census_date__gte=sixty_days_ago
     ).aggregate(total=Sum('count'))['total'] or 0
 
     # Count active sites and species
     total_sites = Site.objects.filter(status='active').count()
 
     # Count species with observations in last 60 days
-    species_with_observations = SpeciesObservation.objects.filter(
-        census__observation_date__gte=sixty_days_ago
+    species_with_observations = CensusObservation.objects.filter(
+        census__census_date__gte=sixty_days_ago
     ).values('species').distinct().count()
 
-    # Recent census observations (last 60 days)
-    recent_census = CensusObservation.objects.filter(
-        observation_date__gte=sixty_days_ago
-    ).select_related('site', 'observer').order_by('-observation_date')[:10]
+    # Recent census records (last 60 days)
+    recent_census = Census.objects.filter(
+        census_date__gte=sixty_days_ago
+    ).select_related('lead_observer', 'month__year__site').order_by('-census_date')[:10]
 
     # Species breakdown - get actual species data from fauna app
     from apps.fauna.models import Species
@@ -50,9 +50,9 @@ def dashboard_view(request):
 
     for species in target_species:
         # Get count for this species in last 60 days
-        count = SpeciesObservation.objects.filter(
+        count = CensusObservation.objects.filter(
             species=species,
-            census__observation_date__gte=sixty_days_ago
+            census__census_date__gte=sixty_days_ago
         ).aggregate(total=Sum('count'))['total'] or 0
 
         species_data.append({
@@ -63,16 +63,16 @@ def dashboard_view(request):
         })
 
     # Get top sites by bird count in last 60 days
-    site_counts = SpeciesObservation.objects.filter(
-        census__observation_date__gte=sixty_days_ago
-    ).values('census__site').annotate(
+    site_counts = CensusObservation.objects.filter(
+        census__census_date__gte=sixty_days_ago
+    ).values('census__month__year__site').annotate(
         total_birds=Sum('count'),
         species_count=Count('species', distinct=True)
     ).order_by('-total_birds')[:5]
 
     top_sites = []
     for site_count in site_counts:
-        site = Site.objects.get(id=site_count['census__site'])
+        site = Site.objects.get(id=site_count['census__month__year__site'])
         top_sites.append({
             'site': site,
             'total_birds': site_count['total_birds'],
@@ -97,7 +97,7 @@ def species_analytics_view(request):
     """Species-specific analytics reading from operational data"""
 
     from apps.fauna.models import Species
-    from apps.locations.models import SpeciesObservation
+    from apps.locations.models import CensusObservation
     from django.db.models import Sum, Count, Avg
 
     # Get target species (egrets and herons)
@@ -111,16 +111,16 @@ def species_analytics_view(request):
     species_with_data = []
     for species in target_species:
         # Get observations for this species
-        observations = SpeciesObservation.objects.filter(species=species)
+        observations = CensusObservation.objects.filter(species=species)
 
         if observations.exists():
             # Calculate statistics
             total_count = observations.aggregate(total=Sum('count'))['total'] or 0
-            sites_with_presence = observations.values('census__site').distinct().count()
+            sites_with_presence = observations.values('census__month__year__site').distinct().count()
             avg_count = observations.aggregate(avg=Avg('count'))['avg'] or 0
 
             # Get most recent observation
-            recent_obs = observations.order_by('-census__observation_date').first()
+            recent_obs = observations.order_by('-census__census_date').first()
 
             # Create analytics-like object structure for template compatibility
             class AnalyticsObj:
@@ -155,7 +155,7 @@ def species_analytics_view(request):
 def site_analytics_view(request):
     """Site-specific analytics reading from operational data"""
 
-    from apps.locations.models import Site, CensusObservation, SpeciesObservation
+    from apps.locations.models import Site, Census, CensusObservation
     from django.db.models import Sum, Count
 
     # Get active sites with census data
@@ -164,24 +164,24 @@ def site_analytics_view(request):
     # Add analytics data for each site
     sites_with_data = []
     for site in sites:
-        # Get census observations for this site
-        census_observations = CensusObservation.objects.filter(site=site)
+        # Get census records for this site
+        census_records = Census.objects.filter(month__year__site=site)
 
-        if census_observations.exists():
-            # Get species observations for this site
-            species_observations = SpeciesObservation.objects.filter(census__site=site)
+        if census_records.exists():
+            # Get all observations for this site
+            observations = CensusObservation.objects.filter(census__month__year__site=site)
 
             # Calculate statistics
-            total_birds = species_observations.aggregate(total=Sum('count'))['total'] or 0
-            species_diversity = species_observations.values('species').distinct().count()
-            total_observations = census_observations.count()
+            total_birds = observations.aggregate(total=Sum('count'))['total'] or 0
+            species_diversity = observations.values('species').distinct().count()
+            total_census = census_records.count()
 
-            # Get most recent observation
-            recent_census = census_observations.order_by('-observation_date').first()
+            # Get most recent census
+            recent_census = census_records.order_by('-census_date').first()
 
             # Get species composition
             species_data = {}
-            for obs in species_observations:
+            for obs in observations:
                 species_name = obs.species.name if obs.species else obs.species_name
                 species_data[species_name] = species_data.get(species_name, 0) + obs.count
 
@@ -194,11 +194,11 @@ def site_analytics_view(request):
                     'total_birds_recorded': total_birds,
                     'species_diversity': species_diversity,
                     'habitat_type': site.site_type,
-                    'area_hectares': site.area_hectares,
+                    'area_hectares': None,  # Field not available in current model
                     'target_species_present': list(species_data.keys()) if species_data else [],
                 },
                 'recent_census': [{
-                    'census_date': recent_census.observation_date,
+                    'census_date': recent_census.census_date,
                     'total_birds': total_birds,
                     'is_verified': True,  # Mark as verified since it's operational data
                 }] if recent_census else [],
@@ -219,7 +219,7 @@ def site_analytics_view(request):
 def census_records_view(request):
     """View census observations with analytics"""
 
-    from apps.locations.models import CensusObservation, SpeciesObservation, Site
+    from apps.locations.models import Census, CensusObservation, Site
 
     # Filter options
     site_filter = request.GET.get('site')
@@ -227,45 +227,45 @@ def census_records_view(request):
     date_to = request.GET.get('date_to')
     species_filter = request.GET.get('species')
 
-    # Base query for census observations
-    records = CensusObservation.objects.select_related('site', 'observer')
+    # Base query for census records
+    records = Census.objects.select_related('lead_observer', 'month__year__site')
 
     if site_filter:
-        records = records.filter(site_id=site_filter)
+        records = records.filter(month__year__site_id=site_filter)
 
     if date_from:
-        records = records.filter(observation_date__gte=date_from)
+        records = records.filter(census_date__gte=date_from)
 
     if date_to:
-        records = records.filter(observation_date__lte=date_to)
+        records = records.filter(census_date__lte=date_to)
 
     # If no date filters provided, show last 60 days by default
     if not date_from and not date_to:
         sixty_days_ago = timezone.now().date() - timezone.timedelta(days=60)
-        records = records.filter(observation_date__gte=sixty_days_ago)
+        records = records.filter(census_date__gte=sixty_days_ago)
 
     # Apply species filter if provided
     if species_filter:
-        # Filter census observations that have observations of the specified species
+        # Filter census records that have observations of the specified species
         records = records.filter(
-            species_observations__species__name__icontains=species_filter
+            observations__species__name__icontains=species_filter
         ).distinct()
 
-    records = records.order_by('-observation_date')
+    records = records.order_by('-census_date')
 
     # Enhance records with analytics data
     enhanced_records = []
     for census in records:
-        # Get species observations for this census
-        species_observations = SpeciesObservation.objects.filter(census=census)
+        # Get observations for this census
+        observations = CensusObservation.objects.filter(census=census)
 
         # Calculate analytics
-        total_birds = species_observations.aggregate(total=Sum('count'))['total'] or 0
-        species_richness = species_observations.count()
+        total_birds = observations.aggregate(total=Sum('count'))['total'] or 0
+        species_richness = observations.values('species').distinct().count()
 
         # Get species breakdown
         species_breakdown = {}
-        for obs in species_observations:
+        for obs in observations:
             species_name = obs.species.name if obs.species else obs.species_name
             species_breakdown[species_name] = obs.count
 
@@ -358,7 +358,7 @@ def report_generator_view(request):
 def generate_comprehensive_report(config, user):
     """Generate comprehensive report data from all systems"""
     from apps.fauna.models import Species
-    from apps.locations.models import Site, CensusObservation, SpeciesObservation
+    from apps.locations.models import Site, Census, CensusObservation
     from apps.users.models import User
     from django.db.models import Sum, Count
     from django.utils import timezone
@@ -380,15 +380,15 @@ def generate_comprehensive_report(config, user):
         target_species = Species.objects.filter(name__icontains='egret') | Species.objects.filter(name__icontains='heron')
 
         for species in target_species:
-            observations = SpeciesObservation.objects.filter(
+            observations = CensusObservation.objects.filter(
                 species=species,
-                census__observation_date__gte=start_date,
-                census__observation_date__lte=end_date
+                census__census_date__gte=start_date,
+                census__census_date__lte=end_date
             )
 
             if observations.exists():
                 total_count = observations.aggregate(total=Sum('count'))['total'] or 0
-                sites_with_presence = observations.values('census__site').distinct().count()
+                sites_with_presence = observations.values('census__month__year__site').distinct().count()
 
                 species_data.append({
                     'name': species.name,
@@ -407,25 +407,25 @@ def generate_comprehensive_report(config, user):
         sites = Site.objects.filter(status='active')
 
         for site in sites:
-            census_observations = CensusObservation.objects.filter(
-                site=site,
-                observation_date__gte=start_date,
-                observation_date__lte=end_date
+            census_records = Census.objects.filter(
+                month__year__site=site,
+                census_date__gte=start_date,
+                census_date__lte=end_date
             )
 
-            if census_observations.exists():
-                species_observations = SpeciesObservation.objects.filter(census__site=site)
-                total_birds = species_observations.aggregate(total=Sum('count'))['total'] or 0
-                species_diversity = species_observations.values('species').distinct().count()
+            if census_records.exists():
+                observations = CensusObservation.objects.filter(census__month__year__site=site)
+                total_birds = observations.aggregate(total=Sum('count'))['total'] or 0
+                species_diversity = observations.values('species').distinct().count()
 
                 sites_data.append({
                     'name': site.name,
                     'site_type': site.site_type,
                     'coordinates': site.coordinates,
-                    'area_hectares': site.area_hectares,
+                    'area_hectares': None,  # Field not available in current model
                     'total_birds': total_birds,
                     'species_diversity': species_diversity,
-                    'census_count': census_observations.count(),
+                    'census_count': census_records.count(),
                 })
 
         report_data['sites_data'] = sites_data
@@ -434,46 +434,46 @@ def generate_comprehensive_report(config, user):
     # Census Management Data
     if "CENSUS" in config.report_type or "MONTHLY" in config.report_type:
         census_data = []
-        census_observations = CensusObservation.objects.filter(
-            observation_date__gte=start_date,
-            observation_date__lte=end_date
-        ).select_related('site', 'observer')
+        census_records = Census.objects.filter(
+            census_date__gte=start_date,
+            census_date__lte=end_date
+        ).select_related('lead_observer', 'month__year__site')
 
-        for census in census_observations:
-            species_observations = SpeciesObservation.objects.filter(census=census)
-            total_birds = species_observations.aggregate(total=Sum('count'))['total'] or 0
+        for census in census_records:
+            observations = CensusObservation.objects.filter(census=census)
+            total_birds = observations.aggregate(total=Sum('count'))['total'] or 0
 
             species_breakdown = {}
-            for obs in species_observations:
+            for obs in observations:
                 species_name = obs.species.name if obs.species else obs.species_name
                 species_breakdown[species_name] = obs.count
 
             census_data.append({
-                'site': census.site.name,
-                'date': census.observation_date,
-                'observer': census.observer.employee_id if census.observer else 'Unknown',
+                'site': census.month.year.site.name,
+                'date': census.census_date,
+                'observer': census.lead_observer.employee_id if census.lead_observer else 'Unknown',
                 'total_birds': total_birds,
                 'species_count': len(species_breakdown),
                 'species_breakdown': species_breakdown,
             })
 
         report_data['census_data'] = census_data
-        report_data['total_records'] = len(census_observations)
+        report_data['total_records'] = len(census_records)
 
     # Personnel Data
     personnel_data = []
     users = User.objects.filter(is_active=True)
     for user in users:
-        # Get user's activity (simplified - in real implementation, you'd track this)
-        census_count = CensusObservation.objects.filter(observer=user).count()
-        species_obs_count = SpeciesObservation.objects.filter(census__observer=user).count()
+        # Get user's activity
+        census_count = Census.objects.filter(lead_observer=user).count()
+        observations_count = CensusObservation.objects.filter(census__lead_observer=user).count()
 
         personnel_data.append({
             'employee_id': user.employee_id,
             'name': f"{user.first_name} {user.last_name}",
             'role': user.role,
             'census_observations': census_count,
-            'species_observations': species_obs_count,
+            'species_observations': observations_count,
         })
 
     report_data['personnel_data'] = personnel_data
@@ -709,16 +709,16 @@ def population_trends_view(request):
 @login_required
 @require_http_methods(["POST"])
 def verify_census_record(request, record_id):
-    """Verify a census observation"""
+    """Verify a census record"""
 
     if request.user.role not in ['SUPERADMIN', 'ADMIN']:
         messages.error(request, "Only administrators can verify records.")
         return redirect('analytics_new:census_records')
 
-    from apps.locations.models import CensusObservation
-    census_observation = get_object_or_404(CensusObservation, id=record_id)
+    from apps.locations.models import Census
+    census = get_object_or_404(Census, id=record_id)
 
-    # Update verification status (you could add a verification field to CensusObservation if needed)
+    # Update verification status (you could add a verification field to Census if needed)
     # For now, we'll just show a success message since the operational data is already "verified"
-    messages.success(request, f"Census observation for {census_observation.site.name} on {census_observation.observation_date} has been verified.")
+    messages.success(request, f"Census record for {census.month.year.site.name} on {census.census_date} has been verified.")
     return redirect('analytics_new:census_records')
