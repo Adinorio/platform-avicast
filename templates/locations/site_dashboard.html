@@ -136,9 +136,9 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
-                    <i class="fas fa-calendar-alt fa-2x text-success mb-2"></i>
-                    <h4 class="mb-1">{{ active_years }}</h4>
-                    <small class="text-muted">Active Years</small>
+                    <i class="fas fa-map-pin fa-2x text-success mb-2"></i>
+                    <h4 class="mb-1">{{ sites_with_coordinates }}</h4>
+                    <small class="text-muted">Sites with Coordinates</small>
                 </div>
             </div>
         </div>
@@ -263,8 +263,8 @@
                         <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-eye me-1"></i>View Details
                         </a>
-                        <a href="{% url 'locations:year_list' site.id %}" class="btn btn-outline-success btn-sm">
-                            <i class="fas fa-calendar me-1"></i>Census Years
+                        <a href="{% url 'locations:site_map' site.id %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-map-marked-alt me-1"></i>View on Map
                         </a>
                     </div>
                 </div>
@@ -342,9 +342,9 @@
                                                    class="btn btn-sm btn-outline-primary" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="{% url 'locations:year_list' site.id %}"
-                                                   class="btn btn-sm btn-outline-success" title="Census Years">
-                                                    <i class="fas fa-calendar"></i>
+                                                <a href="{% url 'locations:site_map' site.id %}"
+                                                   class="btn btn-sm btn-outline-success" title="View on Map">
+                                                    <i class="fas fa-map-marked-alt"></i>
                                                 </a>
                                                 <a href="{% url 'locations:site_edit' site.id %}"
                                                    class="btn btn-sm btn-outline-secondary" title="Edit">
