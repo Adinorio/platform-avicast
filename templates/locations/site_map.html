@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Site Map - {{ site.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.map-container {
+    height: 600px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.map-controls {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.control-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.control-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: white;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-btn:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.control-btn.active {
+    background: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.site-info-panel {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.coordinate-display {
+    font-family: 'Courier New', monospace;
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.census-summary {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 0 6px 6px 0;
+}
+
+.census-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.census-item:last-child {
+    border-bottom: none;
+}
+
+.census-year {
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.census-counts {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Leaflet map customization */
+.leaflet-popup-content {
+    min-width: 200px;
+}
+
+.popup-site-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: #2d3748;
+}
+
+.popup-site-type {
+    color: #718096;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.popup-coordinates {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #4a5568;
+    background: #f7fafc;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+}
+
+.popup-census-summary {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.popup-census-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.popup-census-year {
+    font-weight: 500;
+    color: #1976d2;
+}
+
+.popup-census-counts {
+    color: #718096;
+}
+
+@media (max-width: 768px) {
+    .map-container {
+        height: 400px;
+    }
+    
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .control-btn {
+        justify-content: center;
+    }
+}
+</style>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="fas fa-map-marked-alt text-primary me-2"></i>
+                        Site Map: {{ site.name }}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-map-pin me-1"></i>{{ site.get_site_type_display }} Site
+                        {% if site.coordinates %}
+                        <span class="ms-3 coordinate-display">{{ site.get_coordinates_display }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Site
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Controls -->
+    <div class="row">
+        <div class="col-12">
+            <div class="map-controls">
+                <div class="control-group">
+                    <button id="toggleCensus" class="control-btn active">
+                        <i class="fas fa-list-alt"></i>
+                        Show Census Data
+                    </button>
+                    <button id="fitToSite" class="control-btn">
+                        <i class="fas fa-crosshairs"></i>
+                        Fit to Site
+                    </button>
+                    <button id="toggleLabels" class="control-btn">
+                        <i class="fas fa-tag"></i>
+                        Show Labels
+                    </button>
+                    <select id="censusYearFilter" class="form-select" style="width: auto;">
+                        <option value="all">All Years</option>
+                        {% for year in census_years %}
+                        <option value="{{ year.year }}">{{ year.year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="row">
+        <div class="col-12">
+            <div id="siteMap" class="map-container"></div>
+        </div>
+    </div>
+
+    <!-- Site Information Panel -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="site-info-panel">
+                <h5 class="mb-3">
+                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    Site Information
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Site Type:</strong> {{ site.get_site_type_display }}</p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge bg-{% if site.status == 'active' %}success{% else %}secondary{% endif %}">
+                                {{ site.get_status_display }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Created:</strong> {{ site.created_at|date:"M d, Y" }}</p>
+                        {% if site.created_by %}
+                        <p><strong>Created by:</strong> {{ site.created_by.employee_id }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if site.description %}
+                <div class="mt-3">
+                    <p><strong>Description:</strong></p>
+                    <p class="text-muted">{{ site.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            {% if census_years %}
+            <div class="census-summary">
+                <h6 class="mb-3">
+                    <i class="fas fa-chart-bar text-primary me-2"></i>
+                    Census Summary
+                </h6>
+                {% for year in census_years %}
+                <div class="census-item">
+                    <span class="census-year">{{ year.year }}</span>
+                    <span class="census-counts">
+                        {{ year.total_birds_recorded }} birds, {{ year.total_species_recorded }} species
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Site data from Django
+    const siteData = {
+        id: '{{ site.id }}',
+        name: '{{ site.name|escapejs }}',
+        siteType: '{{ site.site_type }}',
+        coordinates: '{{ site.coordinates|default:"" }}',
+        description: '{{ site.description|escapejs|default:"" }}',
+        status: '{{ site.status }}'
+    };
+
+    // Parse coordinates
+    let siteLat, siteLon;
+    if (siteData.coordinates) {
+        const coords = siteData.coordinates.split(',');
+        siteLat = parseFloat(coords[0].trim());
+        siteLon = parseFloat(coords[1].trim());
+    }
+
+    // Initialize map
+    let map;
+    let siteMarker;
+    let censusMarkers = [];
+    let showCensusData = true;
+    let showLabels = false;
+
+    function initializeMap() {
+        // Default to Philippines if no coordinates
+        const defaultLat = siteLat || 14.5995;
+        const defaultLon = siteLon || 120.9842;
+        const defaultZoom = siteLat ? 15 : 6;
+
+        map = L.map('siteMap').setView([defaultLat, defaultLon], defaultZoom);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add site marker if coordinates exist
+        if (siteLat && siteLon) {
+            addSiteMarker();
+        } else {
+            // Show message if no coordinates
+            map.setView([defaultLat, defaultLon], 6);
+            L.popup()
+                .setLatLng([defaultLat, defaultLon])
+                .setContent(`
+                    <div class="text-center">
+                        <i class="fas fa-map-marker-alt fa-2x text-muted mb-2"></i>
+                        <p class="mb-0"><strong>${siteData.name}</strong></p>
+                        <p class="mb-0 text-muted">Coordinates not set</p>
+                        <small class="text-muted">Please add coordinates to see exact location</small>
+                    </div>
+                `)
+                .openOn(map);
+        }
+    }
+
+    function addSiteMarker() {
+        if (siteMarker) {
+            map.removeLayer(siteMarker);
+        }
+
+        // Choose marker color based on site type
+        const markerColors = {
+            'wetland': '#28a745',
+            'forest': '#228b22',
+            'grassland': '#ffc107',
+            'urban': '#007bff',
+            'coastal': '#17a2b8',
+            'mountain': '#6c757d',
+            'other': '#6f42c1'
+        };
+
+        const markerColor = markerColors[siteData.siteType] || '#6f42c1';
+
+        // Create custom marker
+        const markerIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `
+                <div style="
+                    background: ${markerColor};
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    border: 3px solid white;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 10px;
+                    font-weight: bold;
+                ">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+            `,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        siteMarker = L.marker([siteLat, siteLon], { icon: markerIcon })
+            .addTo(map)
+            .bindPopup(createSitePopup());
+    }
+
+    function createSitePopup() {
+        const censusData = getCensusData();
+        const censusHtml = censusData && censusData.length > 0 ? `
+            <div class="popup-census-summary">
+                <strong>Census Data:</strong>
+                ${censusData.map(year => `
+                    <div class="popup-census-item">
+                        <span class="popup-census-year">${year.year}</span>
+                        <span class="popup-census-counts">${year.birds} birds, ${year.species} species</span>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '<div class="popup-census-summary"><em>No census data available</em></div>';
+
+        return `
+            <div class="popup-site-name">${siteData.name}</div>
+            <div class="popup-site-type">${getSiteTypeDisplay(siteData.siteType)}</div>
+            <div class="popup-coordinates">${siteData.coordinates}</div>
+            ${censusHtml}
+        `;
+    }
+
+    function getSiteTypeDisplay(type) {
+        const types = {
+            'wetland': 'Wetland',
+            'forest': 'Forest', 
+            'grassland': 'Grassland',
+            'urban': 'Urban',
+            'coastal': 'Coastal',
+            'mountain': 'Mountain',
+            'other': 'Other'
+        };
+        return types[type] || 'Other';
+    }
+
+    function getCensusData() {
+        // Get census data from Django context
+        const censusData = [];
+        {% for year in census_years %}
+        censusData.push({
+            year: {{ year.year }},
+            birds: {{ year.total_birds_recorded }},
+            species: {{ year.total_species_recorded }},
+            census: {{ year.total_census_count }}
+        });
+        {% endfor %}
+        return censusData;
+    }
+
+    async function loadMapData() {
+        try {
+            const response = await fetch(`{% url 'locations:get_site_map_data' site.id %}`);
+            const data = await response.json();
+            
+            // Update census data from API
+            window.mapData = data;
+            
+            // Add nearby sites if any
+            if (data.nearby_sites && data.nearby_sites.length > 0) {
+                addNearbySites(data.nearby_sites);
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Error loading map data:', error);
+            return null;
+        }
+    }
+
+    function addNearbySites(sites) {
+        // Remove existing nearby site markers
+        censusMarkers.forEach(marker => {
+            map.removeLayer(marker);
+        });
+        censusMarkers = [];
+
+        // Add markers for nearby sites
+        sites.forEach(site => {
+            const markerIcon = L.divIcon({
+                className: 'nearby-site-marker',
+                html: `
+                    <div style="
+                        background: #6c757d;
+                        width: 15px;
+                        height: 15px;
+                        border-radius: 50%;
+                        border: 2px solid white;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-size: 8px;
+                        font-weight: bold;
+                    ">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                `,
+                iconSize: [15, 15],
+                iconAnchor: [7, 7]
+            });
+
+            const marker = L.marker([site.coordinates.lat, site.coordinates.lon], { icon: markerIcon })
+                .addTo(map)
+                .bindPopup(createNearbySitePopup(site));
+            
+            censusMarkers.push(marker);
+        });
+    }
+
+    function createNearbySitePopup(site) {
+        return `
+            <div class="popup-site-name">${site.name}</div>
+            <div class="popup-site-type">${getSiteTypeDisplay(site.site_type)}</div>
+            <div class="popup-coordinates">${site.coordinates.lat.toFixed(6)}, ${site.coordinates.lon.toFixed(6)}</div>
+            <div class="mt-2">
+                <a href="/locations/sites/${site.id}/" class="btn btn-sm btn-primary">
+                    <i class="fas fa-eye me-1"></i>View Details
+                </a>
+            </div>
+        `;
+    }
+
+    // Control button handlers
+    document.getElementById('toggleCensus').addEventListener('click', function() {
+        showCensusData = !showCensusData;
+        this.classList.toggle('active', showCensusData);
+        
+        if (showCensusData) {
+            this.innerHTML = '<i class="fas fa-list-alt"></i> Show Census Data';
+        } else {
+            this.innerHTML = '<i class="fas fa-list-alt"></i> Hide Census Data';
+        }
+    });
+
+    document.getElementById('fitToSite').addEventListener('click', function() {
+        if (siteLat && siteLon) {
+            map.setView([siteLat, siteLon], 15);
+        }
+    });
+
+    document.getElementById('toggleLabels').addEventListener('click', function() {
+        showLabels = !showLabels;
+        this.classList.toggle('active', showLabels);
+        
+        if (showLabels) {
+            this.innerHTML = '<i class="fas fa-tag"></i> Hide Labels';
+        } else {
+            this.innerHTML = '<i class="fas fa-tag"></i> Show Labels';
+        }
+    });
+
+    document.getElementById('censusYearFilter').addEventListener('change', function() {
+        const selectedYear = this.value;
+        // Filter census data based on selected year
+        console.log('Filtering by year:', selectedYear);
+    });
+
+    // Initialize the map and load data
+    initializeMap();
+    loadMapData();
+});
+</script>
+{% endblock %}

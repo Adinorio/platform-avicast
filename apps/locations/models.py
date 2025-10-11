@@ -47,7 +47,7 @@ class Site(OptimizableImageMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     site_type = models.CharField(max_length=20, choices=SITE_TYPES, default="other")
-    coordinates = models.CharField(max_length=100, blank=True, help_text="Latitude, Longitude")
+    coordinates = models.CharField(max_length=100, blank=False, help_text="Latitude, Longitude (e.g., 14.5995, 120.9842)")
     description = models.TextField(blank=True)
 
     # Image support
@@ -76,11 +76,139 @@ class Site(OptimizableImageMixin):
         """Return formatted coordinates for display"""
         if self.coordinates:
             try:
-                lat, lon = self.coordinates.split(",")
-                return f"{float(lat):.6f}, {float(lon):.6f}"
+                lat, lon = self.parse_coordinates()
+                return f"{lat:.6f}, {lon:.6f}"
             except (ValueError, IndexError):
                 return self.coordinates
         return "Coordinates not set"
+
+    def parse_coordinates(self):
+        """Parse coordinates string and return (lat, lon) tuple"""
+        if not self.coordinates:
+            return None, None
+        
+        # Handle various coordinate formats
+        coords_str = self.coordinates.strip()
+        
+        # Split by common delimiters
+        for delimiter in [',', ';', '|', ' ']:
+            if delimiter in coords_str:
+                parts = coords_str.split(delimiter)
+                if len(parts) >= 2:
+                    lat = float(parts[0].strip())
+                    lon = float(parts[1].strip())
+                    return lat, lon
+        
+        # Try to parse as space-separated
+        parts = coords_str.split()
+        if len(parts) >= 2:
+            lat = float(parts[0].strip())
+            lon = float(parts[1].strip())
+            return lat, lon
+        
+        raise ValueError(f"Invalid coordinate format: {coords_str}")
+
+    def normalize_coordinates(self, lat, lon):
+        """Normalize and validate coordinates, return standardized string"""
+        # Validate latitude (-90 to 90)
+        if not -90 <= lat <= 90:
+            raise ValueError(f"Latitude must be between -90 and 90, got {lat}")
+        
+        # Validate longitude (-180 to 180)
+        if not -180 <= lon <= 180:
+            raise ValueError(f"Longitude must be between -180 and 180, got {lon}")
+        
+        # Round to 6 decimal places (approximately 0.1m precision)
+        lat = round(lat, 6)
+        lon = round(lon, 6)
+        
+        # Return standardized format: "lat, lon"
+        return f"{lat}, {lon}"
+
+    @classmethod
+    def parse_coordinate_input(cls, coordinate_input):
+        """
+        Parse various coordinate input formats and return normalized coordinates string.
+        
+        Accepts formats like:
+        - "14.5995, 120.9842"
+        - "14.5995,120.9842"
+        - "14.5995; 120.9842"
+        - "14.5995 120.9842"
+        - "14°35'58.2\"N, 120°59'3.1\"E" (basic DMS support)
+        """
+        if not coordinate_input or not coordinate_input.strip():
+            raise ValueError("Coordinates cannot be empty")
+        
+        input_str = coordinate_input.strip()
+        
+        # Handle degree-minute-second format (basic)
+        if any(char in input_str for char in ['°', "'", '"']):
+            try:
+                return cls._parse_dms_format(input_str)
+            except ValueError:
+                pass  # Fall back to decimal format
+        
+        # Handle decimal formats
+        return cls._parse_decimal_format(input_str)
+
+    @classmethod
+    def _parse_decimal_format(cls, input_str):
+        """Parse decimal coordinate formats"""
+        # Split by common delimiters
+        for delimiter in [',', ';', '|']:
+            if delimiter in input_str:
+                parts = input_str.split(delimiter)
+                if len(parts) >= 2:
+                    lat = float(parts[0].strip())
+                    lon = float(parts[1].strip())
+                    return cls().normalize_coordinates(lat, lon)
+        
+        # Try space-separated
+        parts = input_str.split()
+        if len(parts) >= 2:
+            lat = float(parts[0].strip())
+            lon = float(parts[1].strip())
+            return cls().normalize_coordinates(lat, lon)
+        
+        raise ValueError(f"Invalid coordinate format: {input_str}")
+
+    @classmethod
+    def _parse_dms_format(cls, input_str):
+        """Parse degree-minute-second format (basic implementation)"""
+        # This is a simplified DMS parser
+        # For production, consider using a library like pyproj
+        import re
+        
+        # Basic regex for DMS format
+        dms_pattern = r"(\d+)°(\d+)'([\d.]+)\"([NS])\s*,\s*(\d+)°(\d+)'([\d.]+)\"([EW])"
+        match = re.match(dms_pattern, input_str)
+        
+        if match:
+            lat_deg, lat_min, lat_sec, lat_dir, lon_deg, lon_min, lon_sec, lon_dir = match.groups()
+            
+            lat = float(lat_deg) + float(lat_min)/60 + float(lat_sec)/3600
+            lon = float(lon_deg) + float(lon_min)/60 + float(lon_sec)/3600
+            
+            if lat_dir == 'S':
+                lat = -lat
+            if lon_dir == 'W':
+                lon = -lon
+            
+            return cls().normalize_coordinates(lat, lon)
+        
+        raise ValueError(f"Invalid DMS format: {input_str}")
+
+    def save(self, *args, **kwargs):
+        """Override save to normalize coordinates"""
+        if self.coordinates:
+            try:
+                lat, lon = self.parse_coordinates()
+                self.coordinates = self.normalize_coordinates(lat, lon)
+            except (ValueError, IndexError) as e:
+                # Don't save if coordinates are invalid
+                raise ValueError(f"Invalid coordinates: {e}")
+        super().save(*args, **kwargs)
 
     def get_years_with_census(self):
         """Get all years that have census data for this site"""

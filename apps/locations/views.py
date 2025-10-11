@@ -53,6 +53,7 @@ def site_dashboard(request):
     User = get_user_model()
     
     total_sites = sites.count()
+    sites_with_coordinates = sites.exclude(coordinates__isnull=True).exclude(coordinates="").count()
     active_years = CensusYear.objects.filter(site__status="active").distinct().count()
     total_observations = CensusObservation.objects.filter(census__month__year__site__status="active").count()
     field_personnel = User.objects.filter(
@@ -63,6 +64,7 @@ def site_dashboard(request):
     context = {
         "sites": sites,
         "total_sites": total_sites,
+        "sites_with_coordinates": sites_with_coordinates,
         "active_years": active_years,
         "total_observations": total_observations,
         "field_personnel": field_personnel,
@@ -103,6 +105,21 @@ def site_create(request):
         "title": "Create New Site",
     }
     return render(request, "locations/site_form.html", context)
+
+
+@login_required
+def site_map(request, site_id):
+    """View site location on map with census data overlay"""
+    site = get_object_or_404(Site, id=site_id)
+    
+    # Get census years for this site
+    census_years = site.get_years_with_census()
+    
+    context = {
+        "site": site,
+        "census_years": census_years,
+    }
+    return render(request, "locations/site_map.html", context)
 
 
 @login_required
@@ -643,6 +660,71 @@ def get_observations(request, census_id):
         })
 
     return JsonResponse({"observations": data})
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_site_map_data(request, site_id):
+    """Get map data for a specific site including census information"""
+    site = get_object_or_404(Site, id=site_id)
+    
+    # Parse coordinates using the model's method
+    coordinates = None
+    if site.coordinates:
+        try:
+            lat, lon = site.parse_coordinates()
+            coordinates = {
+                "lat": lat,
+                "lon": lon
+            }
+        except (ValueError, IndexError):
+            pass
+    
+    # Get census data
+    census_years = site.get_years_with_census()
+    census_data = []
+    
+    for year in census_years:
+        census_data.append({
+            "year": year.year,
+            "total_birds": year.total_birds_recorded,
+            "total_species": year.total_species_recorded,
+            "total_census": year.total_census_count
+        })
+    
+    # Get all sites for context (if needed for multi-site view)
+    all_sites = Site.objects.filter(status="active", coordinates__isnull=False).exclude(coordinates="")
+    nearby_sites = []
+    
+    for other_site in all_sites:
+        if other_site.id != site.id and other_site.coordinates:
+            try:
+                lat, lon = other_site.parse_coordinates()
+                nearby_sites.append({
+                    "id": str(other_site.id),
+                    "name": other_site.name,
+                    "site_type": other_site.site_type,
+                    "coordinates": {
+                        "lat": lat,
+                        "lon": lon
+                    },
+                    "status": other_site.status
+                })
+            except (ValueError, IndexError):
+                continue
+    
+    return JsonResponse({
+        "site": {
+            "id": str(site.id),
+            "name": site.name,
+            "site_type": site.site_type,
+            "coordinates": coordinates,
+            "description": site.description,
+            "status": site.status
+        },
+        "census_data": census_data,
+        "nearby_sites": nearby_sites
+    })
 
 
 @login_required
