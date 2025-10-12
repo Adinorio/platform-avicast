@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Import Results - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:import_export_hub' %}">Data Management</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:import_census_data' %}">Import</a>
+            </li>
+            <li class="breadcrumb-item active">Results</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                Import Results
+            </h2>
+            <p class="text-muted">Review the results of your census data import</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Summary -->
+    {% if not has_errors %}
+    <div class="alert alert-success" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle fa-3x me-3"></i>
+            <div>
+                <h4 class="alert-heading">Import Completed Successfully!</h4>
+                <p class="mb-0">All data has been imported without errors.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Errors List -->
+    {% if has_errors %}
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Import Errors ({{ errors|length }})</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger" style="max-height: 400px; overflow-y: auto;">
+                <ul class="mb-0">
+                    {% for error in errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <p class="mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                Please correct these errors in your Excel file and try importing again.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'locations:import_export_hub' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Data Management
+        </a>
+        <div>
+            {% if has_errors %}
+            <a href="{% url 'locations:import_census_data' %}" class="btn btn-primary">
+                <i class="fas fa-redo me-2"></i>Try Again
+            </a>
+            {% else %}
+            <a href="{% url 'locations:census_totals' %}" class="btn btn-success">
+                <i class="fas fa-chart-bar me-2"></i>View Census Totals
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

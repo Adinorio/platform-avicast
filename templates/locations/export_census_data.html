@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Export Census Data - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:import_export_hub' %}">Data Management</a>
+            </li>
+            <li class="breadcrumb-item active">Export Census Data</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-file-download text-success me-2"></i>
+                Export Census Data
+            </h2>
+            <p class="text-muted">Download census records to Excel with custom filters</p>
+        </div>
+    </div>
+
+    <!-- Export Form -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Options</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Site Filter -->
+                        <div class="mb-3">
+                            <label for="site_id" class="form-label fw-bold">
+                                Site (Optional)
+                            </label>
+                            <select name="site_id" id="site_id" class="form-select">
+                                <option value="">All Sites</option>
+                                {% for site in sites %}
+                                <option value="{{ site.id }}">{{ site.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Year Filter -->
+                        <div class="mb-3">
+                            <label for="year" class="form-label fw-bold">
+                                Year (Optional)
+                            </label>
+                            <select name="year" id="year" class="form-select">
+                                <option value="">All Years</option>
+                                {% for year in years %}
+                                <option value="{{ year }}">{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Month Filter -->
+                        <div class="mb-3">
+                            <label for="month" class="form-label fw-bold">
+                                Month (Optional)
+                            </label>
+                            <select name="month" id="month" class="form-select">
+                                <option value="">All Months</option>
+                                {% for month in months %}
+                                <option value="{{ month }}">Month {{ month }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Date Range Filters -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="start_date" class="form-label fw-bold">
+                                    Start Date (Optional)
+                                </label>
+                                <input type="date" name="start_date" id="start_date" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="end_date" class="form-label fw-bold">
+                                    End Date (Optional)
+                                </label>
+                                <input type="date" name="end_date" id="end_date" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading">Export Format</h6>
+                            <p class="mb-2">
+                                The exported Excel file will include all observations matching your filter criteria with the following columns:
+                            </p>
+                            <div class="row">
+                                <div class="col-6">
+                                    <ul class="mb-0">
+                                        <li>Site Name</li>
+                                        <li>Year</li>
+                                        <li>Month</li>
+                                        <li>Census Date</li>
+                                    </ul>
+                                </div>
+                                <div class="col-6">
+                                    <ul class="mb-0">
+                                        <li>Species Name</li>
+                                        <li>Count</li>
+                                        <li>Weather Conditions</li>
+                                        <li>Notes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between border-top pt-3">
+                            <a href="{% url 'locations:import_export_hub' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-download me-2"></i>Download Excel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
