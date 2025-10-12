@@ -5,6 +5,15 @@ Following the card-based user flow: Site -> Year -> Month -> Census Table
 
 from django.urls import path
 from . import views
+from .views_import_export import (
+    census_import_export_hub,
+    download_import_template,
+    import_census_data,
+    import_results,
+    export_census_data,
+    census_totals_view,
+    census_species_breakdown,
+)
 
 app_name = "locations"
 
@@ -51,4 +60,13 @@ urlpatterns = [
     path("api/sites/<uuid:site_id>/coordinates/", views.update_coordinates, name="update_coordinates"),
     path("api/census/<uuid:census_id>/observations/", views.get_observations, name="get_observations"),
     path("api/sites/<uuid:site_id>/map-data/", views.get_site_map_data, name="get_site_map_data"),
+    
+    # Import/Export and Data Management
+    path("data/", census_import_export_hub, name="import_export_hub"),
+    path("data/template/", download_import_template, name="download_template"),
+    path("data/import/", import_census_data, name="import_census_data"),
+    path("data/import/results/", import_results, name="import_results"),
+    path("data/export/", export_census_data, name="export_census_data"),
+    path("data/totals/", census_totals_view, name="census_totals"),
+    path("data/breakdown/", census_species_breakdown, name="species_breakdown"),
 ]
