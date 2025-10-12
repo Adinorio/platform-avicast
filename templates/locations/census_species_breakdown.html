@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Species Breakdown - {{ site.name }} - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:import_export_hub' %}">Data Management</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:census_totals' %}">Census Totals</a>
+            </li>
+            <li class="breadcrumb-item active">Species Breakdown</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-dove text-primary me-2"></i>
+                {{ site.name }} - {{ month_name }} {{ year }}
+            </h2>
+            <p class="text-muted">Detailed species-by-species breakdown of census observations</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Total Birds Observed</small>
+                    <h2 class="mb-0 mt-2">{{ total_birds|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Species Diversity</small>
+                    <h2 class="mb-0 mt-2">{{ total_species|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Species List -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Species Observations</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Common Name</th>
+                            <th>Scientific Name</th>
+                            <th class="text-center">IUCN Status</th>
+                            <th class="text-end">Total Count</th>
+                            <th class="text-end">Observations</th>
+                            <th class="text-end">% of Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for species in species_totals %}
+                        <tr>
+                            <td>
+                                <strong>{{ species.species__name|default:"Unknown Species" }}</strong>
+                            </td>
+                            <td class="fst-italic text-muted">
+                                {{ species.species__scientific_name|default:"-" }}
+                            </td>
+                            <td class="text-center">
+                                {% if species.species__iucn_status == 'CR' %}
+                                <span class="badge bg-danger">
+                                    Critically Endangered
+                                </span>
+                                {% elif species.species__iucn_status == 'EN' %}
+                                <span class="badge bg-warning">
+                                    Endangered
+                                </span>
+                                {% elif species.species__iucn_status == 'VU' %}
+                                <span class="badge bg-info">
+                                    Vulnerable
+                                </span>
+                                {% elif species.species__iucn_status == 'NT' %}
+                                <span class="badge bg-primary">
+                                    Near Threatened
+                                </span>
+                                {% else %}
+                                <span class="badge bg-success">
+                                    Least Concern
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <h5 class="mb-0 text-primary">
+                                    {{ species.total_count|default:"0" }}
+                                </h5>
+                            </td>
+                            <td class="text-end text-muted">
+                                {{ species.observation_count|default:"0" }}
+                            </td>
+                            <td class="text-end">
+                                <span class="badge bg-secondary">
+                                    {% widthratio species.total_count total_birds 100 %}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="fas fa-dove fa-3x text-muted mb-3 d-block"></i>
+                                <h5 class="text-muted">No observations found for this period</h5>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'locations:census_totals' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Totals
+        </a>
+        <a href="{% url 'locations:export_census_data' %}" class="btn btn-success">
+            <i class="fas fa-download me-2"></i>Export This Data
+        </a>
+    </div>
+</div>
+{% endblock %}
