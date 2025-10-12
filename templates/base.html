@@ -309,6 +309,11 @@
                 <!-- Admin Data Management -->
                 {% if user.role in 'ADMIN,SUPERADMIN' %}
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'locations:import_export_hub' %}">
+                        <i class="fas fa-file-import me-2"></i> Data Import/Export
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="# Mobile Data Import not implemented in current revamp">
                         <i class="fas fa-mobile-alt me-2"></i> Mobile Data Import
                     </a>

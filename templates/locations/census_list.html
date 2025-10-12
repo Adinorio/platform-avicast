@@ -108,14 +108,24 @@
     <!-- Month Header -->
     <div class="month-header">
         <div class="row align-items-center">
-            <div class="col-md-8">
+            <div class="col-md-6">
                 <h1 class="mb-2">{{ month.get_month_display }} {{ year.year }}</h1>
                 <p class="mb-0">{{ site.name }} - Census Records</p>
             </div>
-            <div class="col-md-4 text-end">
-                <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Add Census Record
-                </a>
+            <div class="col-md-6 text-end">
+                <div class="btn-group" role="group">
+                    {% if user.role in 'ADMIN,SUPERADMIN' %}
+                    <a href="{% url 'locations:import_export_hub' %}" class="btn btn-outline-primary btn-sm" title="Import historical data">
+                        <i class="fas fa-file-import me-1"></i>Import Data
+                    </a>
+                    <a href="{% url 'locations:census_totals' %}?site={{ site.id }}&year={{ year.year }}&month={{ month.month }}" class="btn btn-outline-success btn-sm" title="View totals for this month">
+                        <i class="fas fa-chart-bar me-1"></i>View Totals
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-2"></i>Add Census Record
+                    </a>
+                </div>
             </div>
         </div>
     </div>
