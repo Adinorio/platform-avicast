@@ -23,49 +23,37 @@ def dashboard_view(request):
     from django.db.models import Sum, Count
     from apps.locations.models import CensusObservation, Census, Site
 
-    # Total birds from recent census observations (last 60 days)
-    sixty_days_ago = timezone.now().date() - timezone.timedelta(days=60)
-    total_birds = CensusObservation.objects.filter(
-        census__census_date__gte=sixty_days_ago
-    ).aggregate(total=Sum('count'))['total'] or 0
+    # Total birds from all census observations
+    total_birds = CensusObservation.objects.aggregate(total=Sum('count'))['total'] or 0
 
     # Count active sites and species
-    total_sites = Site.objects.filter(status='active').count()
+    total_sites = Site.objects.filter(is_archived=False).count()
 
-    # Count species with observations in last 60 days
-    species_with_observations = CensusObservation.objects.filter(
-        census__census_date__gte=sixty_days_ago
-    ).values('species').distinct().count()
+    # Count species with observations
+    species_with_observations = CensusObservation.objects.values('species').distinct().count()
 
-    # Recent census records (last 60 days)
-    recent_census = Census.objects.filter(
-        census_date__gte=sixty_days_ago
-    ).select_related('lead_observer', 'month__year__site').order_by('-census_date')[:10]
+    # Recent census records (last 10 records)
+    recent_census = Census.objects.select_related('lead_observer', 'month__year__site').order_by('-census_date')[:10]
 
-    # Species breakdown - get actual species data from fauna app
+    # Species breakdown - get top species by count
     from apps.fauna.models import Species
 
+    # Get top 10 species by total count
+    top_species_data = CensusObservation.objects.values('species__name', 'species__scientific_name', 'species__iucn_status').annotate(
+        total_count=Sum('count')
+    ).order_by('-total_count')[:10]
+
     species_data = []
-    target_species = Species.objects.filter(name__icontains='egret') | Species.objects.filter(name__icontains='heron')
-
-    for species in target_species:
-        # Get count for this species in last 60 days
-        count = CensusObservation.objects.filter(
-            species=species,
-            census__census_date__gte=sixty_days_ago
-        ).aggregate(total=Sum('count'))['total'] or 0
-
+    for species_data_item in top_species_data:
         species_data.append({
-            'name': species.name,
-            'scientific_name': species.scientific_name,
-            'count': count,
-            'iucn_status': species.iucn_status,
+            'name': species_data_item['species__name'] or 'Unknown Species',
+            'scientific_name': species_data_item['species__scientific_name'] or '-',
+            'count': species_data_item['total_count'] or 0,
+            'iucn_status': species_data_item['species__iucn_status'] or 'LC',
         })
 
-    # Get top sites by bird count in last 60 days
-    site_counts = CensusObservation.objects.filter(
-        census__census_date__gte=sixty_days_ago
-    ).values('census__month__year__site').annotate(
+    # Get top sites by bird count
+    site_counts = CensusObservation.objects.values('census__month__year__site').annotate(
         total_birds=Sum('count'),
         species_count=Count('species', distinct=True)
     ).order_by('-total_birds')[:5]
@@ -159,7 +147,7 @@ def site_analytics_view(request):
     from django.db.models import Sum, Count
 
     # Get active sites with census data
-    sites = Site.objects.filter(status='active')
+    sites = Site.objects.filter(is_archived=False)
 
     # Add analytics data for each site
     sites_with_data = []
@@ -239,10 +227,8 @@ def census_records_view(request):
     if date_to:
         records = records.filter(census_date__lte=date_to)
 
-    # If no date filters provided, show last 60 days by default
-    if not date_from and not date_to:
-        sixty_days_ago = timezone.now().date() - timezone.timedelta(days=60)
-        records = records.filter(census_date__gte=sixty_days_ago)
+    # If no date filters provided, show all records by default
+    # (removed 60-day filter to show all data)
 
     # Apply species filter if provided
     if species_filter:
@@ -281,11 +267,16 @@ def census_records_view(request):
         })
 
     # Get available sites for filter
-    sites = Site.objects.filter(status='active')
+    sites = Site.objects.filter(is_archived=False)
+    
+    # Get species for filter dropdown
+    from apps.fauna.models import Species
+    species_list = Species.objects.filter(is_archived=False).order_by('name')
 
     context = {
         'records': enhanced_records,
         'sites': sites,
+        'species_list': species_list,
         'page_title': 'Census Records',
     }
 
@@ -404,7 +395,7 @@ def generate_comprehensive_report(config, user):
     # Site Management Data
     if "SITE" in config.report_type or config.report_type == "SITE_COMPARISON":
         sites_data = []
-        sites = Site.objects.filter(status='active')
+        sites = Site.objects.filter(is_archived=False)
 
         for site in sites:
             census_records = Census.objects.filter(

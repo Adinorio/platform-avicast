@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Import Census Data - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:import_export_hub' %}">Data Management</a>
+            </li>
+            <li class="breadcrumb-item active">Import Census Data</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-file-upload text-primary me-2"></i>
+                Import Census Data
+            </h2>
+            <p class="text-muted">Upload historical census data from Excel files</p>
+        </div>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="alert alert-warning" role="alert">
+        <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Before You Import</h5>
+        <ol class="mb-0">
+            <li><strong>Download the template</strong> - Use our standardized Excel template with family groupings</li>
+            <li><strong>Fill in your data</strong> - Family headings + species with monthly counts</li>
+            <li><strong>Validate site names</strong> - Must match existing sites ({{ sites_count }} active sites)</li>
+            <li><strong>Check species names</strong> - New species will be created automatically if not found ({{ species_count }} species available)</li>
+            <li><strong>Monthly counts</strong> - Fill in counts for each month (January-December)</li>
+            <li><strong>Family-grouped format</strong> - 16 columns: Site, Family, Species, Jan-Dec months, Year Total</li>
+            {% if ai_available %}
+            <li><strong>AI assistance</strong> - AI helps match and validate species names</li>
+            {% endif %}
+        </ol>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Excel File</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- File Upload -->
+                        <div class="mb-4">
+                            <label for="excel_file" class="form-label fw-bold">
+                                Select Excel File
+                            </label>
+                            <input type="file" 
+                                   class="form-control" 
+                                   name="excel_file" 
+                                   id="excel_file" 
+                                   accept=".xlsx,.xls"
+                                   required>
+                            <div class="form-text">
+                                Accepted formats: .xlsx, .xls
+                            </div>
+                        </div>
+
+                        <!-- Import Options -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold">Import Options</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><i class="fas fa-check-circle text-success me-2"></i>Automatic validation of all data</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i>Family grouping preservation</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i>Monthly count processing</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i>Error reporting with line numbers</li>
+                                    <li><i class="fas fa-sitemap text-primary me-2"></i><strong>Family-Grouped Format</strong> - Organizes species by families with monthly counts</li>
+                                    {% if ai_available %}
+                                    <li><i class="fas fa-robot text-info me-2"></i><strong>AI Species Matching</strong> - Automatically matches species names using AI</li>
+                                    <li><i class="fas fa-robot text-info me-2"></i><strong>AI Data Validation</strong> - AI checks for suspicious data patterns</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                            <a href="{% url 'locations:import_export_hub' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <div>
+                                <a href="{% url 'locations:download_template' %}" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-download me-2"></i>Download Template
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-upload me-2"></i>Import Data
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="row mt-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Need Help?</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Template Format:</strong> Family headings organize species, with monthly counts for each species.</p>
+                    <p><strong>Family Structure:</strong> Family heading rows (no species name) followed by species rows with monthly counts.</p>
+                    <p><strong>Monthly Data:</strong> Each species can have different counts for each month (January-December).</p>
+                    <p><strong>Validation:</strong> The system will check all data before importing and show detailed error messages.</p>
+                    <p class="mb-0"><strong>Missing Data:</strong> Blank monthly cells mean no observations for that month (not zero).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

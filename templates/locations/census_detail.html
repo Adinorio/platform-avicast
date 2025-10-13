@@ -12,6 +12,61 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
+/* Compact family groupings */
+.family-header-row td {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem;
+}
+
+.observation-table tbody tr {
+    line-height: 1.2;
+}
+
+.observation-table tbody td {
+    padding: 0.5rem 1rem !important;
+    vertical-align: middle;
+}
+
+.species-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Standardized counting badges */
+.count-badge {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    min-width: 2.5rem;
+    text-align: center;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.count-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+/* Smaller badges and buttons */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.3em 0.6em;
+}
+
+.btn-xs {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
+
 .observation-table th {
     background: #f8f9fa;
     border: none;
@@ -28,9 +83,9 @@
 
 .personnel-info {
     background: #f8f9fa;
-    padding: 1.5rem;
+    padding: 1rem;
     border-radius: 10px;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .personnel-avatar {
@@ -102,12 +157,25 @@
                         <div class="col-md-8">
                             <h1 class="mb-2">{{ site.name }}</h1>
                             <p class="text-muted mb-3">{{ site.description|default:"No description available" }}</p>
-                            <div class="d-flex gap-3">
+                            <div class="d-flex gap-2 flex-wrap">
                                 <span class="badge bg-primary">{{ site.get_site_type_display }}</span>
                                 <span class="badge bg-secondary">{{ site.get_status_display }}</span>
                                 {% if site.coordinates %}
                                 <span class="badge bg-info">
                                     <i class="fas fa-map-pin me-1"></i>{{ site.get_coordinates_display }}
+                                </span>
+                                {% endif %}
+                                {% if census.census_date.day == 15 and census.created_at.date != census.census_date %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-sitemap me-1"></i>Family-Grouped Import
+                                </span>
+                                {% endif %}
+                                <span class="badge bg-success">{{ census.total_birds }} Birds</span>
+                                <span class="badge bg-primary">{{ census.total_species }} Species</span>
+                                <span class="badge bg-info">{{ total_observations }} Records</span>
+                                {% if census.lead_observer %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-user me-1"></i>{{ census.lead_observer.get_full_name }}
                                 </span>
                                 {% endif %}
                             </div>
@@ -130,107 +198,23 @@
         </div>
     </div>
 
-    <!-- Personnel Information -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="personnel-info">
-                <h5 class="mb-3">
-                    <i class="fas fa-users me-2"></i>Field Personnel
-                </h5>
-
-                {% if census.lead_observer %}
-                <div class="mb-3">
-                    <strong>Lead Observer:</strong>
-                    <div class="d-flex align-items-center mt-2">
-                        <div class="personnel-avatar">
-                            {{ census.lead_observer.get_initials }}
-                        </div>
-                        <div>
-                            <div class="font-weight-medium">{{ census.lead_observer.get_full_name }}</div>
-                            <small class="text-muted">{{ census.lead_observer.employee_id }}</small>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if census.field_team.all %}
-                <div>
-                    <strong>Field Team ({{ census.field_team.count }} members):</strong>
-                    <div class="d-flex flex-wrap gap-2 mt-2">
-                        {% for member in census.field_team.all %}
-                        <div class="d-flex align-items-center">
-                            <div class="personnel-avatar">
-                                {{ member.get_initials }}
-                            </div>
-                            <div>
-                                <div class="font-weight-medium">{{ member.get_full_name }}</div>
-                                <small class="text-muted">{{ member.employee_id }}</small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% else %}
-                <p class="text-muted mb-0">No field team members assigned</p>
-                {% endif %}
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Summary Stats -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <i class="fas fa-feather-alt fa-2x text-success mb-2"></i>
-                    <h4 class="mb-1">{{ census.total_birds }}</h4>
-                    <small class="text-muted">Birds Observed</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <i class="fas fa-paw fa-2x text-primary mb-2"></i>
-                    <h4 class="mb-1">{{ census.total_species }}</h4>
-                    <small class="text-muted">Species Recorded</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <i class="fas fa-list fa-2x text-info mb-2"></i>
-                    <h4 class="mb-1">{{ total_observations }}</h4>
-                    <small class="text-muted">Observations</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
-                    <h4 class="mb-1">{{ census.created_at|date:"M d" }}</h4>
-                    <small class="text-muted">Created</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Observations Table -->
-    <div class="row">
+    <div class="row mt-3">
         <div class="col-12">
             {% if observations %}
             <div class="card observation-table">
-                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
+                <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 text-dark">
                         <i class="fas fa-binoculars me-2"></i>Bird Observations
+                        <span class="badge bg-primary ms-2">{{ observations.count }}</span>
                     </h5>
                     <div class="d-flex gap-2">
-                        <span class="badge bg-primary">{{ observations.count }} observations</span>
+                        <a href="{% url 'locations:observation_create' site.id year.year month.month census.id %}"
+                           class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Add Single
+                        </a>
                         <a href="{% url 'locations:batch_observation_create' site.id year.year month.month census.id %}"
-                           class="btn btn-sm btn-outline-primary">
+                           class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-list me-1"></i>Batch Add
                         </a>
                     </div>
@@ -238,56 +222,180 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table mb-0">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Species</th>
-                                    <th>Count</th>
-                                    <th>Recorded</th>
-                                    <th>Actions</th>
+                                    <th class="fw-semibold">Species</th>
+                                    <th class="fw-semibold">Scientific Name</th>
+                                    <th class="fw-semibold text-center">Count</th>
+                                    <th class="fw-semibold">Recorded</th>
+                                    <th class="fw-semibold text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for observation in observations %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="species-icon me-2">
-                                                <i class="fas fa-feather-alt text-primary"></i>
+                                {% if has_family_data %}
+                                    <!-- Family-Grouped Observations -->
+                                    {% for family_name, family_observations in family_groups.items %}
+                                    <tr class="family-header-row" style="background: #f8f9fa; border-left: 4px solid #007bff;">
+                                        <td colspan="5" class="py-3 px-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-layer-group me-2 text-primary"></i>
+                                                <h6 class="mb-0 text-dark fw-bold">{{ family_name }}</h6>
+                                                <span class="badge bg-primary ms-3">{{ family_observations|length }} species</span>
                                             </div>
-                                            <div>
-                                                <strong>
-                                                    {% if observation.species %}
-                                                    {{ observation.species.name }}
-                                                    {% else %}
-                                                    {{ observation.species_name }}
-                                                    {% endif %}
-                                                </strong>
-                                                {% if observation.species %}
-                                                <br><small class="text-muted">{{ observation.species.scientific_name }}</small>
-                                                {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% for observation in family_observations %}
+                                    <tr class="border-0">
+                                        <td class="py-3 px-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="species-icon me-3">
+                                                    <i class="fas fa-dove text-success"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-semibold text-dark">
+                                                        {% if observation.species %}
+                                                        {{ observation.species.name }}
+                                                        {% else %}
+                                                        {{ observation.species_name|slice:"1:" }}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-success fs-6">{{ observation.count }}</span>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">{{ observation.created_at|date:"M d, H:i" }}</small>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{% url 'locations:observation_edit' site.id year.year month.month census.id observation.id %}"
-                                               class="btn btn-sm btn-outline-primary" title="Edit Observation">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{% url 'locations:observation_delete' site.id year.year month.month census.id observation.id %}"
-                                               class="btn btn-sm btn-outline-danger" title="Delete Observation">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            {% if observation.species and observation.species.scientific_name %}
+                                            <span class="text-muted fst-italic">{{ observation.species.scientific_name }}</span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <span class="count-badge">{{ observation.count }}</span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="text-muted small">{{ observation.created_at|date:"M d, H:i" }}</span>
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'locations:observation_edit' site.id year.year month.month census.id observation.id %}"
+                                                   class="btn btn-outline-primary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'locations:observation_delete' site.id year.year month.month census.id observation.id %}"
+                                                   class="btn btn-outline-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% endfor %}
+                                    
+                                    <!-- Uncategorized Observations (if any) -->
+                                    {% if uncategorized_observations %}
+                                    <tr class="family-header-row" style="background: #f8f9fa; border-left: 4px solid #6c757d;">
+                                        <td colspan="5" class="py-3 px-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-question-circle me-2 text-secondary"></i>
+                                                <h6 class="mb-0 text-dark fw-bold">Other Species</h6>
+                                                <span class="badge bg-secondary ms-3">{{ uncategorized_observations|length }} species</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% for observation in uncategorized_observations %}
+                                    <tr class="border-0">
+                                        <td class="py-3 px-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="species-icon me-3">
+                                                    <i class="fas fa-feather-alt text-secondary"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-semibold text-dark">
+                                                        {% if observation.species %}
+                                                        {{ observation.species.name }}
+                                                        {% else %}
+                                                        {{ observation.species_name|slice:"1:" }}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            {% if observation.species and observation.species.scientific_name %}
+                                            <span class="text-muted fst-italic">{{ observation.species.scientific_name }}</span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <span class="count-badge">{{ observation.count }}</span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="text-muted small">{{ observation.created_at|date:"M d, H:i" }}</span>
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'locations:observation_edit' site.id year.year month.month census.id observation.id %}"
+                                                   class="btn btn-outline-primary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'locations:observation_delete' site.id year.year month.month census.id observation.id %}"
+                                                   class="btn btn-outline-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% endif %}
+                                {% else %}
+                                    <!-- Fallback: Original flat list for data without family info -->
+                                    {% for observation in observations %}
+                                    <tr class="border-0">
+                                        <td class="py-3 px-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="species-icon me-3">
+                                                    <i class="fas fa-dove text-primary"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-semibold text-dark">
+                                                        {% if observation.species %}
+                                                        {{ observation.species.name }}
+                                                        {% else %}
+                                                        {{ observation.species_name|slice:"1:" }}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            {% if observation.species and observation.species.scientific_name %}
+                                            <span class="text-muted fst-italic">{{ observation.species.scientific_name }}</span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <span class="count-badge">{{ observation.count }}</span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="text-muted small">{{ observation.created_at|date:"M d, H:i" }}</span>
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'locations:observation_edit' site.id year.year month.month census.id observation.id %}"
+                                                   class="btn btn-outline-primary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'locations:observation_delete' site.id year.year month.month census.id observation.id %}"
+                                                   class="btn btn-outline-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>

@@ -59,6 +59,9 @@ class Site(OptimizableImageMixin):
     )
 
     status = models.CharField(max_length=20, choices=SITE_STATUS, default="active")
+    is_archived = models.BooleanField(default=False, help_text="Archive site instead of deleting")
+    archived_at = models.DateTimeField(null=True, blank=True, help_text="When the site was archived")
+    archived_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="archived_sites")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -213,6 +216,21 @@ class Site(OptimizableImageMixin):
     def get_years_with_census(self):
         """Get all years that have census data for this site"""
         return CensusYear.objects.filter(site=self).order_by('-year')
+    
+    def archive(self, user=None):
+        """Archive this site"""
+        self.is_archived = True
+        self.archived_at = timezone.now()
+        if user:
+            self.archived_by = user
+        self.save()
+    
+    def restore(self):
+        """Restore this site from archive"""
+        self.is_archived = False
+        self.archived_at = None
+        self.archived_by = None
+        self.save()
 
 
 class CensusYear(models.Model):
@@ -227,6 +245,8 @@ class CensusYear(models.Model):
     total_birds_recorded = models.PositiveIntegerField(default=0, help_text="Total birds recorded this year")
     total_species_recorded = models.PositiveIntegerField(default=0, help_text="Total species recorded this year")
 
+    is_archived = models.BooleanField(default=False, help_text="Archive year instead of deleting")
+    archived_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -271,6 +291,8 @@ class CensusMonth(models.Model):
     total_birds_recorded = models.PositiveIntegerField(default=0, help_text="Total birds recorded this month")
     total_species_recorded = models.PositiveIntegerField(default=0, help_text="Total species recorded this month")
 
+    is_archived = models.BooleanField(default=False, help_text="Archive month instead of deleting")
+    archived_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -332,6 +354,8 @@ class Census(models.Model):
     total_birds = models.PositiveIntegerField(default=0, help_text="Total birds observed")
     total_species = models.PositiveIntegerField(default=0, help_text="Total species observed")
 
+    is_archived = models.BooleanField(default=False, help_text="Archive census instead of deleting")
+    archived_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -372,10 +396,13 @@ class CensusObservation(models.Model):
         blank=True
     )
     species_name = models.CharField(max_length=200, help_text="Common or scientific name")
+    family = models.CharField(max_length=100, blank=True, help_text="Bird family (optional)")
     count = models.PositiveIntegerField(validators=[MinValueValidator(1)])
 
     # Additional notes removed - behavior_notes field deleted
 
+    is_archived = models.BooleanField(default=False, help_text="Archive observation instead of deleting")
+    archived_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

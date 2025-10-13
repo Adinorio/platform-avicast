@@ -74,16 +74,6 @@ def site_dashboard(request):
     return render(request, "locations/site_dashboard.html", context)
 
 
-@login_required
-def site_list(request):
-    """List all sites"""
-    sites = Site.objects.all().order_by("name")
-
-    context = {
-        "sites": sites,
-        "total_sites": sites.count(),
-    }
-    return render(request, "locations/site_list.html", context)
 
 
 @login_required
@@ -203,6 +193,37 @@ def site_delete(request, site_id):
         "title": f"Delete Site: {site.name}",
     }
     return render(request, "locations/site_confirm_delete.html", context)
+
+
+@login_required
+def site_archive(request, site_id):
+    """Archive a site"""
+    site = get_object_or_404(Site, id=site_id)
+    
+    if request.method == "POST":
+        site.archive(user=request.user)
+        messages.success(request, f"Site '{site.name}' archived successfully!")
+        return redirect("locations:dashboard")
+    
+    context = {
+        "site": site,
+        "title": f"Archive Site: {site.name}",
+    }
+    return render(request, "locations/site_confirm_archive.html", context)
+
+
+@login_required
+def site_restore(request, site_id):
+    """Restore an archived site"""
+    site = get_object_or_404(Site, id=site_id)
+    
+    if request.method == "POST":
+        site.restore()
+        messages.success(request, f"Site '{site.name}' restored successfully!")
+        return redirect("locations:dashboard")
+    
+    # If GET request, redirect to dashboard
+    return redirect("locations:dashboard")
 
 
 @login_required
@@ -496,6 +517,17 @@ def census_list(request, site_id, year, month):
     sort_field = valid_sorts.get(sort_by, '-census_date')
     census_records = month_obj.get_census_records().order_by(sort_field)
 
+    # Calculate monthly statistics for family-grouped data display
+    from django.db.models import Sum, Count
+    monthly_stats = {
+        'total_birds': census_records.aggregate(total=Sum('total_birds'))['total'] or 0,
+        'total_species': census_records.aggregate(total=Count('observations__species', distinct=True))['total'] or 0,
+        'total_observations': census_records.aggregate(total=Count('observations'))['total'] or 0,
+    }
+    
+    # Check if this month has family-grouped data (multiple census records on the 15th)
+    family_grouped_data = census_records.filter(census_date__day=15).count() > 1
+
     context = {
         "site": site,
         "year": year_obj,
@@ -503,6 +535,8 @@ def census_list(request, site_id, year, month):
         "census_records": census_records,
         "total_census": census_records.count(),
         "current_sort": sort_by,
+        "monthly_stats": monthly_stats,
+        "family_grouped_data": family_grouped_data,
     }
     return render(request, "locations/census_list.html", context)
 
@@ -550,13 +584,51 @@ def census_detail(request, site_id, year, month, census_id):
     census = get_object_or_404(Census, id=census_id, month=month_obj)
     observations = census.get_observations()
 
+    # Group observations by family
+    family_groups = {}
+    uncategorized_observations = []
+    
+    for obs in observations:
+        family_name = obs.family.strip() if obs.family else None
+        
+        if family_name:
+            if family_name not in family_groups:
+                family_groups[family_name] = []
+            family_groups[family_name].append(obs)
+        else:
+            uncategorized_observations.append(obs)
+
+    # Define family order as shown in species detection summary
+    family_order = [
+        'HERONS AND EGRETS',
+        'SHOREBIRDS-WADERS', 
+        'RAILS, GALLINULES & COOTS',
+        'GULLS, TERNS & SKIMMERRS',
+        'ADDITIONAL SPECIES',
+        'UNCATEGORIZED'
+    ]
+    
+    # Sort family_groups by the defined order
+    sorted_family_groups = {}
+    for family_name in family_order:
+        if family_name in family_groups:
+            sorted_family_groups[family_name] = family_groups[family_name]
+    
+    # Add any remaining families not in the predefined order
+    for family_name, obs_list in family_groups.items():
+        if family_name not in sorted_family_groups:
+            sorted_family_groups[family_name] = obs_list
+
     context = {
         "site": site,
         "year": year_obj,
         "month": month_obj,
         "census": census,
         "observations": observations,
+        "family_groups": sorted_family_groups,
+        "uncategorized_observations": uncategorized_observations,
         "total_observations": observations.count(),
+        "has_family_data": bool(family_groups),
     }
     return render(request, "locations/census_detail.html", context)
 
@@ -640,7 +712,7 @@ def update_coordinates(request, site_id):
 
     except json.JSONDecodeError:
         return JsonResponse({"success": False, "error": "Invalid JSON data"})
-    except Exception as e:
+    except Exception as e:  
         return JsonResponse({"success": False, "error": str(e)})
 
 

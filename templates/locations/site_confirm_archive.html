@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-archive me-2"></i>Archive Site
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Archive Confirmation</h5>
+                        <p class="mb-0">
+                            Are you sure you want to archive the site <strong>"{{ site.name }}"</strong>?
+                        </p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>What happens when you archive:</strong>
+                        </p>
+                        <ul class="mb-0">
+                            <li>The site will be hidden from the main site list</li>
+                            <li>All census data will be preserved</li>
+                            <li>You can restore the site later if needed</li>
+                            <li>This is safer than deleting permanently</li>
+                        </ul>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Site Details:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Name:</strong> {{ site.name }}</li>
+                                <li><strong>Type:</strong> {{ site.get_site_type_display }}</li>
+                                <li><strong>Status:</strong> {{ site.get_status_display }}</li>
+                                <li><strong>Created:</strong> {{ site.created_at|date:"M d, Y" }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Census Data:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Years:</strong> {{ site.census_years.count }}</li>
+                                <li><strong>Total Census:</strong> {{ site.census_years.aggregate.total_census_count|default:"0" }}</li>
+                                <li><strong>Total Birds:</strong> {{ site.census_years.aggregate.total_birds_recorded|default:"0" }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-archive me-2"></i>Yes, Archive Site
+                        </button>
+                    </form>
+                    <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

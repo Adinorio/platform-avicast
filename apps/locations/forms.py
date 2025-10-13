@@ -129,7 +129,7 @@ class CensusObservationForm(forms.ModelForm):
 
     class Meta:
         model = CensusObservation
-        fields = ['species', 'species_name', 'count']
+        fields = ['species', 'species_name', 'family', 'count']
         widgets = {
             'species': forms.Select(attrs={
                 'class': 'form-control',
@@ -138,6 +138,10 @@ class CensusObservationForm(forms.ModelForm):
             'species_name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter species name if not in list'
+            }),
+            'family': forms.Select(attrs={
+                'class': 'form-control',
+                'placeholder': 'Select family (optional)'
             }),
             'count': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -152,6 +156,39 @@ class CensusObservationForm(forms.ModelForm):
         from apps.fauna.models import Species
         species_choices = [('', 'Select Species')] + [(species.id, species.name) for species in Species.objects.all()]
         self.fields['species'].choices = species_choices
+        
+        # Populate family choices (optional)
+        family_choices = [
+            ('', 'Select Family (Optional)'),
+            ('HERONS AND EGRETS', 'Herons and Egrets'),
+            ('SPOONBILLS', 'Spoonbills'),
+            ('STILTS AND AVOCETS', 'Stilts and Avocets'),
+            ('SANDPIPERS AND ALLIES', 'Sandpipers and Allies'),
+            ('GULLS AND TERNS', 'Gulls and Terns'),
+            ('KINGFISHERS', 'Kingfishers'),
+            ('RAILS AND ALLIES', 'Rails and Allies'),
+            ('DUCKS AND GEESE', 'Ducks and Geese'),
+            ('PIGEONS AND DOVES', 'Pigeons and Doves'),
+            ('CUCKOOS', 'Cuckoos'),
+            ('OWLS', 'Owls'),
+            ('SWIFTS', 'Swifts'),
+            ('HORNBILLS', 'Hornbills'),
+            ('BARBETS', 'Barbets'),
+            ('WOODPECKERS', 'Woodpeckers'),
+            ('FALCONS', 'Falcons'),
+            ('PARROTS', 'Parrots'),
+            ('BULBULS', 'Bulbuls'),
+            ('CROWS AND ALLIES', 'Crows and Allies'),
+            ('STARLINGS', 'Starlings'),
+            ('THRUSHES', 'Thrushes'),
+            ('FLYCATCHERS', 'Flycatchers'),
+            ('WARBLERS', 'Warblers'),
+            ('WEAVERS', 'Weavers'),
+            ('FINCHES', 'Finches'),
+            ('SPARROWS', 'Sparrows'),
+            ('OTHER', 'Other'),
+        ]
+        self.fields['family'].choices = family_choices
 
         # Set initial visibility and requirement of species_name field
         species_selected = False

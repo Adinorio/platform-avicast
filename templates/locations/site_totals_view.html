@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Site Totals - {{ site.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Standardized counting badges */
+.count-badge {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    min-width: 2.5rem;
+    text-align: center;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.count-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.totals-card {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    border: none;
+    border-radius: 10px;
+}
+
+.stat-box {
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.stat-box h4 {
+    font-weight: 600;
+}
+
+/* Horizontal Layout Styles */
+.month-grid-horizontal {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.month-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.month-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.month-header {
+    margin-bottom: 0.75rem;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.month-stats {
+    margin-bottom: 0.75rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.stat-row small {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .month-grid-horizontal {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .month-item {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .stat-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">
+                    <i class="fas fa-home me-1"></i>Sites
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:site_detail' site.id %}">
+                    {{ site.name }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Site Totals</li>
+        </ol>
+    </nav>
+
+    <!-- Overall Site Totals -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card totals-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h2 class="mb-2">{{ site.name }}</h2>
+                            <p class="text-muted mb-0">Comprehensive Census Analytics</p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row text-center">
+                                <div class="col-3">
+                                    <div class="stat-box">
+                                        <h4 class="mb-1 text-primary">{{ site_totals.total_years }}</h4>
+                                        <small class="text-muted">Years</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-box">
+                                        <h4 class="mb-1 text-success">{{ site_totals.total_birds }}</h4>
+                                        <small class="text-muted">Birds</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-box">
+                                        <h4 class="mb-1 text-info">{{ site_totals.total_species }}</h4>
+                                        <small class="text-muted">Species</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-box">
+                                        <h4 class="mb-1 text-warning">{{ site_totals.total_observations }}</h4>
+                                        <small class="text-muted">Records</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Species -->
+    {% if top_species %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy me-2"></i>Top 10 Species by Count
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for species_name, count in top_species %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                                <span class="fw-medium">{{ species_name }}</span>
+                                <span class="count-badge">{{ count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Yearly Breakdown -->
+    <div class="row">
+        {% for year, year_data in yearly_data.items %}
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <!-- Year Header -->
+                        <div class="col-md-3">
+                            <h5 class="mb-1 text-primary">
+                                <i class="fas fa-calendar-alt me-2"></i>{{ year }}
+                            </h5>
+                            <small class="text-muted">Year Summary</small>
+                        </div>
+                        
+                        <!-- Year Stats -->
+                        <div class="col-md-6">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <span class="badge bg-success fs-6">{{ year_data.total_birds }}</span>
+                                        <small class="d-block text-muted">birds</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <span class="badge bg-info fs-6">{{ year_data.total_species }}</span>
+                                        <small class="d-block text-muted">species</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <span class="badge bg-secondary fs-6">{{ year_data.total_observations }}</span>
+                                        <small class="d-block text-muted">records</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Year Actions -->
+                        <div class="col-md-3 text-end">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#year-{{ year }}">
+                                    <i class="fas fa-calendar-day me-1"></i>Months
+                                </button>
+                                <a href="{% url 'locations:year_detail' site.id year %}" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-external-link-alt me-1"></i>Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Breakdown -->
+                    <div class="collapse mt-3" id="year-{{ year }}">
+                        <hr>
+                        <h6 class="mb-3">Monthly Breakdown</h6>
+                        <div class="month-grid-horizontal">
+                            {% for month_num, month_data in year_data.months.items %}
+                            <div class="month-item">
+                                <div class="month-header">
+                                    <strong>
+                                        {% if month_num == 1 %}Jan
+                                        {% elif month_num == 2 %}Feb
+                                        {% elif month_num == 3 %}Mar
+                                        {% elif month_num == 4 %}Apr
+                                        {% elif month_num == 5 %}May
+                                        {% elif month_num == 6 %}Jun
+                                        {% elif month_num == 7 %}Jul
+                                        {% elif month_num == 8 %}Aug
+                                        {% elif month_num == 9 %}Sep
+                                        {% elif month_num == 10 %}Oct
+                                        {% elif month_num == 11 %}Nov
+                                        {% elif month_num == 12 %}Dec
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                                <div class="month-stats">
+                                    <div class="stat-row">
+                                        <span class="badge bg-primary">{{ month_data.total_birds }}</span>
+                                        <small>birds</small>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span class="badge bg-info">{{ month_data.species }}</span>
+                                        <small>species</small>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span class="badge bg-secondary">{{ month_data.observations }}</span>
+                                        <small>records</small>
+                                    </div>
+                                </div>
+                                <a href="{% url 'locations:month_detail' site.id year month_num %}" 
+                                   class="btn btn-sm btn-outline-primary mt-2">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not yearly_data %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Census Data Found</h4>
+                    <p class="text-muted">No census data found for {{ site.name }}.</p>
+                    <a href="{% url 'locations:import_export_hub' %}" class="btn btn-primary">
+                        <i class="fas fa-file-import me-2"></i>Import Data
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

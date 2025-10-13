@@ -49,5 +49,16 @@ class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def get_context_data(self, **kwargs):
         """Add additional context data"""
         context = super().get_context_data(**kwargs)
-        context["total_species"] = self.get_queryset().count()
+        queryset = self.get_queryset()
+        context["total_species"] = queryset.count()
+        
+        # Add IUCN status statistics
+        context["iucn_stats"] = {
+            'least_concern': queryset.filter(iucn_status='LC').count(),
+            'near_threatened': queryset.filter(iucn_status='NT').count(),
+            'vulnerable': queryset.filter(iucn_status='VU').count(),
+            'endangered': queryset.filter(iucn_status='EN').count(),
+            'critically_endangered': queryset.filter(iucn_status='CR').count(),
+        }
+        
         return context

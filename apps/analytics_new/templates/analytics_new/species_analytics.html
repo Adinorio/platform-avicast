@@ -1,87 +1,111 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
 
-{% block title %}Species Analytics - AVICAST System{% endblock %}
+{% block title %}Species Analytics - AVICAST{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'analytics_new:dashboard' %}">Analytics Dashboard</a>
+            </li>
+            <li class="breadcrumb-item active">Species Analytics</li>
+        </ol>
+    </nav>
+
     <!-- Page Header -->
-    <div class="avic-page-header">
-        <h1 class="avic-page-title">
-            <i class="fas fa-paw"></i>Species Analytics
-        </h1>
-        <p class="avic-page-subtitle">Population data and trends for target bird species</p>
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-paw text-primary me-2"></i>
+                Species Analytics
+            </h2>
+            <p class="text-muted">Population data and trends for target bird species</p>
+        </div>
     </div>
 
-    <!-- Species Cards -->
-    <div class="row">
-        {% for item in species_with_trends %}
-        <div class="col-lg-6 col-md-12 mb-4">
-            <div class="card avic-card h-100">
-                <div class="card-header avic-card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-paw me-2"></i>{{ item.analytics.get_species_display }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Population Data</h6>
-                            <ul class="list-unstyled">
-                                <li><strong>Total Count:</strong> {{ item.analytics.total_count }}</li>
-                                <li><strong>Sites Present:</strong> {{ item.analytics.sites_with_presence }}</li>
-                                <li><strong>IUCN Status:</strong>
-                                    <span class="badge bg-{% if item.analytics.iucn_status == 'LC' %}success{% elif item.analytics.iucn_status == 'NT' %}warning{% elif item.analytics.iucn_status == 'VU' %}danger{% else %}secondary{% endif %}">
-                                        {{ item.analytics.iucn_status }}
-                                    </span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted">Trend Information</h6>
-                            {% if item.recent_trend %}
-                            <ul class="list-unstyled">
-                                <li><strong>Direction:</strong>
-                                    <span class="badge bg-{% if item.recent_trend.trend_direction == 'INCREASING' %}success{% elif item.recent_trend.trend_direction == 'DECREASING' %}danger{% else %}secondary{% endif %}">
-                                        {{ item.recent_trend.trend_direction }}
-                                    </span>
-                                </li>
-                                <li><strong>Average Count:</strong> {{ item.recent_trend.average_count }}</li>
-                                <li><strong>Period:</strong> {{ item.recent_trend.period_start }} - {{ item.recent_trend.period_end }}</li>
-                            </ul>
-                            {% else %}
-                            <p class="text-muted mb-0">No trend data available</p>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    {% if item.analytics.conservation_notes %}
-                    <div class="mt-3">
-                        <h6 class="text-muted">Conservation Notes</h6>
-                        <p class="small">{{ item.analytics.conservation_notes }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+    <!-- Species Analytics Table -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fas fa-paw me-2"></i>Species Analytics</h5>
         </div>
-        {% endfor %}
+        <div class="card-body p-0">
+            {% if species_with_trends %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Species Name</th>
+                            <th>Scientific Name</th>
+                            <th class="text-center">IUCN Status</th>
+                            <th class="text-end">Total Count</th>
+                            <th class="text-end">Sites Present</th>
+                            <th class="text-end">Avg Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in species_with_trends %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.analytics.species.name|default:"Unknown Species" }}</strong>
+                            </td>
+                            <td class="fst-italic text-muted">
+                                {{ item.analytics.species.scientific_name|default:"-" }}
+                            </td>
+                            <td class="text-center">
+                                {% if item.analytics.species.iucn_status == 'CR' %}
+                                <span class="badge bg-danger">Critically Endangered</span>
+                                {% elif item.analytics.species.iucn_status == 'EN' %}
+                                <span class="badge bg-warning">Endangered</span>
+                                {% elif item.analytics.species.iucn_status == 'VU' %}
+                                <span class="badge bg-info">Vulnerable</span>
+                                {% elif item.analytics.species.iucn_status == 'NT' %}
+                                <span class="badge bg-primary">Near Threatened</span>
+                                {% else %}
+                                <span class="badge bg-success">Least Concern</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <h5 class="mb-0 text-primary">{{ item.analytics.total_count|default:"0" }}</h5>
+                            </td>
+                            <td class="text-end text-muted">
+                                {{ item.analytics.sites_with_presence|default:"0" }}
+                            </td>
+                            <td class="text-end text-muted">
+                                {{ item.analytics.total_count|floatformat:1|default:"0" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-paw fa-3x text-muted mb-3 d-block"></i>
+                <h5 class="text-muted">No species data available</h5>
+                <p class="text-muted">No target species found with observations.</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Navigation -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-body text-center">
-                    <a href="{% url 'analytics_new:dashboard' %}" class="btn avic-btn-primary me-2">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                    </a>
-                    <a href="{% url 'analytics_new:site_analytics' %}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-map-marker-alt me-2"></i>View Site Analytics
-                    </a>
-                    <a href="{% url 'analytics_new:census_records' %}" class="btn btn-outline-primary">
-                        <i class="fas fa-list me-2"></i>View Census Records
-                    </a>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <div class="btn-group" role="group">
+            <a href="{% url 'analytics_new:site_analytics' %}" class="btn btn-primary">
+                <i class="fas fa-map-marker-alt me-2"></i>Site Analytics
+            </a>
+            <a href="{% url 'analytics_new:census_records' %}" class="btn btn-primary">
+                <i class="fas fa-list me-2"></i>Census Records
+            </a>
+            <a href="{% url 'analytics_new:report_generator' %}" class="btn btn-success">
+                <i class="fas fa-file-alt me-2"></i>Generate Reports
+            </a>
         </div>
     </div>
 </div>
@@ -99,6 +123,8 @@
 }
 </style>
 {% endblock %}
+
+
 
 
 
