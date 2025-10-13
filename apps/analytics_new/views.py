@@ -12,6 +12,7 @@ from django.views.decorators.http import require_http_methods
 from .models import (
     GeneratedReport,
     ReportConfiguration,
+    PopulationTrend,
 )
 
 
@@ -695,6 +696,179 @@ def population_trends_view(request):
     }
 
     return render(request, 'analytics_new/population_trends.html', context)
+
+
+@login_required
+def annual_trends_report_view(request):
+    """
+    Annual Trends & Report Charts View
+    
+    Provides comprehensive charts for reports including:
+    - Top 5 species composition
+    - Annual population trends (2020-2022)
+    - Top 3 species abundance comparison
+    - Species diversity over time
+    """
+    from apps.locations.models import CensusObservation, Census
+    from apps.fauna.models import Species
+    from django.db.models import Sum, Count
+    from django.db.models.functions import ExtractYear
+    import json
+    
+    # Get year filter from request (optional)
+    year_filter = request.GET.get('year')
+    
+    # ========== 1. TOP 5 SPECIES COMPOSITION ==========
+    top_5_species = CensusObservation.objects.values(
+        'species__name', 
+        'species__scientific_name',
+        'species__iucn_status'
+    ).annotate(
+        total_count=Sum('count')
+    ).order_by('-total_count')[:5]
+    
+    # ========== 2. YEAR-OVER-YEAR TRENDS (2020-2022) ==========
+    # Get observations grouped by year
+    yearly_data_raw = CensusObservation.objects.annotate(
+        year=ExtractYear('census__census_date')
+    ).values('year').annotate(
+        total_birds=Sum('count'),
+        species_count=Count('species', distinct=True),
+        census_count=Count('census', distinct=True)
+    ).order_by('year')
+    
+    # Calculate averages
+    yearly_data = []
+    for year_item in yearly_data_raw:
+        avg_birds = 0
+        if year_item['census_count'] and year_item['census_count'] > 0:
+            avg_birds = round(year_item['total_birds'] / year_item['census_count'], 1)
+        yearly_data.append({
+            'year': year_item['year'],
+            'total_birds': year_item['total_birds'],
+            'species_count': year_item['species_count'],
+            'census_count': year_item['census_count'],
+            'avg_birds_per_census': avg_birds
+        })
+    
+    # ========== 3. TOP 3 SPECIES ABUNDANCE BY YEAR ==========
+    # First, get the overall top 3 species
+    top_3_overall = CensusObservation.objects.values(
+        'species__name'
+    ).annotate(
+        total=Sum('count')
+    ).order_by('-total')[:3]
+    
+    top_3_species_names = [item['species__name'] for item in top_3_overall if item['species__name']]
+    
+    # Get yearly counts for these top 3 species
+    top_3_by_year = {}
+    for species_name in top_3_species_names:
+        yearly_counts = CensusObservation.objects.filter(
+            species__name=species_name
+        ).annotate(
+            year=ExtractYear('census__census_date')
+        ).values('year').annotate(
+            count=Sum('count')
+        ).order_by('year')
+        
+        top_3_by_year[species_name] = {
+            item['year']: item['count'] for item in yearly_counts
+        }
+    
+    # ========== 4. SPECIES DIVERSITY TRENDS ==========
+    diversity_by_year = CensusObservation.objects.annotate(
+        year=ExtractYear('census__census_date')
+    ).values('year').annotate(
+        unique_species=Count('species', distinct=True)
+    ).order_by('year')
+    
+    # ========== 5. ENDANGERED & THREATENED SPECIES ==========
+    endangered_species = CensusObservation.objects.filter(
+        species__iucn_status__in=['CR', 'EN', 'VU']
+    ).values(
+        'species__name',
+        'species__iucn_status'
+    ).annotate(
+        total_count=Sum('count')
+    ).order_by('-total_count')
+    
+    # ========== 6. MIGRATORY SPECIES (If field exists) ==========
+    # For now, we'll identify potential migratory species by seasonal patterns
+    # This can be enhanced when migratory field is added to Species model
+    
+    # ========== 7. NEW SPECIES RECORDED PER YEAR ==========
+    # Track when species were first observed
+    all_species_observations = CensusObservation.objects.values(
+        'species__name'
+    ).annotate(
+        first_year=ExtractYear('census__census_date')
+    ).order_by('first_year')
+    
+    # Group by year to see new species per year
+    new_species_by_year = {}
+    for obs in all_species_observations:
+        year = obs['first_year']
+        if year and obs['species__name']:
+            if year not in new_species_by_year:
+                new_species_by_year[year] = []
+            if obs['species__name'] not in [s for year_list in new_species_by_year.values() for s in year_list]:
+                new_species_by_year[year].append(obs['species__name'])
+    
+    # ========== PREPARE DATA FOR CHARTS ==========
+    
+    # Get all unique years for consistent x-axis
+    all_years = sorted(list(set([item['year'] for item in yearly_data if item['year']])))
+    
+    # Top 3 abundance data formatted for Chart.js
+    top_3_chart_data = []
+    colors = ['#FF6384', '#36A2EB', '#FFCE56']
+    for idx, species_name in enumerate(top_3_species_names):
+        species_data = []
+        for year in all_years:
+            count = top_3_by_year.get(species_name, {}).get(year, 0)
+            species_data.append(count)
+        
+        top_3_chart_data.append({
+            'label': species_name,
+            'data': species_data,
+            'color': colors[idx % len(colors)]
+        })
+    
+    # ========== SUMMARY STATISTICS ==========
+    total_birds_all_time = CensusObservation.objects.aggregate(total=Sum('count'))['total'] or 0
+    total_species = CensusObservation.objects.values('species').distinct().count()
+    total_census_records = Census.objects.count()
+    
+    # Latest year statistics
+    latest_year = max(all_years) if all_years else None
+    latest_year_data = None
+    if latest_year:
+        latest_year_data = CensusObservation.objects.filter(
+            census__census_date__year=latest_year
+        ).aggregate(
+            total_birds=Sum('count'),
+            species_count=Count('species', distinct=True)
+        )
+    
+    context = {
+        'page_title': 'Annual Trends & Report Charts',
+        'top_5_species': top_5_species,
+        'yearly_data': yearly_data,
+        'diversity_by_year': diversity_by_year,
+        'endangered_species': endangered_species,
+        'new_species_by_year': new_species_by_year,
+        'all_years': all_years,
+        'top_3_chart_data': top_3_chart_data,
+        'top_3_species_names': top_3_species_names,
+        'total_birds_all_time': total_birds_all_time,
+        'total_species': total_species,
+        'total_census_records': total_census_records,
+        'latest_year': latest_year,
+        'latest_year_data': latest_year_data,
+    }
+    
+    return render(request, 'analytics_new/annual_trends_report.html', context)
 
 
 @login_required

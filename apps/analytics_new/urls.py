@@ -25,6 +25,9 @@ urlpatterns = [
 
     # Population trends
     path("trends/", views.population_trends_view, name="population_trends"),
+    
+    # Annual trends & report charts
+    path("annual-trends/", views.annual_trends_report_view, name="annual_trends_report"),
 
     # Report generation
     path("reports/", views.report_generator_view, name="report_generator"),
