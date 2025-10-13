@@ -3,6 +3,255 @@
 
 {% block title %}Annual Trends & Report Charts - AVICAST{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Modern Card Styling */
+    .trend-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .trend-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .card-header-custom {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .card-header-primary {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .card-header-success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .card-header-warning {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    
+    .card-header-info {
+        background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    }
+    
+    /* Stats Cards */
+    .stat-card {
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        background: white;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.8;
+    }
+    
+    /* Section Headers */
+    .section-header {
+        margin: 3rem 0 1.5rem 0;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid #667eea;
+    }
+    
+    .section-header h3 {
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    .section-subtitle {
+        color: #718096;
+        font-size: 0.95rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Chart Containers */
+    .chart-container {
+        position: relative;
+        padding: 1.5rem;
+        background: #fafafa;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    
+    /* Species Badges */
+    .species-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin: 0.25rem;
+        background: #e2e8f0;
+        color: #2d3748;
+        border: 1px solid #cbd5e0;
+    }
+    
+    /* IUCN Status Badges */
+    .iucn-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Threat Alert Box */
+    .threat-alert {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+    }
+    
+    .threat-species-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .threat-species-card h6 {
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    /* Table Enhancements */
+    .modern-table {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .modern-table thead th {
+        background: #f7fafc;
+        color: #2d3748;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border: none;
+    }
+    
+    .modern-table tbody tr {
+        transition: background 0.2s ease;
+    }
+    
+    .modern-table tbody tr:hover {
+        background: #f7fafc;
+    }
+    
+    .modern-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-color: #e2e8f0;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Print Styles */
+    @media print {
+        .no-print, .breadcrumb, .action-btn {
+            display: none !important;
+        }
+        .trend-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        body {
+            background: white;
+        }
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .stat-card {
+            margin-bottom: 1rem;
+        }
+        .section-header {
+            margin: 2rem 0 1rem 0;
+        }
+    }
+    
+    /* Loading Animation */
+    .chart-loading {
+        text-align: center;
+        padding: 3rem;
+        color: #a0aec0;
+    }
+    
+    /* Year Indicator */
+    .year-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Info Tooltip */
+    .info-tooltip {
+        cursor: help;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    
+    .info-tooltip:hover {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
@@ -20,95 +269,115 @@
     </nav>
 
     <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="mb-2">
-                <i class="fas fa-chart-line text-primary me-2"></i>
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <div class="mb-3">
+                <i class="fas fa-chart-line" style="font-size: 3rem; color: #667eea;"></i>
+            </div>
+            <h1 class="display-5 fw-bold mb-2" style="color: #2d3748;">
                 Annual Trends & Report Charts
-            </h2>
-            <p class="text-muted">Comprehensive annual population trends and species composition for Asian Waterbird Census reporting</p>
+            </h1>
+            <p class="lead text-muted mb-3">
+                Comprehensive Population Analysis for Asian Waterbird Census (AWC)
+            </p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                {% for year in all_years %}
+                <span class="year-badge">{{ year }}</span>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
     <!-- Summary Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm bg-primary text-white">
-                <div class="card-body text-center">
-                    <small class="opacity-75">Total Birds (All Time)</small>
-                    <h2 class="mb-0 mt-2">{{ total_birds_all_time|default:"0" }}</h2>
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="stat-icon">
+                    <i class="fas fa-dove"></i>
                 </div>
+                <div class="stat-label">Total Birds Recorded</div>
+                <div class="stat-value">{{ total_birds_all_time|default:"0"|floatformat:0 }}</div>
+                <small style="opacity: 0.9;">All-time census data</small>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm bg-success text-white">
-                <div class="card-body text-center">
-                    <small class="opacity-75">Total Species</small>
-                    <h2 class="mb-0 mt-2">{{ total_species|default:"0" }}</h2>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="stat-icon">
+                    <i class="fas fa-paw"></i>
                 </div>
+                <div class="stat-label">Total Species</div>
+                <div class="stat-value">{{ total_species|default:"0" }}</div>
+                <small style="opacity: 0.9;">Unique species observed</small>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm bg-info text-white">
-                <div class="card-body text-center">
-                    <small class="opacity-75">Census Records</small>
-                    <h2 class="mb-0 mt-2">{{ total_census_records|default:"0" }}</h2>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="stat-icon">
+                    <i class="fas fa-clipboard-list"></i>
                 </div>
+                <div class="stat-label">Census Records</div>
+                <div class="stat-value">{{ total_census_records|default:"0" }}</div>
+                <small style="opacity: 0.9;">Completed surveys</small>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm bg-warning text-white">
-                <div class="card-body text-center">
-                    <small class="opacity-75">Latest Year</small>
-                    <h2 class="mb-0 mt-2">{{ latest_year|default:"N/A" }}</h2>
-                    {% if latest_year_data %}
-                    <small class="opacity-75">{{ latest_year_data.total_birds }} birds, {{ latest_year_data.species_count }} species</small>
-                    {% endif %}
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-alt"></i>
                 </div>
+                <div class="stat-label">Latest Year</div>
+                <div class="stat-value">{{ latest_year|default:"N/A" }}</div>
+                {% if latest_year_data %}
+                <small style="opacity: 0.9;">{{ latest_year_data.total_birds|floatformat:0 }} birds, {{ latest_year_data.species_count }} species</small>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Section A: Charts -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h4 class="mb-3">
-                <i class="fas fa-chart-pie me-2"></i>
-                A. Charts - Species Composition and Abundance
-            </h4>
-        </div>
+    <div class="section-header">
+        <h3>
+            <i class="fas fa-chart-pie me-2"></i>
+            Section A: Species Composition & Abundance
+        </h3>
+        <p class="section-subtitle mb-0">
+            Analysis of the most abundant species and conservation status highlights
+        </p>
     </div>
 
     <!-- Top 5 Species Composition -->
     <div class="row mb-4">
         <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
+            <div class="card trend-card">
+                <div class="card-header card-header-custom">
                     <h5 class="mb-0">
-                        <i class="fas fa-paw me-2 text-primary"></i>
+                        <i class="fas fa-paw me-2"></i>
                         Top 5 Species Composition
                     </h5>
-                    <small class="text-muted">Most abundant species observed in surveys</small>
+                    <small style="opacity: 0.9;">Most abundant species observed in surveys</small>
                 </div>
                 <div class="card-body">
-                    <canvas id="top5SpeciesChart" height="300"></canvas>
+                    <div class="chart-container">
+                        <canvas id="top5SpeciesChart" height="280"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Top 5 Species Table -->
         <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
+            <div class="card trend-card">
+                <div class="card-header card-header-primary">
                     <h5 class="mb-0">
-                        <i class="fas fa-list me-2 text-primary"></i>
-                        Top 5 Species Details
+                        <i class="fas fa-list me-2"></i>
+                        Top 5 Species Rankings
                     </h5>
+                    <small style="opacity: 0.9;">Detailed breakdown with conservation status</small>
                 </div>
                 <div class="card-body p-0">
                     {% if top_5_species %}
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table modern-table mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Rank</th>
@@ -155,32 +424,36 @@
 
     <!-- Endangered & Threatened Species Highlight -->
     {% if endangered_species %}
-    <div class="row mb-4">
+    <div class="row mb-5">
         <div class="col-12">
-            <div class="card border-0 shadow-sm border-start border-danger border-4">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0">
-                        <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
-                        Endangered, Threatened, and Vulnerable Species
-                    </h5>
-                    <small class="text-muted">Species with conservation concerns (CR, EN, VU)</small>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for species in endangered_species %}
-                        <div class="col-md-4 mb-3">
-                            <div class="p-3 border rounded">
-                                <h6 class="mb-1">{{ species.species__name|default:"Unknown" }}</h6>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-{% if species.species__iucn_status == 'CR' %}danger{% elif species.species__iucn_status == 'EN' %}warning{% else %}info{% endif %}">
-                                        {{ species.species__iucn_status }}
-                                    </span>
-                                    <strong class="text-primary">{{ species.total_count }} birds</strong>
-                                </div>
+            <div class="threat-alert">
+                <h4 class="mb-1">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Conservation Priority Species
+                </h4>
+                <p class="mb-4" style="opacity: 0.95; font-size: 0.95rem;">
+                    Species requiring immediate conservation attention (Critically Endangered, Endangered, Vulnerable)
+                </p>
+                <div class="row">
+                    {% for species in endangered_species %}
+                    <div class="col-md-4 mb-3">
+                        <div class="threat-species-card">
+                            <h6>{{ species.species__name|default:"Unknown" }}</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="iucn-badge bg-{% if species.species__iucn_status == 'CR' %}danger{% elif species.species__iucn_status == 'EN' %}warning{% else %}info{% endif %} text-white">
+                                    {% if species.species__iucn_status == 'CR' %}CRITICALLY ENDANGERED
+                                    {% elif species.species__iucn_status == 'EN' %}ENDANGERED
+                                    {% else %}VULNERABLE{% endif %}
+                                </span>
+                            </div>
+                            <div class="mt-2">
+                                <i class="fas fa-dove me-1 text-muted"></i>
+                                <strong style="color: #667eea; font-size: 1.1rem;">{{ species.total_count|floatformat:0 }}</strong>
+                                <span class="text-muted small">individuals observed</span>
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -188,28 +461,31 @@
     {% endif %}
 
     <!-- Section B: Graphs -->
-    <div class="row mb-4 mt-5">
-        <div class="col-12">
-            <h4 class="mb-3">
-                <i class="fas fa-chart-line me-2"></i>
-                B. Graphs - Annual Population Trends
-            </h4>
-        </div>
+    <div class="section-header mt-5">
+        <h3>
+            <i class="fas fa-chart-line me-2"></i>
+            Section B: Annual Population Trends
+        </h3>
+        <p class="section-subtitle mb-0">
+            Year-over-year analysis and abundance comparisons ({{all_years.0}} - {{all_years|last}})
+        </p>
     </div>
 
     <!-- Annual Population Trends -->
     <div class="row mb-4">
         <div class="col-12 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
+            <div class="card trend-card">
+                <div class="card-header card-header-success">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-area me-2 text-success"></i>
-                        Total Waterbird Population Trends (Annual)
+                        <i class="fas fa-chart-area me-2"></i>
+                        Total Waterbird Population Trends
                     </h5>
-                    <small class="text-muted">Year-over-year comparison from Asian Waterbird Census (AWC)</small>
+                    <small style="opacity: 0.9;">Year-over-year comparison from Asian Waterbird Census (AWC)</small>
                 </div>
                 <div class="card-body">
-                    <canvas id="annualTrendsChart" height="100"></canvas>
+                    <div class="chart-container">
+                        <canvas id="annualTrendsChart" height="90"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -218,16 +494,18 @@
     <!-- Top 3 Species Abundance Comparison -->
     <div class="row mb-4">
         <div class="col-12 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
+            <div class="card trend-card">
+                <div class="card-header card-header-info">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-line me-2 text-info"></i>
+                        <i class="fas fa-chart-line me-2"></i>
                         Top 3 Most Abundant Species - Abundance Comparison
                     </h5>
-                    <small class="text-muted">Comparing the three most abundant species across years</small>
+                    <small style="opacity: 0.9;">Comparing the three most abundant species across years</small>
                 </div>
                 <div class="card-body">
-                    <canvas id="top3AbundanceChart" height="100"></canvas>
+                    <div class="chart-container">
+                        <canvas id="top3AbundanceChart" height="90"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -236,44 +514,52 @@
     <!-- Species Diversity Trends -->
     <div class="row mb-4">
         <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
+            <div class="card trend-card">
+                <div class="card-header card-header-warning">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2 text-warning"></i>
+                        <i class="fas fa-chart-bar me-2"></i>
                         Species Diversity Over Time
                     </h5>
-                    <small class="text-muted">Number of unique species observed per year</small>
+                    <small style="opacity: 0.9;">Number of unique species observed per year</small>
                 </div>
                 <div class="card-body">
-                    <canvas id="diversityChart" height="150"></canvas>
+                    <div class="chart-container">
+                        <canvas id="diversityChart" height="140"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Additional Species Recorded -->
         <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
+            <div class="card trend-card">
+                <div class="card-header card-header-success">
                     <h5 class="mb-0">
-                        <i class="fas fa-plus-circle me-2 text-success"></i>
+                        <i class="fas fa-plus-circle me-2"></i>
                         Additional Species Recorded
                     </h5>
-                    <small class="text-muted">New species observed each year</small>
+                    <small style="opacity: 0.9;">New species discovered each year</small>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
                     {% if new_species_by_year %}
                     {% for year, species_list in new_species_by_year.items %}
-                    <div class="mb-3">
-                        <h6 class="text-primary">{{ year }}</h6>
-                        <div class="ms-3">
+                    <div class="mb-3 pb-3 border-bottom">
+                        <span class="badge bg-primary mb-2">{{ year }}</span>
+                        <div>
                             {% for species in species_list %}
-                            <span class="badge bg-light text-dark border me-1 mb-1">{{ species }}</span>
+                            <span class="species-badge">
+                                <i class="fas fa-feather-alt me-1" style="font-size: 0.75rem;"></i>
+                                {{ species }}
+                            </span>
                             {% endfor %}
                         </div>
                     </div>
                     {% endfor %}
                     {% else %}
-                    <p class="text-muted text-center py-3">No new species data available</p>
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No new species data available</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -281,19 +567,20 @@
     </div>
 
     <!-- Yearly Statistics Table -->
-    <div class="row mb-4">
+    <div class="row mb-5">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
+            <div class="card trend-card">
+                <div class="card-header card-header-custom">
                     <h5 class="mb-0">
                         <i class="fas fa-table me-2"></i>
                         Annual Statistics Summary
                     </h5>
+                    <small style="opacity: 0.9;">Comprehensive year-by-year breakdown</small>
                 </div>
                 <div class="card-body p-0">
                     {% if yearly_data %}
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table modern-table mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Year</th>
@@ -329,19 +616,23 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="row mt-4">
+    <div class="row mt-5 mb-4 no-print">
         <div class="col-12">
-            <div class="d-flex justify-content-between">
-                <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Analytics Dashboard
-                </a>
-                <div class="btn-group" role="group">
-                    <button class="btn btn-success" onclick="window.print()">
-                        <i class="fas fa-print me-2"></i>Print Report
-                    </button>
-                    <a href="{% url 'analytics_new:report_generator' %}" class="btn btn-primary">
-                        <i class="fas fa-file-alt me-2"></i>Generate Formal Report
-                    </a>
+            <div class="card trend-card" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <a href="{% url 'analytics_new:dashboard' %}" class="action-btn btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button class="action-btn btn btn-success" onclick="window.print()">
+                                <i class="fas fa-print me-2"></i>Print Report
+                            </button>
+                            <a href="{% url 'analytics_new:report_generator' %}" class="action-btn btn btn-primary">
+                                <i class="fas fa-file-alt me-2"></i>Generate Formal Report
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
