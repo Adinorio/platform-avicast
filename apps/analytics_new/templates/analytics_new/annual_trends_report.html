@@ -20,26 +20,30 @@
     }
     
     .card-header-custom {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #495057 0%, #343a40 100%);
         color: white;
         border: none;
         padding: 1.25rem 1.5rem;
     }
     
     .card-header-primary {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        color: white;
     }
     
     .card-header-success {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        background: linear-gradient(135deg, #198754 0%, #157347 100%);
+        color: white;
     }
     
     .card-header-warning {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        background: linear-gradient(135deg, #fd7e14 0%, #dc6300 100%);
+        color: white;
     }
     
     .card-header-info {
-        background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        background: linear-gradient(135deg, #0dcaf0 0%, #17a2b8 100%);
+        color: white;
     }
     
     /* Stats Cards */
@@ -80,7 +84,7 @@
     .section-header {
         margin: 3rem 0 1.5rem 0;
         padding-bottom: 0.75rem;
-        border-bottom: 3px solid #667eea;
+        border-bottom: 3px solid #495057;
     }
     
     .section-header h3 {
@@ -128,12 +132,12 @@
     
     /* Threat Alert Box */
     .threat-alert {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         color: white;
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
     }
     
     .threat-species-card {
@@ -230,7 +234,7 @@
     /* Year Indicator */
     .year-badge {
         display: inline-block;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #495057 0%, #343a40 100%);
         color: white;
         padding: 0.5rem 1rem;
         border-radius: 20px;
@@ -272,7 +276,7 @@
     <div class="row mb-5">
         <div class="col-12 text-center">
             <div class="mb-3">
-                <i class="fas fa-chart-line" style="font-size: 3rem; color: #667eea;"></i>
+                <i class="fas fa-chart-line" style="font-size: 3rem; color: #495057;"></i>
             </div>
             <h1 class="display-5 fw-bold mb-2" style="color: #2d3748;">
                 Annual Trends & Report Charts
@@ -291,7 +295,7 @@
     <!-- Summary Statistics Cards -->
     <div class="row mb-5">
         <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white;">
                 <div class="stat-icon">
                     <i class="fas fa-dove"></i>
                 </div>
@@ -301,7 +305,7 @@
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%); color: white;">
                 <div class="stat-icon">
                     <i class="fas fa-paw"></i>
                 </div>
@@ -311,7 +315,7 @@
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: white;">
                 <div class="stat-icon">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
@@ -321,7 +325,7 @@
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #fd7e14 0%, #dc3545 100%); color: white;">
                 <div class="stat-icon">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
@@ -448,7 +452,7 @@
                             </div>
                             <div class="mt-2">
                                 <i class="fas fa-dove me-1 text-muted"></i>
-                                <strong style="color: #667eea; font-size: 1.1rem;">{{ species.total_count|floatformat:0 }}</strong>
+                                <strong style="color: #0d6efd; font-size: 1.1rem;">{{ species.total_count|floatformat:0 }}</strong>
                                 <span class="text-muted small">individuals observed</span>
                             </div>
                         </div>
