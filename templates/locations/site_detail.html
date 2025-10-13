@@ -120,11 +120,26 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="btn-group" role="group">
+                                <a href="{% url 'locations:family_grouped_view' site.id %}" class="btn btn-outline-info">
+                                    <i class="fas fa-sitemap me-1"></i>View by Family
+                                </a>
                                 <a href="{% url 'locations:site_edit' site.id %}" class="btn btn-outline-primary">
                                     <i class="fas fa-edit me-1"></i>Edit Site
                                 </a>
                                 <a href="{% url 'locations:year_create' site.id %}" class="btn btn-primary">
                                     <i class="fas fa-plus me-1"></i>Add Year
+                                </a>
+                                {% if not site.is_archived %}
+                                <a href="{% url 'locations:site_archive' site.id %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-archive me-1"></i>Archive
+                                </a>
+                                {% else %}
+                                <a href="{% url 'locations:site_restore' site.id %}" class="btn btn-outline-success">
+                                    <i class="fas fa-undo me-1"></i>Restore
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'locations:site_delete' site.id %}" class="btn btn-outline-danger">
+                                    <i class="fas fa-trash me-1"></i>Delete
                                 </a>
                             </div>
                         </div>
@@ -226,6 +241,25 @@
                                 <div class="stat-label">Species</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Action buttons for year card -->
+                <div class="card-footer bg-transparent border-0 p-2">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{% url 'locations:year_detail' site.id year.year %}"
+                           class="btn btn-sm btn-outline-primary" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'locations:year_edit' site.id year.year %}"
+                           class="btn btn-sm btn-outline-secondary" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'locations:year_delete' site.id year.year %}"
+                           class="btn btn-sm btn-outline-danger" title="Delete"
+                           onclick="event.stopPropagation(); return confirm('Are you sure you want to delete the year {{ year.year }}? This will delete ALL census data for this year.');">
+                            <i class="fas fa-trash"></i>
+                        </a>
                     </div>
                 </div>
             </div>

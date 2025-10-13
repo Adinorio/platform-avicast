@@ -286,7 +286,15 @@
                         <a href="{% url 'locations:site_detail' site.id %}" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-eye me-1"></i>View Details
                         </a>
-                        <a href="{% url 'locations:site_map' site.id %}" class="btn btn-outline-success btn-sm">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'locations:site_totals_view' site.id %}" class="btn btn-outline-success btn-sm" title="View comprehensive totals">
+                                <i class="fas fa-chart-bar"></i>
+                            </a>
+                            <a href="{% url 'locations:family_grouped_view' site.id %}" class="btn btn-outline-info btn-sm" title="View family-grouped data">
+                                <i class="fas fa-sitemap"></i>
+                            </a>
+                        </div>
+                        <a href="{% url 'locations:site_map' site.id %}" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-map-marked-alt me-1"></i>View on Map
                         </a>
                     </div>
