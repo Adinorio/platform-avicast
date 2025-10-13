@@ -274,7 +274,8 @@
             page-break-inside: avoid;
             box-shadow: none !important;
             border: 1px solid #ccc !important;
-            margin-bottom: 15px !important;
+            margin-bottom: 30px !important;
+            width: 100% !important;
         }
         
         .card-header-custom, .card-header-primary, .card-header-success, .card-header-warning, .card-header-info {
@@ -306,17 +307,22 @@
             margin-bottom: 5px !important;
         }
         
-        /* Charts - maintain proper size for readability */
+        /* Charts - larger size for better readability */
         canvas {
             max-width: 100% !important;
-            height: 300px !important;
+            height: 400px !important;
             width: 100% !important;
         }
         
         .chart-container {
-            height: 300px !important;
+            height: 400px !important;
             width: 100% !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 30px !important;
+        }
+        
+        /* Ensure charts have proper aspect ratio */
+        .card-body {
+            padding: 20px !important;
         }
         
         /* Tables */
@@ -393,9 +399,10 @@
         /* Stat cards in separate rows for better spacing */
         .stat-card {
             page-break-inside: avoid;
-            margin-bottom: 15px !important;
+            margin-bottom: 20px !important;
             width: 100% !important;
             display: block !important;
+            padding: 15px !important;
         }
         
         /* Better spacing for tables */
