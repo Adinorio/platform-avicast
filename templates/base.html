@@ -230,17 +230,22 @@
             transition: all 0.2s ease;
         }
 
-        /* Print Styles - Hide all navigation elements */
+        /* Print Styles - Hide only navigation elements */
         @media print {
             .sidebar, .sidebar-overlay, .top-navbar, .sidebar-toggle,
-            .user-profile, .sidebar-header, .sidebar-nav, .sidebar-brand,
-            .main-content {
+            .user-profile, .sidebar-header, .sidebar-nav, .sidebar-brand {
                 display: none !important;
             }
             
             body {
                 margin: 0 !important;
                 padding: 0 !important;
+            }
+            
+            /* Reset main content for print */
+            .main-content {
+                margin-left: 0 !important;
+                background: white !important;
             }
             
             /* Show only the content area */
