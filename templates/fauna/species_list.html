@@ -1,46 +1,173 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
 
-{% block title %}Species List - AVICAST SYSTEM{% endblock %}
+{% block title %}Species Management - AVICAST{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Species</h1>
-    {% if perms.fauna.add_species %}
-        <a href="#" class="btn btn-primary">Add New Species</a>
-    {% endif %}
-</div>
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">Dashboard</a>
+            </li>
+            <li class="breadcrumb-item active">Species Management</li>
+        </ol>
+    </nav>
 
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th scope="col">Common Name</th>
-                <th scope="col">Scientific Name</th>
-                <th scope="col">IUCN Status</th>
-                <th scope="col">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for species in object_list %}
-            <tr>
-                <td>{{ species.name }}</td>
-                <td>{{ species.scientific_name }}</td>
-                <td>{{ species.get_iucn_status_display }}</td>
-                <td>
-                    {% if perms.fauna.change_species %}
-                        <a href="#" class="btn btn-sm btn-outline-secondary">Edit</a>
-                    {% endif %}
-                    {% if perms.fauna.delete_species %}
-                        <a href="#" class="btn btn-sm btn-outline-danger">Archive</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" class="text-center">No species found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-paw text-primary me-2"></i>
+                Species Management
+            </h2>
+            <p class="text-muted">Comprehensive database of bird species with conservation status and details</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Total Species</small>
+                    <h2 class="mb-0 mt-2">{{ total_species|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Least Concern</small>
+                    <h2 class="mb-0 mt-2">{{ iucn_stats.least_concern|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Threatened</small>
+                    <h2 class="mb-0 mt-2">{{ iucn_stats.vulnerable|add:iucn_stats.endangered|add:iucn_stats.critically_endangered|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Near Threatened</small>
+                    <h2 class="mb-0 mt-2">{{ iucn_stats.near_threatened|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Species List -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Species Database</h5>
+            {% if perms.fauna.add_species %}
+                <a href="#" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>Add New Species
+                </a>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Common Name</th>
+                            <th>Scientific Name</th>
+                            <th class="text-center">IUCN Status</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for species in species_list %}
+                        <tr>
+                            <td>
+                                <strong>{{ species.name|default:"Unknown Species" }}</strong>
+                            </td>
+                            <td class="fst-italic text-muted">
+                                {{ species.scientific_name|default:"-" }}
+                            </td>
+                            <td class="text-center">
+                                {% if species.iucn_status == 'CR' %}
+                                <span class="badge bg-danger">
+                                    Critically Endangered
+                                </span>
+                                {% elif species.iucn_status == 'EN' %}
+                                <span class="badge bg-warning">
+                                    Endangered
+                                </span>
+                                {% elif species.iucn_status == 'VU' %}
+                                <span class="badge bg-info">
+                                    Vulnerable
+                                </span>
+                                {% elif species.iucn_status == 'NT' %}
+                                <span class="badge bg-primary">
+                                    Near Threatened
+                                </span>
+                                {% else %}
+                                <span class="badge bg-success">
+                                    Least Concern
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if species.is_archived %}
+                                <span class="badge bg-warning">Archived</span>
+                                {% else %}
+                                <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    {% if perms.fauna.change_species %}
+                                        <a href="#" class="btn btn-sm btn-outline-primary" title="Edit Species">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if perms.fauna.delete_species %}
+                                        <a href="#" class="btn btn-sm btn-outline-danger" title="Archive Species">
+                                            <i class="fas fa-archive"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <i class="fas fa-paw fa-3x text-muted mb-3 d-block"></i>
+                                <h5 class="text-muted">No species found in database</h5>
+                                <p class="text-muted">Start by adding your first species to the database.</p>
+                                {% if perms.fauna.add_species %}
+                                    <a href="#" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Add First Species
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'locations:dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        {% if perms.fauna.add_species %}
+            <a href="#" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Add New Species
+            </a>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
