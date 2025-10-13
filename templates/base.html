@@ -229,6 +229,28 @@
         * {
             transition: all 0.2s ease;
         }
+
+        /* Print Styles - Hide all navigation elements */
+        @media print {
+            .sidebar, .sidebar-overlay, .top-navbar, .sidebar-toggle,
+            .user-profile, .sidebar-header, .sidebar-nav, .sidebar-brand,
+            .main-content {
+                display: none !important;
+            }
+            
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* Show only the content area */
+            .container-fluid {
+                margin: 0 !important;
+                padding: 15px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
