@@ -223,20 +223,50 @@
 </div>
 
 <!-- Chart Data -->
-<script>
-// Species Distribution Chart Data
-const speciesData = {
-    labels: [
-        {% for species in species_data %}
-        '{{ species.name|escapejs }}',
-        {% endfor %}
-    ],
-    datasets: [{
-        data: [
+<script type="application/json" id="dashboard-chart-data">
+{
+    "speciesData": {
+        "labels": [
             {% for species in species_data %}
-            {{ species.count|default:"0" }},
+            "{{ species.name|escapejs }}"{% if not forloop.last %},{% endif %}
             {% endfor %}
         ],
+        "data": [
+            {% for species in species_data %}
+            {{ species.count|default:"0" }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    },
+    "siteData": {
+        "labels": [
+            {% for site in top_sites %}
+            "{{ site.site.name|escapejs }}"{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        "totalBirds": [
+            {% for site in top_sites %}
+            {{ site.total_birds|default:"0" }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        "speciesCount": [
+            {% for site in top_sites %}
+            {{ site.species_count|default:"0" }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+}
+</script>
+
+<script>
+// Get chart data from JSON script tag
+const chartDataElement = document.getElementById('dashboard-chart-data');
+const chartData = JSON.parse(chartDataElement.textContent);
+
+// Species Distribution Chart Data
+const speciesData = {
+    labels: chartData.speciesData.labels,
+    datasets: [{
+        data: chartData.speciesData.data,
         backgroundColor: [
             '#FF6384',
             '#36A2EB',
@@ -254,28 +284,16 @@ const speciesData = {
 
 // Site Performance Chart Data
 const siteData = {
-    labels: [
-        {% for site in top_sites %}
-        '{{ site.site.name|escapejs }}',
-        {% endfor %}
-    ],
+    labels: chartData.siteData.labels,
     datasets: [{
         label: 'Total Birds',
-        data: [
-            {% for site in top_sites %}
-            {{ site.total_birds|default:"0" }},
-            {% endfor %}
-        ],
+        data: chartData.siteData.totalBirds,
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 2
     }, {
         label: 'Species Count',
-        data: [
-            {% for site in top_sites %}
-            {{ site.species_count|default:"0" }},
-            {% endfor %}
-        ],
+        data: chartData.siteData.speciesCount,
         backgroundColor: 'rgba(255, 99, 132, 0.6)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 2
