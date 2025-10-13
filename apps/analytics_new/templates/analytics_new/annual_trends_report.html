@@ -202,15 +202,73 @@
     
     /* Print Styles */
     @media print {
-        .no-print, .breadcrumb, .action-btn {
+        /* Hide all navigation and UI elements */
+        nav, .navbar, .sidebar, header, footer,
+        .breadcrumb, .action-btn, .no-print,
+        .btn, .btn-group, a[href],
+        .d-print-none {
             display: none !important;
         }
+        
+        /* Show only the main content */
+        body {
+            background: white !important;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container-fluid {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+        }
+        
+        /* Card adjustments for print */
         .trend-card {
             break-inside: avoid;
             page-break-inside: avoid;
+            box-shadow: none !important;
+            border: 1px solid #dee2e6 !important;
+            margin-bottom: 20px;
         }
-        body {
-            background: white;
+        
+        /* Stat cards in one row */
+        .stat-card {
+            box-shadow: none !important;
+            border: 1px solid #dee2e6 !important;
+            page-break-inside: avoid;
+        }
+        
+        /* Section breaks */
+        .section-header {
+            page-break-after: avoid;
+            border-bottom: 2px solid #333 !important;
+        }
+        
+        /* Charts */
+        canvas {
+            max-width: 100% !important;
+        }
+        
+        /* Tables */
+        table {
+            page-break-inside: avoid;
+        }
+        
+        /* Remove hover effects */
+        .trend-card:hover,
+        .stat-card:hover,
+        .modern-table tbody tr:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Ensure colors print */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
     }
     
@@ -258,12 +316,13 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
+    <nav aria-label="breadcrumb" class="mb-4 no-print">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
                 <a href="{% url 'analytics_new:dashboard' %}">Analytics Dashboard</a>
@@ -273,7 +332,7 @@
     </nav>
 
     <!-- Page Header -->
-    <div class="row mb-5">
+    <div class="row mb-5" id="report-header">
         <div class="col-12 text-center">
             <div class="mb-3">
                 <i class="fas fa-chart-line" style="font-size: 3rem; color: #495057;"></i>
@@ -289,6 +348,9 @@
                 <span class="year-badge">{{ year }}</span>
                 {% endfor %}
             </div>
+            <p class="text-muted small mt-3 d-none d-print-block">
+                Generated on: {{ request.user.employee_id }} | Date: {% now "F d, Y" %}
+            </p>
         </div>
     </div>
 
@@ -632,6 +694,9 @@
                             <button class="action-btn btn btn-success" onclick="window.print()">
                                 <i class="fas fa-print me-2"></i>Print Report
                             </button>
+                            <button class="action-btn btn btn-info" onclick="exportAsImage()">
+                                <i class="fas fa-image me-2"></i>Export as Image
+                            </button>
                             <a href="{% url 'analytics_new:report_generator' %}" class="action-btn btn btn-primary">
                                 <i class="fas fa-file-alt me-2"></i>Generate Formal Report
                             </a>
@@ -642,6 +707,63 @@
         </div>
     </div>
 </div>
+
+<!-- Export as Image Function -->
+<script>
+function exportAsImage() {
+    // Hide action buttons and breadcrumb
+    const elementsToHide = document.querySelectorAll('.no-print, .breadcrumb, nav');
+    elementsToHide.forEach(el => el.style.display = 'none');
+    
+    // Get the main content container
+    const element = document.querySelector('.container-fluid');
+    
+    // Show loading message
+    const loadingMsg = document.createElement('div');
+    loadingMsg.innerHTML = '<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999;"><i class="fas fa-spinner fa-spin me-2"></i>Generating image...</div>';
+    document.body.appendChild(loadingMsg);
+    
+    // Use html2canvas to capture the content
+    html2canvas(element, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+    }).then(canvas => {
+        // Remove loading message
+        document.body.removeChild(loadingMsg);
+        
+        // Show elements again
+        elementsToHide.forEach(el => el.style.display = '');
+        
+        // Convert canvas to blob
+        canvas.toBlob(blob => {
+            // Create download link
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().split('T')[0];
+            link.download = `AVICAST_Annual_Trends_Report_${timestamp}.png`;
+            link.href = url;
+            link.click();
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+        });
+    }).catch(error => {
+        // Remove loading message
+        document.body.removeChild(loadingMsg);
+        
+        // Show elements again
+        elementsToHide.forEach(el => el.style.display = '');
+        
+        alert('Error generating image. Please try printing instead.');
+        console.error('Error:', error);
+    });
+}
+</script>
 
 <!-- Chart.js Scripts -->
 <script>
