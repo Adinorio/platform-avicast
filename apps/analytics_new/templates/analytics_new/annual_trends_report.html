@@ -311,11 +311,7 @@
                                     <td class="text-end">{{ year_data.species_count|default:"0" }}</td>
                                     <td class="text-end">{{ year_data.census_count|default:"0" }}</td>
                                     <td class="text-end">
-                                        {% if year_data.census_count > 0 %}
-                                        {{ year_data.total_birds|default:0|floatformat:0|add:"0"|div:year_data.census_count|floatformat:0 }}
-                                        {% else %}
-                                        0
-                                        {% endif %}
+                                        {{ year_data.avg_birds_per_census|floatformat:1 }}
                                     </td>
                                 </tr>
                                 {% endfor %}

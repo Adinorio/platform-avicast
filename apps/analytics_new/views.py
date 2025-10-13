@@ -729,13 +729,27 @@ def annual_trends_report_view(request):
     
     # ========== 2. YEAR-OVER-YEAR TRENDS (2020-2022) ==========
     # Get observations grouped by year
-    yearly_data = CensusObservation.objects.annotate(
+    yearly_data_raw = CensusObservation.objects.annotate(
         year=ExtractYear('census__census_date')
     ).values('year').annotate(
         total_birds=Sum('count'),
         species_count=Count('species', distinct=True),
         census_count=Count('census', distinct=True)
     ).order_by('year')
+    
+    # Calculate averages
+    yearly_data = []
+    for year_item in yearly_data_raw:
+        avg_birds = 0
+        if year_item['census_count'] and year_item['census_count'] > 0:
+            avg_birds = round(year_item['total_birds'] / year_item['census_count'], 1)
+        yearly_data.append({
+            'year': year_item['year'],
+            'total_birds': year_item['total_birds'],
+            'species_count': year_item['species_count'],
+            'census_count': year_item['census_count'],
+            'avg_birds_per_census': avg_birds
+        })
     
     # ========== 3. TOP 3 SPECIES ABUNDANCE BY YEAR ==========
     # First, get the overall top 3 species
