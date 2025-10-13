@@ -306,14 +306,17 @@
             margin-bottom: 5px !important;
         }
         
-        /* Charts - make them smaller */
+        /* Charts - maintain proper size for readability */
         canvas {
             max-width: 100% !important;
-            max-height: 200px !important;
+            height: 300px !important;
+            width: 100% !important;
         }
         
         .chart-container {
-            height: 200px !important;
+            height: 300px !important;
+            width: 100% !important;
+            margin-bottom: 20px !important;
         }
         
         /* Tables */
@@ -361,13 +364,48 @@
             font-size: 8pt !important;
         }
         
-        /* Ensure proper page breaks */
+        /* Ensure proper page breaks and spacing */
         .row {
             page-break-inside: avoid;
+            margin-bottom: 20px !important;
         }
         
         .col-lg-6, .col-md-6, .col-12 {
             page-break-inside: avoid;
+            margin-bottom: 15px !important;
+        }
+        
+        /* Force page breaks between major sections */
+        .section-header {
+            page-break-before: always;
+        }
+        
+        .section-header:first-child {
+            page-break-before: avoid;
+        }
+        
+        /* Ensure cards don't break awkwardly */
+        .trend-card {
+            page-break-inside: avoid;
+            margin-bottom: 25px !important;
+        }
+        
+        /* Stat cards in separate rows for better spacing */
+        .stat-card {
+            page-break-inside: avoid;
+            margin-bottom: 15px !important;
+            width: 100% !important;
+            display: block !important;
+        }
+        
+        /* Better spacing for tables */
+        .table-responsive {
+            margin-bottom: 20px !important;
+        }
+        
+        /* Ensure proper spacing between elements */
+        .mb-4, .mb-5 {
+            margin-bottom: 20px !important;
         }
     }
     
