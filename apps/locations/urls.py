@@ -9,10 +9,17 @@ from .views_import_export import (
     census_import_export_hub,
     download_import_template,
     import_census_data,
+    import_preview,
+    confirm_import,
     import_results,
     export_census_data,
     census_totals_view,
     census_species_breakdown,
+)
+from .views_family_totals import (
+    family_grouped_view,
+    site_totals_view,
+    family_totals_api,
 )
 
 app_name = "locations"
@@ -20,13 +27,12 @@ app_name = "locations"
 urlpatterns = [
     # Main dashboard - Site cards
     path("", views.site_dashboard, name="dashboard"),
-
-    # Site management (CRUD)
-    path("sites/", views.site_list, name="site_list"),
     path("sites/create/", views.site_create, name="site_create"),
     path("sites/<uuid:site_id>/", views.site_detail, name="site_detail"),
     path("sites/<uuid:site_id>/map/", views.site_map, name="site_map"),
     path("sites/<uuid:site_id>/edit/", views.site_edit, name="site_edit"),
+    path("sites/<uuid:site_id>/archive/", views.site_archive, name="site_archive"),
+    path("sites/<uuid:site_id>/restore/", views.site_restore, name="site_restore"),
     path("sites/<uuid:site_id>/delete/", views.site_delete, name="site_delete"),
 
     # Year management (card-based)
@@ -65,8 +71,15 @@ urlpatterns = [
     path("data/", census_import_export_hub, name="import_export_hub"),
     path("data/template/", download_import_template, name="download_template"),
     path("data/import/", import_census_data, name="import_census_data"),
+    path("data/import/preview/", import_preview, name="import_preview"),
+    path("data/import/confirm/", confirm_import, name="confirm_import"),
     path("data/import/results/", import_results, name="import_results"),
     path("data/export/", export_census_data, name="export_census_data"),
     path("data/totals/", census_totals_view, name="census_totals"),
     path("data/breakdown/", census_species_breakdown, name="species_breakdown"),
+    
+    # Family-Grouped Data and Enhanced Totals
+    path("sites/<uuid:site_id>/families/", family_grouped_view, name="family_grouped_view"),
+    path("sites/<uuid:site_id>/totals/", site_totals_view, name="site_totals_view"),
+    path("api/sites/<uuid:site_id>/family-totals/", family_totals_api, name="family_totals_api"),
 ]

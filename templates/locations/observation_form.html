@@ -60,14 +60,30 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="{{ form.count.id_for_label }}" class="form-label">Count *</label>
-                            {{ form.count }}
-                            {% if form.count.errors %}
-                            <div class="text-danger">
-                                {% for error in form.count.errors %}<small>{{ error }}</small>{% endfor %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.family.id_for_label }}" class="form-label">Family</label>
+                                    {{ form.family }}
+                                    <small class="form-text text-muted">Optional - select bird family</small>
+                                    {% if form.family.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.family.errors %}<small>{{ error }}</small>{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            {% endif %}
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.count.id_for_label }}" class="form-label">Count *</label>
+                                    {{ form.count }}
+                                    {% if form.count.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.count.errors %}<small>{{ error }}</small>{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
 
                         <div class="d-grid gap-2">
