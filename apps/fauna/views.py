@@ -39,8 +39,8 @@ class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             messages.error(self.request, "Authentication required.")
             return redirect("login")
 
-        from django.http import HttpResponse
-        return HttpResponse("Access denied. Insufficient permissions.", status=403)
+        from django.shortcuts import render
+        return render(self.request, '403.html', {'message': 'Access denied. Insufficient permissions.'}, status=403)
 
     def get_queryset(self):
         """Return only non-archived species ordered by name"""

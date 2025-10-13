@@ -367,7 +367,7 @@ def generate_comprehensive_report(config, user):
     report_data['date_range'] = f"{start_date} to {end_date}"
 
     # Species Management Data
-    if "SPECIES" in config.report_type or config.report_type == "SPECIES_SUMMARY":
+    if config.report_type in ["SPECIES_SUMMARY"]:
         species_data = []
         target_species = Species.objects.filter(name__icontains='egret') | Species.objects.filter(name__icontains='heron')
 
@@ -394,7 +394,7 @@ def generate_comprehensive_report(config, user):
         report_data['species_count'] = len(species_data)
 
     # Site Management Data
-    if "SITE" in config.report_type or config.report_type == "SITE_COMPARISON":
+    if config.report_type in ["SITE_COMPARISON"]:
         sites_data = []
         sites = Site.objects.filter(is_archived=False)
 
@@ -424,7 +424,7 @@ def generate_comprehensive_report(config, user):
         report_data['sites_count'] = len(sites_data)
 
     # Census Management Data
-    if "CENSUS" in config.report_type or "MONTHLY" in config.report_type:
+    if config.report_type in ["MONTHLY_SUMMARY"]:
         census_data = []
         census_records = Census.objects.filter(
             census_date__gte=start_date,
