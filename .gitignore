@@ -116,7 +116,27 @@ check_table.py
 fix_db.py
 test_ai_deps.py
 apps/image_processing/views_new.py
-olve JavaScript syntax errors and improve error handling
+
+# Temporary files and outputs
+*.tmp
+*.temp
+*_backup.json
+*_output.html
+browser_diagnostic.js
+CONTEXT.txt
+prompt.txt
+
+# Test files in root (should be in tests/)
+/test_*.py
+
+# Data files (should be in data/)
+/data/
+*.xlsx
+!docs/*.xlsx
+
+# Backup databases
+db_backup*.sqlite3
+db_new*.sqlite3
 
 # ===== MACHINE LEARNING / AI PROJECT EXCLUSIONS =====
 
