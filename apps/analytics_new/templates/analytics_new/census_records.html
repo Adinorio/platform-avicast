@@ -1,23 +1,35 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
 
-{% block title %}Census Records - AVICAST System{% endblock %}
+{% block title %}Census Records - AVICAST{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'analytics_new:dashboard' %}">Analytics Dashboard</a>
+            </li>
+            <li class="breadcrumb-item active">Census Records</li>
+        </ol>
+    </nav>
+
     <!-- Page Header -->
-    <div class="avic-page-header">
-        <h1 class="avic-page-title">
-            <i class="fas fa-list"></i>Census Records
-        </h1>
-        <p class="avic-page-subtitle">View and manage bird census data</p>
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-list text-primary me-2"></i>
+                Census Records
+            </h2>
+            <p class="text-muted">View and manage bird census data</p>
+        </div>
     </div>
 
     <!-- Filters -->
-    <div class="card avic-card mb-4">
-        <div class="card-header avic-card-header">
-            <h5 class="mb-0">
-                <i class="fas fa-filter me-2"></i>Filters
-            </h5>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h5>
         </div>
         <div class="card-body">
             <form method="get" class="row g-3">
@@ -27,7 +39,7 @@
                         <option value="">All Sites</option>
                         {% for site in sites %}
                         <option value="{{ site.id }}" {% if site.id|stringformat:"s" == request.GET.site %}selected{% endif %}>
-                            {{ site.site_code }}: {{ site.site_name }}
+                            {{ site.name }}
                         </option>
                         {% endfor %}
                     </select>
@@ -46,18 +58,17 @@
                     <label for="species" class="form-label">Filter by Species</label>
                     <select name="species" id="species" class="form-select">
                         <option value="">All Species</option>
-                        <option value="CHINESE_EGRET" {% if request.GET.species == 'CHINESE_EGRET' %}selected{% endif %}>Chinese Egret</option>
-                        <option value="GREAT_EGRET" {% if request.GET.species == 'GREAT_EGRET' %}selected{% endif %}>Great Egret</option>
-                        <option value="INTERMEDIATE_EGRET" {% if request.GET.species == 'INTERMEDIATE_EGRET' %}selected{% endif %}>Intermediate Egret</option>
-                        <option value="LITTLE_EGRET" {% if request.GET.species == 'LITTLE_EGRET' %}selected{% endif %}>Little Egret</option>
-                        <option value="CATTLE_EGRET" {% if request.GET.species == 'CATTLE_EGRET' %}selected{% endif %}>Cattle Egret</option>
-                        <option value="PACIFIC_REEF_HERON" {% if request.GET.species == 'PACIFIC_REEF_HERON' %}selected{% endif %}>Pacific Reef Heron</option>
+                        {% for species in species_list %}
+                        <option value="{{ species.id }}" {% if species.id|stringformat:"s" == request.GET.species %}selected{% endif %}>
+                            {{ species.name }}
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
                     <div class="d-grid">
-                        <button type="submit" class="btn avic-btn-primary">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-search me-2"></i>Filter
                         </button>
                     </div>
@@ -67,11 +78,9 @@
     </div>
 
     <!-- Records Table -->
-    <div class="card avic-card">
-        <div class="card-header avic-card-header">
-            <h5 class="mb-0">
-                <i class="fas fa-table me-2"></i>Census Records
-            </h5>
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fas fa-table me-2"></i>Census Records</h5>
         </div>
         <div class="card-body p-0">
             {% if records %}
@@ -81,60 +90,49 @@
                         <tr>
                             <th>Site</th>
                             <th>Date</th>
-                            <th>Total Birds</th>
-                            <th>Chinese Egret</th>
-                            <th>Great Egret</th>
-                            <th>Intermediate Egret</th>
-                            <th>Little Egret</th>
-                            <th>Cattle Egret</th>
-                            <th>Pacific Reef Heron</th>
                             <th>Observer</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th class="text-end">Total Birds</th>
+                            <th class="text-end">Species Count</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for record in records %}
                         <tr>
                             <td>
-                                <strong>{{ record.census.site.name }}</strong><br>
-                                <small class="text-muted">{{ record.census.site.site_type }}</small>
-                            </td>
-                            <td>
-                                <strong>{{ record.census.observation_date }}</strong>
-                                {% if record.census.observation_time %}<br>
-                                <small class="text-muted">{{ record.census.observation_time }}</small>
-                                {% endif %}
-                            </td>
-                            <td><span class="badge bg-primary">{{ record.total_birds }}</span></td>
-                            <td>{{ record.species_breakdown.chinese_egret|default:0 }}</td>
-                            <td>{{ record.species_breakdown.great_egret|default:0 }}</td>
-                            <td>{{ record.species_breakdown.intermediate_egret|default:0 }}</td>
-                            <td>{{ record.species_breakdown.little_egret|default:0 }}</td>
-                            <td>{{ record.species_breakdown.cattle_egret|default:0 }}</td>
-                            <td>{{ record.species_breakdown.pacific_reef_heron|default:0 }}</td>
-                            <td>{{ record.census.observer.employee_id|default:"-" }}</td>
-                            <td>
-                                {% if record.verification_status == 'VERIFIED' %}
-                                <span class="badge bg-success">
-                                    <i class="fas fa-check me-1"></i>Verified
-                                </span>
-                                {% else %}
-                                <span class="badge bg-warning">
-                                    <i class="fas fa-clock me-1"></i>Pending
-                                </span>
+                                <strong>{{ record.census.month.year.site.name }}</strong>
+                                {% if record.census.month.year.site.description %}
+                                <br><small class="text-muted">{{ record.census.month.year.site.description|truncatechars:30 }}</small>
                                 {% endif %}
                             </td>
                             <td>
-                                {% if record.verification_status != 'VERIFIED' and user.role in 'SUPERADMIN,ADMIN' %}
-                                <form method="post" action="{% url 'analytics_new:verify_census_record' record.census.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-success"
-                                            onclick="return confirm('Verify this census record?')">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                </form>
+                                <strong>{{ record.census.census_date|date:"M d, Y" }}</strong>
+                                {% if record.census.observation_time %}
+                                <br><small class="text-muted">{{ record.census.observation_time|time:"H:i" }}</small>
                                 {% endif %}
+                            </td>
+                            <td class="text-muted">
+                                {{ record.census.lead_observer.employee_id|default:"Unknown" }}
+                            </td>
+                            <td class="text-end">
+                                <span class="badge bg-primary">{{ record.total_birds|default:"0" }}</span>
+                            </td>
+                            <td class="text-end text-muted">
+                                {{ record.species_richness|default:"0" }}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group" role="group">
+                                    {% if record.census.id and record.census.month.year.site.id %}
+                                    <a href="{% url 'locations:census_detail' record.census.month.year.site.id record.census.month.year.year record.census.month.month record.census.id %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'locations:family_grouped_view' record.census.month.year.site.id %}" class="btn btn-sm btn-outline-info" title="View by Family">
+                                        <i class="fas fa-layer-group"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">No actions</span>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -142,31 +140,30 @@
                 </table>
             </div>
             {% else %}
-            <div class="p-4 text-center text-muted">
-                <i class="fas fa-inbox fa-3x mb-3"></i>
-                <h5>No census records found</h5>
-                <p>Try adjusting your filters or add new census data.</p>
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-check fa-3x text-muted mb-3 d-block"></i>
+                <h5 class="text-muted">No census records found</h5>
+                <p class="text-muted">Try adjusting your filters or add new census data.</p>
             </div>
             {% endif %}
         </div>
     </div>
 
     <!-- Navigation -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-body text-center">
-                    <a href="{% url 'analytics_new:dashboard' %}" class="btn avic-btn-primary me-2">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                    </a>
-                    <a href="{% url 'analytics_new:species_analytics' %}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-paw me-2"></i>View Species Analytics
-                    </a>
-                    <a href="{% url 'analytics_new:site_analytics' %}" class="btn btn-outline-primary">
-                        <i class="fas fa-map-marker-alt me-2"></i>View Site Analytics
-                    </a>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <div class="btn-group" role="group">
+            <a href="{% url 'analytics_new:species_analytics' %}" class="btn btn-primary">
+                <i class="fas fa-paw me-2"></i>Species Analytics
+            </a>
+            <a href="{% url 'analytics_new:site_analytics' %}" class="btn btn-primary">
+                <i class="fas fa-map-marker-alt me-2"></i>Site Analytics
+            </a>
+            <a href="{% url 'analytics_new:report_generator' %}" class="btn btn-success">
+                <i class="fas fa-file-alt me-2"></i>Generate Reports
+            </a>
         </div>
     </div>
 </div>
