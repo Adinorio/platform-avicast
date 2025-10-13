@@ -457,8 +457,16 @@
                                 {% for species in top_5_species %}
                                 <tr>
                                     <td><strong>#{{ forloop.counter }}</strong></td>
-                                    <td>{{ species.species__name|default:"Unknown" }}</td>
-                                    <td class="fst-italic text-muted">{{ species.species__scientific_name|default:"-" }}</td>
+                                    <td>
+                                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ species.species__name|default:'Unknown' }}">
+                                            {{ species.species__name|default:"Unknown" }}
+                                        </div>
+                                    </td>
+                                    <td class="fst-italic text-muted">
+                                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ species.species__scientific_name|default:'-' }}">
+                                            {{ species.species__scientific_name|default:"-" }}
+                                        </div>
+                                    </td>
                                     <td class="text-center">
                                         {% if species.species__iucn_status == 'CR' %}
                                         <span class="badge bg-danger">CR</span>
