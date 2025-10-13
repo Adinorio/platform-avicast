@@ -1,0 +1,662 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Annual Trends & Report Charts - AVICAST{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'analytics_new:dashboard' %}">Analytics Dashboard</a>
+            </li>
+            <li class="breadcrumb-item active">Annual Trends & Report Charts</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-chart-line text-primary me-2"></i>
+                Annual Trends & Report Charts
+            </h2>
+            <p class="text-muted">Comprehensive annual population trends and species composition for Asian Waterbird Census reporting</p>
+        </div>
+    </div>
+
+    <!-- Summary Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Total Birds (All Time)</small>
+                    <h2 class="mb-0 mt-2">{{ total_birds_all_time|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Total Species</small>
+                    <h2 class="mb-0 mt-2">{{ total_species|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Census Records</small>
+                    <h2 class="mb-0 mt-2">{{ total_census_records|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Latest Year</small>
+                    <h2 class="mb-0 mt-2">{{ latest_year|default:"N/A" }}</h2>
+                    {% if latest_year_data %}
+                    <small class="opacity-75">{{ latest_year_data.total_birds }} birds, {{ latest_year_data.species_count }} species</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section A: Charts -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-chart-pie me-2"></i>
+                A. Charts - Species Composition and Abundance
+            </h4>
+        </div>
+    </div>
+
+    <!-- Top 5 Species Composition -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-paw me-2 text-primary"></i>
+                        Top 5 Species Composition
+                    </h5>
+                    <small class="text-muted">Most abundant species observed in surveys</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="top5SpeciesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 5 Species Table -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2 text-primary"></i>
+                        Top 5 Species Details
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if top_5_species %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Species Name</th>
+                                    <th>Scientific Name</th>
+                                    <th class="text-center">IUCN Status</th>
+                                    <th class="text-end">Total Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for species in top_5_species %}
+                                <tr>
+                                    <td><strong>#{{ forloop.counter }}</strong></td>
+                                    <td>{{ species.species__name|default:"Unknown" }}</td>
+                                    <td class="fst-italic text-muted">{{ species.species__scientific_name|default:"-" }}</td>
+                                    <td class="text-center">
+                                        {% if species.species__iucn_status == 'CR' %}
+                                        <span class="badge bg-danger">CR</span>
+                                        {% elif species.species__iucn_status == 'EN' %}
+                                        <span class="badge bg-warning">EN</span>
+                                        {% elif species.species__iucn_status == 'VU' %}
+                                        <span class="badge bg-info">VU</span>
+                                        {% elif species.species__iucn_status == 'NT' %}
+                                        <span class="badge bg-primary">NT</span>
+                                        {% else %}
+                                        <span class="badge bg-success">LC</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end"><strong class="text-primary">{{ species.total_count|default:"0" }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No species data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Endangered & Threatened Species Highlight -->
+    {% if endangered_species %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm border-start border-danger border-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+                        Endangered, Threatened, and Vulnerable Species
+                    </h5>
+                    <small class="text-muted">Species with conservation concerns (CR, EN, VU)</small>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for species in endangered_species %}
+                        <div class="col-md-4 mb-3">
+                            <div class="p-3 border rounded">
+                                <h6 class="mb-1">{{ species.species__name|default:"Unknown" }}</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-{% if species.species__iucn_status == 'CR' %}danger{% elif species.species__iucn_status == 'EN' %}warning{% else %}info{% endif %}">
+                                        {{ species.species__iucn_status }}
+                                    </span>
+                                    <strong class="text-primary">{{ species.total_count }} birds</strong>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Section B: Graphs -->
+    <div class="row mb-4 mt-5">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-chart-line me-2"></i>
+                B. Graphs - Annual Population Trends
+            </h4>
+        </div>
+    </div>
+
+    <!-- Annual Population Trends -->
+    <div class="row mb-4">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-area me-2 text-success"></i>
+                        Total Waterbird Population Trends (Annual)
+                    </h5>
+                    <small class="text-muted">Year-over-year comparison from Asian Waterbird Census (AWC)</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="annualTrendsChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 3 Species Abundance Comparison -->
+    <div class="row mb-4">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2 text-info"></i>
+                        Top 3 Most Abundant Species - Abundance Comparison
+                    </h5>
+                    <small class="text-muted">Comparing the three most abundant species across years</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="top3AbundanceChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Species Diversity Trends -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2 text-warning"></i>
+                        Species Diversity Over Time
+                    </h5>
+                    <small class="text-muted">Number of unique species observed per year</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="diversityChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Species Recorded -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus-circle me-2 text-success"></i>
+                        Additional Species Recorded
+                    </h5>
+                    <small class="text-muted">New species observed each year</small>
+                </div>
+                <div class="card-body">
+                    {% if new_species_by_year %}
+                    {% for year, species_list in new_species_by_year.items %}
+                    <div class="mb-3">
+                        <h6 class="text-primary">{{ year }}</h6>
+                        <div class="ms-3">
+                            {% for species in species_list %}
+                            <span class="badge bg-light text-dark border me-1 mb-1">{{ species }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted text-center py-3">No new species data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yearly Statistics Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>
+                        Annual Statistics Summary
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if yearly_data %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Year</th>
+                                    <th class="text-end">Total Birds</th>
+                                    <th class="text-end">Species Count</th>
+                                    <th class="text-end">Census Records</th>
+                                    <th class="text-end">Avg Birds/Census</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for year_data in yearly_data %}
+                                <tr>
+                                    <td><strong>{{ year_data.year }}</strong></td>
+                                    <td class="text-end text-primary"><strong>{{ year_data.total_birds|default:"0" }}</strong></td>
+                                    <td class="text-end">{{ year_data.species_count|default:"0" }}</td>
+                                    <td class="text-end">{{ year_data.census_count|default:"0" }}</td>
+                                    <td class="text-end">
+                                        {% if year_data.census_count > 0 %}
+                                        {{ year_data.total_birds|default:0|floatformat:0|add:"0"|div:year_data.census_count|floatformat:0 }}
+                                        {% else %}
+                                        0
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No yearly data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Analytics Dashboard
+                </a>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-success" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Print Report
+                    </button>
+                    <a href="{% url 'analytics_new:report_generator' %}" class="btn btn-primary">
+                        <i class="fas fa-file-alt me-2"></i>Generate Formal Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ========== TOP 5 SPECIES PIE CHART ==========
+    const top5SpeciesCtx = document.getElementById('top5SpeciesChart').getContext('2d');
+    new Chart(top5SpeciesCtx, {
+        type: 'pie',
+        data: {
+            labels: [
+                {% for species in top_5_species %}
+                '{{ species.species__name|escapejs }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for species in top_5_species %}
+                    {{ species.total_count|default:"0" }},
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value} birds (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // ========== ANNUAL POPULATION TRENDS LINE CHART ==========
+    const annualTrendsCtx = document.getElementById('annualTrendsChart').getContext('2d');
+    new Chart(annualTrendsCtx, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for year in all_years %}
+                '{{ year }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Total Waterbirds',
+                data: [
+                    {% for year_data in yearly_data %}
+                    {{ year_data.total_birds|default:"0" }},
+                    {% endfor %}
+                ],
+                borderColor: '#36A2EB',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: '#36A2EB',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        font: {
+                            size: 12
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Total Bird Count',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Year',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+
+    // ========== TOP 3 SPECIES ABUNDANCE COMPARISON ==========
+    const top3AbundanceCtx = document.getElementById('top3AbundanceChart').getContext('2d');
+    new Chart(top3AbundanceCtx, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for year in all_years %}
+                '{{ year }}',
+                {% endfor %}
+            ],
+            datasets: [
+                {% for chart_data in top_3_chart_data %}
+                {
+                    label: '{{ chart_data.label|escapejs }}',
+                    data: {{ chart_data.data|safe }},
+                    borderColor: '{{ chart_data.color }}',
+                    backgroundColor: '{{ chart_data.color }}33',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '{{ chart_data.color }}',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        font: {
+                            size: 12
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Bird Count',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Year',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+
+    // ========== SPECIES DIVERSITY BAR CHART ==========
+    const diversityCtx = document.getElementById('diversityChart').getContext('2d');
+    new Chart(diversityCtx, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for diversity in diversity_by_year %}
+                '{{ diversity.year }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Unique Species Count',
+                data: [
+                    {% for diversity in diversity_by_year %}
+                    {{ diversity.unique_species|default:"0" }},
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                borderColor: 'rgba(255, 206, 86, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        font: {
+                            size: 12
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Number of Species',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Year',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+@media print {
+    .btn, .breadcrumb, nav {
+        display: none !important;
+    }
+    .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+</style>
+{% endblock %}
+
