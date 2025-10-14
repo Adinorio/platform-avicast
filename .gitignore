@@ -290,6 +290,13 @@ fix_permissions.py
 training/
 # training_data/
 
+# ===== EGRET MODEL TRAINING OUTPUTS =====
+
+# Egret model training directories (contain model weights and training artifacts)
+egret_500_model/
+egret_*_model/
+egret_detector*/
+
 # Ignore contents of training_data, but not the directory itself
 training_data/*
 !training_data/README.md
