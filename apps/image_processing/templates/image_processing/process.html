@@ -1,35 +1,30 @@
 {% extends 'base.html' %}
 
-{% block title %}Clarify Images{% endblock %}
+{% block title %}Process Images - AVICAST{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="avic-page-title">
-                <i class="fas fa-search"></i>Clarify Images
-            </h1>
-            <p class="avic-page-subtitle">GTD Workflow Stage 2: AI processing to identify egret species</p>
-        </div>
-    </div>
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'image_processing:dashboard' %}">Image Processing</a>
+            </li>
+            <li class="breadcrumb-item active">Process Images</li>
+        </ol>
+    </nav>
 
-    <!-- Progress Indicator -->
+    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <div class="badge bg-primary me-3 fs-6">CAPTURE</div>
-                            <div class="badge bg-warning me-3 fs-6">CLARIFY</div>
-                            <span class="text-muted">→ Organize → Reflect → Engage</span>
-                        </div>
-                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <h2 class="mb-2">
+                <i class="fas fa-search text-primary me-2"></i>
+                Process Images
+            </h2>
+            <p class="text-muted">Use AI to identify bird species and analyze uploaded images</p>
         </div>
     </div>
 
@@ -37,10 +32,10 @@
     <!-- Images Ready for Processing -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-header avic-card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
-                        <i class="fas fa-images me-2"></i>Images Ready for Clarification
+                        <i class="fas fa-images me-2"></i>Images Ready for Processing
                     </h5>
                 </div>
                 <div class="card-body">
@@ -78,10 +73,10 @@
     </div>
 
     <!-- Processing Status -->
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-header avic-card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
                         <i class="fas fa-cog me-2"></i>Processing Status
                     </h5>
@@ -109,14 +104,14 @@
     </div>
     {% else %}
     <!-- No Images Message -->
-    <div class="row justify-content-center">
+    <div class="row mb-4 justify-content-center">
         <div class="col-lg-8">
-            <div class="card avic-card text-center">
+            <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-5">
                     <i class="fas fa-camera text-muted fa-4x mb-4"></i>
                     <h4 class="text-muted">No Images Ready for Processing</h4>
-                    <p class="text-muted mb-4">Upload some bird images first to start the clarification process.</p>
-                    <a href="{% url 'image_processing:upload' %}" class="btn avic-btn-primary btn-lg">
+                    <p class="text-muted mb-4">Upload some bird images first to start the processing.</p>
+                    <a href="{% url 'image_processing:upload' %}" class="btn btn-primary btn-lg">
                         <i class="fas fa-upload me-2"></i>Upload Images
                     </a>
                 </div>
@@ -126,12 +121,12 @@
     {% endif %}
 
     <!-- Process Instructions -->
-    <div class="row mt-4">
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-header avic-card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
-                        <i class="fas fa-robot me-2"></i>AI Clarification Process
+                        <i class="fas fa-robot me-2"></i>AI Processing Guide
                     </h5>
                 </div>
                 <div class="card-body">

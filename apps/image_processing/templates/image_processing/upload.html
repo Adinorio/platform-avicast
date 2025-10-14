@@ -1,42 +1,38 @@
 {% extends 'base.html' %}
 
-{% block title %}Capture Images{% endblock %}
+{% block title %}Upload Images - AVICAST{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="avic-page-title">
-                <i class="fas fa-upload"></i>Capture Images
-            </h1>
-            <p class="avic-page-subtitle">GTD Workflow Stage 1: Upload bird images for egret species identification</p>
-        </div>
-    </div>
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'image_processing:dashboard' %}">Image Processing</a>
+            </li>
+            <li class="breadcrumb-item active">Upload Images</li>
+        </ol>
+    </nav>
 
-    <!-- Progress Indicator -->
+    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <div class="badge bg-primary me-3 fs-6">CAPTURE</div>
-                            <span class="text-muted">→ Clarify → Organize → Reflect → Engage</span>
-                        </div>
-                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <h2 class="mb-2">
+                <i class="fas fa-upload text-primary me-2"></i>
+                Upload Images
+            </h2>
+            <p class="text-muted">Upload bird images for AI-powered species identification and analysis</p>
         </div>
     </div>
 
     <!-- Upload Form -->
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card avic-card">
-                <div class="card-header avic-card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
                         <i class="fas fa-camera me-2"></i>Upload Bird Image
                     </h5>
@@ -82,7 +78,7 @@
                         </div>
 
                         <div class="d-grid">
-                            <button type="submit" class="btn avic-btn-primary btn-lg">
+                            <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-upload me-2"></i>Capture Image
                             </button>
                         </div>
@@ -131,18 +127,18 @@
     </div>
 
     <!-- Recent Uploads -->
-    <div class="row mt-4">
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-header avic-card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
                         <i class="fas fa-clock me-2"></i>Your Recent Uploads
                     </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Title</th>
                                     <th>Status</th>
@@ -175,9 +171,10 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        <i class="fas fa-camera fa-2x mb-2"></i>
-                                        <br>No uploads yet. Upload your first image above!
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-camera fa-3x text-muted mb-3 d-block"></i>
+                                        <h6 class="text-muted">No uploads yet</h6>
+                                        <p class="text-muted">Upload your first image above to get started!</p>
                                     </td>
                                 </tr>
                                 {% endfor %}

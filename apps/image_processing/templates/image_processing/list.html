@@ -1,22 +1,37 @@
 {% extends 'base.html' %}
 
-{% block title %}Organize Images{% endblock %}
+{% block title %}Image Library - AVICAST{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'image_processing:dashboard' %}">Image Processing</a>
+            </li>
+            <li class="breadcrumb-item active">Image Library</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="avic-page-title">
-                <i class="fas fa-clipboard-list"></i>Organize Images
-            </h1>
-            <p class="avic-page-subtitle">GTD Workflow Stage 3: View and organize images by workflow stage</p>
+            <h2 class="mb-2">
+                <i class="fas fa-clipboard-list text-primary me-2"></i>
+                Image Library
+            </h2>
+            <p class="text-muted">View and organize all uploaded bird images by processing stage</p>
         </div>
     </div>
 
     <!-- Stage Filter -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
+            <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <div class="row g-2">
                         <div class="col-md-2">
@@ -40,7 +55,7 @@
                             </a>
                         </div>
                         <div class="col-md-2">
-                            <a href="{% url 'image_processing:list' %}?stage=reflected" class="btn {% if current_stage == 'reflected' %}btn-secondary{% else %}btn-outline-secondary{% endif %} w-100">
+                            <a href="{% url 'image_processing:list' %}?stage=reflected" class="btn {% if current_stage == 'reflected' %}btn-info{% else %}btn-outline-info{% endif %} w-100">
                                 Reflect ({{ stage_counts.reflected }})
                             </a>
                         </div>
@@ -107,7 +122,7 @@
                             <i class="fas fa-cog me-1"></i>Processing...
                         </span>
                         {% elif image.upload_status == 'ORGANIZED' %}
-                        <a href="{% url 'image_processing:review' %}" class="btn btn-sm btn-secondary">
+                        <a href="{% url 'image_processing:review' %}" class="btn btn-sm btn-info">
                             <i class="fas fa-brain me-1"></i>Ready for Review
                         </a>
                         {% elif image.upload_status == 'REFLECTED' %}
@@ -168,9 +183,9 @@
     {% endif %}
     {% else %}
     <!-- No Images Message -->
-    <div class="row justify-content-center">
+    <div class="row mb-4 justify-content-center">
         <div class="col-lg-8">
-            <div class="card avic-card text-center">
+            <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-5">
                     <i class="fas fa-images text-muted fa-4x mb-4"></i>
                     <h4 class="text-muted">No Images Found</h4>
@@ -181,7 +196,7 @@
                             No images in the {{ current_stage|title }} stage.
                         {% endif %}
                     </p>
-                    <a href="{% url 'image_processing:upload' %}" class="btn avic-btn-primary btn-lg">
+                    <a href="{% url 'image_processing:upload' %}" class="btn btn-primary btn-lg">
                         <i class="fas fa-upload me-2"></i>Upload Images
                     </a>
                 </div>
@@ -191,10 +206,10 @@
     {% endif %}
 
     <!-- Workflow Progress Summary -->
-    <div class="row mt-4">
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-header avic-card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-line me-2"></i>Workflow Progress Summary
                     </h5>

@@ -1,46 +1,39 @@
 {% extends 'base.html' %}
 
-{% block title %}Engage Census{% endblock %}
+{% block title %}Allocate to Census - AVICAST{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="avic-page-title">
-                <i class="fas fa-check-circle"></i>Engage Census
-            </h1>
-            <p class="avic-page-subtitle">GTD Workflow Stage 5: Allocate approved results to census data</p>
-        </div>
-    </div>
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'image_processing:dashboard' %}">Image Processing</a>
+            </li>
+            <li class="breadcrumb-item active">Allocate to Census</li>
+        </ol>
+    </nav>
 
-    <!-- Progress Indicator -->
+    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <div class="badge bg-primary me-3 fs-6">CAPTURE</div>
-                            <div class="badge bg-warning me-3 fs-6">CLARIFY</div>
-                            <div class="badge bg-info me-3 fs-6">ORGANIZE</div>
-                            <div class="badge bg-secondary me-3 fs-6">REFLECT</div>
-                            <div class="badge bg-success me-3 fs-6">ENGAGE</div>
-                        </div>
-                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <h2 class="mb-2">
+                <i class="fas fa-check-circle text-primary me-2"></i>
+                Allocate to Census
+            </h2>
+            <p class="text-muted">Allocate approved bird identifications to census data and monitoring sites</p>
         </div>
     </div>
 
     {% if ready_results %}
     <!-- Results Ready for Allocation -->
-    <div class="row">
+    <div class="row mb-4">
         {% for result in ready_results %}
         <div class="col-12 mb-4">
-            <div class="card avic-card">
+            <div class="card border-0 shadow-sm">
                 <div class="row g-0">
                     <div class="col-lg-3">
                         <img src="{{ result.image_upload.image_file.url }}"
@@ -157,14 +150,14 @@
     </div>
     {% else %}
     <!-- No Results Message -->
-    <div class="row justify-content-center">
+    <div class="row mb-4 justify-content-center">
         <div class="col-lg-8">
-            <div class="card avic-card text-center">
+            <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-5">
                     <i class="fas fa-check-circle text-muted fa-4x mb-4"></i>
                     <h4 class="text-muted">No Results Ready for Allocation</h4>
                     <p class="text-muted mb-4">Review and approve some AI results first to see them here.</p>
-                    <a href="{% url 'image_processing:review' %}" class="btn btn-secondary btn-lg">
+                    <a href="{% url 'image_processing:review' %}" class="btn btn-info btn-lg">
                         <i class="fas fa-brain me-2"></i>Review Results
                     </a>
                 </div>
@@ -174,10 +167,10 @@
     {% endif %}
 
     <!-- Allocation Instructions -->
-    <div class="row mt-4">
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card avic-card">
-                <div class="card-header avic-card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
                         <i class="fas fa-info-circle me-2"></i>Census Allocation Guide
                     </h5>
