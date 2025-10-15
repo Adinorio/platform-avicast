@@ -332,8 +332,6 @@ apps/*/admin.py.disabled
 apps/admin_system/generated/
 
 # Documentation files that are auto-generated or deployment-specific
-SECURITY_ENHANCEMENTS.md
-MULTI_DEVICE_DEPLOYMENT_PLAN.md
 *_DEPLOYMENT_*.md
 *_SECURITY_*.md
 
