@@ -66,8 +66,43 @@
 
         /* Dark Mode Component Styles */
         [data-theme="dark"] body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Force all child elements of body to inherit dark theme */
+        [data-theme="dark"] body * {
+            background-color: inherit !important;
+            color: inherit !important;
+        }
+
+        /* Override specific elements that should have different backgrounds */
+        [data-theme="dark"] body .sidebar {
+            background: var(--sidebar-bg) !important;
+        }
+
+        [data-theme="dark"] body .card {
+            background-color: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] body .table {
+            background-color: var(--table-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] body .table tbody tr {
+            background-color: var(--table-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] body .table tbody tr:hover {
+            background-color: var(--table-hover) !important;
+        }
+
+        [data-theme="dark"] body .table tbody td {
+            background-color: inherit !important;
+            color: var(--text-primary) !important;
         }
 
         [data-theme="dark"] .card {
@@ -310,7 +345,28 @@
         }
 
         [data-theme="dark"] .content-wrapper {
-            background: var(--bg-primary);
+            background: var(--bg-primary) !important;
+        }
+
+        /* Force main content areas to use dark background */
+        [data-theme="dark"] .main-content-wrapper,
+        [data-theme="dark"] .page-wrapper,
+        [data-theme="dark"] .dashboard-wrapper,
+        [data-theme="dark"] .app-content,
+        [data-theme="dark"] .content-main {
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Force all Bootstrap grid elements to use transparent background */
+        [data-theme="dark"] .container-fluid > .row,
+        [data-theme="dark"] .container > .row {
+            background-color: transparent !important;
+        }
+
+        [data-theme="dark"] .container-fluid > .row > .col,
+        [data-theme="dark"] .container > .row > .col {
+            background-color: transparent !important;
         }
 
         /* Additional Missing Dark Mode Overrides */
@@ -466,6 +522,116 @@
             background-color: var(--card-bg) !important;
             color: var(--text-primary) !important;
             border-color: var(--border-color) !important;
+        }
+
+        /* HIGH PRIORITY OVERRIDES - Force dark mode on all elements */
+        [data-theme="dark"] .container,
+        [data-theme="dark"] .container-fluid,
+        [data-theme="dark"] .row,
+        [data-theme="dark"] .col,
+        [data-theme="dark"] .col-1, [data-theme="dark"] .col-2, [data-theme="dark"] .col-3, [data-theme="dark"] .col-4, [data-theme="dark"] .col-5, [data-theme="dark"] .col-6,
+        [data-theme="dark"] .col-7, [data-theme="dark"] .col-8, [data-theme="dark"] .col-9, [data-theme="dark"] .col-10, [data-theme="dark"] .col-11, [data-theme="dark"] .col-12,
+        [data-theme="dark"] .col-md-1, [data-theme="dark"] .col-md-2, [data-theme="dark"] .col-md-3, [data-theme="dark"] .col-md-4, [data-theme="dark"] .col-md-5, [data-theme="dark"] .col-md-6,
+        [data-theme="dark"] .col-md-7, [data-theme="dark"] .col-md-8, [data-theme="dark"] .col-md-9, [data-theme="dark"] .col-md-10, [data-theme="dark"] .col-md-11, [data-theme="dark"] .col-md-12 {
+            background-color: transparent !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Force main content area to use dark background */
+        [data-theme="dark"] .main-content,
+        [data-theme="dark"] .content-area,
+        [data-theme="dark"] .page-content,
+        [data-theme="dark"] .dashboard-content {
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Force all table elements to use dark theme */
+        [data-theme="dark"] .table,
+        [data-theme="dark"] .table-striped,
+        [data-theme="dark"] .table-hover,
+        [data-theme="dark"] .table-bordered {
+            background-color: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .table tbody tr {
+            background-color: var(--table-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .table tbody tr:hover {
+            background-color: var(--table-hover) !important;
+        }
+
+        [data-theme="dark"] .table tbody td {
+            background-color: inherit !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .table thead th {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .table-light {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .table-light th {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Force navbar and navigation to use dark theme */
+        [data-theme="dark"] .navbar,
+        [data-theme="dark"] .navbar-light,
+        [data-theme="dark"] .navbar-expand {
+            background-color: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .navbar-brand,
+        [data-theme="dark"] .navbar-nav .nav-link {
+            color: var(--text-primary) !important;
+        }
+
+        /* Force breadcrumb to use dark theme */
+        [data-theme="dark"] .breadcrumb {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .breadcrumb-item {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .breadcrumb-item.active {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Force specific Bootstrap classes that might override dark mode */
+        [data-theme="dark"] .bg-white,
+        [data-theme="dark"] .bg-light {
+            background-color: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .text-dark {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .text-black {
+            color: var(--text-primary) !important;
+        }
+
+        /* Force all div elements to inherit dark theme */
+        [data-theme="dark"] div:not(.sidebar):not(.navbar):not(.card):not(.modal):not(.dropdown-menu):not(.alert):not(.badge):not(.btn):not(.nav):not(.breadcrumb):not(.table):not(.progress) {
+            background-color: transparent !important;
+            color: var(--text-primary) !important;
         }
 
         /* ===== AVICAST DESIGN SYSTEM ===== */
