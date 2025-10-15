@@ -5,55 +5,73 @@
 <!-- User Statistics -->
 <div class="row mb-4">
     <div class="col-md-2 mb-3">
-        <div class="stats-card primary">
-            <div class="text-center">
-                <p class="stats-number">{{ user_stats.total }}</p>
-                <p class="stats-label">Total Users</p>
+        <div class="card border-0 shadow-sm bg-primary text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Total Users</small>
+                <h2 class="mb-2 mt-2">{{ user_stats.total }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-users me-1"></i>All Users
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-2 mb-3">
-        <div class="stats-card success">
-            <div class="text-center">
-                <p class="stats-number">{{ user_stats.active }}</p>
-                <p class="stats-label">Active</p>
+        <div class="card border-0 shadow-sm bg-success text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Active</small>
+                <h2 class="mb-2 mt-2">{{ user_stats.active }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-check-circle me-1"></i>Active Users
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-2 mb-3">
-        <div class="stats-card warning">
-            <div class="text-center">
-                <p class="stats-number">{{ user_stats.inactive }}</p>
-                <p class="stats-label">Inactive</p>
+        <div class="card border-0 shadow-sm bg-warning text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Inactive</small>
+                <h2 class="mb-2 mt-2">{{ user_stats.inactive }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-pause-circle me-1"></i>Inactive Users
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-2 mb-3">
-        <div class="stats-card info">
-            <div class="text-center">
-                <p class="stats-number">{{ user_stats.admins }}</p>
-                <p class="stats-label">Admins</p>
+        <div class="card border-0 shadow-sm bg-info text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Admins</small>
+                <h2 class="mb-2 mt-2">{{ user_stats.admins }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-user-shield me-1"></i>Administrators
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-2 mb-3">
-        <div class="stats-card secondary">
-            <div class="text-center">
-                <p class="stats-number">{{ user_stats.field_workers }}</p>
-                <p class="stats-label">Field Workers</p>
+        <div class="card border-0 shadow-sm bg-secondary text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Field Workers</small>
+                <h2 class="mb-2 mt-2">{{ user_stats.field_workers }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-hard-hat me-1"></i>Field Workers
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-2 mb-3">
-        <div class="stats-card danger">
-            <div class="text-center">
-                <p class="stats-number">{{ user_stats.archived }}</p>
-                <p class="stats-label">Archived</p>
+        <div class="card border-0 shadow-sm bg-danger text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Archived</small>
+                <h2 class="mb-2 mt-2">{{ user_stats.archived }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-archive me-1"></i>Archived Users
+                </small>
             </div>
         </div>
     </div>
@@ -62,7 +80,7 @@
 <!-- Search and Filter Controls -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="admin-card">
+        <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <form method="GET" class="row g-3">
                     <div class="col-md-4">

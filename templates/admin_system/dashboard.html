@@ -5,57 +5,49 @@
 <!-- Statistics Cards -->
 <div class="row mb-4">
     <div class="col-md-3 mb-3">
-        <div class="stats-card primary">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.total_users }}</p>
-                    <p class="stats-label">Total Users</p>
-                </div>
-                <div class="text-primary">
-                    <i class="fas fa-users fa-2x"></i>
-                </div>
+        <div class="card border-0 shadow-sm bg-primary text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Total Users</small>
+                <h2 class="mb-2 mt-2">{{ stats.total_users }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-users me-1"></i>System Users
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 mb-3">
-        <div class="stats-card success">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.total_species }}</p>
-                    <p class="stats-label">Species</p>
-                </div>
-                <div class="text-success">
-                    <i class="fas fa-paw fa-2x"></i>
-                </div>
+        <div class="card border-0 shadow-sm bg-success text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Species</small>
+                <h2 class="mb-2 mt-2">{{ stats.total_species }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-paw me-1"></i>Bird Species
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 mb-3">
-        <div class="stats-card warning">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.total_images }}</p>
-                    <p class="stats-label">Images</p>
-                </div>
-                <div class="text-warning">
-                    <i class="fas fa-camera fa-2x"></i>
-                </div>
+        <div class="card border-0 shadow-sm bg-warning text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Images</small>
+                <h2 class="mb-2 mt-2">{{ stats.total_images }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-camera me-1"></i>Processed
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 mb-3">
-        <div class="stats-card info">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.total_census }}</p>
-                    <p class="stats-label">Census Records</p>
-                </div>
-                <div class="text-info">
-                    <i class="fas fa-clipboard-list fa-2x"></i>
-                </div>
+        <div class="card border-0 shadow-sm bg-info text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Census Records</small>
+                <h2 class="mb-2 mt-2">{{ stats.total_census }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-clipboard-list me-1"></i>Monitoring Data
+                </small>
             </div>
         </div>
     </div>
@@ -64,35 +56,35 @@
 <!-- Quick Actions -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="admin-card">
-            <div class="card-header">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
                 <h5 class="mb-0">
-                    <i class="fas fa-bolt me-2"></i>
+                    <i class="fas fa-bolt text-primary me-2"></i>
                     Quick Actions
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3 mb-2">
-                        <a href="{% url 'admin_system:user_management' %}" class="btn btn-admin btn-primary w-100">
+                        <a href="{% url 'admin_system:user_management' %}" class="btn btn-primary w-100">
                             <i class="fas fa-users me-2"></i>
                             Manage Users
                         </a>
                     </div>
                     <div class="col-md-3 mb-2">
-                        <a href="{% url 'fauna:species_list' %}" class="btn btn-admin btn-success w-100">
+                        <a href="{% url 'fauna:species_list' %}" class="btn btn-success w-100">
                             <i class="fas fa-paw me-2"></i>
                             Manage Species
                         </a>
                     </div>
                     <div class="col-md-3 mb-2">
-                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-admin btn-warning w-100">
+                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-warning w-100">
                             <i class="fas fa-camera me-2"></i>
                             Image Processing
                         </a>
                     </div>
                     <div class="col-md-3 mb-2">
-                        <a href="{% url 'admin_system:export_data' %}?type=users&format=csv" class="btn btn-admin btn-info w-100">
+                        <a href="{% url 'admin_system:export_data' %}?type=users&format=csv" class="btn btn-info w-100">
                             <i class="fas fa-download me-2"></i>
                             Export Data
                         </a>
@@ -107,10 +99,10 @@
 <div class="row">
     <!-- System Health -->
     <div class="col-md-6 mb-4">
-        <div class="admin-card">
-            <div class="card-header">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
                 <h5 class="mb-0">
-                    <i class="fas fa-heartbeat me-2"></i>
+                    <i class="fas fa-heartbeat text-primary me-2"></i>
                     System Health
                 </h5>
             </div>
@@ -157,10 +149,10 @@
     
     <!-- Recent Users -->
     <div class="col-md-6 mb-4">
-        <div class="admin-card">
-            <div class="card-header">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
                 <h5 class="mb-0">
-                    <i class="fas fa-user-plus me-2"></i>
+                    <i class="fas fa-user-plus text-primary me-2"></i>
                     Recent Users
                 </h5>
             </div>
@@ -192,10 +184,10 @@
 <div class="row">
     <!-- System Notifications -->
     <div class="col-md-6 mb-4">
-        <div class="admin-card">
-            <div class="card-header">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
                 <h5 class="mb-0">
-                    <i class="fas fa-bell me-2"></i>
+                    <i class="fas fa-bell text-primary me-2"></i>
                     System Notifications
                 </h5>
             </div>
@@ -220,10 +212,10 @@
     
     <!-- Recent Activities -->
     <div class="col-md-6 mb-4">
-        <div class="admin-card">
-            <div class="card-header">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
                 <h5 class="mb-0">
-                    <i class="fas fa-history me-2"></i>
+                    <i class="fas fa-history text-primary me-2"></i>
                     Recent Activities
                 </h5>
             </div>
@@ -250,43 +242,37 @@
 <!-- Additional Stats Row -->
 <div class="row">
     <div class="col-md-4 mb-3">
-        <div class="stats-card success">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.active_admins }}</p>
-                    <p class="stats-label">Active Admins</p>
-                </div>
-                <div class="text-success">
-                    <i class="fas fa-user-shield fa-2x"></i>
-                </div>
+        <div class="card border-0 shadow-sm bg-success text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Active Admins</small>
+                <h2 class="mb-2 mt-2">{{ stats.active_admins }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-user-shield me-1"></i>Administrators
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-4 mb-3">
-        <div class="stats-card warning">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.pending_images }}</p>
-                    <p class="stats-label">Pending Images</p>
-                </div>
-                <div class="text-warning">
-                    <i class="fas fa-clock fa-2x"></i>
-                </div>
+        <div class="card border-0 shadow-sm bg-warning text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Pending Images</small>
+                <h2 class="mb-2 mt-2">{{ stats.pending_images }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-clock me-1"></i>Awaiting Review
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-4 mb-3">
-        <div class="stats-card info">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="stats-number">{{ stats.processed_images }}</p>
-                    <p class="stats-label">Processed Images</p>
-                </div>
-                <div class="text-info">
-                    <i class="fas fa-check-circle fa-2x"></i>
-                </div>
+        <div class="card border-0 shadow-sm bg-info text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Processed Images</small>
+                <h2 class="mb-2 mt-2">{{ stats.processed_images }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-check-circle me-1"></i>Completed
+                </small>
             </div>
         </div>
     </div>
