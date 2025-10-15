@@ -62,7 +62,7 @@
             /* Dynamic Link Colors */
             --link-color: #4a90e2 !important;
             --link-hover-color: #66b3ff !important;
-            --link-visited: #8b5cf6 !important;
+            --link-visited: #6b7280 !important;
             --link-active: #3b82f6 !important;
             
             /* Enhanced Button System */
@@ -257,7 +257,7 @@
             /* Dynamic Link Colors */
             --link-color: #4a90e2;
             --link-hover-color: #66b3ff;
-            --link-visited: #8b5cf6;
+            --link-visited: #6b7280;
             --link-active: #3b82f6;
             
             /* Enhanced Button System */
@@ -1218,14 +1218,15 @@
         }
 
         .sidebar-brand {
-            color: white;
+            color: #ffffff;
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 700;
             text-decoration: none;
+            transition: color 0.3s ease;
         }
 
         .sidebar-brand:hover {
-            color: #17a2b8;
+            color: #4a90e2;
             text-decoration: none;
         }
 
@@ -1242,24 +1243,26 @@
         }
 
         .sidebar-nav .nav-link {
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.85);
             padding: 0.75rem 1.5rem;
             border-radius: 0;
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
+            font-weight: 500;
         }
 
         .sidebar-nav .nav-link:hover {
-            color: white;
-            background: rgba(255,255,255,0.1);
-            border-left-color: #17a2b8;
-            transform: translateX(5px);
+            color: #ffffff;
+            background: rgba(255,255,255,0.08);
+            border-left-color: #4a90e2;
+            transform: translateX(3px);
         }
 
         .sidebar-nav .nav-link.active {
-            color: white;
-            background: rgba(23, 162, 184, 0.2);
-            border-left-color: #17a2b8;
+            color: #ffffff;
+            background: rgba(74, 144, 226, 0.15);
+            border-left-color: #4a90e2;
+            font-weight: 600;
         }
 
         .sidebar-nav .nav-link.text-danger:hover {
