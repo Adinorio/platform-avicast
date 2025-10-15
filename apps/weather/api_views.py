@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from django.contrib.admin.views.decorators import staff_member_required as staff_required
+# Removed Django admin dependency - using custom role-based permissions
 # from apps.locations.models import Site  # Temporarily disabled during revamp
 from .models import FieldWorkSchedule, WeatherForecast
 from .weather_service import get_field_work_optimizer, get_weather_service
@@ -94,7 +94,7 @@ def _parse_coordinates(coord_str):
 
 
 @login_required
-@staff_required
+# Removed Django admin decorator - using custom role-based permissions
 @csrf_exempt
 @require_http_methods(["POST"])
 def fetch_weather(request):
@@ -177,7 +177,7 @@ def fetch_weather(request):
 
 
 @login_required
-@staff_required
+# Removed Django admin decorator - using custom role-based permissions
 @csrf_exempt
 @require_http_methods(["POST"])
 def optimize_field_work(request):
@@ -208,7 +208,7 @@ def optimize_field_work(request):
 
 
 @login_required
-@staff_required
+# Removed Django admin decorator - using custom role-based permissions
 @csrf_exempt
 @require_http_methods(["POST"])
 def best_days(request):
@@ -319,7 +319,7 @@ def best_days(request):
 
 
 @login_required
-@staff_required
+# Removed Django admin decorator - using custom role-based permissions
 @csrf_exempt
 @require_http_methods(["POST"])
 def daily_summary(request):
@@ -431,7 +431,7 @@ def daily_summary(request):
 
 
 @login_required
-@staff_required
+# Removed Django admin decorator - using custom role-based permissions
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_schedule(request):

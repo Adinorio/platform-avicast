@@ -21,8 +21,8 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
 from django.urls import include, path
-from django.views.generic import TemplateView
-from apps.users.admin_index import custom_admin_index
+from django.views.generic import TemplateView, RedirectView
+# from apps.users.admin_index import custom_admin_index  # REMOVED - No longer using Django admin
 
 
 
@@ -31,20 +31,22 @@ def custom_login_redirect(request):
     """Custom login view that redirects based on user role"""
     if request.user.is_authenticated:
         if request.user.role == "SUPERADMIN":
-            return redirect("admin:index")
+            return redirect("admin_system:admin_dashboard")
         else:
-            # Redirect ADMIN and FIELD_WORKER to home page
+            # Redirect ADMIN and FIELD_WORKER to main system home page
             return redirect("home")
     return auth_views.LoginView.as_view(template_name="registration/login.html")(request)
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # path("admin/", admin.site.urls),  # REMOVED - Using custom admin system instead
+    path("admin/", RedirectView.as_view(url='/admin-system/', permanent=False)),  # Redirect old admin to custom admin
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
     path("login/", custom_login_redirect, name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page="home"), name="logout"),
     path("users/", include("apps.users.urls", namespace="users")),
     path("fauna/", include("apps.fauna.urls", namespace="fauna")),
+    path("admin-system/", include("apps.admin_system.urls", namespace="admin_system")),
     path("locations/", include("apps.locations.urls", namespace="locations")),
     path("analytics/", include("apps.analytics_new.urls", namespace="analytics_new")),
     path("image-processing/", include("apps.image_processing.urls", namespace="image_processing")),

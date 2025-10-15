@@ -1,0 +1,335 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<!-- User Statistics -->
+<div class="row mb-4">
+    <div class="col-md-2 mb-3">
+        <div class="stats-card primary">
+            <div class="text-center">
+                <p class="stats-number">{{ user_stats.total }}</p>
+                <p class="stats-label">Total Users</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 mb-3">
+        <div class="stats-card success">
+            <div class="text-center">
+                <p class="stats-number">{{ user_stats.active }}</p>
+                <p class="stats-label">Active</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 mb-3">
+        <div class="stats-card warning">
+            <div class="text-center">
+                <p class="stats-number">{{ user_stats.inactive }}</p>
+                <p class="stats-label">Inactive</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 mb-3">
+        <div class="stats-card info">
+            <div class="text-center">
+                <p class="stats-number">{{ user_stats.admins }}</p>
+                <p class="stats-label">Admins</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 mb-3">
+        <div class="stats-card secondary">
+            <div class="text-center">
+                <p class="stats-number">{{ user_stats.field_workers }}</p>
+                <p class="stats-label">Field Workers</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 mb-3">
+        <div class="stats-card danger">
+            <div class="text-center">
+                <p class="stats-number">{{ user_stats.archived }}</p>
+                <p class="stats-label">Archived</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Controls -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Search Users</label>
+                        <input type="text" class="form-control search-box" name="search" 
+                               value="{{ search_query }}" placeholder="Search by name, email, or ID...">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Filter by Role</label>
+                        <select class="form-select filter-select" name="role">
+                            <option value="">All Roles</option>
+                            <option value="SUPERADMIN" {% if role_filter == 'SUPERADMIN' %}selected{% endif %}>Super Admin</option>
+                            <option value="ADMIN" {% if role_filter == 'ADMIN' %}selected{% endif %}>Admin</option>
+                            <option value="FIELD_WORKER" {% if role_filter == 'FIELD_WORKER' %}selected{% endif %}>Field Worker</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Filter by Status</label>
+                        <select class="form-select filter-select" name="status">
+                            <option value="">All Status</option>
+                            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                            <option value="archived" {% if status_filter == 'archived' %}selected{% endif %}>Archived</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-admin btn-primary">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-body">
+                <form method="POST" action="{% url 'admin_system:bulk_user_action' %}" id="bulk-action-form">
+                    {% csrf_token %}
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="selectAll()">
+                                <i class="fas fa-check-square me-2"></i>Select All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="selectNone()">
+                                <i class="fas fa-square me-2"></i>Select None
+                            </button>
+                        </div>
+                        
+                        <div class="me-3">
+                            <select name="action" class="form-select filter-select" required>
+                                <option value="">Choose Action...</option>
+                                <option value="activate">Activate Selected</option>
+                                <option value="deactivate">Deactivate Selected</option>
+                                <option value="archive">Archive Selected</option>
+                                <option value="unarchive">Unarchive Selected</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="btn btn-admin btn-warning" onclick="return confirmBulkAction()">
+                                <i class="fas fa-play me-2"></i>Execute
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Users ({{ page_obj.paginator.count }} total)
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="admin-table">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox" id="select-all" onchange="toggleAll(this)">
+                                </th>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Date Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in page_obj %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="user_ids" value="{{ user.id }}" class="user-checkbox">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ user.full_name }}</h6>
+                                            <small class="text-muted">{{ user.employee_id }} • {{ user.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ user.role|lower|slugify }}">{{ user.role }}</span>
+                                </td>
+                                <td>
+                                    {% if user.is_archived %}
+                                        <span class="status-badge status-archived">Archived</span>
+                                    {% elif user.is_active %}
+                                        <span class="status-badge status-active">Active</span>
+                                    {% else %}
+                                        <span class="status-badge status-inactive">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.last_login %}
+                                        <small>{{ user.last_login|timesince }} ago</small>
+                                    {% else %}
+                                        <small class="text-muted">Never</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ user.date_joined|date:"M d, Y" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'admin_system:user_detail' user.id %}" 
+                                           class="btn btn-sm btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'admin_system:user_edit' user.id %}" 
+                                           class="btn btn-sm btn-outline-warning" title="Edit User">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-users fa-3x mb-3"></i>
+                                        <p>No users found matching your criteria.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="User pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectAll() {
+    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.getElementById('select-all').checked = true;
+}
+
+function selectNone() {
+    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('select-all').checked = false;
+}
+
+function toggleAll(checkbox) {
+    document.querySelectorAll('.user-checkbox').forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+}
+
+function confirmBulkAction() {
+    const selectedUsers = document.querySelectorAll('.user-checkbox:checked');
+    const action = document.querySelector('select[name="action"]').value;
+    
+    if (selectedUsers.length === 0) {
+        alert('Please select at least one user.');
+        return false;
+    }
+    
+    if (!action) {
+        alert('Please select an action.');
+        return false;
+    }
+    
+    return confirm(`Are you sure you want to ${action} ${selectedUsers.length} user(s)?`);
+}
+
+// Update select-all checkbox when individual checkboxes change
+document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const totalCheckboxes = document.querySelectorAll('.user-checkbox').length;
+        const checkedCheckboxes = document.querySelectorAll('.user-checkbox:checked').length;
+        
+        document.getElementById('select-all').checked = checkedCheckboxes === totalCheckboxes;
+        document.getElementById('select-all').indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
+    });
+});
+</script>
+{% endblock %}

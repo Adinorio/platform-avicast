@@ -1,0 +1,294 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stats-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="stats-number">{{ stats.total_users }}</p>
+                    <p class="stats-label">Total Users</p>
+                </div>
+                <div class="text-primary">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="stats-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="stats-number">{{ stats.total_species }}</p>
+                    <p class="stats-label">Species</p>
+                </div>
+                <div class="text-success">
+                    <i class="fas fa-paw fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="stats-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="stats-number">{{ stats.total_images }}</p>
+                    <p class="stats-label">Images</p>
+                </div>
+                <div class="text-warning">
+                    <i class="fas fa-camera fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="stats-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="stats-number">{{ stats.total_census }}</p>
+                    <p class="stats-label">Census Records</p>
+                </div>
+                <div class="text-info">
+                    <i class="fas fa-clipboard-list fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'admin_system:user_management' %}" class="btn btn-admin btn-primary w-100">
+                            <i class="fas fa-users me-2"></i>
+                            Manage Users
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'fauna:species_list' %}" class="btn btn-admin btn-success w-100">
+                            <i class="fas fa-paw me-2"></i>
+                            Manage Species
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'image_processing:dashboard' %}" class="btn btn-admin btn-warning w-100">
+                            <i class="fas fa-camera me-2"></i>
+                            Image Processing
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'admin_system:export_data' %}?type=users&format=csv" class="btn btn-admin btn-info w-100">
+                            <i class="fas fa-download me-2"></i>
+                            Export Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Health and Recent Activities -->
+<div class="row">
+    <!-- System Health -->
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    System Health
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Database Status</span>
+                        <span class="badge bg-success">Healthy</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Disk Usage</span>
+                        <span>{{ system_health.disk_usage }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-warning" style="width: 75%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Memory Usage</span>
+                        <span>{{ system_health.memory_usage }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-info" style="width: 60%"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        Last backup: {{ system_health.last_backup|timesince }} ago
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Users -->
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Recent Users
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for user in recent_users %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="mb-0">{{ user.full_name }}</h6>
+                        <small class="text-muted">{{ user.role }} • {{ user.date_joined|timesince }} ago</small>
+                    </div>
+                    <div>
+                        <span class="status-badge status-{{ user.role|lower|slugify }}">{{ user.role }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No recent users</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications and Recent Activities -->
+<div class="row">
+    <!-- System Notifications -->
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    System Notifications
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for notification in notifications %}
+                <div class="notification-item {{ notification.notification_type|lower }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ notification.title }}</h6>
+                            <p class="mb-1 text-muted">{{ notification.message }}</p>
+                            <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                        </div>
+                        <span class="badge bg-{{ notification.notification_type|lower }}">{{ notification.priority }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No notifications</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activities -->
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Activities
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for activity in recent_activities %}
+                <div class="activity-item {{ activity.action_type|lower }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ activity.user.full_name }}</h6>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                        </div>
+                        <span class="badge bg-{{ activity.action_type|lower }}">{{ activity.action_type }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No recent activities</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Stats Row -->
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="stats-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="stats-number">{{ stats.active_admins }}</p>
+                    <p class="stats-label">Active Admins</p>
+                </div>
+                <div class="text-success">
+                    <i class="fas fa-user-shield fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="stats-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="stats-number">{{ stats.pending_images }}</p>
+                    <p class="stats-label">Pending Images</p>
+                </div>
+                <div class="text-warning">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="stats-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="stats-number">{{ stats.processed_images }}</p>
+                    <p class="stats-label">Processed Images</p>
+                </div>
+                <div class="text-info">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

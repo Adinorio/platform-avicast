@@ -1,0 +1,223 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<!-- User Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-4" style="width: 80px; height: 80px; font-size: 2rem;">
+                        {{ user_obj.first_name.0|upper }}{{ user_obj.last_name.0|upper }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h3 class="mb-1">{{ user_obj.full_name }}</h3>
+                        <p class="text-muted mb-2">{{ user_obj.employee_id }} • {{ user_obj.email }}</p>
+                        <div class="d-flex gap-2">
+                            <span class="status-badge status-{{ user_obj.role|lower|slugify }}">{{ user_obj.role }}</span>
+                            {% if user_obj.is_archived %}
+                                <span class="status-badge status-archived">Archived</span>
+                            {% elif user_obj.is_active %}
+                                <span class="status-badge status-active">Active</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'admin_system:user_edit' user_obj.id %}" class="btn btn-admin btn-warning">
+                            <i class="fas fa-edit me-2"></i>Edit User
+                        </a>
+                        <a href="{% url 'admin_system:user_management' %}" class="btn btn-admin btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Information -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Basic Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="fw-bold">Employee ID:</td>
+                        <td>{{ user_obj.employee_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Full Name:</td>
+                        <td>{{ user_obj.full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Email:</td>
+                        <td>{{ user_obj.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Role:</td>
+                        <td><span class="status-badge status-{{ user_obj.role|lower|slugify }}">{{ user_obj.role }}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Account Status:</td>
+                        <td>
+                            {% if user_obj.is_archived %}
+                                <span class="status-badge status-archived">Archived</span>
+                            {% elif user_obj.is_active %}
+                                <span class="status-badge status-active">Active</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Staff Status:</td>
+                        <td>
+                            {% if user_obj.is_staff %}
+                                <span class="badge bg-success">Yes</span>
+                            {% else %}
+                                <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Superuser:</td>
+                        <td>
+                            {% if user_obj.is_superuser %}
+                                <span class="badge bg-danger">Yes</span>
+                            {% else %}
+                                <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Account Dates
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="fw-bold">Date Joined:</td>
+                        <td>{{ user_obj.date_joined|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Last Login:</td>
+                        <td>
+                            {% if user_obj.last_login %}
+                                {{ user_obj.last_login|date:"M d, Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Last Activity:</td>
+                        <td>
+                            {% if user_obj.last_activity %}
+                                {{ user_obj.last_activity|date:"M d, Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Unknown</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Login Count:</td>
+                        <td>{{ user_obj.login_count|default:0 }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Password Changed:</td>
+                        <td>
+                            {% if user_obj.password_changed_date %}
+                                {{ user_obj.password_changed_date|date:"M d, Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if user_obj.archived_date %}
+                    <tr>
+                        <td class="fw-bold">Archived Date:</td>
+                        <td>{{ user_obj.archived_date|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent User Activities
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for activity in activities %}
+                <div class="activity-item view">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ activity.action_type }}</h6>
+                            <p class="mb-1 text-muted">{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                        </div>
+                        <span class="badge bg-secondary">{{ activity.action_type }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No recent activities</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-shield me-2"></i>
+                    Admin Activities
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for activity in admin_activities %}
+                <div class="activity-item {{ activity.action_type|lower }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ activity.action_type }}</h6>
+                            <p class="mb-1 text-muted">{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                        </div>
+                        <span class="badge bg-{{ activity.action_type|lower }}">{{ activity.action_type }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No admin activities</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

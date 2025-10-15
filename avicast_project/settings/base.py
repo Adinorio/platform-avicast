@@ -44,7 +44,7 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    # "django.contrib.admin",  # REMOVED - Using custom admin system instead
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "apps.common.apps.CommonConfig",
     "apps.users.apps.UsersConfig",
     "apps.fauna.apps.FaunaConfig",
+    "apps.admin_system.apps.AdminSystemConfig",
     "apps.locations.apps.LocationsConfig",
     "apps.analytics_new.apps.AnalyticsNewConfig",
     "apps.image_processing.apps.ImageProcessingConfig",
@@ -73,7 +74,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # 'axes.middleware.AxesMiddleware',  # Temporarily disabled
-    "apps.users.middleware.SuperadminRestrictionMiddleware",  # Custom middleware for role restrictions
+    "apps.users.middleware.RoleRestrictionMiddleware",  # Custom middleware for role restrictions
+    "apps.admin_system.middleware.SuperAdminPasswordChangeMiddleware",  # Password change middleware
 ]
 
 ROOT_URLCONF = "avicast_project.urls"

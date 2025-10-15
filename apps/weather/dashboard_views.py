@@ -6,13 +6,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
 
-from django.contrib.admin.views.decorators import staff_member_required as staff_required
+# Removed Django admin dependency - using custom role-based permissions
 from apps.locations.models import Site
 from .models import FieldWorkSchedule, WeatherAlert, WeatherAPI, WeatherForecast
 
 
 @login_required
-@staff_required
 def dashboard(request):
     """Weather dashboard with forecasts and optimization"""
     # Get all active sites

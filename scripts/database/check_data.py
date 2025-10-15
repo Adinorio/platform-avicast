@@ -108,7 +108,7 @@ def check_database_data():
             print("   3. Database connection issues")
             print("\n   To add test data:")
             print("   1. Create a superuser: python manage.py createsuperuser")
-            print("   2. Access admin: http://localhost:8000/admin/")
+            print("   2. Access admin: http://localhost:8000/admin-system/")
             print("   3. Add some test sites and census data")
         else:
             print("✅ Database contains data!")

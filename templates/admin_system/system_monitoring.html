@@ -1,0 +1,194 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<!-- System Health Overview -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stats-card success">
+            <div class="text-center">
+                <p class="stats-number">{{ db_stats|length }}</p>
+                <p class="stats-label">Database Tables</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="stats-card info">
+            <div class="text-center">
+                <p class="stats-number">{{ db_stats.users|default:0 }}</p>
+                <p class="stats-label">Total Users</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="stats-card warning">
+            <div class="text-center">
+                <p class="stats-number">{{ db_stats.fauna_species|default:0 }}</p>
+                <p class="stats-label">Species</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="stats-card primary">
+            <div class="text-center">
+                <p class="stats-number">{{ db_stats.image_processing_imageupload|default:0 }}</p>
+                <p class="stats-label">Images</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Database Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-database me-2"></i>
+                    Database Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for table_name, count in db_stats.items %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <h6 class="mb-0">{{ table_name|title }}</h6>
+                                <small class="text-muted">Table</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary fs-6">{{ count }}</span>
+                                <div><small class="text-muted">Records</small></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent System Activities -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent System Activities
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for activity in recent_activities %}
+                <div class="activity-item {{ activity.action_type|lower }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ activity.user.full_name }}</h6>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{{ activity.action_type|lower }}">{{ activity.action_type }}</span>
+                            {% if activity.model_name %}
+                                <div><small class="text-muted">{{ activity.model_name }}</small></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No recent activities</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    System Errors
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for error in error_activities %}
+                <div class="alert alert-danger alert-sm mb-2">
+                    <h6 class="alert-heading">{{ error.user.full_name }}</h6>
+                    <p class="mb-1">{{ error.description }}</p>
+                    <small class="text-muted">{{ error.timestamp|timesince }} ago</small>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No recent errors</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Configuration -->
+<div class="row">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>
+                    System Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if configurations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Value</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Public</th>
+                                <th>Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for config in configurations %}
+                            <tr>
+                                <td><code>{{ config.key }}</code></td>
+                                <td>
+                                    {% if config.data_type == 'JSON' %}
+                                        <pre class="mb-0">{{ config.value|truncatechars:50 }}</pre>
+                                    {% else %}
+                                        {{ config.value|truncatechars:50 }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ config.data_type }}</span>
+                                </td>
+                                <td>{{ config.description|truncatechars:50 }}</td>
+                                <td>
+                                    {% if config.is_public %}
+                                        <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ config.updated_at|date:"M d, Y" }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No system configurations found</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

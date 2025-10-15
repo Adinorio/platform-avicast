@@ -3,7 +3,7 @@ GTD-based Image Processing Permissions
 Following Getting Things Done methodology for access control
 """
 
-from django.contrib.admin.views.decorators import staff_member_required
+# Removed Django admin dependency - using custom role-based permissions
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
@@ -32,7 +32,7 @@ def can_access_image_processing(user):
     if not user.is_authenticated:
         return False
 
-    return user.role in ['ADMIN', 'SUPERADMIN']
+    return user.role in ['ADMIN', 'SUPERADMIN', 'FIELD_WORKER']
 
 
 def can_upload_images(user):

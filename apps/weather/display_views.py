@@ -9,13 +9,13 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
-from django.contrib.admin.views.decorators import staff_member_required as staff_required
+# Removed Django admin dependency - using custom role-based permissions
 # from apps.locations.models import Site  # Temporarily disabled during revamp
 from .models import FieldWorkSchedule, WeatherAlert, WeatherForecast
 
 
 @login_required
-@staff_required
+# Removed Django admin decorator - using custom role-based permissions
 def alerts_view(request):
     """Weather alerts and warnings view"""
     # Get all alerts
@@ -44,7 +44,7 @@ def alerts_view(request):
 
 
 @login_required
-@staff_required
+# Removed Django admin decorator - using custom role-based permissions
 def forecast_view(request, site_id=None):
     """Weather forecast view for specific site or all sites"""
     if site_id:
@@ -84,7 +84,7 @@ def forecast_view(request, site_id=None):
 
 
 @login_required
-@staff_required
+# Removed Django admin decorator - using custom role-based permissions
 def schedule_view(request):
     """Field work schedule management"""
     # Get all schedules

@@ -1,0 +1,159 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<!-- Edit User Form -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Edit User: {{ user_obj.full_name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ user_obj.first_name }}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ user_obj.last_name }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ user_obj.email }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="FIELD_WORKER" {% if user_obj.role == 'FIELD_WORKER' %}selected{% endif %}>Field Worker</option>
+                            <option value="ADMIN" {% if user_obj.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                            {% if user.role == 'SUPERADMIN' %}
+                            <option value="SUPERADMIN" {% if user_obj.role == 'SUPERADMIN' %}selected{% endif %}>Super Admin</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                       {% if user_obj.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Active Account
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_staff" name="is_staff" 
+                                       {% if user_obj.is_staff %}checked{% endif %}>
+                                <label class="form-check-label" for="is_staff">
+                                    Staff Access
+                                </label>
+                            </div>
+                        </div>
+                        
+                        {% if user.role == 'SUPERADMIN' %}
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_superuser" name="is_superuser" 
+                                       {% if user_obj.is_superuser %}checked{% endif %}>
+                                <label class="form-check-label" for="is_superuser">
+                                    Superuser Access
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-admin btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{% url 'admin_system:user_detail' user_obj.id %}" class="btn btn-admin btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="admin-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Current Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td class="fw-bold">Employee ID:</td>
+                        <td>{{ user_obj.employee_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Date Joined:</td>
+                        <td>{{ user_obj.date_joined|date:"M d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Last Login:</td>
+                        <td>
+                            {% if user_obj.last_login %}
+                                {{ user_obj.last_login|date:"M d, Y" }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Login Count:</td>
+                        <td>{{ user_obj.login_count|default:0 }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="admin-card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Important Notes
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        <small>Changes will take effect immediately</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-shield-alt text-warning me-2"></i>
+                        <small>Be careful when changing user roles</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-history text-secondary me-2"></i>
+                        <small>All changes are logged for audit</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
