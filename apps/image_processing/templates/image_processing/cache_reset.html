@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Cache Reset - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'image_processing:dashboard' %}">Image Processing</a>
+            </li>
+            <li class="breadcrumb-item active">Cache Reset</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-sync-alt text-light me-2"></i>
+                Cache Reset Tools
+            </h2>
+            <p class="text-muted">Clear browser cache to see updated content</p>
+        </div>
+    </div>
+
+    <!-- Cache Reset Instructions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-info text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Browser Cache Issue Detected
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        Your browser is showing cached content instead of the latest updates.
+                        Use the methods below to clear the cache and see fresh content.
+                    </p>
+
+                    <!-- Quick Actions -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-info">
+                                        <i class="fas fa-keyboard me-2"></i>
+                                        Keyboard Shortcut
+                                    </h5>
+                                    <h3 class="text-info">Ctrl + F5</h3>
+                                    <p class="card-text">Hard refresh - bypasses all caches</p>
+                                    <button class="btn btn-info" onclick="window.location.reload()">
+                                        <i class="fas fa-sync-alt me-1"></i>Try Now
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-success">
+                                        <i class="fas fa-broom me-2"></i>
+                                        Clear Cache
+                                    </h5>
+                                    <h6 class="text-success">Manual Method</h6>
+                                    <p class="card-text">Clear browser cache completely</p>
+                                    <button class="btn btn-success" onclick="showCacheInstructions()">
+                                        <i class="fas fa-info-circle me-1"></i>Instructions
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Instructions -->
+                    <div id="cacheInstructions" class="mt-4" style="display: none;">
+                        <h5>Detailed Cache Clearing Instructions:</h5>
+
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <h6><i class="fab fa-chrome text-info me-2"></i>Chrome / Edge</h6>
+                                <ol class="small">
+                                    <li>Press <kbd>Ctrl + Shift + Delete</kbd></li>
+                                    <li>Select "Cached images and files"</li>
+                                    <li>Click "Clear data"</li>
+                                    <li>Refresh page with <kbd>Ctrl + F5</kbd></li>
+                                </ol>
+                            </div>
+                            <div class="col-md-4">
+                                <h6><i class="fab fa-firefox text-orange me-2"></i>Firefox</h6>
+                                <ol class="small">
+                                    <li>Press <kbd>Ctrl + Shift + Delete</kbd></li>
+                                    <li>Select "Cache"</li>
+                                    <li>Click "Clear"</li>
+                                    <li>Refresh page with <kbd>Ctrl + F5</kbd></li>
+                                </ol>
+                            </div>
+                            <div class="col-md-4">
+                                <h6><i class="fas fa-mobile-alt text-light me-2"></i>Mobile</h6>
+                                <ol class="small">
+                                    <li>Open browser settings</li>
+                                    <li>Find "Privacy" or "Storage"</li>
+                                    <li>Clear "Cached data" or "Site data"</li>
+                                    <li>Refresh the page</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alternative Solutions -->
+                    <div class="mt-4">
+                        <h6>Alternative Solutions:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-user-secret me-2"></i>Incognito Mode</h6>
+                                    <p class="mb-2">Open <code>http://127.0.0.1:8000/image-processing/review/</code> in private browsing mode.</p>
+                                    <a href="{% url 'image_processing:review' %}" target="_blank" class="btn btn-info btn-sm">
+                                        <i class="fas fa-external-link-alt me-1"></i>Open in New Tab
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-redo me-2"></i>Restart Browser</h6>
+                                    <p class="mb-2">Completely close and restart your browser application.</p>
+                                    <button class="btn btn-info btn-sm" onclick="window.close()">
+                                        <i class="fas fa-times me-1"></i>Close This Tab
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Links -->
+                    <div class="mt-4">
+                        <h6>Test Links:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a href="{% url 'image_processing:review' %}" class="btn btn-info btn-block">
+                                    <i class="fas fa-eye me-2"></i>Test Review Page
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'image_processing:dashboard' %}" class="btn btn-secondary btn-block">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Test Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showCacheInstructions() {
+    const instructions = document.getElementById('cacheInstructions');
+    instructions.style.display = instructions.style.display === 'none' ? 'block' : 'none';
+}
+
+// Auto-redirect after 30 seconds if not manually refreshed
+setTimeout(function() {
+    if (confirm('Would you like to return to the review page?')) {
+        window.location.href = '{% url "image_processing:review" %}';
+    }
+}, 30000);
+</script>
+{% endblock %}

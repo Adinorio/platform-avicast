@@ -2,6 +2,8 @@
 
 {% block title %}Allocate to Census - AVICAST{% endblock %}
 
+{% load allocation_filters %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Breadcrumb -->
@@ -36,10 +38,20 @@
             <div class="card border-0 shadow-sm">
                 <div class="row g-0">
                     <div class="col-lg-3">
-                        <img src="{{ result.image_upload.image_file.url }}"
-                             class="img-fluid rounded-start h-100 object-fit-cover"
-                             alt="{{ result.image_upload.title }}"
-                             style="min-height: 250px;">
+                        {% if result.image_upload.image_file %}
+                            <img src="{{ result.image_upload.image_file.url }}"
+                                 class="img-fluid rounded-start h-100 object-fit-cover"
+                                 alt="{{ result.image_upload.title }}"
+                                 style="min-height: 250px;">
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center bg-light rounded-start h-100"
+                                 style="min-height: 250px;">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-image fa-3x mb-3"></i>
+                                    <p>No image available</p>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="col-lg-6">
                         <div class="card-body">
@@ -93,7 +105,7 @@
 
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Target Site <span class="text-danger">*</span></label>
-                                        <select name="site_id" class="form-select" required>
+                                        <select name="site_id" class="form-select" required onchange="updateSiteSelection(this.value, '{{ result.id }}')">
                                             <option value="">Select a site...</option>
                                             {% for site in available_sites %}
                                                 <option value="{{ site.id }}">{{ site.name }}</option>
@@ -102,15 +114,27 @@
                                     </div>
 
                                     <div class="col-md-6">
+                                        <label class="form-label fw-bold">Year <span class="text-danger">*</span></label>
+                                        <select name="year" class="form-select" required id="year-select-{{ result.id }}" onchange="updateYearsAndMonths(this.value, '{{ result.id }}')">
+                                            <option value="">Select year...</option>
+                                            {% for year in all_years %}
+                                                <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Month <span class="text-danger">*</span></label>
+                                        <select name="month" class="form-select" required id="month-select-{{ result.id }}" disabled>
+                                            <option value="">Select month...</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
                                         <label class="form-label fw-bold">Observation Date <span class="text-danger">*</span></label>
                                         <input type="date" name="observation_date" class="form-control" required>
                                     </div>
 
-                                    <div class="col-12">
-                                        <label class="form-label fw-bold">Allocation Notes</label>
-                                        <textarea name="allocation_notes" class="form-control" rows="2"
-                                                  placeholder="Optional notes about this allocation..."></textarea>
-                                    </div>
 
                                     <div class="col-12">
                                         <button type="submit" class="btn btn-success">
@@ -210,6 +234,102 @@ function skipAllocation(resultId) {
     // In a real implementation, this would mark the result for later allocation
     // For now, just show a message
     alert('Allocation skipped. You can allocate this result later from the dashboard.');
+}
+
+// Handle site selection changes
+async function updateSiteSelection(siteId, resultId) {
+    const form = event.target.closest('form');
+    const yearSelect = form.querySelector(`#year-select-${resultId}`);
+    const monthSelect = form.querySelector(`#month-select-${resultId}`);
+
+    if (!siteId) {
+        // Clear and disable year and month selects
+        yearSelect.innerHTML = '<option value="">Select year...</option>';
+        yearSelect.disabled = true;
+        monthSelect.innerHTML = '<option value="">Select month...</option>';
+        monthSelect.disabled = true;
+        return;
+    }
+
+    // Load years for selected site
+    await loadYearsForSite(siteId, resultId);
+}
+
+// Load years for a specific site via AJAX
+async function loadYearsForSite(siteId, resultId) {
+    const yearSelect = document.querySelector(`#year-select-${resultId}`);
+
+    try {
+        const response = await fetch(`/image-processing/allocate/site/${siteId}/years/`);
+        const data = await response.json();
+
+        if (data.years && data.years.length > 0) {
+            let options = '<option value="">Select year...</option>';
+            data.years.forEach(year => {
+                options += `<option value="${year}">${year}</option>`;
+            });
+            yearSelect.innerHTML = options;
+            yearSelect.disabled = false;
+        } else {
+            yearSelect.innerHTML = '<option value="">No years available for this site</option>';
+            yearSelect.disabled = true;
+        }
+    } catch (error) {
+        console.error('Error loading years:', error);
+        yearSelect.innerHTML = '<option value="">Error loading years</option>';
+        yearSelect.disabled = true;
+    }
+}
+
+// Update years and months when site is selected
+function updateYearsAndMonths(year, resultId) {
+    const form = event.target.closest('form');
+    const siteSelect = form.querySelector('select[name="site_id"]');
+    const monthSelect = form.querySelector(`#month-select-${resultId}`);
+
+    if (!year) {
+        monthSelect.disabled = true;
+        monthSelect.innerHTML = '<option value="">Select month...</option>';
+        return;
+    }
+
+    // Get selected site
+    const siteId = siteSelect.value;
+    if (!siteId) {
+        monthSelect.disabled = true;
+        monthSelect.innerHTML = '<option value="">Select site first...</option>';
+        return;
+    }
+
+    // Load months for selected site and year
+    loadMonthsForSiteYear(siteId, year, resultId);
+}
+
+// Load months for a specific site and year via AJAX
+async function loadMonthsForSiteYear(siteId, year, resultId) {
+    const monthSelect = document.querySelector(`#month-select-${resultId}`);
+
+    try {
+        const response = await fetch(`/image-processing/allocate/site/${siteId}/year/${year}/months/`);
+        const data = await response.json();
+
+        if (data.months && data.months.length > 0) {
+            let options = '<option value="">Select month...</option>';
+            data.months.forEach(month => {
+                const monthName = new Date(2000, month - 1).toLocaleString('default', { month: 'long' });
+                options += `<option value="${month}">${monthName}</option>`;
+            });
+            monthSelect.innerHTML = options;
+            monthSelect.disabled = false;
+        } else {
+            monthSelect.innerHTML = '<option value="">No months available for this site/year</option>';
+            monthSelect.disabled = true;
+        }
+    } catch (error) {
+        console.error('Error loading months:', error);
+        monthSelect.innerHTML = '<option value="">Error loading months</option>';
+        monthSelect.disabled = true;
+    }
 }
 </script>
 {% endblock %}

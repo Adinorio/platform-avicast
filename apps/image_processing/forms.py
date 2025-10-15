@@ -118,15 +118,6 @@ class CensusAllocationForm(forms.Form):
         help_text="When were these birds observed?"
     )
 
-    allocation_notes = forms.CharField(
-        widget=forms.Textarea(attrs={
-            "class": "form-control",
-            "rows": 2,
-            "placeholder": "Optional notes about this allocation"
-        }),
-        required=False,
-        help_text="Add context or notes about this observation"
-    )
 
     def __init__(self, *args, **kwargs):
         sites_queryset = kwargs.pop("sites_queryset", None)

@@ -14,12 +14,12 @@ User = get_user_model()
 
 class EgretSpecies(models.TextChoices):
     """6 Focus egret species for identification"""
-    CHINESE_EGRET = "CHINESE_EGRET", "Chinese Egret"
-    GREAT_EGRET = "GREAT_EGRET", "Great Egret"
-    INTERMEDIATE_EGRET = "INTERMEDIATE_EGRET", "Intermediate Egret"
-    LITTLE_EGRET = "LITTLE_EGRET", "Little Egret"
-    CATTLE_EGRET = "CATTLE_EGRET", "Cattle Egret"
-    PACIFIC_REEF_HERON = "PACIFIC_REEF_HERON", "Pacific Reef Heron"
+    CHINESE_EGRET = "Chinese_Egret", "Chinese Egret"
+    GREAT_EGRET = "Great_Egret", "Great Egret"
+    INTERMEDIATE_EGRET = "Intermediate_Egret", "Intermediate Egret"
+    LITTLE_EGRET = "Little_Egret", "Little Egret"
+    WESTERN_CATTLE_EGRET = "Western_Cattle_Egret", "Western Cattle Egret"
+    PACIFIC_REEF_HERON = "Pacific_Reef_Heron", "Pacific Reef Heron"
 
 
 class ProcessingStatus(models.TextChoices):
@@ -131,23 +131,29 @@ class ProcessingResult(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     image_upload = models.OneToOneField(ImageUpload, on_delete=models.CASCADE, related_name="processing_result")
 
-    # AI detection results (Clarify stage)
+    # AI detection results (Clarify stage) - Enhanced for multi-species support
     detected_species = models.CharField(
         max_length=50,
         choices=EgretSpecies.choices,
-        help_text="AI-identified egret species"
+        help_text="Primary AI-identified egret species (highest confidence)"
     )
     confidence_score = models.DecimalField(
         max_digits=5,
         decimal_places=4,
-        help_text="AI confidence score (0.0 to 1.0)"
+        help_text="Confidence score of primary detection (0.0 to 1.0)"
     )
     bounding_box = models.JSONField(
-        help_text="Bounding box coordinates for detected bird"
+        help_text="Bounding box coordinates for primary detected bird"
     )
     total_detections = models.PositiveIntegerField(
         default=1,
-        help_text="Number of birds detected in image"
+        help_text="Total number of birds detected in image"
+    )
+
+    # Enhanced multi-species support
+    all_detections = models.JSONField(
+        default=list,
+        help_text="Complete list of all detections with species, confidence, and bounding boxes"
     )
 
     # Processing metadata
@@ -191,22 +197,22 @@ class ProcessingResult(models.Model):
     overridden_count = models.PositiveIntegerField(null=True, blank=True)
     override_reason = models.TextField(blank=True)
 
-    # Allocation (Engage stage)
-    # allocated_to_site = models.ForeignKey(  # Temporarily disabled during locations revamp
+    # Allocation (Engage stage) - Disabled
+    # allocated_to_site = models.ForeignKey(  # Disabled - allocation not needed
     #     "locations.Site",
     #     on_delete=models.SET_NULL,
     #     null=True,
     #     blank=True,
     #     related_name="allocated_images"
     # )
-    # allocated_to_census = models.ForeignKey(  # Temporarily disabled during locations revamp
+    # allocated_to_census = models.ForeignKey(  # Disabled - allocation not needed
     #     "locations.CensusObservation",
     #     on_delete=models.SET_NULL,
     #     null=True,
     #     blank=True,
     #     related_name="allocated_images"
     # )
-    # allocated_at = models.DateTimeField(null=True, blank=True)  # Temporarily disabled during locations revamp
+    # allocated_at = models.DateTimeField(null=True, blank=True)  # Disabled - allocation not needed
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -226,6 +232,11 @@ class ProcessingResult(models.Model):
         self.reviewed_by = reviewer
         self.reviewed_at = timezone.now()
         self.review_notes = notes
+
+        # Move image from ORGANIZED to REFLECTED status (ready for allocation)
+        self.image_upload.upload_status = ProcessingStatus.REFLECTED
+        self.image_upload.save(update_fields=["upload_status"])
+
         self.save(update_fields=["review_decision", "reviewed_by", "reviewed_at", "review_notes"])
 
     def reject_result(self, reviewer, notes=""):
@@ -234,6 +245,11 @@ class ProcessingResult(models.Model):
         self.reviewed_by = reviewer
         self.reviewed_at = timezone.now()
         self.review_notes = notes
+
+        # Move image from ORGANIZED to REFLECTED status (reviewed but rejected)
+        self.image_upload.upload_status = ProcessingStatus.REFLECTED
+        self.image_upload.save(update_fields=["upload_status"])
+
         self.save(update_fields=["review_decision", "reviewed_by", "reviewed_at", "review_notes"])
 
     def override_result(self, reviewer, new_species, new_count=None, reason=""):
@@ -245,14 +261,25 @@ class ProcessingResult(models.Model):
         self.review_decision = ReviewDecision.OVERRIDDEN
         self.reviewed_by = reviewer
         self.reviewed_at = timezone.now()
+
+        # Move image from ORGANIZED to REFLECTED status (reviewed and overridden)
+        self.image_upload.upload_status = ProcessingStatus.REFLECTED
+        self.image_upload.save(update_fields=["upload_status"])
+
         self.save()
 
     def allocate_to_census(self, site, census_observation):
-        """Allocate approved result to census data (Engage stage)"""
-        self.allocated_to_site = site
-        self.allocated_to_census = census_observation
-        self.allocated_at = timezone.now()
-        self.save(update_fields=["allocated_to_site", "allocated_to_census", "allocated_at"])
+        """Allocate approved result to census data (Engage stage) - Disabled"""
+        # Allocation functionality disabled - just update image status
+        # self.allocated_to_site = site
+        # self.allocated_to_census = census_observation
+        # self.allocated_at = timezone.now()
+
+        # Move image from REFLECTED to ENGAGED status (census record created)
+        self.image_upload.upload_status = ProcessingStatus.ENGAGED
+        self.image_upload.save(update_fields=["upload_status"])
+
+        # self.save(update_fields=["allocated_to_site", "allocated_to_census", "allocated_at"])
 
     @property
     def final_species(self):

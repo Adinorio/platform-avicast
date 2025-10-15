@@ -23,7 +23,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-2">
-                    <i class="fas fa-robot text-primary me-2"></i>
+                    <i class="fas fa-robot text-info me-2"></i>
                     {{ title }}
                 </h2>
                 <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary">
@@ -65,7 +65,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-list text-primary"></i>
+                                <i class="fas fa-list text-info"></i>
                                 Available Models
                             </h5>
                         </div>
@@ -87,13 +87,13 @@
                                                 <p class="text-muted small mb-2">Model Files:</p>
                                                 <ul class="list-unstyled small">
                                                     {% for file in model.files %}
-                                                    <li><i class="fas fa-file-code text-info"></i> {{ file }}</li>
+                                                    <li><i class="fas fa-file-code text-light"></i> {{ file }}</li>
                                                     {% endfor %}
                                                 </ul>
                                             </div>
                                             <div class="card-footer bg-transparent">
                                                 {% if model.name != current_model %}
-                                                <button class="btn btn-sm btn-primary w-100" onclick="switchModel('{{ model.name }}')">
+                                                <button class="btn btn-sm btn-info w-100" onclick="switchModel('{{ model.name }}')">
                                                     <i class="fas fa-exchange-alt"></i> Switch to this model
                                                 </button>
                                                 {% else %}
@@ -108,10 +108,10 @@
                                 </div>
                             {% else %}
                                 <div class="text-center py-4">
-                                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                                    <i class="fas fa-exclamation-triangle text-light fa-3x mb-3"></i>
                                     <h5>No Models Found</h5>
                                     <p class="text-muted">No AI models were found in the models directory.</p>
-                                    <a href="{% url 'image_processing:dashboard' %}" class="btn btn-primary">
+                                    <a href="{% url 'image_processing:dashboard' %}" class="btn btn-info">
                                         <i class="fas fa-upload"></i> Upload Models
                                     </a>
                                 </div>
@@ -127,7 +127,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-info-circle text-info"></i>
+                                <i class="fas fa-info-circle text-light"></i>
                                 Model Information
                             </h5>
                         </div>

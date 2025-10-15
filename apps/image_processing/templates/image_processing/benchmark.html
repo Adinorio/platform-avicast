@@ -23,7 +23,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-2">
-                    <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                    <i class="fas fa-tachometer-alt text-info me-2"></i>
                     {{ title }}
                 </h2>
                 <a href="{% url 'image_processing:dashboard' %}" class="btn btn-outline-secondary">
@@ -41,7 +41,7 @@
                     <div class="card border-0 shadow-sm h-100 {% if model.status == 'active' %}border-success{% endif %}">
                         <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
-                                <i class="fas fa-robot text-primary me-2"></i>
+                                <i class="fas fa-robot text-info me-2"></i>
                                 {{ model.name|title }}
                             </h5>
                             {% if model.status == 'active' %}
@@ -55,9 +55,9 @@
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <div class="text-center">
-                                        <h6 class="text-primary mb-1">Accuracy</h6>
+                                        <h6 class="text-info mb-1">Accuracy</h6>
                                         <div class="progress mb-2" style="height: 20px;">
-                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                            <div class="progress-bar bg-dark" role="progressbar" 
                                                  style="width: {{ model.accuracy|floatformat:0|add:0 }}%">
                                                 {{ model.accuracy|floatformat:1 }}
                                             </div>
@@ -66,7 +66,7 @@
                                 </div>
                                 <div class="col-6">
                                     <div class="text-center">
-                                        <h6 class="text-info mb-1">Precision</h6>
+                                        <h6 class="text-light mb-1">Precision</h6>
                                         <div class="progress mb-2" style="height: 20px;">
                                             <div class="progress-bar bg-info" role="progressbar" 
                                                  style="width: {{ model.precision|floatformat:0|add:0 }}%">
@@ -80,9 +80,9 @@
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <div class="text-center">
-                                        <h6 class="text-warning mb-1">Recall</h6>
+                                        <h6 class="text-light mb-1">Recall</h6>
                                         <div class="progress mb-2" style="height: 20px;">
-                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                            <div class="progress-bar bg-info" role="progressbar" 
                                                  style="width: {{ model.recall|floatformat:0|add:0 }}%">
                                                 {{ model.recall|floatformat:1 }}
                                             </div>
@@ -107,7 +107,7 @@
                                 <div class="col-12">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="fw-bold">Inference Time:</span>
-                                        <span class="badge {% if model.inference_time < 0.1 %}bg-success{% elif model.inference_time < 0.2 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        <span class="badge {% if model.inference_time < 0.1 %}bg-success{% elif model.inference_time < 0.2 %}bg-info{% else %}bg-danger{% endif %}">
                                             {{ model.inference_time }}s
                                         </span>
                                     </div>
@@ -145,7 +145,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-info-circle text-info"></i>
+                                <i class="fas fa-info-circle text-light"></i>
                                 Benchmark Information
                             </h5>
                         </div>
@@ -168,7 +168,7 @@
                                     <ul class="text-muted small">
                                         <li><strong>Inference Time:</strong> Time to process one image</li>
                                         <li><span class="badge bg-success">Fast:</span> &lt; 0.1s</li>
-                                        <li><span class="badge bg-warning">Moderate:</span> 0.1s - 0.2s</li>
+                                        <li><span class="badge bg-info">Moderate:</span> 0.1s - 0.2s</li>
                                         <li><span class="badge bg-danger">Slow:</span> &gt; 0.2s</li>
                                     </ul>
                                     

@@ -21,7 +21,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <h2 class="mb-2">
-                <i class="fas fa-clipboard-list text-primary me-2"></i>
+                <i class="fas fa-clipboard-list text-info me-2"></i>
                 Image Library
             </h2>
             <p class="text-muted">View and organize all uploaded bird images by processing stage</p>
@@ -45,7 +45,7 @@
                             </a>
                         </div>
                         <div class="col-md-2">
-                            <a href="{% url 'image_processing:list' %}?stage=clarified" class="btn {% if current_stage == 'clarified' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">
+                            <a href="{% url 'image_processing:list' %}?stage=clarified" class="btn {% if current_stage == 'clarified' %}btn-info{% else %}btn-outline-info{% endif %} w-100">
                                 Clarify ({{ stage_counts.clarified }})
                             </a>
                         </div>
@@ -77,14 +77,24 @@
         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
             <div class="card h-100 border">
                 <div class="position-relative">
-                    <img src="{{ image.image_file.url }}"
-                         class="card-img-top"
-                         alt="{{ image.title }}"
-                         style="height: 200px; object-fit: cover;">
+                    {% if image.image_file %}
+                        <img src="{{ image.image_file.url }}"
+                             class="card-img-top"
+                             alt="{{ image.title }}"
+                             style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center bg-light"
+                             style="height: 200px;">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-image fa-2x"></i>
+                                <p class="mt-2 small">No image</p>
+                            </div>
+                        </div>
+                    {% endif %}
 
                     <!-- Status Badge -->
                     <div class="position-absolute top-0 end-0 m-2">
-                        <span class="badge fs-6 {% if image.upload_status == 'CAPTURED' %}bg-primary{% elif image.upload_status == 'CLARIFIED' %}bg-warning{% elif image.upload_status == 'ORGANIZED' %}bg-info{% elif image.upload_status == 'REFLECTED' %}bg-secondary{% else %}bg-success{% endif %}">
+                        <span class="badge fs-6 {% if image.upload_status == 'CAPTURED' %}bg-primary{% elif image.upload_status == 'CLARIFIED' %}bg-info{% elif image.upload_status == 'ORGANIZED' %}bg-info{% elif image.upload_status == 'REFLECTED' %}bg-secondary{% else %}bg-success{% endif %}">
                             {% if image.upload_status == 'CAPTURED' %}CAPTURE{% elif image.upload_status == 'CLARIFIED' %}CLARIFY{% elif image.upload_status == 'ORGANIZED' %}ORGANIZE{% elif image.upload_status == 'REFLECTED' %}REFLECT{% else %}ENGAGE{% endif %}
                         </span>
                     </div>
@@ -114,7 +124,7 @@
                     <!-- Action Buttons -->
                     <div class="btn-group-vertical w-100" role="group">
                         {% if image.upload_status == 'CAPTURED' %}
-                        <a href="{% url 'image_processing:start_processing' image.id %}" class="btn btn-sm btn-warning">
+                        <a href="{% url 'image_processing:start_processing' image.id %}" class="btn btn-sm btn-info">
                             <i class="fas fa-search me-1"></i>Start Clarification
                         </a>
                         {% elif image.upload_status == 'CLARIFIED' %}
@@ -196,7 +206,7 @@
                             No images in the {{ current_stage|title }} stage.
                         {% endif %}
                     </p>
-                    <a href="{% url 'image_processing:upload' %}" class="btn btn-primary btn-lg">
+                    <a href="{% url 'image_processing:upload' %}" class="btn btn-info btn-lg">
                         <i class="fas fa-upload me-2"></i>Upload Images
                     </a>
                 </div>
@@ -225,7 +235,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="border-end">
-                                <h3 class="text-warning">{{ stage_counts.clarified }}</h3>
+                                <h3 class="text-info">{{ stage_counts.clarified }}</h3>
                                 <p class="text-muted mb-0">Clarified</p>
                                 <small class="text-muted">AI processing in progress</small>
                             </div>

@@ -2,6 +2,30 @@
 
 {% block title %}Review Results - AVICAST{% endblock %}
 
+{% block extra_head %}
+<!-- Prevent caching for dynamic content -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<!-- Additional cache-busting for stubborn browsers -->
+<script>
+    // Disable browser back/forward cache for this page
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+
+    // Handle timestamp parameter for cache-busting
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('t')) {
+        // Page was loaded with cache-busting parameter
+        console.log('Page loaded with cache-busting timestamp:', urlParams.get('t'));
+    }
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Breadcrumb -->
@@ -20,11 +44,23 @@
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h2 class="mb-2">
-                <i class="fas fa-brain text-primary me-2"></i>
-                Review Results
-            </h2>
-            <p class="text-muted">Review and validate AI-generated bird species identifications</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="fas fa-brain text-info me-2"></i>
+                        Review Results
+                    </h2>
+                    <p class="text-muted">Review and validate AI-generated bird species identifications</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshPage()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                    <a href="{% url 'image_processing:cache_reset' %}" class="btn btn-outline-info btn-sm" target="_blank">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Cache Issues?
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -36,10 +72,38 @@
             <div class="card border-0 shadow-sm">
                 <div class="row g-0">
                     <div class="col-lg-4">
-                        <img src="{{ result.image_upload.image_file.url }}"
-                             class="img-fluid rounded-start h-100 object-fit-cover"
-                             alt="{{ result.image_upload.title }}"
-                             style="min-height: 300px;">
+                        {% if result.image_upload.image_file %}
+                            <div class="position-relative">
+                                <img src="/image-processing/image-with-bbox/{{ result.id }}/?t={{ result.created_at|date:'U' }}"
+                                     class="img-fluid rounded-start h-100 object-fit-cover"
+                                     alt="{{ result.image_upload.title }}"
+                                     style="min-height: 300px;"
+                                     id="review-image-{{ result.id }}"
+                                     data-original-url="{{ result.image_upload.image_file.url }}">
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-light btn-sm active"
+                                                onclick="toggleBoundingBox('{{ result.id }}', 'bbox')"
+                                                title="Show with bounding box">
+                                            <i class="fas fa-search-plus"></i> Box
+                                        </button>
+                                        <button type="button" class="btn btn-outline-light btn-sm"
+                                                onclick="toggleBoundingBox('{{ result.id }}', 'original')"
+                                                title="Show original image">
+                                            <i class="fas fa-image"></i> Original
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center bg-light rounded-start h-100"
+                                 style="min-height: 300px;">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-image fa-3x mb-3"></i>
+                                    <p>No image available</p>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="col-lg-8">
                         <div class="card-body">
@@ -59,7 +123,7 @@
                             <div class="row mb-3">
                                 <div class="col-md-4">
                                     <div class="border rounded p-3 bg-light">
-                                        <h6 class="fw-bold text-primary mb-2">
+                                        <h6 class="fw-bold text-info mb-2">
                                             <i class="fas fa-robot me-1"></i>AI Detection
                                         </h6>
                                         <p class="mb-1"><strong>Species:</strong> {{ result.get_detected_species_display }}</p>
@@ -126,7 +190,7 @@
                                         </button>
                                     </div>
                                     <div class="col-md-3">
-                                        <button class="btn btn-warning w-100 review-btn"
+                                        <button class="btn btn-info w-100 review-btn"
                                                 data-result-id="{{ result.id }}"
                                                 data-action="override"
                                                 data-bs-toggle="modal"
@@ -179,7 +243,7 @@
                     <i class="fas fa-brain text-muted fa-4x mb-4"></i>
                     <h4 class="text-muted">No Results Need Review</h4>
                     <p class="text-muted mb-4">All AI results have been reviewed. Process more images to see results here.</p>
-                    <a href="{% url 'image_processing:process' %}" class="btn btn-warning btn-lg">
+                    <a href="{% url 'image_processing:process' %}" class="btn btn-info btn-lg">
                         <i class="fas fa-search me-2"></i>Process More Images
                     </a>
                 </div>
@@ -209,7 +273,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                        <button type="submit" class="btn btn-info">Submit Review</button>
                     </div>
                 </form>
             </div>
@@ -228,6 +292,7 @@
                     {% csrf_token %}
                     <div class="modal-body">
                         <input type="hidden" name="result_id" id="overrideResultId">
+                        <input type="hidden" name="action" value="override">
                         <div class="mb-3">
                             <label class="form-label">Correct Species</label>
                             <select name="new_species" class="form-select" required>
@@ -252,7 +317,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-warning">Override Result</button>
+                        <button type="submit" class="btn btn-info">Override Result</button>
                     </div>
                 </form>
             </div>
@@ -261,6 +326,19 @@
 </div>
 
 <script>
+function toggleBoundingBox(resultId, viewType) {
+    const imgElement = document.getElementById(`review-image-${resultId}`);
+    const originalUrl = imgElement.dataset.originalUrl;
+
+    if (viewType === 'original') {
+        // Show original image
+        imgElement.src = originalUrl + '?t=' + Date.now();
+    } else {
+        // Show image with bounding box (default view)
+        imgElement.src = '/image-processing/image-with-bbox/' + resultId + '/?t=' + Date.now();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Handle review buttons
     document.querySelectorAll('.review-btn').forEach(button => {
@@ -273,14 +351,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Set modal values
-            document.getElementById('reviewResultId').value = resultId;
-            document.getElementById('reviewAction').value = action;
-
-            // Clear notes field
-            document.getElementById('reviewNotes').value = '';
+            if (action === 'override') {
+                // Set override modal values
+                document.getElementById('overrideResultId').value = resultId;
+            } else {
+                // Set review modal values
+                document.getElementById('reviewResultId').value = resultId;
+                document.getElementById('reviewAction').value = action;
+                
+                // Clear notes field
+                document.getElementById('reviewNotes').value = '';
+            }
         });
     });
 });
+
+        // Refresh page function
+        function refreshPage() {
+            window.location.reload();
+        }
 </script>
 {% endblock %}

@@ -2,6 +2,23 @@
 
 {% block title %}Process Images - AVICAST{% endblock %}
 
+{% block extra_head %}
+<!-- Prevent caching for dynamic content -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<!-- Additional cache-busting for stubborn browsers -->
+<script>
+    // Disable browser back/forward cache for this page
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Breadcrumb -->
@@ -20,11 +37,20 @@
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h2 class="mb-2">
-                <i class="fas fa-search text-primary me-2"></i>
-                Process Images
-            </h2>
-            <p class="text-muted">Use AI to identify bird species and analyze uploaded images</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="fas fa-search text-info me-2"></i>
+                        Process Images
+                    </h2>
+                    <p class="text-muted">Use AI to identify bird species and analyze uploaded images</p>
+                </div>
+                <div>
+                    <a href="{% url 'image_processing:cache_reset' %}" class="btn btn-outline-info btn-sm" target="_blank">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Cache Issues?
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -44,7 +70,16 @@
                         <div class="col-lg-3 col-md-4 col-sm-6">
                             <div class="card h-100 border">
                                 <div class="position-relative">
-                                    <img src="{{ image.image_file.url }}" class="card-img-top" alt="{{ image.title }}" style="height: 200px; object-fit: cover;">
+                                    {% if image.image_file %}
+                                        <img src="{{ image.image_file.url }}" class="card-img-top" alt="{{ image.title }}" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                                            <div class="text-center text-muted">
+                                                <i class="fas fa-image fa-2x"></i>
+                                                <p class="mt-2 small">No image</p>
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                     <div class="position-absolute top-0 end-0 m-2">
                                         <span class="badge bg-primary">{{ image.get_status_display }}</span>
                                     </div>
@@ -57,11 +92,19 @@
                                     <p class="card-text small text-muted">
                                         {{ image.file_size|filesizeformat }} • {{ image.uploaded_at|timesince }} ago
                                     </p>
-                                    <button class="btn btn-warning btn-sm w-100 process-btn"
-                                            data-image-id="{{ image.id }}"
-                                            data-image-title="{{ image.title }}">
-                                        <i class="fas fa-search me-1"></i>Clarify with AI
-                                    </button>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-info btn-sm process-btn"
+                                                data-image-id="{{ image.id }}"
+                                                data-image-title="{{ image.title }}">
+                                            <i class="fas fa-search me-1"></i>Clarify with AI
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm skip-btn"
+                                                data-image-id="{{ image.id }}"
+                                                data-image-title="{{ image.title }}"
+                                                onclick="skipProcessing('{{ image.id }}', '{{ image.title }}')">
+                                            <i class="fas fa-clock me-1"></i>Process Later
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -111,7 +154,7 @@
                     <i class="fas fa-camera text-muted fa-4x mb-4"></i>
                     <h4 class="text-muted">No Images Ready for Processing</h4>
                     <p class="text-muted mb-4">Upload some bird images first to start the processing.</p>
-                    <a href="{% url 'image_processing:upload' %}" class="btn btn-primary btn-lg">
+                    <a href="{% url 'image_processing:upload' %}" class="btn btn-info btn-lg">
                         <i class="fas fa-upload me-2"></i>Upload Images
                     </a>
                 </div>
@@ -133,14 +176,14 @@
                     <div class="row g-4">
                         <div class="col-md-4">
                             <div class="text-center">
-                                <i class="fas fa-search text-warning fa-2x mb-3"></i>
+                                <i class="fas fa-search text-light fa-2x mb-3"></i>
                                 <h6 class="fw-bold">Species Detection</h6>
                                 <p class="text-muted small">AI identifies egret species from the 6 focus species</p>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="text-center">
-                                <i class="fas fa-calculator text-info fa-2x mb-3"></i>
+                                <i class="fas fa-calculator text-light fa-2x mb-3"></i>
                                 <h6 class="fw-bold">Count Analysis</h6>
                                 <p class="text-muted small">AI counts individual birds in the image</p>
                             </div>
@@ -160,6 +203,33 @@
 </div>
 
 <script>
+// Skip processing - save image for later
+function skipProcessing(imageId, imageTitle) {
+    // Hide the image card with fade animation
+    const imageCard = event.target.closest('.col-lg-3');
+    
+    if (imageCard) {
+        imageCard.style.transition = 'opacity 0.3s ease';
+        imageCard.style.opacity = '0';
+        
+        setTimeout(() => {
+            imageCard.style.display = 'none';
+            
+            // Show success message
+            const statusDiv = document.getElementById('processing-status');
+            statusDiv.innerHTML = `
+                <i class="fas fa-clock text-light fa-3x mb-3"></i>
+                <p class="text-muted">"${imageTitle}" saved for later processing.</p>
+                <p class="small text-muted">This image will remain in CAPTURED status and appear here next time.</p>
+            `;
+            statusDiv.classList.remove('d-none');
+        }, 300);
+    }
+    
+    // Optional: Could send AJAX request to mark image as "deferred" if we add that field
+    console.log(`Image ${imageId} skipped for later processing`);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const processButtons = document.querySelectorAll('.process-btn');
 
@@ -193,29 +263,100 @@ function updateProgress(percentage, message) {
 
 async function startProcessing(imageId) {
     try {
-        // Simulate processing steps
-        updateProgress(10, 'Loading AI model...');
-        await sleep(1000);
+        // Show loading state
+        updateProgress(10, 'Starting AI processing...');
 
-        updateProgress(30, 'Analyzing image...');
-        await sleep(1500);
+        // Make actual API call to start processing
+        const response = await fetch(`/image-processing/process/${imageId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+            },
+            body: new URLSearchParams({
+                'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            }),
+            credentials: 'same-origin'  // Ensure cookies are sent for authentication
+        });
 
-        updateProgress(60, 'Detecting birds...');
-        await sleep(2000);
+        // Check response status first
+        if (!response.ok) {
+            if (response.status === 403) {
+                throw new Error('Authentication failed. Please refresh the page and try again.');
+            } else if (response.status === 404) {
+                throw new Error('Image not found or not ready for processing.');
+            } else {
+                throw new Error(`Server error (${response.status}). Please try again.`);
+            }
+        }
 
-        updateProgress(90, 'Finalizing results...');
-        await sleep(1000);
+        // Check if response is JSON or HTML
+        const contentType = response.headers.get('content-type');
+        let data;
 
-        updateProgress(100, 'Processing complete!');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            // If not JSON, it might be a redirect or error page
+            const text = await response.text();
+            if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                throw new Error('Server returned HTML instead of JSON. This might be due to authentication issues or server problems.');
+            } else {
+                throw new Error('Unexpected response format from server.');
+            }
+        }
 
-        // Redirect to results page
-        setTimeout(() => {
-            window.location.href = '{% url "image_processing:review" %}';
-        }, 1000);
+        if (data.success) {
+            // Processing started successfully
+            updateProgress(50, 'AI processing in progress...');
+
+            // Poll for completion by checking if the result appears in the review page
+            let attempts = 0;
+            const maxAttempts = 30;
+
+            while (attempts < maxAttempts) {
+                await sleep(1000);
+
+                try {
+                    // Check if the result now appears in the review page
+                    const checkResponse = await fetch(`/image-processing/review/?t=${Date.now()}`, {
+                        credentials: 'same-origin'
+                    });
+
+                    if (checkResponse.ok) {
+                        const checkContent = await checkResponse.text();
+
+                        // Look for the result ID in the HTML
+                        if (checkContent.includes(`data-result-id="${data.result_id}"`) ||
+                            checkContent.includes(data.result_id) ||
+                            checkContent.includes('No images ready for review')) {
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // Continue polling on network errors
+                    console.log('Polling check failed, continuing...');
+                }
+
+                attempts++;
+                updateProgress(50 + (attempts / maxAttempts) * 40, `Processing... (${attempts}s)`);
+            }
+
+            updateProgress(100, 'Processing complete!');
+
+            // Redirect to review page with fresh data
+            setTimeout(() => {
+                const reviewUrl = '{% url "image_processing:review" %}';
+                window.location.href = reviewUrl + '?t=' + Date.now();
+            }, 500);
+        } else {
+            throw new Error(data.error || 'Processing failed');
+        }
 
     } catch (error) {
         console.error('Processing failed:', error);
-        updateProgress(0, 'Processing failed. Please try again.');
+        updateProgress(0, `Processing failed: ${error.message}`);
     }
 }
 
