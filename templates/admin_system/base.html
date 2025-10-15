@@ -55,34 +55,35 @@
 .admin-card {
     border: none;
     border-radius: 1rem;
-    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.25rem 1rem var(--shadow-color);
     transition: all 0.2s ease;
+    background: var(--card-bg);
 }
 
 .admin-card:hover {
-    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.5rem 2rem var(--shadow-color);
     transform: translateY(-2px);
 }
 
 .admin-card .card-header {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-bottom: 1px solid #dee2e6;
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--border-color) 100%);
+    border-bottom: 1px solid var(--border-color);
     border-radius: 1rem 1rem 0 0 !important;
     padding: 1.5rem;
-    color: #495057;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 .stats-card {
     border: none;
     border-radius: 1rem;
-    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.25rem 1rem var(--shadow-color);
     transition: all 0.2s ease;
     text-align: center;
 }
 
 .stats-card:hover {
-    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.5rem 2rem var(--shadow-color);
     transform: translateY(-2px);
 }
 

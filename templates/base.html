@@ -20,6 +20,7 @@
             --text-primary: #212529;
             --text-secondary: #6c757d;
             --text-muted: #6c757d;
+            --text-white: #ffffff;
             --border-color: #dee2e6;
             --shadow-color: rgba(0, 0, 0, 0.08);
             --sidebar-bg: linear-gradient(135deg, #343a40 0%, #495057 100%);
@@ -27,6 +28,14 @@
             --input-bg: #ffffff;
             --table-bg: #ffffff;
             --table-hover: #f8f9fa;
+            --link-color: #0d6efd;
+            --link-hover-color: #0a58ca;
+            --btn-primary-bg: #0d6efd;
+            --btn-primary-border: #0d6efd;
+            --btn-primary-hover-bg: #0b5ed7;
+            --btn-secondary-bg: #6c757d;
+            --btn-secondary-border: #6c757d;
+            --btn-outline-color: #6c757d;
         }
 
         /* Dark Mode Colors */
@@ -37,6 +46,7 @@
             --text-primary: #ffffff;
             --text-secondary: #b0b0b0;
             --text-muted: #888888;
+            --text-white: #ffffff;
             --border-color: #404040;
             --shadow-color: rgba(0, 0, 0, 0.3);
             --sidebar-bg: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
@@ -44,6 +54,14 @@
             --input-bg: #3a3a3a;
             --table-bg: #2d2d2d;
             --table-hover: #3a3a3a;
+            --link-color: #66b3ff;
+            --link-hover-color: #80c4ff;
+            --btn-primary-bg: #0d6efd;
+            --btn-primary-border: #0d6efd;
+            --btn-primary-hover-bg: #0b5ed7;
+            --btn-secondary-bg: #6c757d;
+            --btn-secondary-border: #6c757d;
+            --btn-outline-color: #6c757d;
         }
 
         /* Dark Mode Component Styles */
@@ -120,6 +138,181 @@
             color: var(--text-primary);
         }
 
+        /* Additional Bootstrap Component Overrides for Dark Mode */
+        [data-theme="dark"] .btn-primary {
+            background-color: var(--btn-primary-bg);
+            border-color: var(--btn-primary-border);
+        }
+
+        [data-theme="dark"] .btn-primary:hover {
+            background-color: var(--btn-primary-hover-bg);
+            border-color: var(--btn-primary-hover-bg);
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background-color: var(--btn-secondary-bg);
+            border-color: var(--btn-secondary-border);
+        }
+
+        [data-theme="dark"] .btn-outline-primary {
+            color: var(--btn-primary-bg);
+            border-color: var(--btn-primary-border);
+        }
+
+        [data-theme="dark"] .btn-outline-primary:hover {
+            background-color: var(--btn-primary-bg);
+            border-color: var(--btn-primary-border);
+        }
+
+        [data-theme="dark"] .btn-outline-secondary {
+            color: var(--btn-outline-color);
+            border-color: var(--btn-outline-color);
+        }
+
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background-color: var(--btn-secondary-bg);
+            border-color: var(--btn-secondary-border);
+        }
+
+        [data-theme="dark"] .btn-link {
+            color: var(--link-color);
+        }
+
+        [data-theme="dark"] .btn-link:hover {
+            color: var(--link-hover-color);
+        }
+
+        [data-theme="dark"] a {
+            color: var(--link-color);
+        }
+
+        [data-theme="dark"] a:hover {
+            color: var(--link-hover-color);
+        }
+
+        [data-theme="dark"] .badge {
+            color: var(--text-white);
+        }
+
+        [data-theme="dark"] .nav-link {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .nav-link:hover {
+            color: var(--link-hover-color);
+        }
+
+        [data-theme="dark"] .page-link {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .page-link:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .page-item.active .page-link {
+            background-color: var(--btn-primary-bg);
+            border-color: var(--btn-primary-border);
+        }
+
+        [data-theme="dark"] .list-group-item {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .list-group-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        [data-theme="dark"] .progress {
+            background-color: var(--bg-tertiary);
+        }
+
+        [data-theme="dark"] .spinner-border {
+            color: var(--btn-primary-bg);
+        }
+
+        [data-theme="dark"] .border {
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-top {
+            border-top-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-bottom {
+            border-bottom-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-start {
+            border-left-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-end {
+            border-right-color: var(--border-color) !important;
+        }
+
+        /* Text Color Overrides for Dark Mode */
+        [data-theme="dark"] h1, 
+        [data-theme="dark"] h2, 
+        [data-theme="dark"] h3, 
+        [data-theme="dark"] h4, 
+        [data-theme="dark"] h5, 
+        [data-theme="dark"] h6 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] p {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .small {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .lead {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .blockquote {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .blockquote-footer {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .text-body {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .text-black-50 {
+            color: var(--text-muted) !important;
+        }
+
+        [data-theme="dark"] .text-white-50 {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Custom AVICAST Element Overrides */
+        [data-theme="dark"] .sidebar-toggle {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .sidebar-toggle:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .content-wrapper {
+            background: var(--bg-primary);
+        }
+
         /* ===== AVICAST DESIGN SYSTEM ===== */
 
         /* Page Header Styles */
@@ -130,7 +323,7 @@
         .avic-page-title {
             font-size: 2.5rem;
             font-weight: 700;
-            color: #0d6efd;
+            color: var(--btn-primary-bg);
             margin-bottom: 0.5rem;
         }
 
@@ -141,7 +334,7 @@
 
         .avic-page-subtitle {
             font-size: 1.125rem;
-            color: #6c757d;
+            color: var(--text-secondary);
             margin-bottom: 0;
             font-weight: 400;
         }
@@ -164,7 +357,7 @@
         }
 
         .avic-btn-secondary {
-            background: #6c757d;
+            background: var(--btn-secondary-bg);
             border: none;
             border-radius: 0.5rem;
             font-weight: 500;
