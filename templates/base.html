@@ -9,6 +9,117 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- AVICAST Design System CSS -->
     <style>
+        /* ===== AVICAST DARK MODE SYSTEM ===== */
+        
+        /* CSS Custom Properties for Theme Management */
+        :root {
+            /* Light Mode Colors */
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --sidebar-bg: linear-gradient(135deg, #343a40 0%, #495057 100%);
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --table-bg: #ffffff;
+            --table-hover: #f8f9fa;
+        }
+
+        /* Dark Mode Colors */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #888888;
+            --border-color: #404040;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --sidebar-bg: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            --card-bg: #2d2d2d;
+            --input-bg: #3a3a3a;
+            --table-bg: #2d2d2d;
+            --table-hover: #3a3a3a;
+        }
+
+        /* Dark Mode Component Styles */
+        [data-theme="dark"] body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .card {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .form-control {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .form-control:focus {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        [data-theme="dark"] .form-select {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .table {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: var(--table-hover);
+        }
+
+        [data-theme="dark"] .breadcrumb {
+            background-color: var(--bg-tertiary);
+        }
+
+        [data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+            color: var(--text-muted);
+        }
+
+        [data-theme="dark"] .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        [data-theme="dark"] .alert {
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .dropdown-menu {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .dropdown-item {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
         /* ===== AVICAST DESIGN SYSTEM ===== */
 
         /* Page Header Styles */
@@ -64,18 +175,19 @@
         .avic-card {
             border: none;
             border-radius: 1rem;
-            box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
+            box-shadow: 0 0.25rem 1rem var(--shadow-color);
             transition: all 0.2s ease;
+            background: var(--card-bg);
         }
 
         .avic-card:hover {
-            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.12);
+            box-shadow: 0 0.5rem 2rem var(--shadow-color);
             transform: translateY(-2px);
         }
 
         .avic-card-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-bottom: 1px solid #dee2e6;
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--border-color) 100%);
+            border-bottom: 1px solid var(--border-color);
             border-radius: 1rem 1rem 0 0 !important;
             padding: 1.5rem;
         }
@@ -87,7 +199,7 @@
             left: 0;
             height: 100vh;
             width: 280px;
-            background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+            background: var(--sidebar-bg);
             z-index: 1000;
             overflow-y: auto;
             transition: transform 0.3s ease;
@@ -157,7 +269,7 @@
         .main-content {
             margin-left: 280px;
             min-height: 100vh;
-            background: #f8f9fa;
+            background: var(--bg-primary);
             transition: margin-left 0.3s ease;
         }
 
@@ -167,8 +279,8 @@
 
         /* Top navbar */
         .top-navbar {
-            background: white;
-            border-bottom: 1px solid #dee2e6;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
             padding: 0.5rem 1rem;
             position: sticky;
             top: 0;
@@ -390,6 +502,11 @@
                     <i class="fas fa-user me-1"></i>{{ user.employee_id }}
                 </span>
                 {% endif %}
+                
+                <!-- Dark Mode Toggle -->
+                <button class="btn btn-link text-muted" id="themeToggle" title="Toggle Dark Mode">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
             </div>
         </div>
 
@@ -546,6 +663,48 @@
                     sidebarOverlay.classList.remove('show');
                 }
             });
+        });
+
+        // Dark Mode functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const body = document.body;
+            
+            // Check for saved theme preference or default to light mode
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            
+            // Apply the current theme
+            if (currentTheme === 'dark') {
+                body.setAttribute('data-theme', 'dark');
+                themeIcon.className = 'fas fa-sun';
+                themeToggle.title = 'Switch to Light Mode';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                themeIcon.className = 'fas fa-moon';
+                themeToggle.title = 'Switch to Dark Mode';
+            }
+            
+            // Theme toggle functionality
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = body.getAttribute('data-theme');
+                    
+                    if (currentTheme === 'dark') {
+                        // Switch to light mode
+                        body.setAttribute('data-theme', 'light');
+                        themeIcon.className = 'fas fa-moon';
+                        themeToggle.title = 'Switch to Dark Mode';
+                        localStorage.setItem('theme', 'light');
+                    } else {
+                        // Switch to dark mode
+                        body.setAttribute('data-theme', 'dark');
+                        themeIcon.className = 'fas fa-sun';
+                        themeToggle.title = 'Switch to Light Mode';
+                        localStorage.setItem('theme', 'dark');
+                    }
+                });
+            }
         });
     </script>
     {% block extra_js %}{% endblock %}

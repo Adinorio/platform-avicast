@@ -5,6 +5,52 @@
 
 {% block extra_css %}
 <style>
+/* Dark Mode Support for Admin System */
+[data-theme="dark"] .admin-card {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .admin-card .card-header {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .admin-table {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .admin-table .table thead th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .admin-table .table tbody td {
+    background: var(--table-bg);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .admin-table .table tbody tr:hover {
+    background: var(--table-hover);
+}
+
+[data-theme="dark"] .breadcrumb {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .breadcrumb-item a {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .breadcrumb-item.active {
+    color: var(--text-secondary);
+}
+
 /* Admin-specific styles - Matching main system design */
 .admin-card {
     border: none;
@@ -228,6 +274,12 @@
                 
                 <div class="d-flex align-items-center">
                     <span class="badge bg-primary me-3">{{ user.role }}</span>
+                    
+                    <!-- Dark Mode Toggle -->
+                    <button class="btn btn-link text-muted me-3" id="themeToggle" title="Toggle Dark Mode">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                    
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-2"></i>{{ user.get_full_name }}
