@@ -18,11 +18,13 @@ class Species(OptimizableImageMixin):
         EXTINCT = "EX", "Extinct"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True)
-    scientific_name = models.CharField(max_length=255, unique=True)
-    iucn_status = models.CharField(max_length=2, choices=IUCNStatus.choices)
-    image = models.ImageField(upload_to="species_images/", blank=True, null=True)
-    is_archived = models.BooleanField(default=False)
+    name = models.CharField(max_length=255, unique=True, help_text="Common name of the species")
+    scientific_name = models.CharField(max_length=255, unique=True, help_text="Scientific name of the species")
+    family = models.CharField(max_length=100, blank=True, help_text="Taxonomic family (e.g., Ardeidae for herons)")
+    iucn_status = models.CharField(max_length=2, choices=IUCNStatus.choices, help_text="IUCN conservation status")
+    description = models.TextField(blank=True, help_text="Additional description or notes about the species")
+    image = models.ImageField(upload_to="species_images/", blank=True, null=True, help_text="Representative image of the species")
+    is_archived = models.BooleanField(default=False, help_text="Whether this species is archived")
 
     def __str__(self):
         return self.name
