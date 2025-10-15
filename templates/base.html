@@ -634,6 +634,50 @@
             color: var(--text-primary) !important;
         }
 
+        /* MAXIMUM PRIORITY OVERRIDES - Force main content background */
+        [data-theme="dark"] body {
+            background-color: var(--bg-primary) !important;
+            background: var(--bg-primary) !important;
+        }
+
+        [data-theme="dark"] html {
+            background-color: var(--bg-primary) !important;
+            background: var(--bg-primary) !important;
+        }
+
+        /* Force ALL possible main content containers */
+        [data-theme="dark"] .container-fluid,
+        [data-theme="dark"] .container,
+        [data-theme="dark"] .main-content,
+        [data-theme="dark"] .content-area,
+        [data-theme="dark"] .page-content,
+        [data-theme="dark"] .dashboard-content,
+        [data-theme="dark"] .app-content,
+        [data-theme="dark"] .content-main,
+        [data-theme="dark"] .wrapper,
+        [data-theme="dark"] .main-wrapper {
+            background-color: var(--bg-primary) !important;
+            background: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Force all rows and columns to be transparent */
+        [data-theme="dark"] .row,
+        [data-theme="dark"] .row > *,
+        [data-theme="dark"] [class*="col-"] {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        /* Override any potential inline styles or higher specificity rules */
+        [data-theme="dark"] * {
+            background-color: inherit !important;
+        }
+
+        [data-theme="dark"] *:not(.sidebar):not(.navbar):not(.card):not(.modal):not(.dropdown-menu):not(.alert):not(.badge):not(.btn):not(.nav):not(.breadcrumb):not(.table):not(.progress):not(.card-header):not(.card-body):not(.table-header):not(.table-row) {
+            background-color: transparent !important;
+        }
+
         /* ===== AVICAST DESIGN SYSTEM ===== */
 
         /* Page Header Styles */
@@ -1199,26 +1243,75 @@
                 themeToggle.title = 'Switch to Dark Mode';
             }
             
-            // Theme toggle functionality
-            if (themeToggle) {
-                themeToggle.addEventListener('click', function() {
-                    const currentTheme = body.getAttribute('data-theme');
-                    
-                    if (currentTheme === 'dark') {
-                        // Switch to light mode
-                        body.setAttribute('data-theme', 'light');
-                        themeIcon.className = 'fas fa-moon';
-                        themeToggle.title = 'Switch to Dark Mode';
-                        localStorage.setItem('theme', 'light');
-                    } else {
-                        // Switch to dark mode
-                        body.setAttribute('data-theme', 'dark');
-                        themeIcon.className = 'fas fa-sun';
-                        themeToggle.title = 'Switch to Light Mode';
-                        localStorage.setItem('theme', 'dark');
-                    }
-                });
-            }
+               // Theme toggle functionality
+               if (themeToggle) {
+                   themeToggle.addEventListener('click', function() {
+                       const currentTheme = body.getAttribute('data-theme');
+                       
+                       if (currentTheme === 'dark') {
+                           // Switch to light mode
+                           body.setAttribute('data-theme', 'light');
+                           themeIcon.className = 'fas fa-moon';
+                           themeToggle.title = 'Switch to Dark Mode';
+                           localStorage.setItem('theme', 'light');
+                           // Force light mode background
+                           forceThemeBackground('light');
+                       } else {
+                           // Switch to dark mode
+                           body.setAttribute('data-theme', 'dark');
+                           themeIcon.className = 'fas fa-sun';
+                           themeToggle.title = 'Switch to Light Mode';
+                           localStorage.setItem('theme', 'dark');
+                           // Force dark mode background
+                           forceThemeBackground('dark');
+                       }
+                   });
+               }
+               
+               // Function to force theme background
+               function forceThemeBackground(theme) {
+                   const containers = [
+                       '.container-fluid',
+                       '.container',
+                       '.main-content',
+                       '.content-area',
+                       '.page-content',
+                       '.dashboard-content',
+                       '.app-content',
+                       '.content-main',
+                       '.wrapper',
+                       '.main-wrapper'
+                   ];
+                   
+                   containers.forEach(selector => {
+                       const elements = document.querySelectorAll(selector);
+                       elements.forEach(element => {
+                           if (theme === 'dark') {
+                               element.style.backgroundColor = '#1a1a1a';
+                               element.style.background = '#1a1a1a';
+                               element.style.color = '#ffffff';
+                           } else {
+                               element.style.backgroundColor = '#f8f9fa';
+                               element.style.background = '#f8f9fa';
+                               element.style.color = '#212529';
+                           }
+                       });
+                   });
+                   
+                   // Force body background
+                   if (theme === 'dark') {
+                       document.body.style.backgroundColor = '#1a1a1a';
+                       document.body.style.background = '#1a1a1a';
+                       document.documentElement.style.backgroundColor = '#1a1a1a';
+                   } else {
+                       document.body.style.backgroundColor = '#f8f9fa';
+                       document.body.style.background = '#f8f9fa';
+                       document.documentElement.style.backgroundColor = '#f8f9fa';
+                   }
+               }
+               
+               // Apply theme background on page load
+               forceThemeBackground(currentTheme);
         });
     </script>
     {% block extra_js %}{% endblock %}
