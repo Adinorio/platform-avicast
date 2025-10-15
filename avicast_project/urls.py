@@ -49,6 +49,7 @@ urlpatterns = [
     path("analytics/", include("apps.analytics_new.urls", namespace="analytics_new")),
     path("image-processing/", include("apps.image_processing.urls", namespace="image_processing")),
     path("weather/", include("apps.weather.urls", namespace="weather")),
+    path("system-logs/", include("apps.users.urls", namespace="system_logs")),
 ]
 
 # Serve media files in development
