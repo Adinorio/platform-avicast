@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import views, audit_views
 
 app_name = "users"
 
@@ -11,6 +11,8 @@ urlpatterns = [
     path("create/", views.create_user, name="create_user"),
     path("update/<int:user_id>/", views.update_user, name="update_user"),
     path("logs/", views.system_logs, name="system_logs"),
+    # System Monitoring
+    path("audit-logs/", audit_views.system_logs, name="audit_logs"),
     # Password Management
     path("change-password/", views.change_password, name="change_password"),
 ]

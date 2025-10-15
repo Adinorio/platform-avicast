@@ -212,7 +212,7 @@ class UserActivity(models.Model):
     activity_type = models.CharField(max_length=50, choices=ActivityType.choices)
     description = models.TextField()
     ip_address = models.GenericIPAddressField(null=True, blank=True)
-    user_agent = models.TextField(blank=True)
+    user_agent = models.TextField(blank=True, null=True)
     severity = models.CharField(max_length=20, choices=Severity.choices, default=Severity.INFO)
     metadata = models.JSONField(default=dict, blank=True)  # Store additional data
     timestamp = models.DateTimeField(auto_now_add=True)

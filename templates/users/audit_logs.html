@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}System Monitoring - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">Dashboard</a>
+            </li>
+            <li class="breadcrumb-item active">System Monitoring</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-chart-line text-primary me-2"></i>
+                System Monitoring & Audit Logs
+            </h2>
+            <p class="text-muted">Monitor all CRUD operations across Species Management, Site Management, and Image Processing</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Total Activities</small>
+                    <h2 class="mb-0 mt-2">{{ total_activities|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Species Operations</small>
+                    <h2 class="mb-0 mt-2">{{ species_activities|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Census Operations</small>
+                    <h2 class="mb-0 mt-2">{{ census_activities|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Image Processing</small>
+                    <h2 class="mb-0 mt-2">{{ image_activities|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Activities</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="activity_type" class="form-label">Activity Type</label>
+                            <select name="activity_type" id="activity_type" class="form-select">
+                                <option value="">All Activities</option>
+                                <option value="SPECIES_ADDED" {% if current_activity == 'SPECIES_ADDED' %}selected{% endif %}>Species Added</option>
+                                <option value="SPECIES_UPDATED" {% if current_activity == 'SPECIES_UPDATED' %}selected{% endif %}>Species Updated</option>
+                                <option value="SPECIES_ARCHIVED" {% if current_activity == 'SPECIES_ARCHIVED' %}selected{% endif %}>Species Archived</option>
+                                <option value="CENSUS_ADDED" {% if current_activity == 'CENSUS_ADDED' %}selected{% endif %}>Census Added</option>
+                                <option value="CENSUS_UPDATED" {% if current_activity == 'CENSUS_UPDATED' %}selected{% endif %}>Census Updated</option>
+                                <option value="IMAGE_PROCESSED" {% if current_activity == 'IMAGE_PROCESSED' %}selected{% endif %}>Image Processed</option>
+                                <option value="DATA_IMPORTED" {% if current_activity == 'DATA_IMPORTED' %}selected{% endif %}>Data Imported</option>
+                                <option value="DATA_EXPORTED" {% if current_activity == 'DATA_EXPORTED' %}selected{% endif %}>Data Exported</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="user" class="form-label">User</label>
+                            <select name="user" id="user" class="form-select">
+                                <option value="">All Users</option>
+                                {% for user in users %}
+                                    <option value="{{ user.id }}" {% if current_user == user.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ user.employee_id }} - {{ user.get_full_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" name="date" id="date" class="form-control" value="{{ current_date }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="severity" class="form-label">Severity</label>
+                            <select name="severity" id="severity" class="form-select">
+                                <option value="">All Levels</option>
+                                <option value="INFO" {% if current_severity == 'INFO' %}selected{% endif %}>Information</option>
+                                <option value="WARNING" {% if current_severity == 'WARNING' %}selected{% endif %}>Warning</option>
+                                <option value="ERROR" {% if current_severity == 'ERROR' %}selected{% endif %}>Error</option>
+                                <option value="CRITICAL" {% if current_severity == 'CRITICAL' %}selected{% endif %}>Critical</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>Filter
+                            </button>
+                            <a href="{% url 'users:audit_logs' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Logs -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Activity Logs</h5>
+            <div class="btn-group" role="group">
+                <a href="?export=csv" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-download me-1"></i>Export CSV
+                </a>
+                <a href="?export=json" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-download me-1"></i>Export JSON
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Activity</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                            <th>IP Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in page_obj %}
+                        <tr>
+                            <td>
+                                <small class="text-muted">
+                                    {{ activity.timestamp|date:"M d, Y" }}<br>
+                                    {{ activity.timestamp|time:"H:i:s" }}
+                                </small>
+                            </td>
+                            <td>
+                                <strong>{{ activity.user.employee_id }}</strong><br>
+                                <small class="text-muted">{{ activity.user.get_full_name }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if activity.activity_type == 'SPECIES_ADDED' %}success{% elif activity.activity_type == 'SPECIES_UPDATED' %}warning{% elif activity.activity_type == 'SPECIES_ARCHIVED' %}danger{% elif activity.activity_type == 'CENSUS_ADDED' %}info{% elif activity.activity_type == 'IMAGE_PROCESSED' %}primary{% else %}secondary{% endif %}">
+                                    {{ activity.get_activity_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 300px;" title="{{ activity.description }}">
+                                    {{ activity.description }}
+                                </div>
+                                {% if activity.metadata %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>Has metadata
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if activity.severity == 'CRITICAL' %}
+                                    <span class="badge bg-danger">Critical</span>
+                                {% elif activity.severity == 'ERROR' %}
+                                    <span class="badge bg-warning">Error</span>
+                                {% elif activity.severity == 'WARNING' %}
+                                    <span class="badge bg-info">Warning</span>
+                                {% else %}
+                                    <span class="badge bg-success">Info</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ activity.ip_address|default:"-" }}</small>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info" 
+                                        onclick="showActivityDetails('{{ activity.id }}')"
+                                        title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <i class="fas fa-chart-line fa-3x text-muted mb-3 d-block"></i>
+                                <h5 class="text-muted">No activity logs found</h5>
+                                <p class="text-muted">Activity logs will appear here as users perform operations in the system.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Activity logs pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i> First
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">
+                        <i class="fas fa-angle-left"></i> Previous
+                    </a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    <small class="d-block text-muted">
+                        Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} activities
+                    </small>
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">
+                        Next <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">
+                        Last <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'locations:dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <div class="btn-group" role="group">
+            <a href="{% url 'admin:users_useractivity_changelist' %}" class="btn btn-outline-primary">
+                <i class="fas fa-cog me-2"></i>Admin Interface
+            </a>
+            <button class="btn btn-outline-info" onclick="refreshLogs()">
+                <i class="fas fa-sync me-2"></i>Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Details Modal -->
+<div class="modal fade" id="activityDetailsModal" tabindex="-1" aria-labelledby="activityDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="activityDetailsModalLabel">Activity Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="activityDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showActivityDetails(activityId) {
+    // This would typically make an AJAX call to get detailed activity information
+    // For now, we'll show a placeholder
+    document.getElementById('activityDetailsContent').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+            <p>Loading activity details...</p>
+        </div>
+    `;
+    
+    // Show the modal
+    var modal = new bootstrap.Modal(document.getElementById('activityDetailsModal'));
+    modal.show();
+    
+    // Simulate loading detailed information
+    setTimeout(() => {
+        document.getElementById('activityDetailsContent').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Activity Information</h6>
+                    <p><strong>ID:</strong> ${activityId}</p>
+                    <p><strong>Type:</strong> <span id="activityType"></span></p>
+                    <p><strong>User:</strong> <span id="activityUser"></span></p>
+                    <p><strong>Timestamp:</strong> <span id="activityTimestamp"></span></p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Technical Details</h6>
+                    <p><strong>IP Address:</strong> <span id="activityIP"></span></p>
+                    <p><strong>User Agent:</strong> <span id="activityUserAgent"></span></p>
+                    <p><strong>Severity:</strong> <span id="activitySeverity"></span></p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>Description</h6>
+                    <p id="activityDescription"></p>
+                </div>
+            </div>
+            <div class="row mt-3" id="metadataSection" style="display: none;">
+                <div class="col-12">
+                    <h6>Metadata</h6>
+                    <pre id="activityMetadata" class="bg-light p-3 rounded"></pre>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+function refreshLogs() {
+    window.location.reload();
+}
+</script>
+{% endblock %}

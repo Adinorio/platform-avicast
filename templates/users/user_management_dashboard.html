@@ -8,13 +8,13 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2 class="text-primary">
+                    <h2 class="text-warning">
                         <i class="fas fa-tachometer-alt me-2"></i>User Management Dashboard
                     </h2>
                     <p class="text-muted">Overview of user accounts and system activities</p>
                 </div>
                 <div>
-                    <a href="{% url 'users:create_user' %}" class="btn btn-primary">
+                    <a href="{% url 'users:create_user' %}" class="btn btn-warning">
                         <i class="fas fa-plus me-2"></i>Create User
                     </a>
                 </div>
@@ -28,9 +28,9 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <i class="fas fa-users text-primary fa-2x"></i>
+                        <i class="fas fa-users text-warning fa-2x"></i>
                     </div>
-                    <h4 class="text-primary">{{ total_users }}</h4>
+                    <h4 class="text-warning">{{ total_users }}</h4>
                     <p class="text-muted mb-0">Total Users</p>
                 </div>
             </div>
@@ -50,9 +50,9 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <i class="fas fa-user-check text-info fa-2x"></i>
+                        <i class="fas fa-user-check text-dark fa-2x"></i>
                     </div>
-                    <h4 class="text-info">{{ active_field_workers }}</h4>
+                    <h4 class="text-dark">{{ active_field_workers }}</h4>
                     <p class="text-muted mb-0">Active Field Workers</p>
                 </div>
             </div>
@@ -61,9 +61,9 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <i class="fas fa-clipboard-list text-warning fa-2x"></i>
+                        <i class="fas fa-clipboard-list text-dark fa-2x"></i>
                     </div>
-                    <h4 class="text-warning">{{ pending_requests }}</h4>
+                    <h4 class="text-info">{{ pending_requests }}</h4>
                     <p class="text-muted mb-0">Pending Requests</p>
                 </div>
             </div>
@@ -75,7 +75,7 @@
         <!-- Recent Activities -->
         <div class="col-md-6">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-dark text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-clock me-2"></i>Recent Activities
                     </h5>
@@ -89,7 +89,7 @@
                                         <div>
                                             <small class="text-muted">{{ activity.timestamp|date:"M d, Y H:i" }}</small>
                                             <p class="mb-1">{{ activity.description }}</p>
-                                            <small class="text-primary">{{ activity.user.employee_id }} - {{ activity.user.get_full_name }}</small>
+                                            <small class="text-warning">{{ activity.user.employee_id }} - {{ activity.user.get_full_name }}</small>
                                         </div>
                                         <span class="badge bg-{{ activity.severity|lower }}">{{ activity.get_severity_display }}</span>
                                     </div>
@@ -100,7 +100,7 @@
                         <p class="text-muted text-center py-4">No recent activities</p>
                     {% endif %}
                     <div class="text-center mt-3">
-                        <a href="{% url 'users:system_logs' %}" class="btn btn-outline-primary btn-sm">View All Logs</a>
+                        <a href="{% url 'users:system_logs' %}" class="btn btn-outline-warning btn-sm">View All Logs</a>
                     </div>
                 </div>
             </div>
@@ -148,14 +148,14 @@
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary">
+                    <h5 class="mb-0 text-warning">
                         <i class="fas fa-bolt me-2"></i>Quick Actions
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <a href="{% url 'users:create_user' %}" class="btn btn-outline-primary w-100">
+                            <a href="{% url 'users:create_user' %}" class="btn btn-outline-warning w-100">
                                 <i class="fas fa-plus-circle me-2"></i>
                                 <div>Create New User</div>
                             </a>
@@ -167,13 +167,13 @@
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'users:system_logs' %}" class="btn btn-outline-info w-100">
+                            <a href="{% url 'users:system_logs' %}" class="btn btn-outline-warning w-100">
                                 <i class="fas fa-list-alt me-2"></i>
                                 <div>System Logs</div>
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary w-100">
+                            <a href="{% url 'admin:index' %}" class="btn btn-outline-danger w-100">
                                 <i class="fas fa-cog me-2"></i>
                                 <div>Admin Panel</div>
                             </a>
