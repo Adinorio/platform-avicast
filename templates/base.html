@@ -38,6 +38,52 @@
             --btn-outline-color: #6c757d;
         }
 
+        /* PREVENT FOUC - Set initial theme based on system preference or saved preference */
+        html {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.1s ease, color 0.1s ease;
+        }
+
+        /* If user prefers dark mode, apply dark theme immediately */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2d2d2d;
+                --bg-tertiary: #3a3a3a;
+                --text-primary: #ffffff;
+                --text-secondary: #b0b0b0;
+                --text-muted: #888888;
+                --text-white: #ffffff;
+                --border-color: #404040;
+                --shadow-color: rgba(0, 0, 0, 0.3);
+                --sidebar-bg: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                --card-bg: #2d2d2d;
+                --input-bg: #3a3a3a;
+                --table-bg: #2d2d2d;
+                --table-hover: #3a3a3a;
+                --link-color: #66b3ff;
+                --link-hover-color: #80c4ff;
+                --btn-primary-bg: #0d6efd;
+                --btn-primary-border: #0d6efd;
+                --btn-primary-hover-bg: #0b5ed7;
+                --btn-secondary-bg: #6c757d;
+                --btn-secondary-border: #6c757d;
+                --btn-outline-color: #6c757d;
+            }
+            
+            :root:not([data-theme="light"]) html,
+            :root:not([data-theme="light"]) body {
+                background-color: #1a1a1a;
+                color: #ffffff;
+            }
+        }
+
         /* Dark Mode Colors */
         [data-theme="dark"] {
             --bg-primary: #1a1a1a;
@@ -1223,6 +1269,27 @@
             });
         });
 
+        // IMMEDIATE THEME APPLICATION - Run before DOM is ready to prevent FOUC
+        (function() {
+            // Get saved theme or default to light
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            
+            // Apply theme immediately to prevent white flash
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.body.style.backgroundColor = '#1a1a1a';
+                document.body.style.background = '#1a1a1a';
+                document.documentElement.style.backgroundColor = '#1a1a1a';
+                document.body.style.color = '#ffffff';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                document.body.style.backgroundColor = '#f8f9fa';
+                document.body.style.background = '#f8f9fa';
+                document.documentElement.style.backgroundColor = '#f8f9fa';
+                document.body.style.color = '#212529';
+            }
+        })();
+
         // Dark Mode functionality
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggle = document.getElementById('themeToggle');
@@ -1249,20 +1316,22 @@
                        const currentTheme = body.getAttribute('data-theme');
                        
                        if (currentTheme === 'dark') {
-                           // Switch to light mode
+                           // Switch to light mode - IMMEDIATE APPLICATION
+                           document.documentElement.setAttribute('data-theme', 'light');
                            body.setAttribute('data-theme', 'light');
                            themeIcon.className = 'fas fa-moon';
                            themeToggle.title = 'Switch to Dark Mode';
                            localStorage.setItem('theme', 'light');
-                           // Force light mode background
+                           // Force light mode background immediately
                            forceThemeBackground('light');
                        } else {
-                           // Switch to dark mode
+                           // Switch to dark mode - IMMEDIATE APPLICATION
+                           document.documentElement.setAttribute('data-theme', 'dark');
                            body.setAttribute('data-theme', 'dark');
                            themeIcon.className = 'fas fa-sun';
                            themeToggle.title = 'Switch to Light Mode';
                            localStorage.setItem('theme', 'dark');
-                           // Force dark mode background
+                           // Force dark mode background immediately
                            forceThemeBackground('dark');
                        }
                    });
