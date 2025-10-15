@@ -313,6 +313,161 @@
             background: var(--bg-primary);
         }
 
+        /* Additional Missing Dark Mode Overrides */
+        [data-theme="dark"] .card-body {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .card-body p {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .card-body .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        [data-theme="dark"] .card-body .text-secondary {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .card-body .text-dark {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .card-body .text-black {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .card-body .text-black-50 {
+            color: var(--text-muted) !important;
+        }
+
+        [data-theme="dark"] .card-body .text-white-50 {
+            color: var(--text-secondary) !important;
+        }
+
+        /* List Group Items */
+        [data-theme="dark"] .list-group-item-action {
+            color: var(--text-primary);
+            background-color: var(--card-bg);
+        }
+
+        [data-theme="dark"] .list-group-item-action:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-tertiary);
+        }
+
+        [data-theme="dark"] .list-group-item-action:focus {
+            color: var(--text-primary);
+            background-color: var(--bg-tertiary);
+        }
+
+        /* Progress Bars */
+        [data-theme="dark"] .progress-bar {
+            background-color: var(--btn-primary-bg);
+        }
+
+        /* Badges and Labels */
+        [data-theme="dark"] .badge.bg-light {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .badge.bg-dark {
+            background-color: var(--text-primary) !important;
+            color: var(--bg-primary) !important;
+        }
+
+        /* Activity Items and User Lists */
+        [data-theme="dark"] .activity-item {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .user-item {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .notification-item {
+            color: var(--text-primary);
+        }
+
+        /* Empty States */
+        [data-theme="dark"] .empty-state {
+            color: var(--text-muted);
+        }
+
+        [data-theme="dark"] .empty-state p {
+            color: var(--text-muted);
+        }
+
+        /* Timeline and Activity Feed */
+        [data-theme="dark"] .timeline-item {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .timeline-item .timeline-content {
+            color: var(--text-primary);
+        }
+
+        /* Stats and Metrics */
+        [data-theme="dark"] .stat-item {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .metric-value {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .metric-label {
+            color: var(--text-secondary);
+        }
+
+        /* Universal Dark Mode Overrides - Force all elements to dark theme */
+        [data-theme="dark"] * {
+            color: inherit;
+        }
+
+        [data-theme="dark"] div:not(.card):not(.modal):not(.dropdown-menu):not(.alert):not(.badge):not(.btn):not(.nav):not(.navbar):not(.sidebar):not(.breadcrumb) {
+            background-color: transparent !important;
+        }
+
+        /* Force all text elements to use dark mode colors */
+        [data-theme="dark"] p:not(.text-white):not(.text-light):not(.text-success):not(.text-info):not(.text-warning):not(.text-danger):not(.text-primary):not(.text-secondary) {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] span:not(.text-white):not(.text-light):not(.text-success):not(.text-info):not(.text-warning):not(.text-danger):not(.text-primary):not(.text-secondary) {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] div:not(.text-white):not(.text-light):not(.text-success):not(.text-info):not(.text-warning):not(.text-danger):not(.text-primary):not(.text-secondary) {
+            color: var(--text-primary) !important;
+        }
+
+        /* Override Bootstrap utility classes that might be forcing white/black text */
+        [data-theme="dark"] .text-dark,
+        [data-theme="dark"] .text-black {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .text-body {
+            color: var(--text-primary) !important;
+        }
+
+        /* Force all card bodies to use dark theme */
+        [data-theme="dark"] .card-body:not(.bg-white):not(.bg-light):not(.bg-success):not(.bg-info):not(.bg-warning):not(.bg-danger):not(.bg-primary):not(.bg-secondary) {
+            background-color: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Force all list group items to use dark theme */
+        [data-theme="dark"] .list-group-item:not(.bg-white):not(.bg-light):not(.bg-success):not(.bg-info):not(.bg-warning):not(.bg-danger):not(.bg-primary):not(.bg-secondary) {
+            background-color: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
         /* ===== AVICAST DESIGN SYSTEM ===== */
 
         /* Page Header Styles */
