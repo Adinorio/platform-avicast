@@ -11,7 +11,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="mb-2">
-                        <i class="fas fa-eye text-primary me-2"></i>Import Preview
+                        <i class="fas fa-eye text-success me-2"></i>Import Preview
                     </h1>
                     <p class="text-muted mb-0">Review your data before importing</p>
                 </div>
@@ -28,7 +28,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-info">
-                <div class="card-header bg-info text-white">
+                <div class="card-header bg-success text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-file-excel me-2"></i>File: {{ filename }}
                     </h5>
@@ -49,13 +49,13 @@
                         </div>
                         <div class="col-md-3">
                             <div class="text-center">
-                                <h3 class="text-info mb-0">{{ preview_data.total_observations }}</h3>
+                                <h3 class="text-light mb-0">{{ preview_data.total_observations }}</h3>
                                 <small class="text-muted">Species with Monthly Data</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center">
-                                <h3 class="text-warning mb-0">{{ preview_data.total_birds|floatformat:0 }}</h3>
+                                <h3 class="text-light mb-0">{{ preview_data.total_birds|floatformat:0 }}</h3>
                                 <small class="text-muted">Total Birds (Sum of Monthly Totals)</small>
                             </div>
                         </div>
@@ -69,7 +69,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-dark text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-calendar-alt me-2"></i>Monthly Totals Breakdown
                     </h5>
@@ -80,7 +80,7 @@
                         {% if total > 0 %}
                         <div class="col-md-3 col-sm-4 col-6 mb-3">
                             <div class="text-center p-3 bg-light rounded">
-                                <h4 class="text-primary mb-1">{{ total|floatformat:0 }}</h4>
+                                <h4 class="text-success mb-1">{{ total|floatformat:0 }}</h4>
                                 <small class="text-muted">{{ month|title }}</small>
                             </div>
                         </div>
@@ -127,7 +127,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
+                <div class="card-header bg-success text-dark">
                     <h5 class="mb-0">
                         <i class="fas fa-exclamation-circle me-2"></i>Warnings
                     </h5>
@@ -135,7 +135,7 @@
                 <div class="card-body">
                     <ul class="list-unstyled">
                         {% for warning in preview_data.warnings %}
-                        <li class="text-warning mb-1">
+                        <li class="text-light mb-1">
                             <i class="fas fa-info-circle me-2"></i>{{ warning }}
                         </li>
                         {% endfor %}
@@ -151,7 +151,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-dark text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-table me-2"></i>Excel Data Preview
                         <span class="badge bg-light text-primary ms-2">{{ preview_data.preview_rows|length }} rows</span>
@@ -255,7 +255,7 @@
                                         </small>
                                     </td>
                                     <td class="text-center {% if row.year_total %}bg-light{% endif %}">
-                                        <strong><small class="text-primary">{{ row.year_total|default:"-" }}</small></strong>
+                                        <strong><small class="text-success">{{ row.year_total|default:"-" }}</small></strong>
                                     </td>
                                 </tr>
                                 {% if row.error %}
@@ -337,7 +337,7 @@
                                         <td class="text-center"><small>{{ row.monthly_counts.October|default:"-" }}</small></td>
                                         <td class="text-center"><small>{{ row.monthly_counts.November|default:"-" }}</small></td>
                                         <td class="text-center"><small>{{ row.monthly_counts.December|default:"-" }}</small></td>
-                                        <td class="text-center bg-light"><strong><small class="text-primary">{{ row.year_total|default:"-" }}</small></strong></td>
+                                        <td class="text-center bg-light"><strong><small class="text-success">{{ row.year_total|default:"-" }}</small></strong></td>
                                     </tr>
                                     {% endif %}
                                 {% endfor %}
@@ -364,20 +364,20 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
+                <div class="card-header bg-success text-dark">
                     <h5 class="mb-0">
                         <i class="fas fa-eye-slash me-2"></i>Absent Species ({{ preview_data.absent_species|length }})
                         <small class="ms-2">These species have zero counts and will be excluded from import</small>
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-warning mb-3">
+                    <div class="alert alert-info mb-3">
                         <i class="fas fa-info-circle me-2"></i>
                         <strong>Note:</strong> Species with zero counts across all months are marked as "Absent" and will not be imported into the census system.
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         {% for species in preview_data.absent_species %}
-                        <span class="badge bg-warning text-dark">{{ species }}</span>
+                        <span class="badge bg-success text-dark">{{ species }}</span>
                         {% endfor %}
                     </div>
                 </div>
@@ -390,7 +390,7 @@
     <div class="row">
         <div class="col-md-4 mb-4">
             <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-dark text-white">
                     <h6 class="mb-0">
                         <i class="fas fa-map-marker-alt me-2"></i>Sites ({{ preview_data.sites|length }})
                     </h6>
@@ -399,7 +399,7 @@
                     {% if preview_data.sites %}
                     <div class="d-flex flex-wrap gap-2">
                         {% for site in preview_data.sites %}
-                        <span class="badge bg-primary">{{ site }}</span>
+                        <span class="badge bg-dark">{{ site }}</span>
                         {% endfor %}
                     </div>
                     {% else %}
@@ -411,7 +411,7 @@
 
         <div class="col-md-4 mb-4">
             <div class="card border-info">
-                <div class="card-header bg-info text-white">
+                <div class="card-header bg-success text-white">
                     <h6 class="mb-0">
                         <i class="fas fa-calendar me-2"></i>Months with Data
                     </h6>
@@ -432,7 +432,7 @@
 
         <div class="col-md-4 mb-4">
             <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
+                <div class="card-header bg-success text-dark">
                     <h6 class="mb-0">
                         <i class="fas fa-calendar-alt me-2"></i>Years
                     </h6>
@@ -441,7 +441,7 @@
                     {% if preview_data.years %}
                     <div class="d-flex flex-wrap gap-2">
                         {% for year in preview_data.years %}
-                        <span class="badge bg-warning text-dark">{{ year }}</span>
+                        <span class="badge bg-success text-dark">{{ year }}</span>
                         {% endfor %}
                     </div>
                     {% else %}
@@ -462,7 +462,7 @@
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         <strong>Cannot import due to errors.</strong> Please fix the errors in your Excel file and try again.
                     </div>
-                    <a href="{% url 'locations:import_census_data' %}" class="btn btn-primary">
+                    <a href="{% url 'locations:import_census_data' %}" class="btn btn-success">
                         <i class="fas fa-upload me-2"></i>Upload New File
                     </a>
                     {% else %}
@@ -473,7 +473,7 @@
                     
                     <!-- Import Configuration -->
                     <div class="card border-info mb-4">
-                        <div class="card-header bg-info text-white">
+                        <div class="card-header bg-success text-white">
                             <h5 class="mb-0">
                                 <i class="fas fa-cog me-2"></i>Import Configuration
                             </h5>
@@ -505,7 +505,7 @@
                                 {% if site not in existing_sites %}
                                 <div class="row mb-3">
                                     <div class="col-12">
-                                        <div class="alert alert-warning">
+                                        <div class="alert alert-info">
                                             <i class="fas fa-map-marker-alt me-2"></i>
                                             <strong>New Site: "{{ site }}"</strong> - Please provide coordinates
                                         </div>

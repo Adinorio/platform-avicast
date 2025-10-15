@@ -107,12 +107,12 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h2 class="mb-1">
-                        <i class="fas fa-calendar-alt text-primary me-2"></i>
+                        <i class="fas fa-calendar-alt text-success me-2"></i>
                         {{ site.name }} - Census Years
                     </h2>
                     <p class="text-muted mb-0">{{ site.description|default:"No description available" }}</p>
                 </div>
-                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-primary">
+                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-success">
                     <i class="fas fa-plus me-2"></i>Add Census Year
                 </a>
             </div>
@@ -183,7 +183,7 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{% url 'locations:year_detail' site.id year.year %}"
-                                               class="btn btn-sm btn-outline-primary" title="View Details">
+                                               class="btn btn-sm btn-outline-success" title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <a href="{% url 'locations:year_edit' site.id year.year %}"
@@ -208,7 +208,7 @@
                 <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
                 <h4 class="text-muted">No census years yet</h4>
                 <p class="text-muted">Add your first census year to start recording data for {{ site.name }}</p>
-                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-primary">
+                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-success">
                     <i class="fas fa-plus me-2"></i>Add First Year
                 </a>
             </div>

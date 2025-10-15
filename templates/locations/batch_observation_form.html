@@ -10,7 +10,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white">
                     <h4 class="mb-0">
-                        <i class="fas fa-list text-primary me-2"></i>
+                        <i class="fas fa-list text-success me-2"></i>
                         {{ title }}
                     </h4>
                 </div>
@@ -160,7 +160,7 @@
                                 </tbody>
                             </table>
                             <div class="text-center mt-3">
-                                <button type="button" class="btn btn-outline-primary" onclick="addObservationRow()">
+                                <button type="button" class="btn btn-outline-success" onclick="addObservationRow()">
                                     <i class="fas fa-plus me-2"></i>Add Another Observation
                                 </button>
                             </div>
@@ -173,7 +173,7 @@
                         {% endif %}
 
                         <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-success">
                                 <i class="fas fa-save me-2"></i>Add All Observations
                             </button>
                             <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}"

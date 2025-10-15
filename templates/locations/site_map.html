@@ -178,7 +178,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h2 class="mb-2">
-                        <i class="fas fa-map-marked-alt text-primary me-2"></i>
+                        <i class="fas fa-map-marked-alt text-success me-2"></i>
                         Site Map: {{ site.name }}
                     </h2>
                     <p class="text-muted mb-0">
@@ -237,7 +237,7 @@
         <div class="col-md-8">
             <div class="site-info-panel">
                 <h5 class="mb-3">
-                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    <i class="fas fa-info-circle text-success me-2"></i>
                     Site Information
                 </h5>
                 <div class="row">
@@ -268,7 +268,7 @@
             {% if census_years %}
             <div class="census-summary">
                 <h6 class="mb-3">
-                    <i class="fas fa-chart-bar text-primary me-2"></i>
+                    <i class="fas fa-chart-bar text-success me-2"></i>
                     Census Summary
                 </h6>
                 {% for year in census_years %}
@@ -512,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="popup-site-type">${getSiteTypeDisplay(site.site_type)}</div>
             <div class="popup-coordinates">${site.coordinates.lat.toFixed(6)}, ${site.coordinates.lon.toFixed(6)}</div>
             <div class="mt-2">
-                <a href="/locations/sites/${site.id}/" class="btn btn-sm btn-primary">
+                <a href="/locations/sites/${site.id}/" class="btn btn-sm btn-success">
                     <i class="fas fa-eye me-1"></i>View Details
                 </a>
             </div>

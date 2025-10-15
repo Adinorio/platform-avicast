@@ -107,7 +107,7 @@
                 <!-- Content will be dynamically inserted here -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-info" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -139,8 +139,8 @@
             const icons = {
                 'success': 'fas fa-check-circle text-success',
                 'error': 'fas fa-exclamation-triangle text-danger',
-                'info': 'fas fa-info-circle text-info',
-                'warning': 'fas fa-exclamation-circle text-warning'
+                'info': 'fas fa-info-circle text-light',
+                'warning': 'fas fa-exclamation-circle text-light'
             };
             
             modalTitle.innerHTML = `<i class="${icons[type]} me-2"></i>${title}`;
@@ -194,7 +194,7 @@
                 return content;
             } else {
                 return `
-                    <div class="alert alert-warning">
+                    <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>No forecast data available to compute best days.
                     </div>
                 `;
