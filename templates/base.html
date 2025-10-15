@@ -1396,6 +1396,67 @@
             z-index: 999;
         }
 
+        /* Enhanced top navbar for dark mode */
+        [data-theme="dark"] .top-navbar {
+            background: var(--bg-secondary) !important;
+            border-bottom: 2px solid var(--border-accent) !important;
+            box-shadow: 0 2px 8px var(--shadow-color) !important;
+        }
+
+        /* Page header area styling */
+        [data-theme="dark"] .container-fluid {
+            background: var(--bg-primary) !important;
+        }
+
+        /* Breadcrumb area styling */
+        [data-theme="dark"] .breadcrumb {
+            background: transparent !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            margin-bottom: 1.5rem !important;
+            padding: 1rem 0 !important;
+        }
+
+        /* Page title area */
+        [data-theme="dark"] h1,
+        [data-theme="dark"] h2,
+        [data-theme="dark"] h3,
+        [data-theme="dark"] h4,
+        [data-theme="dark"] h5,
+        [data-theme="dark"] h6 {
+            color: var(--text-primary) !important;
+        }
+
+        /* Ensure header text is visible */
+        [data-theme="dark"] .top-navbar h5,
+        [data-theme="dark"] .top-navbar .text-muted {
+            color: var(--text-primary) !important;
+        }
+
+        /* Header icons and buttons */
+        [data-theme="dark"] .top-navbar .btn,
+        [data-theme="dark"] .top-navbar .btn-outline-secondary,
+        [data-theme="dark"] .top-navbar .btn-outline-primary {
+            background: var(--bg-tertiary) !important;
+            border-color: var(--border-accent) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .top-navbar .btn:hover,
+        [data-theme="dark"] .top-navbar .btn-outline-secondary:hover,
+        [data-theme="dark"] .top-navbar .btn-outline-primary:hover {
+            background: var(--accent-blue) !important;
+            border-color: var(--accent-blue) !important;
+            color: white !important;
+        }
+
+        /* User profile area in header */
+        [data-theme="dark"] .user-profile-header {
+            background: var(--bg-tertiary) !important;
+            border: 1px solid var(--border-accent) !important;
+            border-radius: 8px !important;
+            padding: 0.5rem 1rem !important;
+        }
+
         .sidebar-toggle {
             background: none;
             border: none;
