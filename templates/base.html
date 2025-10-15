@@ -13,6 +13,12 @@
     
     <!-- CRITICAL CSS - Theme Application Before Any Other Styles -->
     <style>
+        /* CRITICAL: Top navbar must be solid - highest priority */
+        html[data-theme="dark"] .top-navbar {
+            background: #1a1a1a !important;
+            background-color: #1a1a1a !important;
+        }
+
         /* CRITICAL: Immediate theme application - prevents any white flash */
         html[data-theme="dark"] {
             /* Enhanced Dark Mode Color Palette */
@@ -1176,8 +1182,8 @@
             color: var(--text-primary) !important;
         }
 
-        /* Force all div elements to inherit dark theme */
-        [data-theme="dark"] div:not(.sidebar):not(.navbar):not(.card):not(.modal):not(.dropdown-menu):not(.alert):not(.badge):not(.btn):not(.nav):not(.breadcrumb):not(.table):not(.progress) {
+        /* Force all div elements to inherit dark theme - EXCLUDE top-navbar */
+        [data-theme="dark"] div:not(.sidebar):not(.navbar):not(.card):not(.modal):not(.dropdown-menu):not(.alert):not(.badge):not(.btn):not(.nav):not(.breadcrumb):not(.table):not(.progress):not(.top-navbar) {
             background-color: transparent !important;
             color: var(--text-primary) !important;
         }
@@ -1222,7 +1228,7 @@
             background-color: inherit !important;
         }
 
-        [data-theme="dark"] *:not(.sidebar):not(.navbar):not(.card):not(.modal):not(.dropdown-menu):not(.alert):not(.badge):not(.btn):not(.nav):not(.breadcrumb):not(.table):not(.progress):not(.card-header):not(.card-body):not(.table-header):not(.table-row) {
+        [data-theme="dark"] *:not(.sidebar):not(.navbar):not(.card):not(.modal):not(.dropdown-menu):not(.alert):not(.badge):not(.btn):not(.nav):not(.breadcrumb):not(.table):not(.progress):not(.card-header):not(.card-body):not(.table-header):not(.table-row):not(.top-navbar) {
             background-color: transparent !important;
         }
 
@@ -1396,9 +1402,12 @@
             z-index: 999;
         }
 
-        /* Dark mode top navbar - Solid background like light mode */
+        /* Dark mode top navbar - MAXIMUM SPECIFICITY - Solid background like light mode */
+        html[data-theme="dark"] .top-navbar,
+        body[data-theme="dark"] .top-navbar,
         [data-theme="dark"] .top-navbar {
             background: #1a1a1a !important;
+            background-color: #1a1a1a !important;
             border-bottom: 1px solid #333333 !important;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
         }
