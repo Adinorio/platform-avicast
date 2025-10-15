@@ -13,10 +13,15 @@
     
     <!-- CRITICAL CSS - Theme Application Before Any Other Styles -->
     <style>
-        /* CRITICAL: Top navbar must be solid - highest priority */
+        /* CRITICAL: Top navbar must be solid - highest priority for both themes */
         html[data-theme="dark"] .top-navbar {
             background: #1a1a1a !important;
             background-color: #1a1a1a !important;
+        }
+        
+        html[data-theme="light"] .top-navbar {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
         }
 
         /* CRITICAL: Immediate theme application - prevents any white flash */
@@ -1630,7 +1635,7 @@
     <!-- Main Content Area -->
     <div class="main-content" id="mainContent">
         <!-- Top Navigation Bar -->
-        <div class="top-navbar d-flex justify-content-between align-items-center" id="topNavbar" style="background: #1a1a1a !important; background-color: #1a1a1a !important;">
+        <div class="top-navbar d-flex justify-content-between align-items-center" id="topNavbar">
             <div class="d-flex align-items-center">
                 <button class="sidebar-toggle me-3" id="sidebarToggle">
                     <i class="fas fa-bars"></i>
@@ -1881,14 +1886,25 @@
                 });
             }
             
-            // FORCE TOP NAVBAR BACKGROUND - Bulletproof approach
+            // FORCE TOP NAVBAR BACKGROUND - Dynamic for both themes
             function forceTopNavbarBackground() {
                 const topNavbar = document.getElementById('topNavbar');
+                const theme = document.documentElement.getAttribute('data-theme') || 'light';
+                
                 if (topNavbar) {
-                    topNavbar.style.setProperty('background', '#1a1a1a', 'important');
-                    topNavbar.style.setProperty('background-color', '#1a1a1a', 'important');
-                    topNavbar.style.setProperty('border-bottom', '1px solid #333333', 'important');
-                    topNavbar.style.setProperty('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.3)', 'important');
+                    if (theme === 'dark') {
+                        // Dark mode: solid dark background
+                        topNavbar.style.setProperty('background', '#1a1a1a', 'important');
+                        topNavbar.style.setProperty('background-color', '#1a1a1a', 'important');
+                        topNavbar.style.setProperty('border-bottom', '1px solid #333333', 'important');
+                        topNavbar.style.setProperty('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.3)', 'important');
+                    } else {
+                        // Light mode: solid light background
+                        topNavbar.style.setProperty('background', '#ffffff', 'important');
+                        topNavbar.style.setProperty('background-color', '#ffffff', 'important');
+                        topNavbar.style.setProperty('border-bottom', '1px solid #dee2e6', 'important');
+                        topNavbar.style.setProperty('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.1)', 'important');
+                    }
                 }
             }
             
@@ -1949,6 +1965,8 @@
                            localStorage.setItem('theme', 'light');
                            // Force light mode background immediately
                            forceThemeBackground('light');
+                           // Update navbar for light mode
+                           forceTopNavbarBackground();
                        } else {
                            // Switch to dark mode - IMMEDIATE APPLICATION
                            document.documentElement.setAttribute('data-theme', 'dark');
@@ -1958,6 +1976,8 @@
                            localStorage.setItem('theme', 'dark');
                            // Force dark mode background immediately
                            forceThemeBackground('dark');
+                           // Update navbar for dark mode
+                           forceTopNavbarBackground();
                        }
                    });
                }
