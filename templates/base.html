@@ -1380,17 +1380,18 @@
                     document.documentElement.style.setProperty('background-color', '#f8f9fa', 'important');
                 }
                 
-                // Apply to any existing containers immediately
+                // Apply to any existing containers immediately (only if they don't have existing styles)
                 const containers = document.querySelectorAll('.container-fluid, .container, .row, .col, [class*="col-"]');
                 containers.forEach(container => {
-                    if (savedTheme === 'dark') {
-                        container.style.backgroundColor = '#1a1a1a';
-                        container.style.color = '#ffffff';
-                        container.style.setProperty('background-color', '#1a1a1a', 'important');
-                    } else {
-                        container.style.backgroundColor = '#f8f9fa';
-                        container.style.color = '#212529';
-                        container.style.setProperty('background-color', '#f8f9fa', 'important');
+                    // Only apply if container doesn't already have styling
+                    if (!container.style.backgroundColor || container.style.backgroundColor === 'transparent') {
+                        if (savedTheme === 'dark') {
+                            container.style.setProperty('background-color', 'transparent', 'important');
+                            container.style.setProperty('color', '#ffffff', 'important');
+                        } else {
+                            container.style.setProperty('background-color', 'transparent', 'important');
+                            container.style.setProperty('color', '#212529', 'important');
+                        }
                     }
                 });
                 
@@ -1402,26 +1403,23 @@
             }
         })();
         
-        // ADDITIONAL SAFETY NET - Run after DOM is ready to catch any missed elements
+        // TARGETED SAFETY NET - Only apply to specific containers that need theme fixing
         (function() {
-            function applyThemeToAllElements(theme) {
-                const allElements = document.querySelectorAll('*');
-                allElements.forEach(element => {
-                    // Skip elements that should maintain their own backgrounds
-                    if (element.tagName === 'SCRIPT' || element.tagName === 'STYLE' || 
-                        element.classList.contains('card') || element.classList.contains('modal') ||
-                        element.classList.contains('dropdown-menu') || element.classList.contains('alert') ||
-                        element.classList.contains('badge') || element.classList.contains('btn') ||
-                        element.classList.contains('sidebar') || element.classList.contains('navbar')) {
+            function applyThemeToContainers(theme) {
+                // Only target specific Bootstrap containers that might need theme application
+                const containers = document.querySelectorAll('.container-fluid, .container, .row, [class*="col-"]');
+                containers.forEach(container => {
+                    // Skip if container already has proper styling
+                    if (container.style.backgroundColor && container.style.backgroundColor !== 'transparent') {
                         return;
                     }
                     
                     if (theme === 'dark') {
-                        element.style.setProperty('background-color', 'transparent', 'important');
-                        element.style.setProperty('color', '#ffffff', 'important');
+                        container.style.setProperty('background-color', 'transparent', 'important');
+                        container.style.setProperty('color', '#ffffff', 'important');
                     } else {
-                        element.style.setProperty('background-color', 'transparent', 'important');
-                        element.style.setProperty('color', '#212529', 'important');
+                        container.style.setProperty('background-color', 'transparent', 'important');
+                        container.style.setProperty('color', '#212529', 'important');
                     }
                 });
             }
@@ -1430,11 +1428,11 @@
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
                     const theme = document.documentElement.getAttribute('data-theme') || 'light';
-                    applyThemeToAllElements(theme);
+                    applyThemeToContainers(theme);
                 });
             } else {
                 const theme = document.documentElement.getAttribute('data-theme') || 'light';
-                applyThemeToAllElements(theme);
+                applyThemeToContainers(theme);
             }
         })();
 
