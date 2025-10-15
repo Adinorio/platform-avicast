@@ -53,9 +53,9 @@
                                         </div>
                                         <p class="small text-muted mt-2">{{ config.description }}</p>
                                         <div class="small">
-                                            <span class="badge bg-secondary">{{ config.get_report_type_display }}</span>
+                                            <span class="badge bg-info">{{ config.get_report_type_display }}</span>
                                             {% if config.include_charts %}
-                                            <span class="badge bg-info">Charts</span>
+                                            <span class="badge bg-dark">Charts</span>
                                             {% endif %}
                                             {% if config.include_maps %}
                                             <span class="badge bg-success">Maps</span>
@@ -119,7 +119,7 @@
 
     <!-- Navigation -->
     <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-secondary">
+        <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-info">
             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
         </a>
         <div class="btn-group" role="group">

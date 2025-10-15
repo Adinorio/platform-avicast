@@ -782,7 +782,7 @@
                                         {% if species.species__iucn_status == 'CR' %}
                                         <span class="badge bg-danger">CR</span>
                                         {% elif species.species__iucn_status == 'EN' %}
-                                        <span class="badge bg-warning">EN</span>
+                                        <span class="badge bg-info">EN</span>
                                         {% elif species.species__iucn_status == 'VU' %}
                                         <span class="badge bg-info">VU</span>
                                         {% elif species.species__iucn_status == 'NT' %}
@@ -1027,14 +1027,14 @@
             <div class="card trend-card" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <a href="{% url 'analytics_new:dashboard' %}" class="action-btn btn btn-secondary">
+                        <a href="{% url 'analytics_new:dashboard' %}" class="action-btn btn btn-info">
                             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
                         </a>
                         <div class="d-flex gap-2">
                             <button class="action-btn btn btn-success" onclick="window.print()">
                                 <i class="fas fa-print me-2"></i>Print Report
                             </button>
-                            <button class="action-btn btn btn-info" onclick="exportAsImage()">
+                            <button class="action-btn btn btn-primary" onclick="exportAsImage()">
                                 <i class="fas fa-image me-2"></i>Export as Image
                             </button>
                             <a href="{% url 'analytics_new:report_generator' %}" class="action-btn btn btn-primary">

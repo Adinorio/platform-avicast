@@ -37,7 +37,7 @@
                             <ul class="list-unstyled">
                                 <li><strong>Species:</strong>
                                     {% for species in report.species_included %}
-                                    <span class="badge bg-primary">{{ species }}</span>
+                                    <span class="badge bg-dark">{{ species }}</span>
                                     {% endfor %}
                                 </li>
                                 <li><strong>Sites:</strong> {{ report.sites_included|length }}</li>
@@ -70,7 +70,7 @@
                 </div>
                 <div class="card-body text-center">
                     {% if report.status == 'GENERATING' %}
-                    <div class="text-warning">
+                    <div class="text-light">
                         <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
                         <h5>Generating Report</h5>
                         <p>Please wait while the report is being generated...</p>

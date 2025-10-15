@@ -58,7 +58,7 @@
                                 {% if item.analytics.species.iucn_status == 'CR' %}
                                 <span class="badge bg-danger">Critically Endangered</span>
                                 {% elif item.analytics.species.iucn_status == 'EN' %}
-                                <span class="badge bg-warning">Endangered</span>
+                                <span class="badge bg-info">Endangered</span>
                                 {% elif item.analytics.species.iucn_status == 'VU' %}
                                 <span class="badge bg-info">Vulnerable</span>
                                 {% elif item.analytics.species.iucn_status == 'NT' %}
@@ -93,7 +93,7 @@
 
     <!-- Navigation -->
     <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-secondary">
+        <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-info">
             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
         </a>
         <div class="btn-group" role="group">
