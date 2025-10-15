@@ -115,14 +115,14 @@
             <div class="col-md-6 text-end">
                 <div class="btn-group" role="group">
                     {% if user.role in 'ADMIN,SUPERADMIN' %}
-                    <a href="{% url 'locations:import_export_hub' %}" class="btn btn-outline-primary btn-sm" title="Import historical data">
+                    <a href="{% url 'locations:import_export_hub' %}" class="btn btn-outline-success btn-sm" title="Import historical data">
                         <i class="fas fa-file-import me-1"></i>Import Data
                     </a>
                     <a href="{% url 'locations:census_totals' %}?site={{ site.id }}&year={{ year.year }}&month={{ month.month }}" class="btn btn-outline-success btn-sm" title="View totals for this month">
                         <i class="fas fa-chart-bar me-1"></i>View Totals
                     </a>
                     {% endif %}
-                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary btn-sm">
+                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-success btn-sm">
                         <i class="fas fa-plus me-2"></i>Add Census Record
                     </a>
                 </div>
@@ -148,7 +148,7 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body">
-                    <i class="fas fa-clipboard-list fa-2x text-primary mb-2"></i>
+                    <i class="fas fa-clipboard-list fa-2x text-success mb-2"></i>
                     <h4 class="mb-1">{{ total_census }}</h4>
                     <small class="text-muted">Census Records</small>
                 </div>
@@ -166,7 +166,7 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body">
-                    <i class="fas fa-paw fa-2x text-warning mb-2"></i>
+                    <i class="fas fa-paw fa-2x text-light mb-2"></i>
                     <h4 class="mb-1">{{ monthly_stats.total_species }}</h4>
                     <small class="text-muted">Unique Species</small>
                 </div>
@@ -175,7 +175,7 @@
         <div class="col-md-3">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body">
-                    <i class="fas fa-list fa-2x text-info mb-2"></i>
+                    <i class="fas fa-list fa-2x text-light mb-2"></i>
                     <h4 class="mb-1">{{ monthly_stats.total_observations }}</h4>
                     <small class="text-muted">Total Observations</small>
                 </div>
@@ -196,7 +196,7 @@
                         
                         <!-- Sorting Dropdown -->
                         <div class="dropdown">
-                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-sort me-1"></i>Sort
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="sortDropdown">
@@ -285,7 +285,7 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}"
-                                               class="btn btn-sm btn-outline-primary" title="View Details">
+                                               class="btn btn-sm btn-outline-success" title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <a href="{% url 'locations:census_edit' site.id year.year month.month census.id %}"
@@ -310,7 +310,7 @@
                 <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                 <h4 class="text-muted">No census records yet</h4>
                 <p class="text-muted">Add your first census record for {{ month.get_month_display }} {{ year.year }}</p>
-                <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary">
+                <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-success">
                     <i class="fas fa-plus me-2"></i>Add First Census
                 </a>
             </div>

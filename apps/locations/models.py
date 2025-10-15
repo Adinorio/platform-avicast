@@ -369,6 +369,13 @@ class Census(models.Model):
     def __str__(self):
         return f"{self.month} - {self.census_date}"
 
+    def save(self, *args, **kwargs):
+        """Override save to log census record changes"""
+        is_new = self._state.adding
+        action = "CREATING" if is_new else "UPDATING"
+        print(f"DEBUG: Census.save() - {action} census record ID: {self.id}, Date: {self.census_date}, Birds: {self.total_birds}, Species: {self.total_species}")
+        super().save(*args, **kwargs)
+
     def get_observations(self):
         """Get all bird observations for this census"""
         return CensusObservation.objects.filter(census=self)
@@ -376,9 +383,60 @@ class Census(models.Model):
     def update_totals(self):
         """Update total birds and species counts"""
         observations = self.get_observations()
+        old_birds = self.total_birds
+        old_species = self.total_species
         self.total_birds = sum(obs.count for obs in observations)
         self.total_species = observations.values('species').distinct().count()
+        print(f"DEBUG: Census.update_totals() - ID: {self.id}, Old: {old_birds} birds, {old_species} species -> New: {self.total_birds} birds, {self.total_species} species")
         self.save(update_fields=['total_birds', 'total_species', 'updated_at'])
+
+
+class AllocationHistory(models.Model):
+    """Track allocation history for audit purposes"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # What was allocated
+    processing_result = models.ForeignKey(
+        "image_processing.ProcessingResult",
+        on_delete=models.CASCADE,
+        related_name="allocation_history"
+    )
+    census = models.ForeignKey(
+        Census,
+        on_delete=models.CASCADE,
+        related_name="allocation_history"
+    )
+
+    # Who and when
+    allocated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="allocation_history"
+    )
+    allocated_at = models.DateTimeField(auto_now_add=True)
+
+    # Allocation details
+    bird_count = models.PositiveIntegerField(help_text="Number of birds allocated")
+    site = models.ForeignKey(
+        "locations.Site",
+        on_delete=models.CASCADE,
+        related_name="allocation_history"
+    )
+    observation_date = models.DateField(help_text="Date of the census observation")
+
+    # Additional context
+    notes = models.TextField(blank=True, help_text="Optional notes about this allocation")
+
+    class Meta:
+        app_label = "locations"
+        ordering = ["-allocated_at"]
+        verbose_name = "Allocation History"
+        verbose_name_plural = "Allocation History"
+
+    def __str__(self):
+        return f"Allocation: {self.processing_result.image_upload.title} -> {self.census} ({self.bird_count} birds)"
 
 
 class CensusObservation(models.Model):
@@ -417,9 +475,11 @@ class CensusObservation(models.Model):
 
     def save(self, *args, **kwargs):
         """Override save to update census totals"""
+        print(f"DEBUG: Saving CensusObservation - Species: {self.species_name if self.species_name else 'Unknown'}, Count: {self.count}")
         super().save(*args, **kwargs)
         # Update census totals after saving
         if self.census:
+            print(f"DEBUG: Updating census totals for census ID: {self.census.id}")
             self.census.update_totals()
 
 

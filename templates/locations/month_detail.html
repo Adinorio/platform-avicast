@@ -138,10 +138,10 @@
                             <h1 class="mb-2">{{ site.name }}</h1>
                             <p class="text-muted mb-3">{{ site.description|default:"No description available" }}</p>
                             <div class="d-flex gap-3">
-                                <span class="badge bg-primary">{{ site.get_site_type_display }}</span>
+                                <span class="badge bg-dark">{{ site.get_site_type_display }}</span>
                                 <span class="badge bg-secondary">{{ site.get_status_display }}</span>
                                 {% if site.coordinates %}
-                                <span class="badge bg-info">
+                                <span class="badge bg-success">
                                     <i class="fas fa-map-pin me-1"></i>{{ site.get_coordinates_display }}
                                 </span>
                                 {% endif %}
@@ -149,10 +149,10 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="btn-group" role="group">
-                                <a href="{% url 'locations:month_edit' site.id year.year month.month %}" class="btn btn-outline-primary">
+                                <a href="{% url 'locations:month_edit' site.id year.year month.month %}" class="btn btn-outline-success">
                                     <i class="fas fa-edit me-1"></i>Edit Month
                                 </a>
-                                <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary">
+                                <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-success">
                                     <i class="fas fa-plus me-1"></i>Add Census
                                 </a>
                             </div>
@@ -168,7 +168,7 @@
         <div class="col-12 mb-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">
-                    <i class="fas fa-clipboard-list text-primary me-2"></i>
+                    <i class="fas fa-clipboard-list text-success me-2"></i>
                     Census Records ({{ total_census }})
                 </h3>
                 
@@ -188,7 +188,7 @@
                     
                     <!-- Sorting Dropdown -->
                     <div class="dropdown">
-                        <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-sort me-1"></i>Sort
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="sortDropdown">
@@ -267,7 +267,7 @@
                     <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">No census records yet</h4>
                     <p class="text-muted">Add your first census record to start recording data</p>
-                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary">
+                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>Add First Census
                     </a>
                 </div>
@@ -332,7 +332,7 @@
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="{% url 'locations:census_detail' site.id year.year month.month census.id %}"
-                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                   class="btn btn-sm btn-outline-success" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 <a href="{% url 'locations:census_edit' site.id year.year month.month census.id %}"
@@ -357,7 +357,7 @@
                     <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">No census records yet</h4>
                     <p class="text-muted">Add your first census record to start recording data</p>
-                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-primary">
+                    <a href="{% url 'locations:census_create' site.id year.year month.month %}" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>Add First Census
                     </a>
                 </div>

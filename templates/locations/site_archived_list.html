@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Archived Sites - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">Dashboard</a>
+            </li>
+            <li class="breadcrumb-item active">Archived Sites</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-archive text-secondary me-2"></i>
+                Archived Sites
+            </h2>
+            <p class="text-muted">View and manage archived monitoring sites</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm bg-secondary text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Archived Sites</small>
+                    <h2 class="mb-0 mt-2">{{ total_archived_sites|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Active Sites</small>
+                    <h2 class="mb-0 mt-2">{{ active_sites|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <small class="opacity-75">Total Sites</small>
+                    <h2 class="mb-0 mt-2">{{ total_sites|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'locations:dashboard' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-list me-1"></i>Active Sites
+                            </a>
+                            <a href="{% url 'locations:site_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Add New Site
+                            </a>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <a href="?view=card&sort={{ current_sort }}" 
+                               class="btn btn-outline-secondary {% if view_type == 'card' %}active{% endif %}">
+                                <i class="fas fa-th-large me-1"></i>Card View
+                            </a>
+                            <a href="?view=list&sort={{ current_sort }}" 
+                               class="btn btn-outline-secondary {% if view_type == 'list' %}active{% endif %}">
+                                <i class="fas fa-list me-1"></i>List View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archived Sites Display -->
+    {% if sites %}
+        {% if view_type == 'card' %}
+            <!-- Card View -->
+            <div class="row">
+                {% for site in sites %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-archive me-1"></i>
+                                {{ site.name }}
+                            </h6>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'locations:site_detail' site.id %}" 
+                                   class="btn btn-sm btn-outline-light" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'locations:site_restore' site.id %}" 
+                                   class="btn btn-sm btn-outline-light" title="Restore Site">
+                                    <i class="fas fa-undo"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if site.image %}
+                                <img src="{{ site.image.url }}" alt="{{ site.name }}" 
+                                     class="img-fluid rounded mb-3" style="height: 150px; width: 100%; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light rounded mb-3 d-flex align-items-center justify-content-center" 
+                                     style="height: 150px;">
+                                    <i class="fas fa-map-marker-alt fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mb-2">
+                                <strong>Type:</strong> 
+                                <span class="badge bg-secondary">{{ site.get_site_type_display }}</span>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong>Status:</strong> 
+                                <span class="badge bg-secondary">{{ site.get_status_display }}</span>
+                            </div>
+                            
+                            {% if site.coordinates %}
+                            <div class="mb-2">
+                                <strong>Coordinates:</strong>
+                                <small class="text-muted d-block">{{ site.coordinates }}</small>
+                            </div>
+                            {% endif %}
+                            
+                            {% if site.description %}
+                            <div class="mb-2">
+                                <strong>Description:</strong>
+                                <p class="text-muted small mb-0">{{ site.description|truncatewords:15 }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if site.archived_at %}
+                            <div class="mb-2">
+                                <strong>Archived:</strong>
+                                <small class="text-muted d-block">{{ site.archived_at|date:"M d, Y" }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- List View -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-archive me-2"></i>Archived Sites Database</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Site Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Coordinates</th>
+                                    <th>Archived Date</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for site in sites %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if site.image %}
+                                                <img src="{{ site.image.url }}" alt="{{ site.name }}"
+                                                     class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                            {% else %}
+                                                <div class="rounded me-3 d-flex align-items-center justify-content-center"
+                                                     style="width: 40px; height: 40px; background: #f8f9fa;">
+                                                    <i class="fas fa-map-marker-alt text-muted"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <strong>{{ site.name }}</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-archive me-1"></i>Archived
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ site.get_site_type_display }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ site.get_status_display }}</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ site.coordinates|default:"Not specified" }}</small>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ site.archived_at|date:"M d, Y"|default:"Unknown" }}</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'locations:site_detail' site.id %}"
+                                               class="btn btn-sm btn-outline-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'locations:site_restore' site.id %}"
+                                               class="btn btn-sm btn-outline-success" title="Restore Site">
+                                                <i class="fas fa-undo"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-archive fa-4x text-muted mb-3 d-block"></i>
+                <h5 class="text-muted">No Archived Sites</h5>
+                <p class="text-muted">There are currently no archived sites in the database.</p>
+                <a href="{% url 'locations:dashboard' %}" class="btn btn-primary">
+                    <i class="fas fa-list me-2"></i>View Active Sites
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'locations:dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Active Sites
+        </a>
+        <div class="btn-group" role="group">
+            <a href="{% url 'locations:site_create' %}" class="btn btn-outline-primary">
+                <i class="fas fa-plus me-2"></i>Add New Site
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

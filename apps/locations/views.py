@@ -227,6 +227,56 @@ def site_restore(request, site_id):
 
 
 @login_required
+def site_archived_list(request):
+    """Display list of archived sites"""
+    # Get view type parameter (card or list)
+    view_type = request.GET.get('view', 'card')  # Default: card view
+    
+    # Get sorting parameter
+    sort_by = request.GET.get('sort', 'name')  # Default: name
+    
+    # Validate view type parameter
+    valid_views = ['card', 'list']
+    if view_type not in valid_views:
+        view_type = 'card'
+    
+    # Validate sort parameter
+    valid_sorts = {
+        'name': 'name',
+        '-name': '-name',
+        'site_type': 'site_type',
+        '-site_type': '-site_type',
+        'status': 'status',
+        '-status': '-status',
+        'archived_at': 'archived_at',
+        '-archived_at': '-archived_at',
+    }
+    
+    sort_field = valid_sorts.get(sort_by, 'name')
+    sites = Site.objects.filter(is_archived=True).order_by(sort_field)
+
+    # Calculate statistics
+    from apps.locations.models import CensusYear, CensusObservation
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+    
+    total_archived_sites = sites.count()
+    active_sites = Site.objects.filter(is_archived=False).count()
+    total_sites = Site.objects.count()
+
+    context = {
+        "sites": sites,
+        "view_type": view_type,
+        "total_archived_sites": total_archived_sites,
+        "active_sites": active_sites,
+        "total_sites": total_sites,
+        "current_sort": sort_by,
+    }
+    return render(request, "locations/site_archived_list.html", context)
+
+
+@login_required
 def year_list(request, site_id):
     """View all years for a specific site"""
     site = get_object_or_404(Site, id=site_id)

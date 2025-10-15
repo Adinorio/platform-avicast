@@ -144,14 +144,22 @@
                     <a href="{% url 'locations:census_totals' %}" class="btn btn-outline-success">
                         <i class="fas fa-chart-bar me-2"></i>View Totals
                     </a>
+                    <a href="{% url 'locations:site_archived_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-archive me-2"></i>Archived Sites
+                    </a>
                     <a href="{% url 'locations:site_create' %}" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>New Site
                     </a>
                 </div>
                 {% else %}
-                <a href="{% url 'locations:site_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>New Site
-                </a>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'locations:site_archived_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-archive me-2"></i>Archived Sites
+                    </a>
+                    <a href="{% url 'locations:site_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>New Site
+                    </a>
+                </div>
                 {% endif %}
             </div>
         </div>

@@ -109,10 +109,10 @@
                             <h1 class="mb-2">{{ site.name }}</h1>
                             <p class="text-muted mb-3">{{ site.description|default:"No description available" }}</p>
                             <div class="d-flex gap-3">
-                                <span class="badge bg-primary">{{ site.get_site_type_display }}</span>
+                                <span class="badge bg-dark">{{ site.get_site_type_display }}</span>
                                 <span class="badge bg-secondary">{{ site.get_status_display }}</span>
                                 {% if site.coordinates %}
-                                <span class="badge bg-info">
+                                <span class="badge bg-success">
                                     <i class="fas fa-map-pin me-1"></i>{{ site.get_coordinates_display }}
                                 </span>
                                 {% endif %}
@@ -120,17 +120,17 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="btn-group" role="group">
-                                <a href="{% url 'locations:family_grouped_view' site.id %}" class="btn btn-outline-info">
+                                <a href="{% url 'locations:family_grouped_view' site.id %}" class="btn btn-outline-success">
                                     <i class="fas fa-sitemap me-1"></i>View by Family
                                 </a>
-                                <a href="{% url 'locations:site_edit' site.id %}" class="btn btn-outline-primary">
+                                <a href="{% url 'locations:site_edit' site.id %}" class="btn btn-outline-success">
                                     <i class="fas fa-edit me-1"></i>Edit Site
                                 </a>
-                                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-primary">
+                                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-success">
                                     <i class="fas fa-plus me-1"></i>Add Year
                                 </a>
                                 {% if not site.is_archived %}
-                                <a href="{% url 'locations:site_archive' site.id %}" class="btn btn-outline-warning">
+                                <a href="{% url 'locations:site_archive' site.id %}" class="btn btn-outline-success">
                                     <i class="fas fa-archive me-1"></i>Archive
                                 </a>
                                 {% else %}
@@ -154,7 +154,7 @@
         <div class="col-12 mb-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">
-                    <i class="fas fa-calendar-alt text-primary me-2"></i>
+                    <i class="fas fa-calendar-alt text-success me-2"></i>
                     Census Years ({{ total_years }})
                 </h3>
                 
@@ -174,7 +174,7 @@
                     
                     <!-- Sorting Dropdown -->
                     <div class="dropdown">
-                        <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-sort me-1"></i>Sort
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="sortDropdown">
@@ -248,7 +248,7 @@
                 <div class="card-footer bg-transparent border-0 p-2">
                     <div class="btn-group w-100" role="group">
                         <a href="{% url 'locations:year_detail' site.id year.year %}"
-                           class="btn btn-sm btn-outline-primary" title="View Details">
+                           class="btn btn-sm btn-outline-success" title="View Details">
                             <i class="fas fa-eye"></i>
                         </a>
                         <a href="{% url 'locations:year_edit' site.id year.year %}"
@@ -270,7 +270,7 @@
                 <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
                 <h4 class="text-muted">No census years yet</h4>
                 <p class="text-muted">Add your first census year to start recording data</p>
-                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-primary">
+                <a href="{% url 'locations:year_create' site.id %}" class="btn btn-success">
                     <i class="fas fa-plus me-2"></i>Add First Year
                 </a>
             </div>
@@ -307,7 +307,7 @@
                                             <span class="badge bg-success">{{ year.total_birds_recorded }}</span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-info">{{ year.total_species_recorded }}</span>
+                                            <span class="badge bg-success">{{ year.total_species_recorded }}</span>
                                         </td>
                                         <td>
                                             <small class="text-muted">{{ year.created_at|date:"M d, Y" }}</small>
@@ -315,7 +315,7 @@
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="{% url 'locations:year_detail' site.id year.year %}"
-                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                   class="btn btn-sm btn-outline-success" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 <a href="{% url 'locations:year_edit' site.id year.year %}"
@@ -340,7 +340,7 @@
                     <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">No census years yet</h4>
                     <p class="text-muted">Add your first census year to start recording data</p>
-                    <a href="{% url 'locations:year_create' site.id %}" class="btn btn-primary">
+                    <a href="{% url 'locations:year_create' site.id %}" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>Add First Year
                     </a>
                 </div>

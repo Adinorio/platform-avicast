@@ -27,6 +27,7 @@ app_name = "locations"
 urlpatterns = [
     # Main dashboard - Site cards
     path("", views.site_dashboard, name="dashboard"),
+    path("sites/archived/", views.site_archived_list, name="site_archived_list"),
     path("sites/create/", views.site_create, name="site_create"),
     path("sites/<uuid:site_id>/", views.site_detail, name="site_detail"),
     path("sites/<uuid:site_id>/map/", views.site_map, name="site_map"),

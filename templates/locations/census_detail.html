@@ -240,7 +240,7 @@
                                             <div class="d-flex align-items-center">
                                                 <i class="fas fa-layer-group me-2 text-primary"></i>
                                                 <h6 class="mb-0 text-dark fw-bold">{{ family_name }}</h6>
-                                                <span class="badge bg-primary ms-3">{{ family_observations|length }} species</span>
+                                                <span class="badge bg-primary ms-3">{{ family_observations|length }} records</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -256,7 +256,7 @@
                                                         {% if observation.species %}
                                                         {{ observation.species.name }}
                                                         {% else %}
-                                                        {{ observation.species_name|slice:"1:" }}
+                                                        {{ observation.species_name }}
                                                         {% endif %}
                                                     </div>
                                                 </div>
@@ -314,7 +314,7 @@
                                                         {% if observation.species %}
                                                         {{ observation.species.name }}
                                                         {% else %}
-                                                        {{ observation.species_name|slice:"1:" }}
+                                                        {{ observation.species_name }}
                                                         {% endif %}
                                                     </div>
                                                 </div>
@@ -362,7 +362,7 @@
                                                         {% if observation.species %}
                                                         {{ observation.species.name }}
                                                         {% else %}
-                                                        {{ observation.species_name|slice:"1:" }}
+                                                        {{ observation.species_name }}
                                                         {% endif %}
                                                     </div>
                                                 </div>
