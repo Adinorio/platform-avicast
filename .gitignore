@@ -353,6 +353,14 @@ check_*.py
 *_debug.py
 *_fix.py
 
+# Executable build files
+dist/
+build/
+*.spec
+AVICAST-Setup-*.exe
+AVICAST-Portable/
+installer/
+
 # Temporary script outputs
 *.out
 *.err
