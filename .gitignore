@@ -317,9 +317,18 @@ data_export/
 *_export.csv
 *_export.xlsx
 
+# Docker deployment files (deployment-specific)
+docker-compose.yml
+Dockerfile
+docker-entrypoint.sh
+nginx.conf
+.env
+.env.local
+.env.production
+.env.staging
+
 # Deployment configuration files (generated)
 scripts/deployment/generated/
-nginx.conf
 gunicorn.conf
 systemd/
 *.service
