@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Archive Species - {{ species.name }} - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">Dashboard</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'fauna:species_list' %}">Species Management</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'fauna:species_detail' species.pk %}">{{ species.name }}</a>
+            </li>
+            <li class="breadcrumb-item active">Archive Species</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-archive text-warning me-2"></i>
+                Archive Species
+            </h2>
+            <p class="text-muted">Archive this species from the active database</p>
+        </div>
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        Confirm Archive
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if species.image %}
+                            <img src="{{ species.image.url }}" alt="{{ species.name }}"
+                                 class="rounded mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded mb-3 d-flex align-items-center justify-content-center mx-auto"
+                                 style="width: 100px; height: 100px; background: #f8f9fa;">
+                                <i class="fas fa-paw fa-3x text-muted"></i>
+                            </div>
+                        {% endif %}
+
+                        <h4 class="mb-3">Archive "{{ species.name }}"?</h4>
+                        <p class="text-muted">
+                            This will move the species to the archived section. You can restore it later if needed.
+                        </p>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Archiving a species:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Removes it from active species lists</li>
+                                <li>Preserves all existing census observations</li>
+                                <li>Can be restored by admins</li>
+                                <li>Does not delete the species record</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Species Information -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-4">
+                            <strong>Common Name:</strong>
+                        </div>
+                        <div class="col-sm-8">{{ species.name }}</div>
+
+                        <div class="col-sm-4">
+                            <strong>Scientific Name:</strong>
+                        </div>
+                        <div class="col-sm-8">{{ species.scientific_name }}</div>
+
+                        <div class="col-sm-4">
+                            <strong>Family:</strong>
+                        </div>
+                        <div class="col-sm-8">{{ species.family|default:"Not specified" }}</div>
+
+                        <div class="col-sm-4">
+                            <strong>Status:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {% if species.iucn_status == 'CR' %}
+                                <span class="badge bg-danger">Critically Endangered</span>
+                            {% elif species.iucn_status == 'EN' %}
+                                <span class="badge bg-warning">Endangered</span>
+                            {% elif species.iucn_status == 'VU' %}
+                                <span class="badge bg-info">Vulnerable</span>
+                            {% elif species.iucn_status == 'NT' %}
+                                <span class="badge bg-primary">Near Threatened</span>
+                            {% else %}
+                                <span class="badge bg-success">Least Concern</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'fauna:species_detail' species.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-archive me-2"></i>Archive Species
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

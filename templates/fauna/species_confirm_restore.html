@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Restore Species - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">Dashboard</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'fauna:species_list' %}">Species Management</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'fauna:species_archived_list' %}">Archived Species</a>
+            </li>
+            <li class="breadcrumb-item active">Restore Species</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">
+                <i class="fas fa-undo text-success me-2"></i>
+                Restore Species
+            </h2>
+            <p class="text-muted">Restore an archived species to active status</p>
+        </div>
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirm Species Restoration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if object.image %}
+                            <img src="{{ object.image.url }}" alt="{{ object.name }}"
+                                 class="rounded mb-3" style="max-height: 150px;">
+                        {% else %}
+                            <div class="rounded mb-3 d-flex align-items-center justify-content-center mx-auto"
+                                 style="width: 150px; height: 150px; background: #f8f9fa;">
+                                <i class="fas fa-paw fa-3x text-muted"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Are you sure you want to restore this species?</strong>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">COMMON NAME</label>
+                            <div class="fw-semibold">{{ object.name }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">SCIENTIFIC NAME</label>
+                            <div class="fst-italic">{{ object.scientific_name }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">FAMILY</label>
+                            <div>{{ object.family|default:"Not specified" }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">IUCN STATUS</label>
+                            <div>
+                                {% if object.iucn_status == 'CR' %}
+                                    <span class="badge bg-danger">Critically Endangered</span>
+                                {% elif object.iucn_status == 'EN' %}
+                                    <span class="badge bg-warning">Endangered</span>
+                                {% elif object.iucn_status == 'VU' %}
+                                    <span class="badge bg-info">Vulnerable</span>
+                                {% elif object.iucn_status == 'NT' %}
+                                    <span class="badge bg-primary">Near Threatened</span>
+                                {% else %}
+                                    <span class="badge bg-success">Least Concern</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>What happens when you restore:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>The species will be moved back to the active species list</li>
+                            <li>It will be available for census observations and image processing</li>
+                            <li>All existing data (observations, images) will remain intact</li>
+                            <li>The restoration will be logged in the system monitoring</li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'fauna:species_archived_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-undo me-2"></i>Restore Species
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

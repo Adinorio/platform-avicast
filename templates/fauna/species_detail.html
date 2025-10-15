@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ species.name }} - Species Details - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:dashboard' %}">Dashboard</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'fauna:species_list' %}">Species Management</a>
+            </li>
+            <li class="breadcrumb-item active">{{ species.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Species Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-3">
+                                {% if species.image %}
+                                    <img src="{{ species.image.url }}" alt="{{ species.name }}"
+                                         class="rounded me-4" style="width: 80px; height: 80px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded me-4 d-flex align-items-center justify-content-center"
+                                         style="width: 80px; height: 80px; background: #f8f9fa;">
+                                        <i class="fas fa-paw fa-2x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h1 class="mb-1">{{ species.name }}</h1>
+                                    <p class="text-muted mb-2 fst-italic">{{ species.scientific_name }}</p>
+                                    {% if species.family %}
+                                        <span class="badge bg-secondary">{{ species.family }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{% url 'fauna:species_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to List
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Species Information -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Species Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">COMMON NAME</label>
+                                <div class="fw-semibold">{{ species.name }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">SCIENTIFIC NAME</label>
+                                <div class="fst-italic">{{ species.scientific_name }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">FAMILY</label>
+                                <div>{{ species.family|default:"Not specified" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">CONSERVATION STATUS</label>
+                                <div>
+                                    {% if species.iucn_status == 'CR' %}
+                                        <span class="badge bg-danger">Critically Endangered</span>
+                                    {% elif species.iucn_status == 'EN' %}
+                                        <span class="badge bg-danger">Endangered</span>
+                                    {% elif species.iucn_status == 'VU' %}
+                                        <span class="badge bg-info">Vulnerable</span>
+                                    {% elif species.iucn_status == 'NT' %}
+                                        <span class="badge bg-primary">Near Threatened</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Least Concern</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% if species.description %}
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">DESCRIPTION</label>
+                                <div class="text-muted">{{ species.description }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Census Observations -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-binoculars me-2"></i>Census Observations
+                        {% if observation_count > 0 %}
+                            <span class="badge bg-primary ms-2">{{ observation_count }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if observation_count > 0 %}
+                        <div class="row text-center mb-4">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 bg-light">
+                                    <h4 class="text-primary mb-1">{{ observation_count }}</h4>
+                                    <small class="text-muted">Total Observations</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 bg-light">
+                                    <h4 class="text-success mb-1">{{ total_birds_observed }}</h4>
+                                    <small class="text-muted">Total Birds Observed</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 bg-light">
+                                    <h4 class="text-info mb-1">{{ total_birds_observed|floatformat:1 }}</h4>
+                                    <small class="text-muted">Average per Observation</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Site</th>
+                                        <th class="text-center">Count</th>
+                                        <th>Observer</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for observation in observations %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ observation.census.census_date|date:"M d, Y" }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ observation.census.month.get_month_display }} {{ observation.census.month.year.year }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>{{ observation.census.month.year.site.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ observation.census.month.year.site.location|default:"Location not specified" }}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary fs-6">{{ observation.count }}</span>
+                                        </td>
+                                        <td>
+                                            {% if observation.census.lead_observer %}
+                                                <strong>{{ observation.census.lead_observer.get_full_name|default:observation.census.lead_observer.employee_id }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ observation.census.lead_observer.employee_id }}</small>
+                                            {% else %}
+                                                <span class="text-muted">Not specified</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <small>No detailed observation records found</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-binoculars fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Observations Yet</h5>
+                            <p class="text-muted">This species hasn't been observed in any census yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if user.role == 'ADMIN' %}
+                            <a href="{% url 'fauna:species_edit' species.pk %}"
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-2"></i>Edit Species
+                            </a>
+                            <a href="{% url 'fauna:species_delete' species.pk %}"
+                               class="btn btn-outline-danger">
+                                <i class="fas fa-archive me-2"></i>Archive Species
+                            </a>
+                        {% else %}
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-lock me-2"></i>
+                                <small>Admin access required for editing</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Species Image -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0">
+                        <i class="fas fa-image me-2"></i>Species Image
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    {% if species.image %}
+                        <img src="{{ species.image.url }}" alt="{{ species.name }}"
+                             class="img-fluid rounded shadow-sm mb-3" style="max-height: 400px; max-width: 100%;">
+                        <div class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Click to view full size
+                        </div>
+                    {% else %}
+                        <div class="py-5">
+                            <i class="fas fa-image fa-4x text-muted mb-3 d-block"></i>
+                            <h6 class="text-muted mb-2">No Image Available</h6>
+                            <p class="text-muted small mb-3">
+                                This species doesn't have a representative image yet.
+                            </p>
+                            {% if user.role == 'ADMIN' %}
+                                <a href="{% url 'fauna:species_edit' species.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-upload me-1"></i>Add Image
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

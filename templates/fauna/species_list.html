@@ -29,48 +29,173 @@
     <!-- Summary Cards -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm bg-primary text-white">
-                <div class="card-body text-center">
+            <div class="card border-0 shadow-sm bg-primary text-white h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
                     <small class="opacity-75">Total Species</small>
-                    <h2 class="mb-0 mt-2">{{ total_species|default:"0" }}</h2>
+                    <h2 class="mb-2 mt-2">{{ total_species|default:"0" }}</h2>
+                    <small class="opacity-75">
+                        {% if is_paginated %}
+                            Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+                        {% else %}
+                            All {{ species_list|length }} species displayed
+                        {% endif %}
+                    </small>
                 </div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm bg-success text-white">
-                <div class="card-body text-center">
+            <div class="card border-0 shadow-sm bg-success text-white h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
                     <small class="opacity-75">Least Concern</small>
-                    <h2 class="mb-0 mt-2">{{ iucn_stats.least_concern|default:"0" }}</h2>
+                    <h2 class="mb-2 mt-2">{{ iucn_stats.least_concern|default:"0" }}</h2>
+                    <small class="opacity-75">IUCN Status</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm bg-warning text-white">
-                <div class="card-body text-center">
+            <div class="card border-0 shadow-sm bg-danger text-white h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
                     <small class="opacity-75">Threatened</small>
-                    <h2 class="mb-0 mt-2">{{ iucn_stats.vulnerable|add:iucn_stats.endangered|add:iucn_stats.critically_endangered|default:"0" }}</h2>
+                    <h2 class="mb-2 mt-2">{{ iucn_stats.vulnerable|add:iucn_stats.endangered|add:iucn_stats.critically_endangered|default:"0" }}</h2>
+                    <small class="opacity-75">VU + EN + CR</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm bg-info text-white">
-                <div class="card-body text-center">
+            <div class="card border-0 shadow-sm bg-info text-white h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
                     <small class="opacity-75">Near Threatened</small>
-                    <h2 class="mb-0 mt-2">{{ iucn_stats.near_threatened|default:"0" }}</h2>
+                    <h2 class="mb-2 mt-2">{{ iucn_stats.near_threatened|default:"0" }}</h2>
+                    <small class="opacity-75">IUCN Status</small>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Search and Filter Controls -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3" id="filterForm">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control"
+                               placeholder="Search by name, scientific name, family..."
+                               value="{{ current_search }}"
+                               autocomplete="off">
+                        {% if current_search %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearSearch()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Family</label>
+                    <select name="family" class="form-select">
+                        <option value="">All Families</option>
+                        {% for family in families %}
+                            <option value="{{ family }}" {% if family == current_family %}selected{% endif %}>
+                                {{ family }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">IUCN Status</label>
+                    <select name="iucn_status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="LC" {% if current_iucn == 'LC' %}selected{% endif %}>Least Concern</option>
+                        <option value="NT" {% if current_iucn == 'NT' %}selected{% endif %}>Near Threatened</option>
+                        <option value="VU" {% if current_iucn == 'VU' %}selected{% endif %}>Vulnerable</option>
+                        <option value="EN" {% if current_iucn == 'EN' %}selected{% endif %}>Endangered</option>
+                        <option value="CR" {% if current_iucn == 'CR' %}selected{% endif %}>Critically Endangered</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>Filter
+                        </button>
+                        <a href="{% url 'fauna:species_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Smart Matching Results -->
+    {% if current_search and has_smart_matches %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info border-0 shadow-sm">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-brain text-info me-2"></i>
+                    <h6 class="mb-0">Smart Matching Results for "{{ current_search }}"</h6>
+                </div>
+                <div class="row">
+                    {% for match in smart_matches %}
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                {% if match.match_type == 'exact' %}
+                                    <span class="badge bg-success" title="Exact match">Exact</span>
+                                {% elif match.match_type == 'scientific_exact' %}
+                                    <span class="badge bg-primary" title="Scientific name match">Scientific</span>
+                                {% elif match.match_type == 'synonym' %}
+                                    <span class="badge bg-warning" title="Synonym detected">Synonym</span>
+                                {% elif match.match_type == 'fuzzy' %}
+                                    <span class="badge bg-info" title="Fuzzy match">Fuzzy</span>
+                                {% else %}
+                                    <span class="badge bg-secondary" title="Partial match">Partial</span>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <strong>{{ match.species.name }}</strong>
+                                <small class="text-muted d-block">{{ match.species.scientific_name }}</small>
+                                <small class="text-muted">Score: {{ match.score }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <small class="text-muted mt-2 d-block">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Smart matching uses intelligent algorithms to find species even with typos, synonyms, and variations.
+                </small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Species List -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="fas fa-list me-2"></i>Species Database</h5>
-            {% if perms.fauna.add_species %}
-                <a href="#" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus me-1"></i>Add New Species
-                </a>
-            {% endif %}
+            <div class="btn-group" role="group">
+                {% if is_paginated %}
+                    <a href="?show_all=true{% if current_search %}&search={{ current_search }}{% endif %}{% if current_family %}&family={{ current_family }}{% endif %}{% if current_iucn %}&iucn_status={{ current_iucn }}{% endif %}" 
+                       class="btn btn-outline-primary btn-sm" title="Show all species on one page">
+                        <i class="fas fa-list-ul me-1"></i>Show All
+                    </a>
+                {% else %}
+                    <a href="?show_all=false{% if current_search %}&search={{ current_search }}{% endif %}{% if current_family %}&family={{ current_family }}{% endif %}{% if current_iucn %}&iucn_status={{ current_iucn }}{% endif %}" 
+                       class="btn btn-outline-secondary btn-sm" title="Show paginated view">
+                        <i class="fas fa-th-list me-1"></i>Paginated View
+                    </a>
+                {% endif %}
+                {% if user.role == 'ADMIN' %}
+                    <a href="{% url 'fauna:species_archived_list' %}" class="btn btn-outline-secondary btn-sm" title="View archived species">
+                        <i class="fas fa-archive me-1"></i>Archived
+                    </a>
+                    <a href="{% url 'fauna:species_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add New Species
+                    </a>
+                {% endif %}
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -79,19 +204,36 @@
                         <tr>
                             <th>Common Name</th>
                             <th>Scientific Name</th>
+                            <th>Family</th>
                             <th class="text-center">IUCN Status</th>
                             <th class="text-center">Status</th>
-                            <th class="text-center">Actions</th>
+                            <th class="text-center">View</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for species in species_list %}
                         <tr>
                             <td>
-                                <strong>{{ species.name|default:"Unknown Species" }}</strong>
+                                <div class="d-flex align-items-center">
+                                    {% if species.image %}
+                                        <img src="{{ species.image.url }}" alt="{{ species.name }}"
+                                             class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded me-3 d-flex align-items-center justify-content-center"
+                                             style="width: 40px; height: 40px; background: #f8f9fa;">
+                                            <i class="fas fa-paw text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ species.name|default:"Unknown Species" }}</strong>
+                                    </div>
+                                </div>
                             </td>
                             <td class="fst-italic text-muted">
                                 {{ species.scientific_name|default:"-" }}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ species.family|default:"-" }}</span>
                             </td>
                             <td class="text-center">
                                 {% if species.iucn_status == 'CR' %}
@@ -99,7 +241,7 @@
                                     Critically Endangered
                                 </span>
                                 {% elif species.iucn_status == 'EN' %}
-                                <span class="badge bg-warning">
+                                <span class="badge bg-danger">
                                     Endangered
                                 </span>
                                 {% elif species.iucn_status == 'VU' %}
@@ -118,34 +260,26 @@
                             </td>
                             <td class="text-center">
                                 {% if species.is_archived %}
-                                <span class="badge bg-warning">Archived</span>
+                                <span class="badge bg-secondary">Archived</span>
                                 {% else %}
                                 <span class="badge bg-success">Active</span>
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <div class="btn-group" role="group">
-                                    {% if perms.fauna.change_species %}
-                                        <a href="#" class="btn btn-sm btn-outline-primary" title="Edit Species">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    {% endif %}
-                                    {% if perms.fauna.delete_species %}
-                                        <a href="#" class="btn btn-sm btn-outline-danger" title="Archive Species">
-                                            <i class="fas fa-archive"></i>
-                                        </a>
-                                    {% endif %}
-                                </div>
+                                <a href="{% url 'fauna:species_detail' species.pk %}"
+                                   class="btn btn-sm btn-outline-info" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5">
                                 <i class="fas fa-paw fa-3x text-muted mb-3 d-block"></i>
                                 <h5 class="text-muted">No species found in database</h5>
                                 <p class="text-muted">Start by adding your first species to the database.</p>
-                                {% if perms.fauna.add_species %}
-                                    <a href="#" class="btn btn-primary">
+                                {% if user.role == 'ADMIN' %}
+                                    <a href="{% url 'fauna:species_create' %}" class="btn btn-primary">
                                         <i class="fas fa-plus me-2"></i>Add First Species
                                     </a>
                                 {% endif %}
@@ -158,16 +292,199 @@
         </div>
     </div>
 
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <!-- Pagination Info -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} species
+                </div>
+                <div class="text-muted">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </div>
+            </div>
+
+            <!-- Pagination Controls -->
+            <nav aria-label="Species pagination">
+                <ul class="pagination justify-content-center">
+                    <!-- First Page -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_family %}&family={{ current_family }}{% endif %}{% if current_iucn %}&iucn_status={{ current_iucn }}{% endif %}" title="First Page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-double-left"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Previous Page -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_family %}&family={{ current_family }}{% endif %}{% if current_iucn %}&iucn_status={{ current_iucn }}{% endif %}" title="Previous Page">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-left"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Page Numbers -->
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_family %}&family={{ current_family }}{% endif %}{% if current_iucn %}&iucn_status={{ current_iucn }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_family %}&family={{ current_family }}{% endif %}{% if current_iucn %}&iucn_status={{ current_iucn }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Next Page -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_family %}&family={{ current_family }}{% endif %}{% if current_iucn %}&iucn_status={{ current_iucn }}{% endif %}" title="Next Page">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-right"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Last Page -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_family %}&family={{ current_family }}{% endif %}{% if current_iucn %}&iucn_status={{ current_iucn }}{% endif %}" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-double-right"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Actions -->
     <div class="d-flex justify-content-between mt-4">
         <a href="{% url 'locations:dashboard' %}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
         </a>
-        {% if perms.fauna.add_species %}
-            <a href="#" class="btn btn-success">
+        {% if user.role == 'ADMIN' %}
+            <a href="{% url 'fauna:species_create' %}" class="btn btn-success">
                 <i class="fas fa-plus me-2"></i>Add New Species
             </a>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when dropdowns change
+    const familySelect = document.querySelector('select[name="family"]');
+    const iucnSelect = document.querySelector('select[name="iucn_status"]');
+    
+    if (familySelect) {
+        familySelect.addEventListener('change', function() {
+            console.log('Family select changed to:', this.value);
+            this.form.submit();
+        });
+    }
+    
+    if (iucnSelect) {
+        iucnSelect.addEventListener('change', function() {
+            console.log('IUCN select changed to:', this.value);
+            this.form.submit();
+        });
+    }
+    
+    // Add form submission debugging
+    const form = document.getElementById('filterForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submitted with data:');
+            const formData = new FormData(this);
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ': ' + value);
+            }
+        });
+    }
+    
+    // Add enter key support for search
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                this.form.submit();
+            }
+        });
+    }
+    
+    // Show active filter indicators
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilters = urlParams.has('search') || urlParams.has('family') || urlParams.has('iucn_status');
+    
+    if (hasFilters) {
+        // Add visual indicator that filters are active
+        const formCard = document.querySelector('.card');
+        if (formCard) {
+            formCard.classList.add('border-primary');
+        }
+        
+        // Show active filter count
+        let activeFilters = 0;
+        if (urlParams.get('search')) activeFilters++;
+        if (urlParams.get('family')) activeFilters++;
+        if (urlParams.get('iucn_status')) activeFilters++;
+        
+        if (activeFilters > 0) {
+            const filterButton = document.querySelector('button[type="submit"]');
+            if (filterButton) {
+                filterButton.innerHTML = `<i class="fas fa-search me-1"></i>Filter (${activeFilters})`;
+                filterButton.classList.add('btn-success');
+                filterButton.classList.remove('btn-primary');
+            }
+        }
+    }
+});
+
+// Function to clear search input
+function clearSearch() {
+    document.querySelector('input[name="search"]').value = '';
+    document.getElementById('filterForm').submit();
+}
+</script>
 {% endblock %}
