@@ -1223,8 +1223,8 @@
             background: transparent !important;
         }
 
-        /* Override any potential inline styles or higher specificity rules */
-        [data-theme="dark"] * {
+        /* Override any potential inline styles or higher specificity rules - EXCEPT top-navbar */
+        [data-theme="dark"] *:not(.top-navbar) {
             background-color: inherit !important;
         }
 
@@ -1630,7 +1630,7 @@
     <!-- Main Content Area -->
     <div class="main-content" id="mainContent">
         <!-- Top Navigation Bar -->
-        <div class="top-navbar d-flex justify-content-between align-items-center">
+        <div class="top-navbar d-flex justify-content-between align-items-center" id="topNavbar" style="background: #1a1a1a !important; background-color: #1a1a1a !important;">
             <div class="d-flex align-items-center">
                 <button class="sidebar-toggle me-3" id="sidebarToggle">
                     <i class="fas fa-bars"></i>
@@ -1881,16 +1881,32 @@
                 });
             }
             
+            // FORCE TOP NAVBAR BACKGROUND - Bulletproof approach
+            function forceTopNavbarBackground() {
+                const topNavbar = document.getElementById('topNavbar');
+                if (topNavbar) {
+                    topNavbar.style.setProperty('background', '#1a1a1a', 'important');
+                    topNavbar.style.setProperty('background-color', '#1a1a1a', 'important');
+                    topNavbar.style.setProperty('border-bottom', '1px solid #333333', 'important');
+                    topNavbar.style.setProperty('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.3)', 'important');
+                }
+            }
+            
             // Run when DOM is ready
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
                     const theme = document.documentElement.getAttribute('data-theme') || 'light';
                     applyThemeToContainers(theme);
+                    forceTopNavbarBackground();
                 });
             } else {
                 const theme = document.documentElement.getAttribute('data-theme') || 'light';
                 applyThemeToContainers(theme);
+                forceTopNavbarBackground();
             }
+            
+            // Also force it immediately
+            forceTopNavbarBackground();
         })();
 
         // Dark Mode functionality - DOMContentLoaded handler
