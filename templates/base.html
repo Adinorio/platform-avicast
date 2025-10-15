@@ -727,7 +727,12 @@
 
         /* Force breadcrumb to use dark theme */
         [data-theme="dark"] .breadcrumb {
-            background-color: var(--bg-tertiary) !important;
+            background-color: transparent !important;
+            border: none !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            border-radius: 0 !important;
+            padding: 0.75rem 0 !important;
+            margin-bottom: 1rem !important;
             color: var(--text-primary) !important;
         }
 
@@ -737,6 +742,53 @@
 
         [data-theme="dark"] .breadcrumb-item.active {
             color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .breadcrumb-item a {
+            color: var(--link-color) !important;
+            text-decoration: none !important;
+        }
+
+        [data-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--link-hover-color) !important;
+            text-decoration: underline !important;
+        }
+
+        /* Fix any weird lines or borders in dark mode */
+        [data-theme="dark"] hr {
+            border-color: var(--border-color) !important;
+            background-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border {
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-top {
+            border-top-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-bottom {
+            border-bottom-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-start {
+            border-left-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-end {
+            border-right-color: var(--border-color) !important;
+        }
+
+        /* Remove any weird background colors that might show as lines */
+        [data-theme="dark"] nav {
+            background-color: transparent !important;
+            border: none !important;
+        }
+
+        [data-theme="dark"] .navbar {
+            background-color: transparent !important;
+            border: none !important;
         }
 
         /* Force specific Bootstrap classes that might override dark mode */
