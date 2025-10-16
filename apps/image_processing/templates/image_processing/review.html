@@ -139,14 +139,17 @@
                                         </h6>
                                         <div class="row g-2">
                                             <div class="col-sm-6">
-                                                <small class="text-muted">Bounding Box:</small>
+                                                <small class="text-muted">Bounding Boxes ({{ result.bounding_box|length }}):</small>
                                                 <div class="bg-white p-2 rounded border">
-                                                    <code class="small">
-                                                        x: {{ result.bounding_box.x|default:"N/A" }}<br>
-                                                        y: {{ result.bounding_box.y|default:"N/A" }}<br>
-                                                        w: {{ result.bounding_box.width|default:"N/A" }}<br>
-                                                        h: {{ result.bounding_box.height|default:"N/A" }}
-                                                    </code>
+                                                    {% if result.bounding_box %}
+                                                        {% for bbox in result.bounding_box %}
+                                                            <code class="small">
+                                                                Box {{ forloop.counter }}: x={{ bbox.x|default:"N/A" }}, y={{ bbox.y|default:"N/A" }}, w={{ bbox.width|default:"N/A" }}, h={{ bbox.height|default:"N/A" }}<br>
+                                                            </code>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <code class="small">No bounding boxes</code>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                             <div class="col-sm-6">

@@ -25,7 +25,7 @@ class BirdDetectionService:
     Service class for bird detection using YOLO models
     """
 
-    def __init__(self, model_path: Optional[str] = None, confidence_threshold: float = 0.5):
+    def __init__(self, model_path: Optional[str] = None, confidence_threshold: float = 0.3):
         """
         Initialize the optimized bird detection service
 
@@ -169,7 +169,7 @@ class BirdDetectionService:
         """Check if the service is ready for use"""
         return self.model is not None
 
-    def _preprocess_image(self, image: Image.Image) -> np.ndarray:
+    def _preprocess_image(self, image: Image.Image) -> Tuple[np.ndarray, Dict]:
         """
         Enhanced image preprocessing for better detection accuracy
 
@@ -177,13 +177,44 @@ class BirdDetectionService:
             image: PIL Image object
 
         Returns:
-            Preprocessed numpy array
+            Tuple of (preprocessed numpy array, scaling information)
         """
+        # Store original dimensions for coordinate scaling
+        original_width, original_height = image.size
+        
         # Resize to optimal input size while maintaining aspect ratio
-        image = ImageOps.fit(image, self.image_size, Image.Resampling.LANCZOS)
+        processed_image = ImageOps.fit(image, self.image_size, Image.Resampling.LANCZOS)
+        
+        # Calculate scaling factors for coordinate transformation
+        # These factors convert from processed space (640x640) back to original space
+        scale_x = original_width / self.image_size[0]  # original_width / 640
+        scale_y = original_height / self.image_size[1]  # original_height / 640
+        
+        # Calculate padding offsets (ImageOps.fit centers the image)
+        # When aspect ratio doesn't match, ImageOps.fit adds padding
+        if original_width / original_height > self.image_size[0] / self.image_size[1]:
+            # Image is wider than target ratio - padding added top/bottom
+            padding_x = 0
+            padding_y = (self.image_size[1] - (original_height * self.image_size[0] / original_width)) / 2
+        else:
+            # Image is taller than target ratio - padding added left/right
+            padding_x = (self.image_size[0] - (original_width * self.image_size[1] / original_height)) / 2
+            padding_y = 0
+        
+        # Store scaling information for coordinate transformation
+        scaling_info = {
+            'original_width': original_width,
+            'original_height': original_height,
+            'processed_width': self.image_size[0],
+            'processed_height': self.image_size[1],
+            'scale_x': scale_x,
+            'scale_y': scale_y,
+            'padding_x': padding_x,
+            'padding_y': padding_y
+        }
 
         # Convert to numpy array
-        image_array = np.array(image)
+        image_array = np.array(processed_image)
 
         # Enhanced preprocessing pipeline
         if image_array.shape[-1] == 4:  # RGBA
@@ -201,43 +232,120 @@ class BirdDetectionService:
         # Convert back to uint8 for YOLO model
         image_array = (image_array * 255).astype(np.uint8)
 
-        return image_array
+        return image_array, scaling_info
 
-    def _postprocess_detections(self, detections: List[Dict], image_width: int, image_height: int) -> List[Dict]:
+    def _transform_coordinates_to_original(self, detections: List[Dict], scaling_info: Dict) -> List[Dict]:
+        """
+        Transform bounding box coordinates from model space back to original image space
+        
+        Args:
+            detections: List of detection dictionaries with coordinates in model space
+            scaling_info: Dictionary containing scaling and padding information
+            
+        Returns:
+            List of detections with coordinates transformed to original image space
+        """
+        transformed_detections = []
+        
+        # Log transformation parameters for debugging
+        logger.debug(f"Coordinate transformation: original={scaling_info['original_width']}x{scaling_info['original_height']}, "
+                    f"processed={scaling_info['processed_width']}x{scaling_info['processed_height']}, "
+                    f"scale=({scaling_info['scale_x']:.3f}, {scaling_info['scale_y']:.3f}), "
+                    f"padding=({scaling_info['padding_x']:.1f}, {scaling_info['padding_y']:.1f})")
+        
+        for detection in detections:
+            bbox = detection["bounding_box"].copy()
+            
+            # Log original coordinates
+            logger.debug(f"Original bbox: x={bbox['x']}, y={bbox['y']}, w={bbox['width']}, h={bbox['height']}")
+            
+            # CORRECTED TRANSFORMATION LOGIC:
+            # ImageOps.fit() scales the image to fit the target size while maintaining aspect ratio,
+            # then centers it. The key insight is that we need to account for the actual scaling
+            # that was applied, not just the target size.
+            
+            # Calculate the actual scale factors that were applied during ImageOps.fit()
+            # These are different from the target scale factors
+            if scaling_info['original_width'] / scaling_info['original_height'] > scaling_info['processed_width'] / scaling_info['processed_height']:
+                # Wide image - scaled by height, centered horizontally
+                actual_scale = scaling_info['original_height'] / scaling_info['processed_height']
+                # The image was scaled to fit the height, so width was scaled by the same factor
+                scaled_width = scaling_info['original_width'] / actual_scale
+                # Calculate horizontal padding (how much of the target width is padding)
+                horizontal_padding = (scaling_info['processed_width'] - scaled_width) / 2
+                # Transform coordinates
+                x_original = (bbox["x"] - horizontal_padding) * actual_scale
+                y_original = bbox["y"] * actual_scale
+                width_scaled = bbox["width"] * actual_scale
+                height_scaled = bbox["height"] * actual_scale
+            else:
+                # Tall image - scaled by width, centered vertically
+                actual_scale = scaling_info['original_width'] / scaling_info['processed_width']
+                # The image was scaled to fit the width, so height was scaled by the same factor
+                scaled_height = scaling_info['original_height'] / actual_scale
+                # Calculate vertical padding (how much of the target height is padding)
+                vertical_padding = (scaling_info['processed_height'] - scaled_height) / 2
+                # Transform coordinates
+                x_original = bbox["x"] * actual_scale
+                y_original = (bbox["y"] - vertical_padding) * actual_scale
+                width_scaled = bbox["width"] * actual_scale
+                height_scaled = bbox["height"] * actual_scale
+            
+            # Ensure coordinates are within original image bounds
+            x_final = max(0, min(int(x_original), scaling_info["original_width"] - 1))
+            y_final = max(0, min(int(y_original), scaling_info["original_height"] - 1))
+            width_final = max(1, min(int(width_scaled), scaling_info["original_width"] - x_final))
+            height_final = max(1, min(int(height_scaled), scaling_info["original_height"] - y_final))
+            
+            # Log transformed coordinates
+            logger.debug(f"Transformed bbox: x={x_final}, y={y_final}, w={width_final}, h={height_final}")
+            
+            # Create transformed detection
+            transformed_detection = detection.copy()
+            transformed_detection["bounding_box"] = {
+                "x": x_final,
+                "y": y_final,
+                "width": width_final,
+                "height": height_final
+            }
+            
+            transformed_detections.append(transformed_detection)
+            
+        return transformed_detections
+
+    def _postprocess_detections(self, detections: List[Dict], scaling_info: Dict) -> List[Dict]:
         """
         Enhanced post-processing for better detection accuracy
 
         Args:
             detections: Raw detection results
-            image_width: Original image width
-            image_height: Original image height
+            scaling_info: Dictionary containing scaling and padding information
 
         Returns:
-            Filtered and improved detections
+            Filtered and improved detections with coordinates in original image space
         """
         # Filter by confidence threshold
+        logger.info(f"Filtering {len(detections)} detections by confidence threshold {self.confidence_threshold}")
+        for i, det in enumerate(detections):
+            logger.info(f"  Detection {i}: {det['species']} confidence {det['confidence']:.3f} {'PASS' if det['confidence'] >= self.confidence_threshold else 'FILTERED'}")
+        
         filtered_detections = [
             d for d in detections
             if d["confidence"] >= self.confidence_threshold
         ]
+        
+        logger.info(f"After confidence filtering: {len(filtered_detections)} detections remain")
 
         # Apply Non-Maximum Suppression (NMS) for overlapping boxes
         if len(filtered_detections) > 1:
             filtered_detections = self._apply_nms(filtered_detections)
 
-        # Scale bounding boxes back to original image size
-        for detection in filtered_detections:
-            # Bounding boxes are already in original image coordinates
-            # Ensure they don't exceed image boundaries
-            bbox = detection["bounding_box"]
-            bbox["x"] = max(0, min(bbox["x"], image_width - 1))
-            bbox["y"] = max(0, min(bbox["y"], image_height - 1))
-            bbox["width"] = min(bbox["width"], image_width - bbox["x"])
-            bbox["height"] = min(bbox["height"], image_height - bbox["y"])
+        # Transform coordinates from model space to original image space
+        transformed_detections = self._transform_coordinates_to_original(filtered_detections, scaling_info)
 
-        return filtered_detections
+        return transformed_detections
 
-    def _apply_nms(self, detections: List[Dict], iou_threshold: float = 0.45) -> List[Dict]:
+    def _apply_nms(self, detections: List[Dict], iou_threshold: float = 0.3) -> List[Dict]:
         """
         Apply Non-Maximum Suppression to remove overlapping bounding boxes
 
@@ -250,6 +358,8 @@ class BirdDetectionService:
         """
         if len(detections) <= 1:
             return detections
+
+        logger.info(f"Applying NMS to {len(detections)} detections with IoU threshold {iou_threshold}")
 
         # Sort by confidence (highest first)
         detections_sorted = sorted(detections, key=lambda x: x["confidence"], reverse=True)
@@ -265,11 +375,15 @@ class BirdDetectionService:
             remaining = []
             for other in detections_sorted:
                 iou = self._calculate_iou(current["bounding_box"], other["bounding_box"])
+                logger.debug(f"IoU between {current['species']} and {other['species']}: {iou:.3f}")
                 if iou <= iou_threshold:
                     remaining.append(other)
+                else:
+                    logger.info(f"Suppressing {other['species']} due to high IoU ({iou:.3f} > {iou_threshold})")
 
             detections_sorted = remaining
 
+        logger.info(f"NMS result: {len(keep)} detections kept from {len(detections)} original")
         return keep
 
     def _calculate_iou(self, box1: Dict, box2: Dict) -> float:
@@ -326,8 +440,8 @@ class BirdDetectionService:
             # Convert bytes to PIL Image
             image = Image.open(io.BytesIO(image_data))
 
-            # Enhanced preprocessing
-            image_array = self._preprocess_image(image)
+            # Enhanced preprocessing with scaling information
+            image_array, scaling_info = self._preprocess_image(image)
 
             # Clear GPU cache before inference
             if self.device.startswith('cuda'):
@@ -379,8 +493,16 @@ class BirdDetectionService:
                         }
                         detections.append(detection)
 
-            # Apply enhanced post-processing
-            detections = self._postprocess_detections(detections, image.width, image.height)
+            # Apply enhanced post-processing with coordinate transformation
+            logger.info(f"BEFORE post-processing: {len(detections)} detections found")
+            for i, det in enumerate(detections):
+                logger.info(f"  Detection {i}: {det['species']} (conf: {det['confidence']:.3f}) at {det['bounding_box']}")
+            
+            detections = self._postprocess_detections(detections, scaling_info)
+
+            logger.info(f"AFTER post-processing: {len(detections)} detections remaining")
+            for i, det in enumerate(detections):
+                logger.info(f"  Detection {i}: {det['species']} (conf: {det['confidence']:.3f}) at {det['bounding_box']}")
 
             # Recount egret detections after filtering
             egret_detections = sum(1 for d in detections if d["species"] in self.species_display_names.values())

@@ -273,6 +273,9 @@ def process_image_with_ai(image_upload):
         # Store all bounding boxes (list format for multiple detections)
         all_bboxes = [d["bounding_box"] for d in detection_result["detections"]]
         
+        logger.info(f"Processing {len(detection_result['detections'])} detections")
+        logger.info(f"All bounding boxes: {all_bboxes}")
+        
         # Create comprehensive detection data for multi-species support
         all_detections_data = []
         for detection in detection_result["detections"]:
@@ -282,13 +285,15 @@ def process_image_with_ai(image_upload):
                 "bounding_box": detection["bounding_box"],
                 "id": detection["id"]
             })
+            
+        logger.info(f"All detections data: {len(all_detections_data)} items")
         
         # Create processing result from detection data
         result = ProcessingResult.objects.create(
             image_upload=image_upload,
             detected_species=detection_result["primary_species"] or "UNKNOWN",
             confidence_score=detection_result["primary_confidence"],
-            bounding_box=all_bboxes[0] if all_bboxes else {"x": 0, "y": 0, "width": 0, "height": 0},
+            bounding_box=all_bboxes if all_bboxes else [{"x": 0, "y": 0, "width": 0, "height": 0}],
             total_detections=detection_result["total_detections"],
             all_detections=all_detections_data,
             ai_model_used=detection_result["model_used"],
@@ -308,7 +313,7 @@ def process_image_with_ai(image_upload):
             image_upload=image_upload,
             detected_species="PROCESSING_ERROR",
             confidence_score=0.0,
-            bounding_box={"x": 0, "y": 0, "width": 0, "height": 0},
+            bounding_box=[{"x": 0, "y": 0, "width": 0, "height": 0}],
             total_detections=0,
             ai_model_used="ERROR",
             review_decision=ReviewDecision.PENDING,
