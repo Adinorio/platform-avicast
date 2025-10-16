@@ -2,6 +2,20 @@
 {% load static %}
 
 {% block admin_content %}
+<!-- Action Buttons -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-users me-2"></i>User Management
+            </h4>
+            <a href="{% url 'admin_system:user_create' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>Create New User
+            </a>
+        </div>
+    </div>
+</div>
+
 <!-- User Statistics -->
 <div class="row mb-4">
     <div class="col-md-2 mb-3">

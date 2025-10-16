@@ -26,6 +26,12 @@ def system_logs(request):
     if request.user.role not in ['ADMIN', 'SUPERADMIN']:
         messages.error(request, "Access denied. Admin privileges required to view system logs.")
         return redirect('locations:dashboard')
+    
+    # Set appropriate redirect URL based on user role
+    if request.user.role == 'SUPERADMIN':
+        request._redirect_url = 'admin_system:admin_dashboard'
+    else:
+        request._redirect_url = 'locations:dashboard'
 
     # Get filter parameters
     activity_filter = request.GET.get("activity_type", "")

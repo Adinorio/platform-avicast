@@ -16,42 +16,43 @@ from apps.users.models import User
 
 
 def create_default_superadmin():
-    """Create the default superadmin user if it doesn't exist."""
+    """Create the default superadmin user - ALWAYS ensure 010101 exists with correct password."""
 
-    # Check if default user already exists
-    if User.objects.filter(username="010101").exists():
-        print("✅ Default superadmin user '010101' already exists.")
-        return
+    # ALWAYS ensure the default user 010101 exists with the correct password
+    print("🔧 Ensuring default superadmin user '010101' exists with correct password...")
 
-    # Check if any users exist at all
-    if User.objects.count() == 0:
-        print("🆕 No users found. Creating default superadmin...")
-
-        try:
+    try:
+        # Check if default user already exists
+        if User.objects.filter(employee_id="010101").exists():
+            user = User.objects.get(employee_id="010101")
+            # ALWAYS update password to ensure it's correct
+            user.set_password("avicast123")
+            user.save()
+            print("✅ Default superadmin user '010101' exists - password updated to 'avicast123'")
+        else:
             # Create the default superadmin user
+            print("🆕 Creating default superadmin user '010101'...")
             user = User.objects.create_user(
-                username="010101",
                 employee_id="010101",
+                password="avicast123",  # CORRECT default password
+                first_name="Default",
+                last_name="Admin", 
                 email="admin@avicast.local",
-                password="ChangeMe123!",  # Temporary password - MUST be changed on first login
                 role="SUPERADMIN",
                 is_staff=True,
                 is_superuser=True,
                 is_active=True,
             )
-
             print("✅ Default superadmin user created successfully!")
-            print(f"   Username: {user.username}")
-            print(f"   Employee ID: {user.employee_id}")
-            print(f"   Role: {user.role}")
-            print("   Password: avicast123")
-            print("\n🔑 You can now login with these credentials!")
 
-        except Exception as e:
-            print(f"❌ Error creating default user: {e}")
-            return False
-    else:
-        print("ℹ️  Users already exist in the database.")
+        print(f"   Employee ID: {user.employee_id}")
+        print(f"   Role: {user.role}")
+        print("   Password: avicast123")
+        print("\n🔑 ALWAYS login with: Employee ID='010101', Password='avicast123'")
+
+    except Exception as e:
+        print(f"❌ Error creating/updating default user: {e}")
+        return False
 
     return True
 

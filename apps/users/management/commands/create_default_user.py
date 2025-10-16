@@ -8,41 +8,42 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         User = get_user_model()
 
-        # Check if default user already exists
-        if User.objects.filter(username="010101").exists():
-            self.stdout.write(
-                self.style.SUCCESS('✅ Default superadmin user "010101" already exists.')
-            )
-            return
+        # ALWAYS ensure the default user 010101 exists with the correct password
+        self.stdout.write("Ensuring default superadmin user '010101' exists with correct password...")
 
-        # Check if any users exist at all
-        if User.objects.count() == 0:
-            self.stdout.write("🆕 No users found. Creating default superadmin...")
-
-            try:
+        try:
+            # Check if default user already exists
+            if User.objects.filter(employee_id="010101").exists():
+                user = User.objects.get(employee_id="010101")
+                # ALWAYS update password to ensure it's correct
+                user.set_password("avicast123")
+                user.save()
+                self.stdout.write(
+                    self.style.SUCCESS("Default superadmin user '010101' exists - password updated to 'avicast123'")
+                )
+            else:
                 # Create the default superadmin user
+                self.stdout.write("Creating default superadmin user '010101'...")
                 user = User.objects.create_user(
-                    username="010101",
                     employee_id="010101",
+                    password="avicast123",  # CORRECT default password
+                    first_name="Default",
+                    last_name="Admin",
                     email="admin@avicast.local",
-                    password="avicast123",
                     role="SUPERADMIN",
                     is_staff=True,
                     is_superuser=True,
                     is_active=True,
                 )
-
                 self.stdout.write(
-                    self.style.SUCCESS("✅ Default superadmin user created successfully!")
+                    self.style.SUCCESS("Default superadmin user created successfully!")
                 )
-                self.stdout.write(f"   Username: {user.username}")
-                self.stdout.write(f"   Employee ID: {user.employee_id}")
-                self.stdout.write(f"   Role: {user.role}")
-                self.stdout.write("   Password: avicast123")
-                self.stdout.write("\n🔑 You can now login with these credentials!")
 
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"❌ Error creating default user: {e}"))
-                return False
-        else:
-            self.stdout.write("ℹ️  Users already exist in the database.")
+            self.stdout.write(f"   Employee ID: {user.employee_id}")
+            self.stdout.write(f"   Role: {user.role}")
+            self.stdout.write("   Password: avicast123")
+            self.stdout.write("\nALWAYS login with: Employee ID='010101', Password='avicast123'")
+
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Error creating/updating default user: {e}"))
+            return False

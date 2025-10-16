@@ -11,23 +11,98 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- CRITICAL CSS - Theme Application Before Any Other Styles -->
+    <!-- CRITICAL CSS - Theme Application After Bootstrap to Override -->
     <style>
-        /* CRITICAL: Top navbar must be solid - highest priority for both themes */
-        html[data-theme="dark"] .top-navbar {
-            background: #1a1a1a !important;
-            background-color: #1a1a1a !important;
+        /* CRITICAL: Top navbar - MAXIMUM SPECIFICITY with CSS Custom Properties */
+        .top-navbar {
+            background: var(--navbar-bg) !important;
+            background-color: var(--navbar-bg) !important;
+            border-bottom: 1px solid var(--navbar-border) !important;
+            box-shadow: var(--navbar-box-shadow) !important;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+        .top-navbar * { /* Target all children */
+            color: var(--navbar-text) !important;
+            transition: color 0.15s ease !important;
+        }
+
+        /* Specific navbar element overrides with maximum specificity */
+        .top-navbar .text-muted {
+            color: var(--navbar-text-muted) !important;
+        }
+
+        /* Ensure button links also respect the theme */
+        .top-navbar .btn-link {
+            color: var(--navbar-text) !important;
+        }
+        .top-navbar .btn-link:hover {
+            color: var(--navbar-text-muted) !important; /* Slightly different hover for contrast */
+        }
+
+        /* Ensure the theme toggle icon also updates */
+        .top-navbar #themeToggle i {
+            color: var(--navbar-text) !important;
+        }
+
+        /* Ensure any d-flex elements within navbar also get correct text color */
+        .top-navbar .d-flex {
+            color: var(--navbar-text) !important;
         }
         
-        html[data-theme="light"] .top-navbar {
-            background: #ffffff !important;
-            background-color: #ffffff !important;
+        /* Specific navbar element overrides with maximum specificity */
+        html[data-theme="dark"] .top-navbar .text-muted,
+        body[data-theme="dark"] .top-navbar .text-muted,
+        [data-theme="dark"] .top-navbar .text-muted {
+            color: var(--navbar-text-muted, #b0b0b0) !important;
+        }
+        
+        html[data-theme="light"] .top-navbar .text-muted,
+        body[data-theme="light"] .top-navbar .text-muted,
+        [data-theme="light"] .top-navbar .text-muted {
+            color: var(--navbar-text-muted, #6c757d) !important;
+        }
+
+        /* CRITICAL: Bootstrap CSS Variable Override */
+        :root {
+            --navbar-bg: #ffffff;
+            --navbar-text: #212529;
+            --navbar-text-muted: #6c757d;
+            --navbar-border: #dee2e6;
+            --navbar-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Override Bootstrap's CSS variables */
+        html[data-theme="dark"] {
+            --bs-light: #1a1a1a !important;
+            --bs-dark: #ffffff !important;
+            --bs-gray-600: #b0b0b0 !important;
+            --navbar-bg: #1a1a1a !important;
+            --navbar-text: #ffffff !important;
+            --navbar-text-muted: #b0b0b0 !important;
+            --navbar-border: #333333 !important;
+            --navbar-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        html[data-theme="light"] {
+            --bs-light: #ffffff !important;
+            --bs-dark: #212529 !important;
+            --bs-gray-600: #6c757d !important;
+            --navbar-bg: #ffffff !important;
+            --navbar-text: #212529 !important;
+            --navbar-text-muted: #6c757d !important;
+            --navbar-border: #dee2e6 !important;
+            --navbar-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
         }
 
         /* CRITICAL: Immediate theme application - prevents any white flash */
         html[data-theme="dark"] {
             /* Enhanced Dark Mode Color Palette */
             --bg-primary: #0f0f0f !important;
+            --navbar-bg: #1a1a1a !important;
+            --navbar-text: #ffffff !important;
+            --navbar-text-muted: #b0b0b0 !important;
+            --navbar-border: #333333 !important;
             --bg-secondary: #1a1a1a !important;
             --bg-tertiary: #2d2d2d !important;
             --bg-quaternary: #404040 !important;
@@ -97,6 +172,10 @@
         html[data-theme="light"] {
             --bg-primary: #f8f9fa !important;
             --bg-secondary: #ffffff !important;
+            --navbar-bg: #ffffff !important;
+            --navbar-text: #212529 !important;
+            --navbar-text-muted: #6c757d !important;
+            --navbar-border: #dee2e6 !important;
             --bg-tertiary: #e9ecef !important;
             --text-primary: #212529 !important;
             --text-secondary: #6c757d !important;
@@ -1410,27 +1489,103 @@
         /* Dark mode top navbar - MAXIMUM SPECIFICITY - Solid background like light mode */
         html[data-theme="dark"] .top-navbar,
         body[data-theme="dark"] .top-navbar,
-        [data-theme="dark"] .top-navbar {
+        [data-theme="dark"] .top-navbar,
+        .top-navbar.dark-theme,
+        .top-navbar[data-theme="dark"] {
             background: #1a1a1a !important;
             background-color: #1a1a1a !important;
             border-bottom: 1px solid #333333 !important;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+            color: #ffffff !important;
+        }
+        
+        /* Override any Bootstrap classes that might interfere */
+        html[data-theme="dark"] .top-navbar.bg-white,
+        html[data-theme="dark"] .top-navbar.bg-light,
+        html[data-theme="dark"] .top-navbar.navbar-light,
+        [data-theme="dark"] .top-navbar.bg-white,
+        [data-theme="dark"] .top-navbar.bg-light,
+        [data-theme="dark"] .top-navbar.navbar-light {
+            background: #1a1a1a !important;
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
         }
 
-        [data-theme="dark"] .top-navbar .text-muted {
-            color: var(--text-secondary) !important;
+        /* Dark mode text styling */
+        [data-theme="dark"] .top-navbar .text-muted,
+        html[data-theme="dark"] .top-navbar .text-muted,
+        body[data-theme="dark"] .top-navbar .text-muted {
+            color: #b0b0b0 !important;
         }
 
-        [data-theme="dark"] .top-navbar .sidebar-toggle {
-            color: var(--text-primary) !important;
+        [data-theme="dark"] .top-navbar .sidebar-toggle,
+        html[data-theme="dark"] .top-navbar .sidebar-toggle,
+        body[data-theme="dark"] .top-navbar .sidebar-toggle {
+            color: #ffffff !important;
         }
 
-        [data-theme="dark"] .top-navbar .btn-link {
-            color: var(--text-secondary) !important;
+        [data-theme="dark"] .top-navbar .btn-link,
+        html[data-theme="dark"] .top-navbar .btn-link,
+        body[data-theme="dark"] .top-navbar .btn-link {
+            color: #b0b0b0 !important;
         }
 
-        [data-theme="dark"] .top-navbar .btn-link:hover {
-            color: var(--accent-blue) !important;
+        [data-theme="dark"] .top-navbar .btn-link:hover,
+        html[data-theme="dark"] .top-navbar .btn-link:hover,
+        body[data-theme="dark"] .top-navbar .btn-link:hover {
+            color: #4a90e2 !important;
+        }
+        
+        /* Light mode text styling */
+        [data-theme="light"] .top-navbar .text-muted,
+        html[data-theme="light"] .top-navbar .text-muted,
+        body[data-theme="light"] .top-navbar .text-muted,
+        .top-navbar.light-theme .text-muted {
+            color: #6c757d !important;
+        }
+
+        [data-theme="light"] .top-navbar .sidebar-toggle,
+        html[data-theme="light"] .top-navbar .sidebar-toggle,
+        body[data-theme="light"] .top-navbar .sidebar-toggle,
+        .top-navbar.light-theme .sidebar-toggle {
+            color: #6c757d !important;
+        }
+
+        [data-theme="light"] .top-navbar .btn-link,
+        html[data-theme="light"] .top-navbar .btn-link,
+        body[data-theme="light"] .top-navbar .btn-link,
+        .top-navbar.light-theme .btn-link {
+            color: #6c757d !important;
+        }
+
+        [data-theme="light"] .top-navbar .btn-link:hover,
+        html[data-theme="light"] .top-navbar .btn-link:hover,
+        body[data-theme="light"] .top-navbar .btn-link:hover,
+        .top-navbar.light-theme .btn-link:hover {
+            color: #4a90e2 !important;
+        }
+        
+        /* Ensure all text in navbar is visible in dark mode */
+        [data-theme="dark"] .top-navbar h5,
+        [data-theme="dark"] .top-navbar span,
+        [data-theme="dark"] .top-navbar i,
+        html[data-theme="dark"] .top-navbar h5,
+        html[data-theme="dark"] .top-navbar span,
+        html[data-theme="dark"] .top-navbar i {
+            color: #ffffff !important;
+        }
+        
+        /* Ensure all text in navbar is visible in light mode */
+        [data-theme="light"] .top-navbar h5,
+        [data-theme="light"] .top-navbar span,
+        [data-theme="light"] .top-navbar i,
+        html[data-theme="light"] .top-navbar h5,
+        html[data-theme="light"] .top-navbar span,
+        html[data-theme="light"] .top-navbar i,
+        .top-navbar.light-theme h5,
+        .top-navbar.light-theme span,
+        .top-navbar.light-theme i {
+            color: #212529 !important;
         }
 
         .sidebar-toggle {
@@ -1554,6 +1709,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.namespace == 'admin_system' and request.resolver_match.url_name == 'roles_assignments' %}active{% endif %}" href="{% url 'admin_system:roles_assignments' %}">
+                        <i class="fas fa-users-cog me-2"></i> Roles & Assignments
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.namespace == 'admin_system' and request.resolver_match.url_name == 'admin_activities' %}active{% endif %}" href="{% url 'admin_system:admin_activities' %}">
                         <i class="fas fa-history me-2"></i> Activity Log
                     </a>
@@ -1605,6 +1765,11 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'users:audit_logs' %}">
                         <i class="fas fa-shield-alt me-2"></i> System Monitoring
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.namespace == 'admin_system' and request.resolver_match.url_name == 'system_monitoring' %}active{% endif %}" href="{% url 'admin_system:system_monitoring' %}">
+                        <i class="fas fa-server me-2"></i> System Health
                     </a>
                 </li>
                 {% endif %}
@@ -1886,25 +2051,64 @@
                 });
             }
             
-            // FORCE TOP NAVBAR BACKGROUND - Dynamic for both themes
+            // ENHANCED TOP NAVBAR THEME FORCER - CSS Custom Properties + Direct DOM Manipulation
             function forceTopNavbarBackground() {
                 const topNavbar = document.getElementById('topNavbar');
                 const theme = document.documentElement.getAttribute('data-theme') || 'light';
                 
                 if (topNavbar) {
+                    console.log(`🎨 Forcing navbar theme to: ${theme}`);
+                    
+                    // STEP 1: Update CSS Custom Properties at document root level
+                    const root = document.documentElement;
                     if (theme === 'dark') {
-                        // Dark mode: solid dark background
-                        topNavbar.style.setProperty('background', '#1a1a1a', 'important');
-                        topNavbar.style.setProperty('background-color', '#1a1a1a', 'important');
-                        topNavbar.style.setProperty('border-bottom', '1px solid #333333', 'important');
-                        topNavbar.style.setProperty('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.3)', 'important');
-                    } else {
-                        // Light mode: solid light background
-                        topNavbar.style.setProperty('background', '#ffffff', 'important');
-                        topNavbar.style.setProperty('background-color', '#ffffff', 'important');
-                        topNavbar.style.setProperty('border-bottom', '1px solid #dee2e6', 'important');
-                        topNavbar.style.setProperty('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.1)', 'important');
+                        root.style.setProperty('--navbar-bg', '#1a1a1a');
+                        root.style.setProperty('--navbar-text', '#ffffff');
+                        root.style.setProperty('--navbar-text-muted', '#b0b0b0');
+                        root.style.setProperty('--navbar-border', '#333333');
+                        root.style.setProperty('--navbar-box-shadow', '0 2px 4px rgba(0, 0, 0, 0.3)');
+                        // Also override Bootstrap's internal variables directly
+                        root.style.setProperty('--bs-light', '#1a1a1a');
+                        root.style.setProperty('--bs-dark', '#ffffff');
+                        root.style.setProperty('--bs-gray-600', '#b0b0b0');
+                    } else { // Light mode
+                        root.style.setProperty('--navbar-bg', '#ffffff');
+                        root.style.setProperty('--navbar-text', '#212529');
+                        root.style.setProperty('--navbar-text-muted', '#6c757d');
+                        root.style.setProperty('--navbar-border', '#dee2e6');
+                        root.style.setProperty('--navbar-box-shadow', '0 2px 4px rgba(0, 0, 0, 0.1)');
+                        // Also override Bootstrap's internal variables directly
+                        root.style.setProperty('--bs-light', '#ffffff');
+                        root.style.setProperty('--bs-dark', '#212529');
+                        root.style.setProperty('--bs-gray-600', '#6c757d');
                     }
+                    
+                    // STEP 2: Directly apply styles to the topNavbar and its key children
+                    // This ensures immediate visual feedback, bypassing potential CSS cascade delays
+                    requestAnimationFrame(() => {
+                        topNavbar.style.setProperty('background-color', `var(--navbar-bg)`, 'important');
+                        topNavbar.style.setProperty('border-bottom', `1px solid var(--navbar-border)`, 'important');
+                        topNavbar.style.setProperty('box-shadow', `var(--navbar-box-shadow)`, 'important');
+                        
+                        // Update text color for all direct children and specific elements
+                        const elementsToUpdate = topNavbar.querySelectorAll(
+                            '*, .text-muted, .btn-link, #themeToggle i, .d-flex'
+                        );
+                        elementsToUpdate.forEach(el => {
+                            if (el.classList.contains('text-muted')) {
+                                el.style.setProperty('color', `var(--navbar-text-muted)`, 'important');
+                            } else {
+                                el.style.setProperty('color', `var(--navbar-text)`, 'important');
+                            }
+                        });
+                        
+                        // Force a reflow to ensure styles are applied immediately
+                        topNavbar.offsetHeight;
+                        
+                        console.log(`✅ Navbar theme applied: ${theme}`);
+                    });
+                } else {
+                    console.error('❌ Navbar element not found!');
                 }
             }
             
@@ -1951,34 +2155,29 @@
             // Apply comprehensive theme to all containers
             forceThemeBackground(currentTheme);
             
-               // Theme toggle functionality
+               // Enhanced theme toggle functionality
                if (themeToggle) {
                    themeToggle.addEventListener('click', function() {
-                       const currentTheme = body.getAttribute('data-theme');
+                       const currentTheme = document.documentElement.getAttribute('data-theme');
+                       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                        
-                       if (currentTheme === 'dark') {
-                           // Switch to light mode - IMMEDIATE APPLICATION
-                           document.documentElement.setAttribute('data-theme', 'light');
-                           body.setAttribute('data-theme', 'light');
-                           themeIcon.className = 'fas fa-moon';
-                           themeToggle.title = 'Switch to Dark Mode';
-                           localStorage.setItem('theme', 'light');
-                           // Force light mode background immediately
-                           forceThemeBackground('light');
-                           // Update navbar for light mode
-                           forceTopNavbarBackground();
-                       } else {
-                           // Switch to dark mode - IMMEDIATE APPLICATION
-                           document.documentElement.setAttribute('data-theme', 'dark');
-                           body.setAttribute('data-theme', 'dark');
+                       // Update theme attributes immediately
+                       document.documentElement.setAttribute('data-theme', newTheme);
+                       body.setAttribute('data-theme', newTheme);
+                       localStorage.setItem('theme', newTheme);
+                       
+                       // Update toggle button state
+                       if (newTheme === 'dark') {
                            themeIcon.className = 'fas fa-sun';
                            themeToggle.title = 'Switch to Light Mode';
-                           localStorage.setItem('theme', 'dark');
-                           // Force dark mode background immediately
-                           forceThemeBackground('dark');
-                           // Update navbar for dark mode
-                           forceTopNavbarBackground();
+                       } else {
+                           themeIcon.className = 'fas fa-moon';
+                           themeToggle.title = 'Switch to Dark Mode';
                        }
+                       
+                       // Force theme background and navbar update
+                       forceThemeBackground(newTheme);
+                       forceTopNavbarBackground();
                    });
                }
                

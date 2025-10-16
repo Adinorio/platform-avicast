@@ -21,7 +21,8 @@ from apps.fauna.models import Species
 from apps.locations.models import Site, Census
 from apps.image_processing.models import ImageUpload, ProcessingResult
 from apps.users.models import UserActivity
-from .models import AdminActivity, SystemConfiguration, AdminNotification
+from .models import AdminActivity, SystemConfiguration, AdminNotification, RolePermission
+from .forms import UserCreateForm, UserEditForm, UserPasswordChangeForm
 
 User = get_user_model()
 
@@ -184,6 +185,46 @@ def user_detail(request, user_id):
 
 @login_required
 @user_passes_test(admin_required)
+def user_create(request):
+    """
+    Create new user with auto-generated employee ID
+    """
+    if request.method == 'POST':
+        form = UserCreateForm(request.POST)
+        if form.is_valid():
+            try:
+                user = form.save()
+                log_admin_activity(
+                    request.user,
+                    'CREATE',
+                    f'Created user {user.get_full_name()} with ID {user.employee_id}',
+                    'User',
+                    str(user.id),
+                    {
+                        'employee_id': user.employee_id,
+                        'role': user.role,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name
+                    }
+                )
+                messages.success(request, f'User "{user.get_full_name()}" created successfully with Employee ID: {user.employee_id}')
+                return redirect('admin_system:user_detail', user_id=user.id)
+            except Exception as e:
+                messages.error(request, f'Error creating user: {str(e)}')
+    else:
+        form = UserCreateForm()
+    
+    context = {
+        'form': form,
+        'title': 'Create New User',
+        'subtitle': 'User will be assigned an auto-generated Employee ID'
+    }
+    
+    return render(request, 'admin_system/user_form.html', context)
+
+
+@login_required
+@user_passes_test(admin_required)
 def user_edit(request, user_id):
     """
     Edit user information
@@ -191,39 +232,42 @@ def user_edit(request, user_id):
     user = get_object_or_404(User, id=user_id)
     
     if request.method == 'POST':
-        # Update user fields
-        user.first_name = request.POST.get('first_name', user.first_name)
-        user.last_name = request.POST.get('last_name', user.last_name)
-        user.email = request.POST.get('email', user.email)
-        user.role = request.POST.get('role', user.role)
-        user.is_active = request.POST.get('is_active') == 'on'
-        user.is_staff = request.POST.get('is_staff') == 'on'
-        user.is_superuser = request.POST.get('is_superuser') == 'on'
-        
-        user.save()
-        
-        log_admin_activity(
-            request.user, 
-            'UPDATE', 
-            f'Updated user {user.get_full_name()}',
-            'User',
-            str(user.id),
-            {'fields_updated': list(request.POST.keys())}
-        )
-        
-        messages.success(request, f'User {user.get_full_name()} updated successfully.')
-        return redirect('admin_system:user_detail', user_id=user.id)
+        form = UserEditForm(request.POST, instance=user)
+        if form.is_valid():
+            try:
+                form.save()
+                log_admin_activity(
+                    request.user, 
+                    'UPDATE', 
+                    f'Updated user {user.get_full_name()}',
+                    'User',
+                    str(user.id),
+                    {
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'email': user.email,
+                        'role': user.role
+                    }
+                )
+                messages.success(request, f'User "{user.get_full_name()}" updated successfully.')
+                return redirect('admin_system:user_detail', user_id=user.id)
+            except Exception as e:
+                messages.error(request, f'Error updating user: {str(e)}')
+    else:
+        form = UserEditForm(instance=user)
     
     context = {
-        'user_obj': user,
-        'page_title': f'Edit User - {user.get_full_name()}',
+        'form': form,
+        'user': user,
+        'title': f'Edit User - {user.get_full_name()}',
+        'subtitle': f'Employee ID: {user.employee_id}'
     }
     
-    return render(request, 'admin_system/user_edit.html', context)
+    return render(request, 'admin_system/user_form.html', context)
 
 
 @login_required
-@user_passes_test(superadmin_required)
+@user_passes_test(lambda user: user.is_authenticated and hasattr(user, 'role') and user.role in ['ADMIN', 'SUPERADMIN'])
 def system_monitoring(request):
     """
     System monitoring and health dashboard
@@ -263,7 +307,7 @@ def system_monitoring(request):
 
 
 @login_required
-@user_passes_test(admin_required)
+@user_passes_test(superadmin_required)
 def admin_activities(request):
     """
     View all admin activities for audit trail
@@ -394,6 +438,135 @@ def password_change(request):
         return redirect('admin_system:admin_dashboard')
     
     return render(request, 'admin_system/password_change.html')
+
+
+@login_required
+@user_passes_test(admin_required)
+def roles_assignments(request):
+    """
+    Roles and Assignments management page
+    """
+    # Get or create role permissions
+    role_permissions = {}
+    for role_choice in User.Role.choices:
+        role = role_choice[0]
+        permission, created = RolePermission.objects.get_or_create(role=role)
+        role_permissions[role] = permission
+    
+    # Get user counts by role
+    user_counts = User.objects.values('role').annotate(count=Count('id'))
+    role_counts = {item['role']: item['count'] for item in user_counts}
+    
+    if request.method == 'POST':
+        role = request.POST.get('role')
+        permission = role_permissions.get(role)
+        
+        if permission:
+            # Store old permissions for comparison
+            old_permissions = {
+                'can_generate_reports': permission.can_generate_reports,
+                'can_modify_species': permission.can_modify_species,
+                'can_add_sites': permission.can_add_sites,
+                'can_add_birds': permission.can_add_birds,
+                'can_process_images': permission.can_process_images,
+                'can_access_weather': permission.can_access_weather,
+                'can_access_analytics': permission.can_access_analytics,
+                'can_manage_users': permission.can_manage_users,
+            }
+            
+            # Update permissions
+            permission.can_generate_reports = 'can_generate_reports' in request.POST
+            permission.can_modify_species = 'can_modify_species' in request.POST
+            permission.can_add_sites = 'can_add_sites' in request.POST
+            permission.can_add_birds = 'can_add_birds' in request.POST
+            permission.can_process_images = 'can_process_images' in request.POST
+            permission.can_access_weather = 'can_access_weather' in request.POST
+            permission.can_access_analytics = 'can_access_analytics' in request.POST
+            
+            # SUPERADMIN always has User Management enabled
+            if role == 'SUPERADMIN':
+                permission.can_manage_users = True
+            else:
+                permission.can_manage_users = 'can_manage_users' in request.POST
+            
+            # Check for edge cases and provide warnings
+            warnings = []
+            if role == 'ADMIN':
+                # Check if ADMIN has no permissions
+                admin_permissions = [
+                    permission.can_generate_reports,
+                    permission.can_modify_species,
+                    permission.can_add_sites,
+                    permission.can_add_birds,
+                    permission.can_process_images,
+                    permission.can_access_weather,
+                    permission.can_access_analytics,
+                ]
+                if not any(admin_permissions):
+                    warnings.append("⚠️ ADMIN role has no main system permissions! This will severely limit their functionality.")
+                
+                # Check if ADMIN has User Management (not recommended)
+                if permission.can_manage_users:
+                    warnings.append("⚠️ ADMIN role has User Management access. This is unusual - consider if this is intended.")
+            
+            elif role == 'FIELD_WORKER':
+                # Check if FIELD_WORKER has modification permissions
+                modification_permissions = [
+                    permission.can_generate_reports,
+                    permission.can_modify_species,
+                    permission.can_add_sites,
+                    permission.can_add_birds,
+                    permission.can_process_images,
+                ]
+                if any(modification_permissions):
+                    warnings.append("⚠️ FIELD_WORKER role has modification permissions. This contradicts their typical view-only role.")
+                
+                # Check if FIELD_WORKER has User Management (not recommended)
+                if permission.can_manage_users:
+                    warnings.append("⚠️ FIELD_WORKER role has User Management access. This is unusual - consider if this is intended.")
+            
+            # Count active users with this role
+            active_users = User.objects.filter(role=role, is_active=True).count()
+            
+            permission.save()
+            
+            # Create detailed success message
+            success_msg = f"✅ {role} permissions updated successfully!"
+            
+            if active_users > 0:
+                success_msg += f" This affects {active_users} active user(s)."
+            
+            if warnings:
+                success_msg += "\n\n" + "\n".join(warnings)
+                messages.warning(request, success_msg)
+            else:
+                messages.success(request, success_msg)
+            
+            # Log the permission changes
+            changed_permissions = []
+            for perm_name, old_value in old_permissions.items():
+                new_value = getattr(permission, perm_name)
+                if old_value != new_value:
+                    changed_permissions.append(f"{perm_name}: {old_value} → {new_value}")
+            
+            if changed_permissions:
+                log_admin_activity(
+                    request.user,
+                    'UPDATE',
+                    f'Updated {role} permissions: {", ".join(changed_permissions)}',
+                    'RolePermission',
+                    str(permission.id),
+                    {'role': role, 'changes': changed_permissions}
+                )
+            
+            return redirect('admin_system:roles_assignments')
+    
+    context = {
+        'role_permissions': role_permissions,
+        'role_counts': role_counts,
+        'user_roles': User.Role.choices,
+    }
+    return render(request, 'admin_system/roles_assignments.html', context)
 
 
 @login_required

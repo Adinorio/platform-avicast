@@ -9,7 +9,11 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
-                <a href="{% url 'locations:dashboard' %}">Dashboard</a>
+                {% if user.role == 'SUPERADMIN' %}
+                    <a href="{% url 'admin_system:admin_dashboard' %}">Admin Dashboard</a>
+                {% else %}
+                    <a href="{% url 'locations:dashboard' %}">Dashboard</a>
+                {% endif %}
             </li>
             <li class="breadcrumb-item active">System Monitoring</li>
         </ol>

@@ -9,6 +9,72 @@ from django.utils import timezone
 User = get_user_model()
 
 
+class RolePermission(models.Model):
+    """Model to store dynamic role permissions"""
+    role = models.CharField(max_length=50, choices=User.Role.choices, unique=True)
+    
+    # Feature permissions
+    can_generate_reports = models.BooleanField(default=True)
+    can_modify_species = models.BooleanField(default=True)
+    can_add_sites = models.BooleanField(default=True)
+    can_add_birds = models.BooleanField(default=True)
+    can_process_images = models.BooleanField(default=True)
+    can_access_weather = models.BooleanField(default=True)
+    can_access_analytics = models.BooleanField(default=True)
+    can_manage_users = models.BooleanField(default=False)
+    
+    def save(self, *args, **kwargs):
+        """Override save to set default permissions based on role (only on creation)"""
+        # Only set defaults on creation, allow manual changes after that
+        if not self.pk:
+            if self.role == 'SUPERADMIN':
+                # SUPERADMIN: Only user management access by default
+                self.can_generate_reports = False
+                self.can_modify_species = False
+                self.can_add_sites = False
+                self.can_add_birds = False
+                self.can_process_images = False
+                self.can_access_weather = False
+                self.can_access_analytics = False
+                self.can_manage_users = True
+            elif self.role == 'ADMIN':
+                # ADMIN: All main system features by default
+                self.can_generate_reports = True
+                self.can_modify_species = True
+                self.can_add_sites = True
+                self.can_add_birds = True
+                self.can_process_images = True
+                self.can_access_weather = True
+                self.can_access_analytics = True
+                self.can_manage_users = False
+            elif self.role == 'FIELD_WORKER':
+                # FIELD_WORKER: View-only access by default
+                self.can_generate_reports = False
+                self.can_modify_species = False
+                self.can_add_sites = False
+                self.can_add_birds = False
+                self.can_process_images = False
+                self.can_access_weather = True
+                self.can_access_analytics = True
+                self.can_manage_users = False
+        
+        # Always enforce SUPERADMIN User Management
+        if self.role == 'SUPERADMIN':
+            self.can_manage_users = True
+        
+        super().save(*args, **kwargs)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Role Permission"
+        verbose_name_plural = "Role Permissions"
+    
+    def __str__(self):
+        return f"{self.role} Permissions"
+
+
 class AdminActivity(models.Model):
     """
     Track all admin activities for audit purposes

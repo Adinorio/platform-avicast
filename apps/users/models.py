@@ -1,18 +1,51 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+import re
 
 # Create your models here.
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, employee_id, password=None, **extra_fields):
+    def create_user(self, employee_id=None, password=None, **extra_fields):
+        # Auto-generate employee_id if not provided
         if not employee_id:
-            raise ValueError("The Employee ID must be set")
+            employee_id = self.generate_employee_id()
+        
         user = self.model(employee_id=employee_id, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
+    
+    def generate_employee_id(self):
+        """Generate employee ID in format: YY-MMDD-NNN"""
+        from datetime import date
+        
+        today = date.today()
+        year = str(today.year)[-2:]  # Last 2 digits of year
+        month_day = today.strftime("%m%d")  # MMDD format
+        
+        # Find the next sequential number for today
+        prefix = f"{year}-{month_day}-"
+        existing_ids = self.filter(employee_id__startswith=prefix).values_list('employee_id', flat=True)
+        
+        if existing_ids:
+            # Extract numbers and find the highest
+            numbers = []
+            for emp_id in existing_ids:
+                try:
+                    num_part = emp_id.split('-')[-1]
+                    numbers.append(int(num_part))
+                except (ValueError, IndexError):
+                    continue
+            
+            next_num = max(numbers) + 1 if numbers else 1
+        else:
+            next_num = 1
+        
+        # Format with zero padding
+        return f"{prefix}{next_num:03d}"
 
     def create_superuser(self, employee_id, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
@@ -42,7 +75,8 @@ class User(AbstractUser):
 
     # Override username to use employee_id instead
     employee_id = models.CharField(
-        max_length=50, unique=True, verbose_name="Employee ID", null=True, blank=True
+        max_length=50, unique=True, verbose_name="Employee ID", null=True, blank=True,
+        help_text="Format: YY-MMDD-NNN (e.g., 25-0118-001)"
     )
     role = models.CharField(max_length=50, choices=Role.choices)
     account_status = models.CharField(
@@ -95,6 +129,17 @@ class User(AbstractUser):
             self.is_superuser = False
 
         super().save(*args, **kwargs)
+    
+    def clean(self):
+        """Validate employee_id format"""
+        super().clean()
+        if self.employee_id:
+            # Validate format: YY-MMDD-NNN
+            pattern = r'^\d{2}-\d{4}-\d{3}$'
+            if not re.match(pattern, self.employee_id):
+                raise ValidationError({
+                    'employee_id': 'Employee ID must be in format YY-MMDD-NNN (e.g., 25-0118-001)'
+                })
 
     def __str__(self):
         return f"{self.employee_id} - {self.get_full_name()}"

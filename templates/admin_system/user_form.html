@@ -1,0 +1,190 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-plus me-2"></i>{{ title }}
+                        </h5>
+                        {% if subtitle %}
+                        <small class="opacity-75">{{ subtitle }}</small>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'admin_system:user_management' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Users
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Please correct the following errors:</h6>
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field|title }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.help_text %}
+                            <div class="form-text">{{ form.first_name.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                Last Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.help_text %}
+                            <div class="form-text">{{ form.last_name.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.role.id_for_label }}" class="form-label">
+                                Role <span class="text-danger">*</span>
+                            </label>
+                            {{ form.role }}
+                            {% if form.role.help_text %}
+                            <div class="form-text">{{ form.role.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                Email Address
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.help_text %}
+                            <div class="form-text">{{ form.email.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if form.password %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                Password <span class="text-danger">*</span>
+                            </label>
+                            {{ form.password }}
+                            {% if form.password.help_text %}
+                            <div class="form-text">{{ form.password.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.password_confirm.id_for_label }}" class="form-label">
+                                Confirm Password <span class="text-danger">*</span>
+                            </label>
+                            {{ form.password_confirm }}
+                            {% if form.password_confirm.help_text %}
+                            <div class="form-text">{{ form.password_confirm.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.is_active %}
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active User
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                {{ form.is_staff }}
+                                <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">
+                                    Staff Access
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                {{ form.is_superuser }}
+                                <label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">
+                                    Superuser
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user and user.employee_id %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Employee ID:</strong> {{ user.employee_id }}
+                        <br><small>This ID cannot be changed and is used for login.</small>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-magic me-2"></i>
+                        <strong>Auto-Generated Employee ID:</strong> The system will automatically generate an Employee ID in the format YY-MMDD-NNN (e.g., 25-0118-001) when you save this user.
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'admin_system:user_management' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            {% if user %}Update User{% else %}Create User{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const password = document.getElementById('{{ form.password.id_for_label }}');
+            const passwordConfirm = document.getElementById('{{ form.password_confirm.id_for_label }}');
+            
+            if (password && passwordConfirm) {
+                if (password.value !== passwordConfirm.value) {
+                    e.preventDefault();
+                    alert('Passwords do not match!');
+                    passwordConfirm.focus();
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

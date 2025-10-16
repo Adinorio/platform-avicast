@@ -1,0 +1,244 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-users-cog me-2"></i>Roles & Assignments
+                </h4>
+                <p class="mb-0 opacity-75">Manage role permissions and user assignments</p>
+            </div>
+            <div class="card-body">
+                <!-- Role Statistics -->
+                <div class="row mb-4">
+                    {% for role, count in role_counts.items %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary mb-1">{{ count }}</h3>
+                                <p class="mb-0 text-muted">{{ role|title }} Users</p>
+                                {% if role != 'SUPERADMIN' %}
+                                    {% for perm_role, permission in role_permissions.items %}
+                                        {% if perm_role == role %}
+                                            <small class="text-muted">
+                                                {% if role == 'ADMIN' %}
+                                                    {% if permission.can_generate_reports or permission.can_modify_species or permission.can_add_sites or permission.can_add_birds or permission.can_process_images or permission.can_access_weather or permission.can_access_analytics %}
+                                                        <span class="text-success">✅ Full Access</span>
+                                                    {% else %}
+                                                        <span class="text-warning">⚠️ Limited Access</span>
+                                                    {% endif %}
+                                                {% elif role == 'FIELD_WORKER' %}
+                                                    {% if permission.can_generate_reports or permission.can_modify_species or permission.can_add_sites or permission.can_add_birds or permission.can_process_images %}
+                                                        <span class="text-warning">⚠️ Modification Access</span>
+                                                    {% else %}
+                                                        <span class="text-info">👁️ View-Only</span>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </small>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <small class="text-muted"><span class="text-danger">🔒 User Management Only</span></small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Permission Matrix -->
+                <div class="row">
+                    {% for role, permission in role_permissions.items %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-{{ role|lower }}">
+                                <h5 class="mb-0 text-white">
+                                    <i class="fas fa-shield-alt me-2"></i>{{ role|title }}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if role != 'SUPERADMIN' %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="role" value="{{ role }}">
+                                {% endif %}
+                                    
+                                    {% if role != 'SUPERADMIN' %}
+                                    <!-- Main System Features (Not for SUPERADMIN) -->
+                                    
+                                    {% if role == 'FIELD_WORKER' %}
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>FIELD_WORKER:</strong> View-only access to main system features
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="can_generate_reports" 
+                                               id="reports_{{ role }}" {% if permission.can_generate_reports %}checked{% endif %}>
+                                        <label class="form-check-label" for="reports_{{ role }}">
+                                            <i class="fas fa-chart-bar me-1"></i>Generate Reports
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="can_modify_species" 
+                                               id="species_{{ role }}" {% if permission.can_modify_species %}checked{% endif %}>
+                                        <label class="form-check-label" for="species_{{ role }}">
+                                            <i class="fas fa-paw me-1"></i>Modify Species Data
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="can_add_sites" 
+                                               id="sites_{{ role }}" {% if permission.can_add_sites %}checked{% endif %}>
+                                        <label class="form-check-label" for="sites_{{ role }}">
+                                            <i class="fas fa-map-marker-alt me-1"></i>Add Sites
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="can_add_birds" 
+                                               id="birds_{{ role }}" {% if permission.can_add_birds %}checked{% endif %}>
+                                        <label class="form-check-label" for="birds_{{ role }}">
+                                            <i class="fas fa-dove me-1"></i>Add Birds
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="can_process_images" 
+                                               id="images_{{ role }}" {% if permission.can_process_images %}checked{% endif %}>
+                                        <label class="form-check-label" for="images_{{ role }}">
+                                            <i class="fas fa-camera me-1"></i>Process Images
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="can_access_weather" 
+                                               id="weather_{{ role }}" {% if permission.can_access_weather %}checked{% endif %}>
+                                        <label class="form-check-label" for="weather_{{ role }}">
+                                            <i class="fas fa-cloud-sun me-1"></i>Weather Access
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="can_access_analytics" 
+                                               id="analytics_{{ role }}" {% if permission.can_access_analytics %}checked{% endif %}>
+                                        <label class="form-check-label" for="analytics_{{ role }}">
+                                            <i class="fas fa-chart-line me-1"></i>Analytics Access
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if role == 'SUPERADMIN' %}
+                                    <!-- SUPERADMIN: Only User Management -->
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>SUPERADMIN:</strong> User Management access only
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="can_manage_users" 
+                                               id="users_{{ role }}" checked disabled>
+                                        <label class="form-check-label" for="users_{{ role }}">
+                                            <i class="fas fa-users me-1"></i>User Management
+                                            <small class="text-muted d-block">(Always enabled for SUPERADMIN)</small>
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if role != 'SUPERADMIN' %}
+                                    <button type="submit" class="btn btn-primary btn-sm w-100" onclick="return confirmPermissionChanges('{{ role }}')">
+                                        <i class="fas fa-save me-1"></i>Update Permissions
+                                    </button>
+                                    {% else %}
+                                    <div class="alert alert-secondary mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <small>SUPERADMIN permissions are fixed and cannot be modified</small>
+                                    </div>
+                                    {% endif %}
+                                {% if role != 'SUPERADMIN' %}
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card-header.bg-superadmin { background-color: #dc3545 !important; }
+.card-header.bg-admin { background-color: #0d6efd !important; }
+.card-header.bg-field_worker { background-color: #198754 !important; }
+</style>
+
+<script>
+function confirmPermissionChanges(role) {
+    // Get form data
+    const form = event.target.closest('form');
+    const formData = new FormData(form);
+    
+    // Check for potentially problematic configurations
+    let warnings = [];
+    
+    if (role === 'ADMIN') {
+        // Check if ADMIN has no main system permissions
+        const mainPermissions = [
+            'can_generate_reports',
+            'can_modify_species', 
+            'can_add_sites',
+            'can_add_birds',
+            'can_process_images',
+            'can_access_weather',
+            'can_access_analytics'
+        ];
+        
+        const hasMainPermissions = mainPermissions.some(perm => formData.has(perm));
+        if (!hasMainPermissions) {
+            warnings.push("⚠️ ADMIN will have NO main system permissions!");
+        }
+        
+        // Check if ADMIN has User Management
+        if (formData.has('can_manage_users')) {
+            warnings.push("⚠️ ADMIN will have User Management access (unusual)");
+        }
+    }
+    
+    if (role === 'FIELD_WORKER') {
+        // Check if FIELD_WORKER has modification permissions
+        const modificationPermissions = [
+            'can_generate_reports',
+            'can_modify_species',
+            'can_add_sites', 
+            'can_add_birds',
+            'can_process_images'
+        ];
+        
+        const hasModificationPermissions = modificationPermissions.some(perm => formData.has(perm));
+        if (hasModificationPermissions) {
+            warnings.push("⚠️ FIELD_WORKER will have modification permissions (contradicts view-only role)");
+        }
+        
+        // Check if FIELD_WORKER has User Management
+        if (formData.has('can_manage_users')) {
+            warnings.push("⚠️ FIELD_WORKER will have User Management access (unusual)");
+        }
+    }
+    
+    // Show confirmation with warnings if any
+    let confirmMessage = `Are you sure you want to update ${role} permissions?`;
+    
+    if (warnings.length > 0) {
+        confirmMessage += "\n\n" + warnings.join("\n") + "\n\nThis may affect user functionality!";
+    }
+    
+    return confirm(confirmMessage);
+}
+</script>
+{% endblock admin_content %}
