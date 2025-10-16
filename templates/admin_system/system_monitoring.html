@@ -5,37 +5,49 @@
 <!-- System Health Overview -->
 <div class="row mb-4">
     <div class="col-md-3 mb-3">
-        <div class="stats-card success">
-            <div class="text-center">
-                <p class="stats-number">{{ db_stats|length }}</p>
-                <p class="stats-label">Database Tables</p>
+        <div class="card border-0 shadow-sm bg-success text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Database Tables</small>
+                <h2 class="mb-2 mt-2">{{ db_stats|length }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-database me-1"></i>System Tables
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 mb-3">
-        <div class="stats-card info">
-            <div class="text-center">
-                <p class="stats-number">{{ db_stats.users|default:0 }}</p>
-                <p class="stats-label">Total Users</p>
+        <div class="card border-0 shadow-sm bg-info text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Total Users</small>
+                <h2 class="mb-2 mt-2">{{ db_stats.users|default:0 }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-users me-1"></i>System Users
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 mb-3">
-        <div class="stats-card warning">
-            <div class="text-center">
-                <p class="stats-number">{{ db_stats.fauna_species|default:0 }}</p>
-                <p class="stats-label">Species</p>
+        <div class="card border-0 shadow-sm bg-warning text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Species</small>
+                <h2 class="mb-2 mt-2">{{ db_stats.fauna_species|default:0 }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-paw me-1"></i>Bird Species
+                </small>
             </div>
         </div>
     </div>
     
     <div class="col-md-3 mb-3">
-        <div class="stats-card primary">
-            <div class="text-center">
-                <p class="stats-number">{{ db_stats.image_processing_imageupload|default:0 }}</p>
-                <p class="stats-label">Images</p>
+        <div class="card border-0 shadow-sm bg-primary text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <small class="opacity-75">Images</small>
+                <h2 class="mb-2 mt-2">{{ db_stats.image_processing_imageupload|default:0 }}</h2>
+                <small class="opacity-75">
+                    <i class="fas fa-camera me-1"></i>Processed Images
+                </small>
             </div>
         </div>
     </div>
