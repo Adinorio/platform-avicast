@@ -67,16 +67,34 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
 ]
 
-# Rate Limiting
+# Rate Limiting Configuration
 RATELIMIT_ENABLE = True
 RATELIMIT_USE_CACHE = "default"
+RATELIMIT_VIEW = "django_ratelimit.views.ratelimit"
 
-# Login Attempts Tracking
+# Rate Limiting Rules
+RATELIMIT_RULES = {
+    # Login attempts: 5 per minute per IP
+    "login": "5/m",
+    # API endpoints: 100 per hour per IP
+    "api": "100/h", 
+    # Image uploads: 10 per hour per user
+    "upload": "10/h",
+    # Admin actions: 50 per hour per user
+    "admin": "50/h",
+    # General requests: 200 per hour per IP
+    "general": "200/h",
+}
+
+# Login Attempts Tracking (django-axes)
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 5
 AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
 AXES_COOLOFF_TIME = 1  # 1 hour
 AXES_LOCK_OUT_BY_USER_OR_IP = True
+AXES_LOCKOUT_TEMPLATE = "users/lockout.html"
+AXES_LOCKOUT_URL = "/locked-out/"
+AXES_VERBOSE = True
 
 # CORS Settings (restrict to local network)
 CORS_ALLOWED_ORIGINS = [

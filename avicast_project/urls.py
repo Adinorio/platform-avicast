@@ -22,13 +22,15 @@ from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
 from django.urls import include, path
 from django.views.generic import TemplateView, RedirectView
+# from django_ratelimit.decorators import ratelimit  # Temporarily disabled
 # from apps.users.admin_index import custom_admin_index  # REMOVED - No longer using Django admin
 
 
 
 
+# @ratelimit(key='ip', rate='5/m', method='POST', block=True)  # Temporarily disabled
 def custom_login_redirect(request):
-    """Custom login view that redirects based on user role"""
+    """Custom login view that redirects based on user role with rate limiting"""
     if request.user.is_authenticated:
         if request.user.role == "SUPERADMIN":
             return redirect("admin_system:admin_dashboard")

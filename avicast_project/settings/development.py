@@ -5,6 +5,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Force HTTP for development server
+SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+SECURE_CONTENT_TYPE_NOSNIFF = False
+SECURE_BROWSER_XSS_FILTER = False
+SECURE_REFERRER_POLICY = None
+
 # Add any development specific apps here
 INSTALLED_APPS += []
 

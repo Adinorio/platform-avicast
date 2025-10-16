@@ -50,9 +50,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party apps (temporarily disabled for debugging)
-    # 'corsheaders',
-    # 'axes',
+    # Security and rate limiting apps
+    "corsheaders",
+    "axes",
+    # "django_ratelimit",  # Temporarily disabled - requires Redis
     # Local apps
     "apps.common.apps.CommonConfig",
     "apps.users.apps.UsersConfig",
@@ -65,15 +66,18 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    # 'corsheaders.middleware.CorsMiddleware',  # Temporarily disabled
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "apps.common.middleware.HTTPSRedirectMiddleware",  # Redirect HTTPS to HTTP in development
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # 'axes.middleware.AxesMiddleware',  # Temporarily disabled
+    "axes.middleware.AxesMiddleware",
+    "apps.common.middleware.SecurityHeadersMiddleware",  # Security headers
+    "apps.common.middleware.AuditLoggingMiddleware",  # Comprehensive audit logging
     "apps.users.middleware.RoleRestrictionMiddleware",  # Custom middleware for role restrictions
     "apps.admin_system.middleware.SuperAdminPasswordChangeMiddleware",  # Password change middleware
 ]
@@ -158,9 +162,22 @@ LOGIN_REDIRECT_URL = "/"  # Redirect to home page after login
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/login/"
 AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",  # Axes authentication backend
     "apps.users.backends.EmployeeIDBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
+
+# Cache configuration for rate limiting (fallback to file-based cache)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": BASE_DIR / "cache",
+        "TIMEOUT": 300,
+        "OPTIONS": {
+            "MAX_ENTRIES": 1000,
+        },
+    }
+}
 
 
 # Custom login redirect based on user role
