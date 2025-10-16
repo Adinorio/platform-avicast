@@ -125,10 +125,15 @@
                     
                     <div class="col-12 col-md-2">
                         <label class="form-label">&nbsp;</label>
-                        <div class="d-grid">
+                        <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-admin btn-primary">
                                 <i class="fas fa-search me-2"></i>Search
                             </button>
+                            {% if search_query or role_filter or status_filter %}
+                            <a href="{% url 'admin_system:user_management' %}" class="btn btn-admin btn-outline-secondary btn-sm">
+                                <i class="fas fa-times me-2"></i>Clear Filters
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                 </form>
@@ -181,10 +186,23 @@
     <div class="col-12">
         <div class="admin-card">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-users me-2"></i>
-                    Users ({{ page_obj.paginator.count }} total)
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Users ({{ page_obj.paginator.count }} total)
+                    </h5>
+                    {% if search_query or role_filter or status_filter %}
+                    <div class="text-muted">
+                        <small>
+                            <i class="fas fa-filter me-1"></i>
+                            Filters active: 
+                            {% if search_query %}<span class="badge bg-primary me-1">Search: "{{ search_query }}"</span>{% endif %}
+                            {% if role_filter %}<span class="badge bg-info me-1">Role: {{ role_filter }}</span>{% endif %}
+                            {% if status_filter %}<span class="badge bg-warning me-1">Status: {{ status_filter }}</span>{% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="admin-table" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
