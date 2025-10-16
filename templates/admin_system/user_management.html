@@ -18,7 +18,7 @@
 
 <!-- User Statistics -->
 <div class="row mb-4">
-    <div class="col-md-2 mb-3">
+    <div class="col-6 col-md-2 mb-3">
         <div class="card border-0 shadow-sm bg-primary text-white h-100">
             <div class="card-body text-center d-flex flex-column justify-content-center">
                 <small class="opacity-75">Total Users</small>
@@ -30,7 +30,7 @@
         </div>
     </div>
     
-    <div class="col-md-2 mb-3">
+    <div class="col-6 col-md-2 mb-3">
         <div class="card border-0 shadow-sm bg-success text-white h-100">
             <div class="card-body text-center d-flex flex-column justify-content-center">
                 <small class="opacity-75">Active</small>
@@ -42,7 +42,7 @@
         </div>
     </div>
     
-    <div class="col-md-2 mb-3">
+    <div class="col-6 col-md-2 mb-3">
         <div class="card border-0 shadow-sm bg-warning text-white h-100">
             <div class="card-body text-center d-flex flex-column justify-content-center">
                 <small class="opacity-75">Inactive</small>
@@ -54,7 +54,7 @@
         </div>
     </div>
     
-    <div class="col-md-2 mb-3">
+    <div class="col-6 col-md-2 mb-3">
         <div class="card border-0 shadow-sm bg-info text-white h-100">
             <div class="card-body text-center d-flex flex-column justify-content-center">
                 <small class="opacity-75">Admins</small>
@@ -66,7 +66,7 @@
         </div>
     </div>
     
-    <div class="col-md-2 mb-3">
+    <div class="col-6 col-md-2 mb-3">
         <div class="card border-0 shadow-sm bg-secondary text-white h-100">
             <div class="card-body text-center d-flex flex-column justify-content-center">
                 <small class="opacity-75">Field Workers</small>
@@ -78,7 +78,7 @@
         </div>
     </div>
     
-    <div class="col-md-2 mb-3">
+    <div class="col-6 col-md-2 mb-3">
         <div class="card border-0 shadow-sm bg-danger text-white h-100">
             <div class="card-body text-center d-flex flex-column justify-content-center">
                 <small class="opacity-75">Archived</small>
@@ -97,13 +97,13 @@
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <form method="GET" class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <label class="form-label">Search Users</label>
                         <input type="text" class="form-control search-box" name="search" 
                                value="{{ search_query }}" placeholder="Search by name, email, or ID...">
                     </div>
                     
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <label class="form-label">Filter by Role</label>
                         <select class="form-select filter-select" name="role">
                             <option value="">All Roles</option>
@@ -113,7 +113,7 @@
                         </select>
                     </div>
                     
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <label class="form-label">Filter by Status</label>
                         <select class="form-select filter-select" name="status">
                             <option value="">All Status</option>
@@ -123,7 +123,7 @@
                         </select>
                     </div>
                     
-                    <div class="col-md-2">
+                    <div class="col-12 col-md-2">
                         <label class="form-label">&nbsp;</label>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-admin btn-primary">
@@ -144,17 +144,17 @@
             <div class="card-body">
                 <form method="POST" action="{% url 'admin_system:bulk_user_action' %}" id="bulk-action-form">
                     {% csrf_token %}
-                    <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <button type="button" class="btn btn-outline-secondary" onclick="selectAll()">
-                                <i class="fas fa-check-square me-2"></i>Select All
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAll()">
+                                <i class="fas fa-check-square me-1"></i>Select All
                             </button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="selectNone()">
-                                <i class="fas fa-square me-2"></i>Select None
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectNone()">
+                                <i class="fas fa-square me-1"></i>Select None
                             </button>
                         </div>
                         
-                        <div class="me-3">
+                        <div class="flex-grow-1">
                             <select name="action" class="form-select filter-select" required>
                                 <option value="">Choose Action...</option>
                                 <option value="activate">Activate Selected</option>
@@ -166,7 +166,7 @@
                         
                         <div>
                             <button type="submit" class="btn btn-admin btn-warning" onclick="return confirmBulkAction()">
-                                <i class="fas fa-play me-2"></i>Execute
+                                <i class="fas fa-play me-1"></i>Execute
                             </button>
                         </div>
                     </div>
@@ -187,8 +187,8 @@
                 </h5>
             </div>
             <div class="card-body p-0">
-                <div class="admin-table">
-                    <table class="table table-hover">
+                <div class="admin-table" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="table table-hover" style="min-width: 700px;">
                         <thead>
                             <tr>
                                 <th width="50">
@@ -312,6 +312,74 @@
     </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Mobile-specific styles for user management */
+@media (max-width: 768px) {
+    /* Make table responsive */
+    .admin-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .admin-table .table {
+        min-width: 600px;
+    }
+    
+    /* Fix user cards on mobile */
+    .card.bg-primary, .card.bg-success, .card.bg-warning, 
+    .card.bg-info, .card.bg-secondary, .card.bg-danger {
+        margin-bottom: 0.75rem;
+    }
+    
+    .card.bg-primary h2, .card.bg-success h2, .card.bg-warning h2,
+    .card.bg-info h2, .card.bg-secondary h2, .card.bg-danger h2 {
+        font-size: 1.5rem;
+    }
+    
+    /* Fix action buttons on mobile */
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Fix user info display on mobile */
+    .d-flex.align-items-center .bg-primary {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 0.8rem;
+    }
+    
+    .d-flex.align-items-center h6 {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .d-flex.align-items-center small {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Extra small devices */
+    .card.bg-primary h2, .card.bg-success h2, .card.bg-warning h2,
+    .card.bg-info h2, .card.bg-secondary h2, .card.bg-danger h2 {
+        font-size: 1.25rem;
+    }
+    
+    .card.bg-primary small, .card.bg-success small, .card.bg-warning small,
+    .card.bg-info small, .card.bg-secondary small, .card.bg-danger small {
+        font-size: 0.7rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}

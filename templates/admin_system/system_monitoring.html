@@ -52,15 +52,31 @@
                 </h5>
             </div>
             <div class="card-body">
+                <!-- Database Statistics Summary -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-database me-2"></i>
+                                Database Tables ({{ db_stats|length }} total)
+                            </h6>
+                            <small class="text-muted">
+                                Showing {{ start_index }}-{{ end_index }} of {{ db_stats_page.paginator.count }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paginated Database Statistics -->
                 <div class="row">
-                    {% for table_name, count in db_stats.items %}
-                    <div class="col-md-4 mb-3">
-                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
-                            <div>
-                                <h6 class="mb-0">{{ table_name|title }}</h6>
+                    {% for table_name, count in db_stats_page %}
+                    <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded h-100">
+                            <div class="flex-grow-1 me-3" style="min-width: 0;">
+                                <h6 class="mb-0 text-truncate" title="{{ table_name|title }}">{{ table_name|title }}</h6>
                                 <small class="text-muted">Table</small>
                             </div>
-                            <div class="text-end">
+                            <div class="text-end flex-shrink-0">
                                 <span class="badge bg-primary fs-6">{{ count }}</span>
                                 <div><small class="text-muted">Records</small></div>
                             </div>
@@ -68,6 +84,47 @@
                     </div>
                     {% endfor %}
                 </div>
+
+                <!-- Pagination Controls -->
+                {% if db_stats_page.has_other_pages %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <nav aria-label="Database statistics pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if db_stats_page.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ db_stats_page.previous_page_number }}">Previous</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in db_stats_page.paginator.page_range %}
+                                    {% if db_stats_page.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > db_stats_page.number|add:'-3' and num < db_stats_page.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if db_stats_page.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ db_stats_page.next_page_number }}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ db_stats_page.paginator.num_pages }}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -142,8 +199,8 @@
             </div>
             <div class="card-body">
                 {% if configurations %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="table table-hover" style="min-width: 800px;">
                         <thead>
                             <tr>
                                 <th>Key</th>
