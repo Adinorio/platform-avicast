@@ -114,6 +114,10 @@ class User(AbstractUser):
     objects = CustomUserManager()
 
     def save(self, *args, **kwargs):
+        # Generate employee_id if not set (for new users)
+        if not self.pk and not self.employee_id:
+            self.employee_id = self.objects.generate_employee_id()
+        
         if not self.pk and not self.role:
             # Only set default role if it's a new user AND no role is specified
             self.role = self.base_role
