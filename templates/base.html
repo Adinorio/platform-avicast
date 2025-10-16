@@ -14,13 +14,7 @@
     <!-- CRITICAL CSS - Theme Application After Bootstrap to Override -->
     <style>
         /* CRITICAL: Top navbar - MAXIMUM SPECIFICITY with CSS Custom Properties */
-        .top-navbar {
-            background: var(--navbar-bg) !important;
-            background-color: var(--navbar-bg) !important;
-            border-bottom: 1px solid var(--navbar-border) !important;
-            box-shadow: var(--navbar-box-shadow) !important;
-            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
-        }
+        /* Consolidated with main .top-navbar rule below */
 
         .top-navbar * { /* Target all children */
             color: var(--navbar-text) !important;
@@ -1476,14 +1470,148 @@
             margin-left: 0;
         }
 
-        /* Top navbar */
+        /* Top navbar - consolidated with theme variables */
         .top-navbar {
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0.5rem 1rem;
+            background: var(--navbar-bg) !important;
+            background-color: var(--navbar-bg) !important;
+            border-bottom: 1px solid var(--navbar-border) !important;
+            box-shadow: var(--navbar-box-shadow) !important;
             position: sticky;
             top: 0;
             z-index: 999;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+        /* Desktop navbar layout - show on desktop, hide on mobile */
+        .navbar-desktop {
+            padding: 0.5rem 1rem;
+            display: flex;
+        }
+
+        /* Mobile navbar layout - hide on desktop, show on mobile */
+        .navbar-mobile {
+            padding: 0.5rem 0.75rem;
+            min-height: 50px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Show desktop navbar on desktop screens */
+        @media (min-width: 768px) {
+            .navbar-desktop {
+                display: flex !important;
+            }
+            .navbar-mobile {
+                display: none !important;
+            }
+        }
+
+        /* Show mobile navbar on mobile screens */
+        @media (max-width: 767.98px) {
+            .navbar-desktop {
+                display: none !important;
+            }
+            .navbar-mobile {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                overflow: hidden !important;
+                width: 100% !important;
+            }
+            
+            /* Ensure mobile navbar children stay in single row */
+            .navbar-mobile > .d-flex {
+                flex-wrap: nowrap !important;
+                min-width: 0 !important;
+                flex-shrink: 1 !important;
+            }
+            
+            .navbar-mobile > .d-flex:first-child {
+                flex: 0 0 auto !important;
+                max-width: 60% !important;
+            }
+            
+            .navbar-mobile > .d-flex:last-child {
+                flex: 0 0 auto !important;
+                max-width: 40% !important;
+            }
+            
+            /* Prevent any text wrapping */
+            .navbar-mobile * {
+                white-space: nowrap !important;
+            }
+        }
+
+        .navbar-mobile .navbar-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        .navbar-mobile .user-info {
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px;
+        }
+
+        .navbar-mobile .sidebar-toggle {
+            padding: 0.25rem;
+            margin-right: 0.5rem;
+        }
+
+        .navbar-mobile .btn-link {
+            padding: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        /* Ensure mobile navbar elements stay in single row */
+        .navbar-mobile .d-flex {
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+        }
+
+        .navbar-mobile .d-flex:first-child {
+            flex: 0 0 auto !important;
+            min-width: 0 !important;
+        }
+
+        .navbar-mobile .d-flex:last-child {
+            flex: 0 0 auto !important;
+            min-width: 0 !important;
+        }
+
+        .navbar-mobile h6 {
+            margin-bottom: 0 !important;
+            margin-top: 0 !important;
+            line-height: 1.2 !important;
+        }
+
+        /* Force all mobile navbar elements to stay inline */
+        .navbar-mobile * {
+            white-space: nowrap !important;
+        }
+
+        .navbar-mobile .sidebar-toggle {
+            flex-shrink: 0 !important;
+        }
+
+        .navbar-mobile .navbar-title {
+            flex-shrink: 1 !important;
+            min-width: 0 !important;
+        }
+
+        .navbar-mobile .user-info {
+            flex-shrink: 1 !important;
+            min-width: 0 !important;
+        }
+
+        .navbar-mobile .btn-link {
+            flex-shrink: 0 !important;
         }
 
         /* Dark mode top navbar - MAXIMUM SPECIFICITY - Solid background like light mode */
@@ -1607,6 +1735,7 @@
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
+                width: 280px;
             }
 
             .sidebar.show {
@@ -1614,7 +1743,12 @@
             }
 
             .main-content {
-                margin-left: 0;
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+
+            .main-content.expanded {
+                margin-left: 0 !important;
             }
 
             .sidebar-overlay {
@@ -1630,6 +1764,107 @@
 
             .sidebar-overlay.show {
                 display: block;
+            }
+
+            /* Mobile navbar specific styles */
+            .navbar-mobile {
+                padding: 0.5rem 0.75rem !important;
+                min-height: 50px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+            }
+
+            /* Mobile navbar is now controlled by media queries above */
+
+            /* Ensure mobile navbar children don't wrap */
+            .navbar-mobile > .d-flex {
+                flex-wrap: nowrap !important;
+                min-width: 0 !important;
+            }
+
+            .navbar-mobile > .d-flex:first-child {
+                flex: 0 0 auto !important;
+                max-width: 60% !important;
+            }
+
+            .navbar-mobile > .d-flex:last-child {
+                flex: 0 0 auto !important;
+                max-width: 40% !important;
+            }
+
+            .navbar-mobile .navbar-title {
+                font-size: 0.9rem !important;
+                max-width: 120px !important;
+            }
+
+            .navbar-mobile .user-info {
+                font-size: 0.8rem !important;
+                max-width: 80px !important;
+            }
+
+            /* Ensure content doesn't overflow */
+            .content-wrapper {
+                padding: 1rem;
+                overflow-x: hidden;
+            }
+
+            /* Fix container fluid on mobile */
+            .container-fluid {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            /* Fix any potential horizontal scrolling */
+            body, html {
+                overflow-x: hidden;
+                max-width: 100%;
+            }
+        }
+
+        /* Extra small devices (phones, less than 576px) */
+        @media (max-width: 575.98px) {
+            /* Extra small mobile navbar styles */
+            .navbar-mobile {
+                padding: 0.5rem !important;
+                min-height: 45px !important;
+            }
+
+            .navbar-mobile .navbar-title {
+                font-size: 0.8rem !important;
+                max-width: 100px !important;
+            }
+
+            .navbar-mobile .user-info {
+                font-size: 0.75rem !important;
+                max-width: 60px !important;
+            }
+
+            .navbar-mobile .sidebar-toggle {
+                padding: 0.2rem !important;
+                margin-right: 0.4rem !important;
+            }
+
+            .navbar-mobile .btn-link {
+                padding: 0.2rem !important;
+                font-size: 0.8rem !important;
+            }
+
+            .content-wrapper {
+                padding: 0.75rem;
+            }
+
+            .container-fluid {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+
+            /* Make sure all cards and content fit */
+            .card, .admin-card {
+                margin-left: 0;
+                margin-right: 0;
             }
         }
 
@@ -1805,24 +2040,49 @@
     <!-- Main Content Area -->
     <div class="main-content" id="mainContent">
         <!-- Top Navigation Bar -->
-        <div class="top-navbar d-flex justify-content-between align-items-center" id="topNavbar">
-            <div class="d-flex align-items-center">
-                <button class="sidebar-toggle me-3" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h5 class="mb-0 text-muted">{% block page_title %}Dashboard{% endblock %}</h5>
+        <div class="top-navbar" id="topNavbar">
+            <!-- Desktop Layout -->
+            <div class="navbar-desktop justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <button class="sidebar-toggle me-3" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h5 class="mb-0 text-muted">{% block page_title %}Dashboard{% endblock %}</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                    <span class="text-muted me-3">
+                        <i class="fas fa-user me-1"></i>{{ user.employee_id }}
+                    </span>
+                    {% endif %}
+                    
+                    <!-- Dark Mode Toggle -->
+                    <button class="btn btn-link text-muted" id="themeToggle" title="Toggle Dark Mode">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                </div>
             </div>
-            <div class="d-flex align-items-center">
-                {% if user.is_authenticated %}
-                <span class="text-muted me-3">
-                    <i class="fas fa-user me-1"></i>{{ user.employee_id }}
-                </span>
-                {% endif %}
-                
-                <!-- Dark Mode Toggle -->
-                <button class="btn btn-link text-muted" id="themeToggle" title="Toggle Dark Mode">
-                    <i class="fas fa-moon" id="themeIcon"></i>
-                </button>
+            
+            <!-- Mobile Layout -->
+            <div class="navbar-mobile justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <button class="sidebar-toggle me-2" id="sidebarToggleMobile">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h6 class="mb-0 text-muted navbar-title">Dashboard</h6>
+                </div>
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                    <span class="text-muted me-2 user-info">
+                        <i class="fas fa-user me-1"></i>{{ user.employee_id }}
+                    </span>
+                    {% endif %}
+                    
+                    <!-- Dark Mode Toggle -->
+                    <button class="btn btn-link text-muted p-1" id="themeToggleMobile" title="Toggle Dark Mode">
+                        <i class="fas fa-moon" id="themeIconMobile"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1942,18 +2202,29 @@
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('mainContent');
             const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarToggleMobile = document.getElementById('sidebarToggleMobile');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
 
             // Desktop sidebar toggle
-            sidebarToggle.addEventListener('click', function() {
-                if (window.innerWidth > 768) {
-                    sidebar.classList.toggle('collapsed');
-                    mainContent.classList.toggle('expanded');
-                } else {
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    if (window.innerWidth > 768) {
+                        sidebar.classList.toggle('collapsed');
+                        mainContent.classList.toggle('expanded');
+                    } else {
+                        sidebar.classList.toggle('show');
+                        sidebarOverlay.classList.toggle('show');
+                    }
+                });
+            }
+
+            // Mobile sidebar toggle
+            if (sidebarToggleMobile) {
+                sidebarToggleMobile.addEventListener('click', function() {
                     sidebar.classList.toggle('show');
                     sidebarOverlay.classList.toggle('show');
-                }
-            });
+                });
+            }
 
             // Mobile overlay click to close sidebar
             sidebarOverlay.addEventListener('click', function() {
@@ -2137,7 +2408,9 @@
         // Dark Mode functionality - DOMContentLoaded handler
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggle = document.getElementById('themeToggle');
+            const themeToggleMobile = document.getElementById('themeToggleMobile');
             const themeIcon = document.getElementById('themeIcon');
+            const themeIconMobile = document.getElementById('themeIconMobile');
             const body = document.body;
             
             // Get current theme from html element (already set by immediate script)
@@ -2156,22 +2429,33 @@
                     themeToggle.title = 'Switch to Dark Mode';
                 }
             }
+
+            // Update mobile toggle button state
+            if (themeToggleMobile && themeIconMobile) {
+                if (currentTheme === 'dark') {
+                    themeIconMobile.className = 'fas fa-sun';
+                    themeToggleMobile.title = 'Switch to Light Mode';
+                } else {
+                    themeIconMobile.className = 'fas fa-moon';
+                    themeToggleMobile.title = 'Switch to Dark Mode';
+                }
+            }
             
             // Apply comprehensive theme to all containers
             forceThemeBackground(currentTheme);
             
                // Enhanced theme toggle functionality
-               if (themeToggle) {
-                   themeToggle.addEventListener('click', function() {
-                       const currentTheme = document.documentElement.getAttribute('data-theme');
-                       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                       
-                       // Update theme attributes immediately
-                       document.documentElement.setAttribute('data-theme', newTheme);
-                       body.setAttribute('data-theme', newTheme);
-                       localStorage.setItem('theme', newTheme);
-                       
-                       // Update toggle button state
+               function handleThemeToggle() {
+                   const currentTheme = document.documentElement.getAttribute('data-theme');
+                   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                   
+                   // Update theme attributes immediately
+                   document.documentElement.setAttribute('data-theme', newTheme);
+                   body.setAttribute('data-theme', newTheme);
+                   localStorage.setItem('theme', newTheme);
+                   
+                   // Update desktop toggle button state
+                   if (themeToggle && themeIcon) {
                        if (newTheme === 'dark') {
                            themeIcon.className = 'fas fa-sun';
                            themeToggle.title = 'Switch to Light Mode';
@@ -2179,11 +2463,32 @@
                            themeIcon.className = 'fas fa-moon';
                            themeToggle.title = 'Switch to Dark Mode';
                        }
-                       
-                       // Force theme background and navbar update
-                       forceThemeBackground(newTheme);
-                       forceTopNavbarBackground();
-                   });
+                   }
+                   
+                   // Update mobile toggle button state
+                   if (themeToggleMobile && themeIconMobile) {
+                       if (newTheme === 'dark') {
+                           themeIconMobile.className = 'fas fa-sun';
+                           themeToggleMobile.title = 'Switch to Light Mode';
+                       } else {
+                           themeIconMobile.className = 'fas fa-moon';
+                           themeToggleMobile.title = 'Switch to Dark Mode';
+                       }
+                   }
+                   
+                   // Force theme background and navbar update
+                   forceThemeBackground(newTheme);
+                   forceTopNavbarBackground();
+               }
+
+               // Desktop theme toggle
+               if (themeToggle) {
+                   themeToggle.addEventListener('click', handleThemeToggle);
+               }
+
+               // Mobile theme toggle
+               if (themeToggleMobile) {
+                   themeToggleMobile.addEventListener('click', handleThemeToggle);
                }
                
                // Function to force theme background

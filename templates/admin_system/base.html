@@ -233,6 +233,8 @@
     border-radius: 1rem;
     box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
     overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .admin-table .table {
@@ -365,6 +367,144 @@
     .admin-page-title {
         font-size: 2rem;
     }
+
+    /* Fix admin page header on mobile */
+    .admin-page-header {
+        margin-bottom: 1rem;
+    }
+
+    /* Fix admin page title and subtitle layout */
+    .admin-page-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .admin-page-subtitle {
+        font-size: 1rem;
+    }
+
+    /* Fix breadcrumb on mobile */
+    .breadcrumb {
+        font-size: 0.875rem;
+        padding: 0.5rem 0;
+        margin-bottom: 1rem;
+    }
+
+    /* Fix admin cards on mobile */
+    .admin-card {
+        margin-bottom: 1rem;
+    }
+
+    .admin-card .card-header {
+        padding: 1rem;
+    }
+
+    .admin-card .card-body {
+        padding: 1rem;
+    }
+
+    /* Fix admin table on mobile */
+    .admin-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-table .table {
+        font-size: 0.8rem;
+        min-width: 800px;
+    }
+
+    .admin-table .table thead th {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .admin-table .table tbody td {
+        padding: 0.75rem 0.5rem;
+        white-space: nowrap;
+    }
+
+    /* Allow description column to wrap for better readability */
+    .admin-table .table tbody td:nth-child(4) {
+        white-space: normal;
+        max-width: 300px;
+        word-wrap: break-word;
+    }
+
+    /* Fix status badges on mobile */
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* Fix buttons on mobile */
+    .btn-admin {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    /* Simplified page header layout - no redundant elements */
+    .d-flex.justify-content-between {
+        align-items: flex-start !important;
+    }
+}
+
+    /* Fix database statistics cards on mobile */
+    .bg-light.rounded {
+        min-height: 80px;
+    }
+
+    .bg-light.rounded .text-truncate {
+        max-width: 100%;
+    }
+
+    .bg-light.rounded .flex-shrink-0 {
+        min-width: 60px;
+    }
+}
+
+/* Dark mode progress bars for system health */
+[data-theme="dark"] .system-health-progress {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+
+[data-theme="dark"] .system-health-progress .progress-bar {
+    border-radius: 10px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+[data-theme="dark"] .disk-usage-bar {
+    background: linear-gradient(90deg, #ffc107 0%, #ff8c00 100%) !important;
+    animation: pulse-warning 2s infinite !important;
+}
+
+[data-theme="dark"] .memory-usage-bar {
+    background: linear-gradient(90deg, #17a2b8 0%, #007bff 100%) !important;
+    animation: pulse-info 2s infinite !important;
+}
+
+[data-theme="dark"] .database-status-bar {
+    background: linear-gradient(90deg, #28a745 0%, #20c997 100%) !important;
+    animation: pulse-success 2s infinite !important;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+@keyframes pulse-info {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+@keyframes pulse-success {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
 }
 </style>
 {% endblock %}
@@ -393,25 +533,7 @@
                     <p class="text-muted mb-0">Manage your AVICAST system</p>
                 </div>
                 
-                <div class="d-flex align-items-center">
-                    <span class="badge bg-primary me-3">{{ user.role }}</span>
-                    
-                    <!-- Dark Mode Toggle -->
-                    <button class="btn btn-link text-muted me-3" id="themeToggle" title="Toggle Dark Mode">
-                        <i class="fas fa-moon" id="themeIcon"></i>
-                    </button>
-                    
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-2"></i>{{ user.get_full_name }}
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'logout' %}">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
-                            </a></li>
-                        </ul>
-                    </div>
-                </div>
+                <!-- Removed redundant elements - user info and controls already available in sidebar and top navbar -->
             </div>
         </div>
     </div>
