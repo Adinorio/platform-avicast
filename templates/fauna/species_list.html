@@ -3,6 +3,10 @@
 
 {% block title %}Species Management - AVICAST{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/mobile-species.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Breadcrumb -->
@@ -27,7 +31,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="row mb-4">
+    <div class="row mb-4 species-summary-cards">
         <div class="col-md-3 mb-3">
             <div class="card border-0 shadow-sm bg-primary text-white h-100">
                 <div class="card-body text-center d-flex flex-column justify-content-center">
@@ -75,7 +79,7 @@
     <!-- Search and Filter Controls -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <form method="get" class="row g-3" id="filterForm">
+            <form method="get" class="row g-3 species-filter-form" id="filterForm">
                 <div class="col-md-4">
                     <label class="form-label">Search</label>
                     <div class="input-group">
@@ -198,7 +202,7 @@
             </div>
         </div>
         <div class="card-body p-0">
-            <div class="table-responsive">
+            <div class="table-responsive species-table-mobile">
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
@@ -212,13 +216,13 @@
                     <tbody>
                         {% for species in species_list %}
                         <tr>
-                            <td>
+                            <td class="species-name-cell">
                                 <div class="d-flex align-items-center">
                                     {% if species.image %}
                                         <img src="{{ species.image.url }}" alt="{{ species.name }}"
-                                             class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                             class="rounded me-3 species-thumbnail" style="width: 40px; height: 40px; object-fit: cover;">
                                     {% else %}
-                                        <div class="rounded me-3 d-flex align-items-center justify-content-center"
+                                        <div class="rounded me-3 d-flex align-items-center justify-content-center species-thumbnail"
                                              style="width: 40px; height: 40px; background: var(--bg-tertiary);">
                                             <i class="fas fa-paw text-muted"></i>
                                         </div>
@@ -300,7 +304,7 @@
             </div>
 
             <!-- Pagination Controls -->
-            <nav aria-label="Species pagination">
+            <nav aria-label="Species pagination" class="species-pagination">
                 <ul class="pagination justify-content-center">
                     <!-- First Page -->
                     {% if page_obj.has_previous %}
@@ -405,6 +409,25 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Mobile-specific enhancements
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // Add mobile-specific classes
+        document.body.classList.add('mobile-device');
+        
+        // Optimize button groups for mobile
+        const btnGroups = document.querySelectorAll('.btn-group');
+        btnGroups.forEach(group => {
+            group.classList.add('btn-group-mobile-stack');
+        });
+        
+        // Add touch-friendly scrolling to tables
+        const tables = document.querySelectorAll('.species-table-mobile');
+        tables.forEach(table => {
+            table.style.webkitOverflowScrolling = 'touch';
+        });
+    }
     // Auto-submit form when dropdowns change
     const familySelect = document.querySelector('select[name="family"]');
     const iucnSelect = document.querySelector('select[name="iucn_status"]');

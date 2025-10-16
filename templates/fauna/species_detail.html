@@ -3,6 +3,10 @@
 
 {% block title %}{{ species.name }} - Species Details - AVICAST{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/mobile-species.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Breadcrumb -->
@@ -23,14 +27,14 @@
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <div class="row align-items-center">
+                    <div class="row align-items-center species-header">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center mb-3">
                                 {% if species.image %}
                                     <img src="{{ species.image.url }}" alt="{{ species.name }}"
-                                         class="rounded me-4" style="width: 80px; height: 80px; object-fit: cover;">
+                                         class="rounded me-4 species-main-image" style="width: 80px; height: 80px; object-fit: cover;">
                                 {% else %}
-                                    <div class="rounded me-4 d-flex align-items-center justify-content-center"
+                                    <div class="rounded me-4 d-flex align-items-center justify-content-center species-main-image"
                                          style="width: 80px; height: 80px; background: #f8f9fa;">
                                         <i class="fas fa-paw fa-2x text-muted"></i>
                                     </div>
@@ -65,7 +69,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-4">
+                    <div class="row g-4 species-info-card">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small">COMMON NAME</label>
@@ -159,7 +163,7 @@
                             </div>
                         </div>
 
-                        <div class="table-responsive">
+                        <div class="table-responsive species-observations-table">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
@@ -218,7 +222,7 @@
         </div>
 
         <!-- Sidebar -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 species-sidebar">
             <!-- Quick Actions -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom">
@@ -227,7 +231,7 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="d-grid gap-2">
+                    <div class="d-grid gap-2 species-actions">
                         {% if user.role == 'ADMIN' %}
                             <a href="{% url 'fauna:species_edit' species.pk %}"
                                class="btn btn-outline-primary">
