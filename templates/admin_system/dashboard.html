@@ -71,8 +71,8 @@
                         <span>Database Status</span>
                         <span class="badge bg-success">Healthy</span>
                     </div>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    <div class="progress system-health-progress" style="height: 8px;">
+                        <div class="progress-bar bg-success database-status-bar" style="width: 100%"></div>
                     </div>
                 </div>
                 
@@ -81,8 +81,8 @@
                         <span>Disk Usage</span>
                         <span>{{ system_health.disk_usage }}</span>
                     </div>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-warning" style="width: 75%"></div>
+                    <div class="progress system-health-progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning disk-usage-bar" style="width: 75%"></div>
                     </div>
                 </div>
                 
@@ -91,8 +91,8 @@
                         <span>Memory Usage</span>
                         <span>{{ system_health.memory_usage }}</span>
                     </div>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-info" style="width: 60%"></div>
+                    <div class="progress system-health-progress" style="height: 8px;">
+                        <div class="progress-bar bg-info memory-usage-bar" style="width: 60%"></div>
                     </div>
                 </div>
                 
