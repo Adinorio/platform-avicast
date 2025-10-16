@@ -25,6 +25,7 @@ urlpatterns = [
     
     # System Monitoring
     path("audit-logs/", audit_views.system_logs, name="audit_logs"),
+    path("audit-logs/<int:activity_id>/details/", audit_views.activity_details, name="activity_details"),
     # Password Management
     path("change-password/", views.change_password, name="change_password"),
 ]
