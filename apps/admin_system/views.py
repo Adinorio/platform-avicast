@@ -272,7 +272,7 @@ def system_monitoring(request):
     """
     System monitoring and health dashboard
     """
-    # Database statistics
+    # Database statistics with pagination
     with connection.cursor() as cursor:
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         tables = cursor.fetchall()
@@ -283,6 +283,18 @@ def system_monitoring(request):
             cursor.execute(f"SELECT COUNT(*) FROM {table_name};")
             count = cursor.fetchone()[0]
             db_stats[table_name] = count
+    
+    # Convert to list of tuples for pagination
+    db_stats_list = [(table_name, count) for table_name, count in db_stats.items()]
+    
+    # Paginate database statistics
+    paginator = Paginator(db_stats_list, 12)  # 12 items per page (4 rows of 3 columns)
+    page_number = request.GET.get('page')
+    db_stats_page = paginator.get_page(page_number)
+    
+    # Calculate start and end indices for display
+    start_index = (db_stats_page.number - 1) * paginator.per_page + 1
+    end_index = min(start_index + paginator.per_page - 1, paginator.count)
     
     # Get recent system activities
     recent_activities = AdminActivity.objects.select_related('user').order_by('-timestamp')[:20]
@@ -296,7 +308,10 @@ def system_monitoring(request):
     configurations = SystemConfiguration.objects.all().order_by('key')
     
     context = {
-        'db_stats': db_stats,
+        'db_stats': db_stats,  # Keep original for total count
+        'db_stats_page': db_stats_page,  # Paginated data
+        'start_index': start_index,  # Calculated start index
+        'end_index': end_index,  # Calculated end index
         'recent_activities': recent_activities,
         'error_activities': error_activities,
         'configurations': configurations,
