@@ -79,6 +79,10 @@
                             <label for="activity_type" class="form-label">Activity Type</label>
                             <select name="activity_type" id="activity_type" class="form-select">
                                 <option value="">All Activities</option>
+                                <option value="ADMIN_ACTION" {% if current_activity == 'ADMIN_ACTION' %}selected{% endif %}>Admin Actions</option>
+                                <option value="USER_ACTION" {% if current_activity == 'USER_ACTION' %}selected{% endif %}>User Actions</option>
+                                <option value="CLIENT_ERROR" {% if current_activity == 'CLIENT_ERROR' %}selected{% endif %}>Client Errors</option>
+                                <option value="SYSTEM_ERROR" {% if current_activity == 'SYSTEM_ERROR' %}selected{% endif %}>System Errors</option>
                                 <option value="SPECIES_ADDED" {% if current_activity == 'SPECIES_ADDED' %}selected{% endif %}>Species Added</option>
                                 <option value="SPECIES_UPDATED" {% if current_activity == 'SPECIES_UPDATED' %}selected{% endif %}>Species Updated</option>
                                 <option value="SPECIES_ARCHIVED" {% if current_activity == 'SPECIES_ARCHIVED' %}selected{% endif %}>Species Archived</option>
@@ -108,10 +112,12 @@
                             <label for="severity" class="form-label">Severity</label>
                             <select name="severity" id="severity" class="form-select">
                                 <option value="">All Levels</option>
+                                <option value="MEDIUM" {% if current_severity == 'MEDIUM' %}selected{% endif %}>Medium</option>
+                                <option value="HIGH" {% if current_severity == 'HIGH' %}selected{% endif %}>High</option>
+                                <option value="CRITICAL" {% if current_severity == 'CRITICAL' %}selected{% endif %}>Critical</option>
                                 <option value="INFO" {% if current_severity == 'INFO' %}selected{% endif %}>Information</option>
                                 <option value="WARNING" {% if current_severity == 'WARNING' %}selected{% endif %}>Warning</option>
                                 <option value="ERROR" {% if current_severity == 'ERROR' %}selected{% endif %}>Error</option>
-                                <option value="CRITICAL" {% if current_severity == 'CRITICAL' %}selected{% endif %}>Critical</option>
                             </select>
                         </div>
                         <div class="col-12">
