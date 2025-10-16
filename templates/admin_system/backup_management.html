@@ -1,0 +1,995 @@
+{% extends 'admin_system/base.html' %}
+
+{% block title %}Backup Management - AVICAST{% endblock %}
+
+{% block content %}
+<style>
+/* Mobile-friendly file browser styles */
+@media (max-width: 768px) {
+    .file-browser-btn {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .file-browser-info {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+    
+    .quick-copy-buttons {
+        flex-direction: column;
+    }
+    
+    .quick-copy-buttons .btn {
+        margin-bottom: 0.25rem;
+        text-align: left;
+    }
+}
+
+/* File browser animations */
+.file-selected {
+    animation: fileSelected 0.5s ease-in-out;
+}
+
+@keyframes fileSelected {
+    0% { background-color: #d4edda; }
+    50% { background-color: #c3e6cb; }
+    100% { background-color: #d4edda; }
+}
+
+/* Directory browser styles */
+.directory-browser {
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.directory-browser:hover {
+    border-color: #0056b3;
+    background-color: #e3f2fd;
+}
+
+.directory-browser.dragover {
+    border-color: #28a745;
+    background-color: #d4edda;
+}
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-database me-2"></i>Backup Management</h2>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-success" onclick="showRestoreModal()">
+                        <i class="fas fa-undo me-2"></i>Restore from Backup
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="createBackup('full')">
+                        <i class="fas fa-plus me-2"></i>Create Full Backup
+                    </button>
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="createBackup('database')">
+                            <i class="fas fa-database me-2"></i>Database Only
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="createBackup('media')">
+                            <i class="fas fa-images me-2"></i>Media Files Only
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="createBackup('config')">
+                            <i class="fas fa-cog me-2"></i>Configuration Only
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <h4 class="mb-0">{{ total_backups }}</h4>
+                            <p class="mb-0">Total Backups</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-archive fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <h4 class="mb-0">{{ total_size_mb }} MB</h4>
+                            <p class="mb-0">Total Size</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-hdd fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">Backup Location</h6>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="backupLocation" value="{{ backup_dir }}" readonly>
+                                <button class="btn btn-outline-light" type="button" onclick="changeBackupLocation()">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="align-self-center ms-2">
+                            <i class="fas fa-folder fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <h6 class="mb-1">Actions</h6>
+                            <button type="button" class="btn btn-light btn-sm" onclick="refreshStatus()">
+                                <i class="fas fa-sync-alt me-2"></i>Refresh
+                            </button>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-sync-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Files Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Backup Files</h5>
+                </div>
+                <div class="card-body">
+                    {% if backup_files %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Backup Name</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for backup in backup_files %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-file-archive me-2"></i>
+                                        {{ backup.name }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if backup.type == 'full' %}primary{% else %}secondary{% endif %}">
+                                            {{ backup.type|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ backup.size_mb }} MB</td>
+                                    <td>{{ backup.created }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'admin_system:download_backup' backup.name %}" class="btn btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" onclick="deleteBackup('{{ backup.name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-archive fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No backups found</h5>
+                        <p class="text-muted">Create your first backup to get started.</p>
+                        <button type="button" class="btn btn-primary" onclick="createBackup('full')">
+                            <i class="fas fa-plus me-2"></i>Create Full Backup
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Instructions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Backup Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-database me-2"></i>Database Backup</h6>
+                            <p class="text-muted">Backs up all user data, species information, census data, and observations.</p>
+                            
+                            <h6><i class="fas fa-images me-2"></i>Media Backup</h6>
+                            <p class="text-muted">Backs up all uploaded images, documents, and media files.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-cog me-2"></i>Configuration Backup</h6>
+                            <p class="text-muted">Backs up system settings, requirements, and configuration files.</p>
+                            
+                            <h6><i class="fas fa-archive me-2"></i>Full Backup</h6>
+                            <p class="text-muted">Complete system backup including database, media, and configuration.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Create full backups regularly and store them in a safe location. 
+                        In case of system failure, you can restore from these backups.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Creating Backup...</h5>
+                <p class="text-muted">Please wait while the backup is being created.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Modal -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-undo me-2"></i>Restore from Backup
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Important Warning</h6>
+                    <p class="mb-0">
+                        <strong>This will replace your current system data!</strong> 
+                        Make sure to create a backup of your current system before proceeding.
+                    </p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Server Restart Required</h6>
+                    <p class="mb-0">
+                        <strong>Note:</strong> The restore process requires stopping the Django server. 
+                        If the web restore fails, use the command line method instead.
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Select Backup to Restore</label>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="restoreBackupSelect" class="form-label">From System Backups</label>
+                            <select class="form-select" id="restoreBackupSelect">
+                                <option value="">Choose a backup file...</option>
+                                {% for backup in backup_files %}
+                                <option value="{{ backup.name }}" data-size="{{ backup.size_mb }}" data-created="{{ backup.created }}">
+                                    {{ backup.name }} ({{ backup.size_mb }} MB) - {{ backup.created }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="restoreBackupPath" class="form-label">From Drive Directory</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="restoreBackupPath" placeholder="Enter backup file path...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="browseForBackupFile()">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Enter full path to backup file (e.g., D:\Backups\avicast_full_20251016.zip)
+                            </div>
+                            
+                            <!-- Mobile-Friendly File Browser -->
+                            <div class="mt-2">
+                                <input type="file" id="restoreFileBrowser" accept=".zip" class="form-control" style="display: none;" onchange="handleRestoreFileSelection(this)">
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100 file-browser-btn" onclick="document.getElementById('restoreFileBrowser').click()">
+                                    <i class="fas fa-file-archive me-2"></i>Browse Backup File
+                                </button>
+                                <div id="selectedRestoreFileInfo" class="alert alert-info mt-2 file-browser-info" style="display: none;">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <span id="selectedRestoreFilePath"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="restoreBackupUpload" class="form-label">Or Upload Backup File</label>
+                            <input type="file" class="form-control" id="restoreBackupUpload" accept=".zip" onchange="handleFileUpload(this)">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select a backup file (.zip) from your computer
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Restore Options</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="restoreDatabase" checked>
+                        <label class="form-check-label" for="restoreDatabase">
+                            <i class="fas fa-database me-2"></i>Restore Database (User data, species, census)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="restoreMedia" checked>
+                        <label class="form-check-label" for="restoreMedia">
+                            <i class="fas fa-images me-2"></i>Restore Media Files (Images, documents)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="restoreConfig" checked>
+                        <label class="form-check-label" for="restoreConfig">
+                            <i class="fas fa-cog me-2"></i>Restore Configuration (Settings, requirements)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Common Backup Locations</h6>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupPath('C:\\AVICAST_Backups\\avicast_full_*.zip')">
+                            <i class="fas fa-copy me-1"></i>C:\AVICAST_Backups\
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupPath('D:\\Backups\\AVICAST\\avicast_full_*.zip')">
+                            <i class="fas fa-copy me-1"></i>D:\Backups\AVICAST\
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupPath('C:\\Users\\Public\\AVICAST_Backups\\avicast_full_*.zip')">
+                            <i class="fas fa-copy me-1"></i>Public Folder
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupPath('\\\\server\\backups\\avicast\\avicast_full_*.zip')">
+                            <i class="fas fa-copy me-1"></i>Network Drive
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Click to copy common backup paths, then edit the filename
+                    </small>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Restore Process</h6>
+                    <ol class="mb-0">
+                        <li>Check if server can be stopped</li>
+                        <li>Extract backup files</li>
+                        <li>Replace database/media/config files</li>
+                        <li>Restart the server manually</li>
+                    </ol>
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Alternative:</strong> If web restore fails, use command line:<br>
+                        <code>python scripts/backup/restore_backup_simple.py [backup_path]</code>
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmRestore()" id="confirmRestoreBtn" disabled>
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Restore
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div class="modal fade" id="restoreConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Final Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <h6><strong>WARNING: This action cannot be undone!</strong></h6>
+                    <p class="mb-0">You are about to replace your current system with backup data. This will permanently delete your current data.</p>
+                </div>
+                
+                <p><strong>Backup to restore:</strong> <span id="selectedBackupName"></span></p>
+                <p><strong>Restore options:</strong></p>
+                <ul id="selectedRestoreOptions"></ul>
+                
+                <div class="mb-3">
+                    <label for="confirmText" class="form-label">Type "RESTORE" to confirm:</label>
+                    <input type="text" class="form-control" id="confirmText" placeholder="Type RESTORE here">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="executeRestore()" id="executeRestoreBtn" disabled>
+                    <i class="fas fa-undo me-2"></i>Execute Restore
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Location Modal -->
+<div class="modal fade" id="backupLocationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-folder me-2"></i>Change Backup Location
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newBackupLocation" class="form-label">New Backup Location</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newBackupLocation" placeholder="Enter backup directory path">
+                        <button class="btn btn-outline-secondary" type="button" onclick="browseForFolder()">
+                            <i class="fas fa-folder-open"></i> Browse
+                        </button>
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Choose a secure location for your backups (e.g., external drive, network storage)
+                    </div>
+                </div>
+                
+                <!-- Mobile-Friendly Directory Browser -->
+                <div class="mb-3">
+                    <label class="form-label">Select Directory (Mobile-Friendly)</label>
+                    <div class="d-grid gap-2">
+                        <input type="file" id="directoryBrowser" webkitdirectory directory multiple class="form-control" style="display: none;" onchange="handleDirectorySelection(this)">
+                        <button type="button" class="btn btn-outline-primary file-browser-btn" onclick="document.getElementById('directoryBrowser').click()">
+                            <i class="fas fa-folder-open me-2"></i>Browse Directory
+                        </button>
+                        <div id="selectedDirectoryInfo" class="alert alert-info mt-2 file-browser-info" style="display: none;">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <span id="selectedDirectoryPath"></span>
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-mobile-alt me-1"></i>
+                        Works on both desktop and mobile devices
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Quick Backup Locations</h6>
+                    <div class="d-flex flex-wrap gap-2 mb-2 quick-copy-buttons">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupLocation('C:\\AVICAST_Backups')">
+                            <i class="fas fa-copy me-1"></i>C:\AVICAST_Backups
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupLocation('D:\\Backups\\AVICAST')">
+                            <i class="fas fa-copy me-1"></i>D:\Backups\AVICAST
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupLocation('C:\\Users\\Public\\AVICAST_Backups')">
+                            <i class="fas fa-copy me-1"></i>Public Folder
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupLocation('\\\\server\\backups\\avicast')">
+                            <i class="fas fa-copy me-1"></i>Network Drive
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupLocation('C:\\Users\\' + getCurrentUser() + '\\Documents\\AVICAST_Backups')">
+                            <i class="fas fa-copy me-1"></i>Documents Folder
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setBackupLocation('C:\\Users\\' + getCurrentUser() + '\\Desktop\\AVICAST_Backups')">
+                            <i class="fas fa-copy me-1"></i>Desktop Folder
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Click to copy common backup directory paths
+                    </small>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h6>
+                    <ul class="mb-0">
+                        <li>The directory must exist and be writable</li>
+                        <li>Ensure sufficient disk space for backups</li>
+                        <li>Consider using an external drive for safety</li>
+                        <li>Network paths are supported (e.g., \\server\backups)</li>
+                        <li>Use quick-copy buttons above for common locations</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveBackupLocation()">
+                    <i class="fas fa-save me-2"></i>Save Location
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function createBackup(type) {
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    modal.show();
+    
+    fetch('{% url "admin_system:create_backup" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: `type=${type}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        modal.hide();
+        if (data.success) {
+            alert('Backup created successfully!');
+            location.reload();
+        } else {
+            alert('Backup failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        modal.hide();
+        alert('Backup failed: ' + error);
+    });
+}
+
+function deleteBackup(backupName) {
+    if (confirm('Are you sure you want to delete this backup? This action cannot be undone.')) {
+        fetch('{% url "admin_system:delete_backup" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `backup_name=${backupName}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Backup deleted successfully!');
+                location.reload();
+            } else {
+                alert('Delete failed: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Delete failed: ' + error);
+        });
+    }
+}
+
+function refreshStatus() {
+    location.reload();
+}
+
+function showRestoreModal() {
+    const modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+    modal.show();
+}
+
+function confirmRestore() {
+    const selectedBackup = document.getElementById('restoreBackupSelect').value;
+    const backupPath = document.getElementById('restoreBackupPath').value.trim();
+    const uploadedFile = document.getElementById('restoreBackupUpload').files[0];
+    
+    if (!selectedBackup && !backupPath && !uploadedFile) {
+        alert('Please select a backup file to restore.');
+        return;
+    }
+    
+    // Get selected options
+    const restoreOptions = [];
+    if (document.getElementById('restoreDatabase').checked) {
+        restoreOptions.push('Database');
+    }
+    if (document.getElementById('restoreMedia').checked) {
+        restoreOptions.push('Media Files');
+    }
+    if (document.getElementById('restoreConfig').checked) {
+        restoreOptions.push('Configuration');
+    }
+    
+    if (restoreOptions.length === 0) {
+        alert('Please select at least one restore option.');
+        return;
+    }
+    
+    // Update confirmation modal
+    const backupName = selectedBackup || backupPath || uploadedFile.name;
+    const selectedBackupNameElement = document.getElementById('selectedBackupName');
+    if (selectedBackupNameElement) {
+        selectedBackupNameElement.textContent = backupName;
+    }
+    
+    const optionsList = document.getElementById('selectedRestoreOptions');
+    if (optionsList) {
+        optionsList.innerHTML = restoreOptions.map(option => `<li>${option}</li>`).join('');
+    }
+    
+    // Show confirmation modal
+    const confirmModal = new bootstrap.Modal(document.getElementById('restoreConfirmModal'));
+    confirmModal.show();
+    
+    // Close the first modal
+    const firstModal = bootstrap.Modal.getInstance(document.getElementById('restoreModal'));
+    firstModal.hide();
+}
+
+function handleFileUpload(input) {
+    const file = input.files[0];
+    if (file) {
+        // Clear other selections
+        document.getElementById('restoreBackupSelect').value = '';
+        document.getElementById('restoreBackupPath').value = '';
+        
+        // Show file info
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'alert alert-info mt-2';
+        fileInfo.innerHTML = `
+            <i class="fas fa-file-archive me-2"></i>
+            <strong>Selected:</strong> ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)
+        `;
+        
+        // Remove existing file info
+        const existingInfo = input.parentNode.querySelector('.alert-info');
+        if (existingInfo) {
+            existingInfo.remove();
+        }
+        
+        // Add new file info
+        input.parentNode.appendChild(fileInfo);
+    }
+}
+
+function browseForBackupFile() {
+    // Show helpful message about manual path entry
+    const message = 'Enter the full path to your backup file manually.\n\n' +
+                   'Examples:\n' +
+                   '• C:\\AVICAST_Backups\\avicast_full_20251016.zip\n' +
+                   '• D:\\Backups\\AVICAST\\avicast_full_20251016.zip\n' +
+                   '• C:\\Users\\Public\\AVICAST_Backups\\avicast_full_20251016.zip\n' +
+                   '• \\\\server\\backups\\avicast\\avicast_full_20251016.zip\n\n' +
+                   'Tip: Use the quick-copy buttons below for common paths.';
+    
+    alert(message);
+}
+
+function setBackupPath(path) {
+    // Set the path in the restore input field
+    document.getElementById('restoreBackupPath').value = path;
+    
+    // Clear other selections
+    document.getElementById('restoreBackupSelect').value = '';
+    document.getElementById('restoreBackupUpload').value = '';
+    
+    // Show brief confirmation
+    const input = document.getElementById('restoreBackupPath');
+    input.style.backgroundColor = '#d4edda';
+    setTimeout(() => {
+        input.style.backgroundColor = '';
+    }, 1000);
+}
+
+function setBackupLocation(path) {
+    // Set the path in the backup location input field
+    document.getElementById('newBackupLocation').value = path;
+    
+    // Show brief confirmation
+    const input = document.getElementById('newBackupLocation');
+    input.style.backgroundColor = '#d4edda';
+    setTimeout(() => {
+        input.style.backgroundColor = '';
+    }, 1000);
+}
+
+function getCurrentUser() {
+    // Try to get current username from various sources
+    if (typeof navigator !== 'undefined' && navigator.userAgent) {
+        // This is a simplified approach - in a real app you'd get this from the server
+        return 'User'; // Default fallback
+    }
+    return 'User';
+}
+
+function handleDirectorySelection(input) {
+    if (input.files && input.files.length > 0) {
+        // Get the directory path from the first file
+        const firstFile = input.files[0];
+        const fullPath = firstFile.webkitRelativePath || firstFile.name;
+        const directoryPath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+        
+        // Extract the actual directory path (remove the file part)
+        const pathParts = firstFile.path ? firstFile.path.split('\\') : [];
+        if (pathParts.length > 1) {
+            pathParts.pop(); // Remove the filename
+            const actualDirectoryPath = pathParts.join('\\');
+            
+            // Set the directory path in the backup location input
+            document.getElementById('newBackupLocation').value = actualDirectoryPath;
+            
+            // Show confirmation
+            const infoDiv = document.getElementById('selectedDirectoryInfo');
+            const pathSpan = document.getElementById('selectedDirectoryPath');
+            pathSpan.textContent = `Selected directory: ${actualDirectoryPath}`;
+            infoDiv.style.display = 'block';
+            
+            // Highlight the input field
+            const inputField = document.getElementById('newBackupLocation');
+            inputField.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                inputField.style.backgroundColor = '';
+            }, 2000);
+        }
+    }
+}
+
+function handleRestoreFileSelection(input) {
+    if (input.files && input.files.length > 0) {
+        const selectedFile = input.files[0];
+        
+        // For mobile devices, we'll use the file directly
+        // For desktop, we'll try to get the full path
+        let filePath = selectedFile.name;
+        
+        // Try to get the full path (works in some browsers)
+        if (selectedFile.path) {
+            filePath = selectedFile.path;
+        } else if (selectedFile.webkitRelativePath) {
+            filePath = selectedFile.webkitRelativePath;
+        }
+        
+        // Set the file path in the restore path input
+        document.getElementById('restoreBackupPath').value = filePath;
+        
+        // Clear other selections
+        document.getElementById('restoreBackupSelect').value = '';
+        document.getElementById('restoreBackupUpload').value = '';
+        
+        // Show confirmation
+        const infoDiv = document.getElementById('selectedRestoreFileInfo');
+        const pathSpan = document.getElementById('selectedRestoreFilePath');
+        pathSpan.textContent = `Selected file: ${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)`;
+        infoDiv.style.display = 'block';
+        
+        // Highlight the input field
+        const inputField = document.getElementById('restoreBackupPath');
+        inputField.style.backgroundColor = '#d4edda';
+        setTimeout(() => {
+            inputField.style.backgroundColor = '';
+        }, 2000);
+        
+        // Store the file for later use
+        window.selectedRestoreFile = selectedFile;
+    }
+}
+
+function executeRestore() {
+    const confirmText = document.getElementById('confirmText').value.trim();
+    
+    if (confirmText !== 'RESTORE') {
+        alert('Please type "RESTORE" exactly to confirm.');
+        return;
+    }
+    
+    const selectedBackup = document.getElementById('restoreBackupSelect').value;
+    const backupPath = document.getElementById('restoreBackupPath').value.trim();
+    const uploadedFile = document.getElementById('restoreBackupUpload').files[0];
+    const mobileSelectedFile = window.selectedRestoreFile;
+    const restoreOptions = {
+        database: document.getElementById('restoreDatabase').checked,
+        media: document.getElementById('restoreMedia').checked,
+        config: document.getElementById('restoreConfig').checked
+    };
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('restore_options', JSON.stringify(restoreOptions));
+    
+    if (selectedBackup) {
+        // Restore from existing backup
+        formData.append('backup_name', selectedBackup);
+        formData.append('restore_type', 'existing');
+    } else if (mobileSelectedFile) {
+        // Restore from mobile file browser
+        formData.append('backup_file', mobileSelectedFile);
+        formData.append('restore_type', 'upload');
+    } else if (backupPath) {
+        // Restore from drive path
+        formData.append('backup_path', backupPath);
+        formData.append('restore_type', 'path');
+    } else if (uploadedFile) {
+        // Restore from uploaded file
+        formData.append('backup_file', uploadedFile);
+        formData.append('restore_type', 'upload');
+    } else {
+        alert('Please select a backup file to restore.');
+        return;
+    }
+    
+    // Send restore request
+    fetch('{% url "admin_system:restore_backup" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Restore completed successfully! The server will restart automatically.');
+            // Close modal and redirect
+            const modal = bootstrap.Modal.getInstance(document.getElementById('restoreConfirmModal'));
+            modal.hide();
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert('Restore failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Error during restore: ' + error);
+    });
+}
+
+// Enable/disable confirm button based on selection
+document.addEventListener('DOMContentLoaded', function() {
+    const backupSelect = document.getElementById('restoreBackupSelect');
+    const confirmBtn = document.getElementById('confirmRestoreBtn');
+    
+    if (backupSelect && confirmBtn) {
+        backupSelect.addEventListener('change', function() {
+            confirmBtn.disabled = !this.value;
+        });
+    }
+    
+    // Enable/disable execute button based on confirmation text
+    const confirmText = document.getElementById('confirmText');
+    const executeBtn = document.getElementById('executeRestoreBtn');
+    
+    if (confirmText && executeBtn) {
+        confirmText.addEventListener('input', function() {
+            executeBtn.disabled = this.value.trim() !== 'RESTORE';
+        });
+    }
+});
+
+function changeBackupLocation() {
+    const modal = new bootstrap.Modal(document.getElementById('backupLocationModal'));
+    const currentLocation = document.getElementById('backupLocation').value;
+    document.getElementById('newBackupLocation').value = currentLocation;
+    modal.show();
+}
+
+function setBackupPath(path) {
+    // Set the path in the input field
+    document.getElementById('newBackupLocation').value = path;
+    
+    // Show a brief confirmation
+    const input = document.getElementById('newBackupLocation');
+    input.style.backgroundColor = '#d4edda';
+    setTimeout(() => {
+        input.style.backgroundColor = '';
+    }, 1000);
+}
+
+function browseForFolder() {
+    // Show comprehensive directory browsing guidance
+    const message = 'Directory Browser Guide:\n\n' +
+                   '📁 COMMON BACKUP LOCATIONS:\n' +
+                   '• C:\\AVICAST_Backups (Local drive)\n' +
+                   '• D:\\Backups\\AVICAST (External drive)\n' +
+                   '• C:\\Users\\Public\\AVICAST_Backups (Shared folder)\n' +
+                   '• \\\\server\\backups\\avicast (Network drive)\n' +
+                   '• C:\\Users\\[YourName]\\Documents\\AVICAST_Backups (Personal)\n' +
+                   '• C:\\Users\\[YourName]\\Desktop\\AVICAST_Backups (Desktop)\n\n' +
+                   '💡 TIPS:\n' +
+                   '• Use quick-copy buttons above for common paths\n' +
+                   '• Ensure directory exists and is writable\n' +
+                   '• External drives recommended for safety\n' +
+                   '• Network paths supported (\\\\server\\folder)\n' +
+                   '• Use forward slashes (/) or double backslashes (\\\\)\n\n' +
+                   '⚠️ IMPORTANT:\n' +
+                   '• Directory will be created if it doesn\'t exist\n' +
+                   '• Ensure sufficient disk space\n' +
+                   '• Test write permissions before saving';
+    
+    alert(message);
+}
+
+function saveBackupLocation() {
+    const newLocation = document.getElementById('newBackupLocation').value.trim();
+    
+    if (!newLocation) {
+        alert('Please enter a backup location path.');
+        return;
+    }
+    
+    // Validate path format (basic validation)
+    if (newLocation.length < 3) {
+        alert('Please enter a valid path (minimum 3 characters).');
+        return;
+    }
+    
+    // Send request to update backup location
+    fetch('{% url "admin_system:update_backup_location" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: `new_location=${encodeURIComponent(newLocation)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the display
+            document.getElementById('backupLocation').value = newLocation;
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('backupLocationModal'));
+            modal.hide();
+            
+            // Show success message
+            alert('Backup location updated successfully!');
+            
+            // Refresh the page to update statistics
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Failed to update backup location: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Error updating backup location: ' + error);
+    });
+}
+</script>
+{% endblock %}

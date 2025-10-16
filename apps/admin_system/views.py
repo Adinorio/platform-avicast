@@ -332,13 +332,21 @@ def admin_activities(request):
     if date_to:
         activities = activities.filter(timestamp__date__lte=date_to)
     
-    # Pagination
-    paginator = Paginator(activities, 50)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # Pagination with "Show All" option
+    show_all = request.GET.get('show_all', '').strip()
+    if show_all.lower() == 'true':
+        page_obj = None
+        activities_list = list(activities)
+    else:
+        paginator = Paginator(activities, 50)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        activities_list = None
     
     context = {
         'page_obj': page_obj,
+        'activities_list': activities_list,
+        'show_all': show_all.lower() == 'true',
         'action_filter': action_filter,
         'user_filter': user_filter,
         'date_from': date_from,
