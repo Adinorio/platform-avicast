@@ -233,24 +233,45 @@ class UserActivity(models.Model):
     """Model to track user activities and system logs"""
 
     class ActivityType(models.TextChoices):
+        # Authentication activities
         LOGIN = "LOGIN", "Login"
         LOGOUT = "LOGOUT", "Logout"
         PASSWORD_CHANGE = "PASSWORD_CHANGE", "Password Change"
+        
+        # User management activities
         USER_CREATED = "USER_CREATED", "User Created"
         USER_UPDATED = "USER_UPDATED", "User Updated"
         USER_ARCHIVED = "USER_ARCHIVED", "User Archived"
         USER_DISABLED = "USER_DISABLED", "User Disabled"
+        
+        # Species management activities
         SPECIES_ADDED = "SPECIES_ADDED", "Species Added"
         SPECIES_UPDATED = "SPECIES_UPDATED", "Species Updated"
         SPECIES_ARCHIVED = "SPECIES_ARCHIVED", "Species Archived"
+        
+        # Site management activities
         SITE_ADDED = "SITE_ADDED", "Site Added"
         SITE_UPDATED = "SITE_UPDATED", "Site Updated"
+        
+        # Census activities
         CENSUS_ADDED = "CENSUS_ADDED", "Census Added"
         CENSUS_UPDATED = "CENSUS_UPDATED", "Census Updated"
+        
+        # Image processing activities
         IMAGE_PROCESSED = "IMAGE_PROCESSED", "Image Processed"
+        
+        # Reporting and data activities
         REPORT_GENERATED = "REPORT_GENERATED", "Report Generated"
         DATA_IMPORTED = "DATA_IMPORTED", "Data Imported"
         DATA_EXPORTED = "DATA_EXPORTED", "Data Exported"
+        
+        # System activities (from middleware)
+        ADMIN_ACTION = "ADMIN_ACTION", "Admin Action"
+        USER_ACTION = "USER_ACTION", "User Action"
+        CLIENT_ERROR = "CLIENT_ERROR", "Client Error"
+        SYSTEM_ERROR = "SYSTEM_ERROR", "System Error"
+        API_ACCESS = "API_ACCESS", "API Access"
+        PAGE_VIEW = "PAGE_VIEW", "Page View"
 
     class Severity(models.TextChoices):
         LOW = "LOW", "Low"

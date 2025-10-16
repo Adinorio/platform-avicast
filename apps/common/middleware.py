@@ -144,12 +144,89 @@ class AuditLoggingMiddleware:
             return 'SYSTEM_ERROR'
         elif response.status_code >= 400:
             return 'CLIENT_ERROR'
-        elif request.path.startswith('/admin-system/'):
-            return 'ADMIN_ACTION'
-        elif request.path.startswith('/users/'):
-            return 'USER_ACTION'
-        elif request.path.startswith('/api/'):
+        
+        path = request.path
+        method = request.method
+        
+        # More specific activity types based on path and method
+        if path.startswith('/admin-system/'):
+            if method == 'POST':
+                if 'create' in path:
+                    return 'USER_CREATED'
+                elif 'edit' in path or 'update' in path:
+                    return 'USER_UPDATED'
+                elif 'delete' in path:
+                    return 'USER_ARCHIVED'
+                else:
+                    return 'ADMIN_ACTION'
+            else:
+                return 'ADMIN_ACTION'
+        
+        elif path.startswith('/users/'):
+            if method == 'POST':
+                if 'create' in path:
+                    return 'USER_CREATED'
+                elif 'update' in path:
+                    return 'USER_UPDATED'
+                elif 'password-reset' in path:
+                    return 'PASSWORD_CHANGE'
+                else:
+                    return 'USER_ACTION'
+            else:
+                return 'USER_ACTION'
+        
+        elif path.startswith('/fauna/'):
+            if method == 'POST':
+                if 'create' in path:
+                    return 'SPECIES_ADDED'
+                elif 'edit' in path or 'update' in path:
+                    return 'SPECIES_UPDATED'
+                elif 'delete' in path or 'archive' in path:
+                    return 'SPECIES_ARCHIVED'
+                else:
+                    return 'SPECIES_ADDED'  # Default for fauna POST
+            else:
+                return 'SPECIES_ADDED'  # Default for fauna views
+        
+        elif path.startswith('/locations/'):
+            if method == 'POST':
+                if 'sites' in path and 'create' in path:
+                    return 'SITE_ADDED'
+                elif 'sites' in path and ('edit' in path or 'update' in path):
+                    return 'SITE_UPDATED'
+                elif 'census' in path and 'create' in path:
+                    return 'CENSUS_ADDED'
+                elif 'census' in path and ('edit' in path or 'update' in path):
+                    return 'CENSUS_UPDATED'
+                else:
+                    return 'CENSUS_ADDED'  # Default for locations POST
+            else:
+                return 'CENSUS_ADDED'  # Default for locations views
+        
+        elif path.startswith('/image-processing/'):
+            if method == 'POST':
+                return 'IMAGE_PROCESSED'
+            else:
+                return 'IMAGE_PROCESSED'
+        
+        elif path.startswith('/analytics/'):
+            if 'generate' in path or 'export' in path:
+                return 'REPORT_GENERATED'
+            elif 'import' in path:
+                return 'DATA_IMPORTED'
+            elif 'export' in path:
+                return 'DATA_EXPORTED'
+            else:
+                return 'REPORT_GENERATED'
+        
+        elif path == '/login/':
+            return 'LOGIN'
+        elif path == '/logout/':
+            return 'LOGOUT'
+        
+        elif path.startswith('/api/'):
             return 'API_ACCESS'
+        
         else:
             return 'PAGE_VIEW'
 
@@ -174,8 +251,125 @@ class AuditLoggingMiddleware:
         
         if status >= 400:
             return f"Error {status} on {method} {path}"
+        
+        # Create more meaningful descriptions based on the path
+        description = self._get_meaningful_description(request, response)
+        if description:
+            return description
         else:
             return f"{method} {path}"
+    
+    def _get_meaningful_description(self, request, response):
+        """Generate meaningful descriptions for common paths"""
+        path = request.path
+        method = request.method
+        
+        # Admin System paths
+        if path.startswith('/admin-system/'):
+            if path == '/admin-system/':
+                return "Accessed Admin Dashboard"
+            elif path == '/admin-system/users/':
+                return "Viewed User Management"
+            elif path.startswith('/admin-system/users/create'):
+                return "Accessed User Creation Form"
+            elif path.startswith('/admin-system/users/') and path.endswith('/edit/'):
+                return "Accessed User Edit Form"
+            elif path == '/admin-system/roles/':
+                return "Viewed Roles & Assignments"
+            elif path == '/admin-system/monitoring/':
+                return "Viewed System Monitoring"
+            elif path == '/admin-system/activities/':
+                return "Viewed Admin Activities"
+            elif path == '/admin-system/backups/':
+                return "Viewed Backup Management"
+            else:
+                return f"Accessed Admin System: {path.split('/')[-2] if len(path.split('/')) > 2 else 'Unknown'}"
+        
+        # User Management paths
+        elif path.startswith('/users/'):
+            if path == '/users/audit-logs/':
+                return "Viewed System Logs"
+            elif path == '/users/dashboard/':
+                return "Accessed User Dashboard"
+            elif path == '/users/list/':
+                return "Viewed User List"
+            elif path.startswith('/users/create'):
+                return "Accessed User Creation"
+            elif path.startswith('/users/update/'):
+                return "Accessed User Update"
+            elif path.startswith('/users/password-reset/'):
+                return "Accessed Password Reset"
+            else:
+                return f"Accessed User Management: {path.split('/')[-2] if len(path.split('/')) > 2 else 'Unknown'}"
+        
+        # Locations paths
+        elif path.startswith('/locations/'):
+            if path == '/locations/':
+                return "Accessed Locations Dashboard"
+            elif path == '/locations/sites/':
+                return "Viewed Sites"
+            elif path == '/locations/census/':
+                return "Viewed Census Data"
+            elif path.startswith('/locations/sites/create'):
+                return "Accessed Site Creation"
+            elif path.startswith('/locations/census/create'):
+                return "Accessed Census Creation"
+            else:
+                return f"Accessed Locations: {path.split('/')[-2] if len(path.split('/')) > 2 else 'Unknown'}"
+        
+        # Fauna paths
+        elif path.startswith('/fauna/'):
+            if path == '/fauna/':
+                return "Accessed Species Management"
+            elif path == '/fauna/species/':
+                return "Viewed Species List"
+            elif path.startswith('/fauna/species/create'):
+                return "Accessed Species Creation"
+            elif path.startswith('/fauna/species/') and path.endswith('/edit/'):
+                return "Accessed Species Edit"
+            else:
+                return f"Accessed Species Management: {path.split('/')[-2] if len(path.split('/')) > 2 else 'Unknown'}"
+        
+        # Image Processing paths
+        elif path.startswith('/image-processing/'):
+            if path == '/image-processing/':
+                return "Accessed Image Processing"
+            elif path == '/image-processing/upload/':
+                return "Accessed Image Upload"
+            elif path == '/image-processing/results/':
+                return "Viewed Processing Results"
+            else:
+                return f"Accessed Image Processing: {path.split('/')[-2] if len(path.split('/')) > 2 else 'Unknown'}"
+        
+        # Analytics paths
+        elif path.startswith('/analytics/'):
+            if path == '/analytics/':
+                return "Accessed Analytics Dashboard"
+            elif path == '/analytics/reports/':
+                return "Viewed Reports"
+            elif path.startswith('/analytics/reports/generate'):
+                return "Generated Report"
+            else:
+                return f"Accessed Analytics: {path.split('/')[-2] if len(path.split('/')) > 2 else 'Unknown'}"
+        
+        # Weather paths
+        elif path.startswith('/weather/'):
+            if path == '/weather/':
+                return "Accessed Weather Data"
+            elif path == '/weather/forecast/':
+                return "Viewed Weather Forecast"
+            else:
+                return f"Accessed Weather: {path.split('/')[-2] if len(path.split('/')) > 2 else 'Unknown'}"
+        
+        # Login/Logout paths
+        elif path == '/login/':
+            return "User Login"
+        elif path == '/logout/':
+            return "User Logout"
+        elif path == '/':
+            return "Accessed Home Page"
+        
+        return None
 
     def _get_client_ip(self, request):
         """Get the client's real IP address"""
