@@ -67,13 +67,21 @@ def system_logs(request):
     # Get all users for filter dropdown
     users = User.objects.filter(is_active=True).order_by('employee_id')
 
-    # Pagination
-    paginator = Paginator(logs, 20)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    # Pagination with "Show All" option
+    show_all = request.GET.get('show_all', '').strip()
+    if show_all.lower() == 'true':
+        page_obj = None
+        logs_list = list(logs)
+    else:
+        paginator = Paginator(logs, 20)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        logs_list = None
 
     context = {
         "page_obj": page_obj,
+        "logs_list": logs_list,
+        "show_all": show_all.lower() == 'true',
         "total_activities": total_activities,
         "species_activities": species_activities,
         "census_activities": census_activities,

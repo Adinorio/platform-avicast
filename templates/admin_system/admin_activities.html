@@ -41,10 +41,19 @@
                     
                     <div class="col-md-2">
                         <label class="form-label">&nbsp;</label>
-                        <div class="d-grid">
+                        <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-admin btn-primary">
                                 <i class="fas fa-search me-2"></i>Filter
                             </button>
+                            {% if not show_all %}
+                                <a href="?show_all=true{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-admin btn-outline-info btn-sm">
+                                    <i class="fas fa-list me-1"></i>Show All
+                                </a>
+                            {% else %}
+                                <a href="?{% if action_filter %}action={{ action_filter }}&{% endif %}{% if user_filter %}user={{ user_filter }}&{% endif %}{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}" class="btn btn-admin btn-outline-warning btn-sm">
+                                    <i class="fas fa-pager me-1"></i>Show Paginated
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </form>
@@ -60,7 +69,12 @@
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-history me-2"></i>
-                    Admin Activities ({{ page_obj.paginator.count }} total)
+                    Admin Activities
+                    {% if show_all %}
+                        <small class="text-muted">(Showing all {{ activities_list|length }} activities)</small>
+                    {% elif page_obj %}
+                        <small class="text-muted">({{ page_obj.paginator.count }} total)</small>
+                    {% endif %}
                 </h5>
             </div>
             <div class="card-body p-0">
@@ -77,7 +91,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for activity in page_obj %}
+                            {% for activity in page_obj|default:activities_list %}
                             <tr>
                                 <td>
                                     <div>
@@ -147,20 +161,54 @@
 </div>
 
 <!-- Pagination -->
-{% if page_obj.has_other_pages %}
+{% if not show_all and page_obj.has_other_pages %}
 <div class="row mt-4">
     <div class="col-12">
-        <nav aria-label="Activity pagination">
+        <!-- Pagination Info -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} activities
+            </div>
+            <div class="text-muted">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <nav aria-label="Admin activities pagination">
             <ul class="pagination justify-content-center">
+                <!-- First Page -->
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page=1{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">First</a>
+                        <a class="page-link" href="?page=1{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" title="First Page">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
                     </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Previous</a>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-angle-double-left"></i>
+                        </span>
                     </li>
                 {% endif %}
-                
+
+                <!-- Previous Page -->
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" title="Previous Page">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-angle-left"></i>
+                        </span>
+                    </li>
+                {% endif %}
+
+                <!-- Page Numbers -->
                 {% for num in page_obj.paginator.page_range %}
                     {% if page_obj.number == num %}
                         <li class="page-item active">
@@ -170,15 +218,44 @@
                         <li class="page-item">
                             <a class="page-link" href="?page={{ num }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ num }}</a>
                         </li>
+                    {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
                     {% endif %}
                 {% endfor %}
-                
+
+                <!-- Next Page -->
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Next</a>
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" title="Next Page">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
                     </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-angle-right"></i>
+                        </span>
+                    </li>
+                {% endif %}
+
+                <!-- Last Page -->
+                {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Last</a>
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" title="Last Page">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-angle-double-right"></i>
+                        </span>
                     </li>
                 {% endif %}
             </ul>

@@ -121,6 +121,15 @@
                             <a href="{% url 'users:audit_logs' %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i>Clear
                             </a>
+                            {% if not show_all %}
+                                <a href="?show_all=true{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}" class="btn btn-outline-info">
+                                    <i class="fas fa-list me-1"></i>Show All
+                                </a>
+                            {% else %}
+                                <a href="?{% if current_activity %}activity_type={{ current_activity }}&{% endif %}{% if current_user %}user={{ current_user }}&{% endif %}{% if current_date %}date={{ current_date }}&{% endif %}{% if current_severity %}severity={{ current_severity }}&{% endif %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-pager me-1"></i>Show Paginated
+                                </a>
+                            {% endif %}
                         </div>
                     </form>
                 </div>
@@ -131,7 +140,14 @@
     <!-- Activity Logs -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Activity Logs</h5>
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Activity Logs
+                {% if show_all %}
+                    <small class="text-muted">(Showing all {{ logs_list|length }} activities)</small>
+                {% elif page_obj %}
+                    <small class="text-muted">({{ page_obj.paginator.count }} total)</small>
+                {% endif %}
+            </h5>
             <div class="btn-group" role="group">
                 <a href="?export=csv" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-download me-1"></i>Export CSV
@@ -156,7 +172,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for activity in page_obj %}
+                        {% for activity in page_obj|default:logs_list %}
                         <tr>
                             <td>
                                 <small class="text-muted">
@@ -221,45 +237,107 @@
     </div>
 
     <!-- Pagination -->
-    {% if is_paginated %}
-    <nav aria-label="Activity logs pagination" class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">
-                        <i class="fas fa-angle-double-left"></i> First
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">
-                        <i class="fas fa-angle-left"></i> Previous
-                    </a>
-                </li>
-            {% endif %}
-
-            <li class="page-item active">
-                <span class="page-link">
+    {% if not show_all and page_obj.has_other_pages %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <!-- Pagination Info -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} activities
+                </div>
+                <div class="text-muted">
                     Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                    <small class="d-block text-muted">
-                        Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} activities
-                    </small>
-                </span>
-            </li>
+                </div>
+            </div>
 
-            {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">
-                        Next <i class="fas fa-angle-right"></i>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">
-                        Last <i class="fas fa-angle-double-right"></i>
-                    </a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
+            <!-- Pagination Controls -->
+            <nav aria-label="Activity logs pagination">
+                <ul class="pagination justify-content-center">
+                    <!-- First Page -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}" title="First Page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-double-left"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Previous Page -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}" title="Previous Page">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-left"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Page Numbers -->
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Next Page -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}" title="Next Page">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-right"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Last Page -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_activity %}&activity_type={{ current_activity }}{% endif %}{% if current_user %}&user={{ current_user }}{% endif %}{% if current_date %}&date={{ current_date }}{% endif %}{% if current_severity %}&severity={{ current_severity }}{% endif %}" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-double-right"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
     {% endif %}
 
     <!-- Actions -->
