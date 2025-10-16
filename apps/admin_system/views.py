@@ -207,8 +207,16 @@ def user_create(request):
                         'last_name': user.last_name
                     }
                 )
-                messages.success(request, f'User "{user.get_full_name()}" created successfully with Employee ID: {user.employee_id}')
-                return redirect('admin_system:user_detail', user_id=user.id)
+                # Store credentials temporarily in session for display
+                request.session['new_user_credentials'] = {
+                    'employee_id': user.employee_id,
+                    'password': form.cleaned_data.get('password'),
+                    'user_name': user.get_full_name(),
+                    'created_at': timezone.now().isoformat()
+                }
+                
+                messages.success(request, f'User "{user.get_full_name()}" created successfully! Please note the credentials below.')
+                return redirect('admin_system:user_credentials', user_id=user.id)
             except Exception as e:
                 messages.error(request, f'Error creating user: {str(e)}')
     else:
@@ -221,6 +229,28 @@ def user_create(request):
     }
     
     return render(request, 'admin_system/user_form.html', context)
+
+
+@login_required
+@user_passes_test(admin_required)
+def user_credentials(request, user_id):
+    """
+    Display newly created user credentials securely
+    """
+    user = get_object_or_404(User, id=user_id)
+    credentials = request.session.get('new_user_credentials')
+    
+    # Clear credentials from session after displaying
+    if credentials:
+        del request.session['new_user_credentials']
+    
+    context = {
+        'user_obj': user,
+        'credentials': credentials,
+        'page_title': f'User Credentials - {user.get_full_name()}',
+    }
+    
+    return render(request, 'admin_system/user_credentials.html', context)
 
 
 @login_required
