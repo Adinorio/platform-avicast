@@ -510,6 +510,12 @@ def roles_assignments(request):
     user_counts = User.objects.values('role').annotate(count=Count('id'))
     role_counts = {item['role']: item['count'] for item in user_counts}
     
+    # Ensure all roles are included in role_counts, even with 0 users
+    for role_choice in User.Role.choices:
+        role = role_choice[0]
+        if role not in role_counts:
+            role_counts[role] = 0
+    
     if request.method == 'POST':
         role = request.POST.get('role')
         permission = role_permissions.get(role)
@@ -614,10 +620,22 @@ def roles_assignments(request):
             
             return redirect('admin_system:roles_assignments')
     
+    # Create structured role data for template
+    role_data = []
+    for role_choice in User.Role.choices:
+        role = role_choice[0]
+        role_data.append({
+            'role': role,
+            'role_display': role_choice[1],
+            'count': role_counts.get(role, 0),
+            'permission': role_permissions.get(role)
+        })
+    
     context = {
         'role_permissions': role_permissions,
         'role_counts': role_counts,
         'user_roles': User.Role.choices,
+        'role_data': role_data,
     }
     return render(request, 'admin_system/roles_assignments.html', context)
 

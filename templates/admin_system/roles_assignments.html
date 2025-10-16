@@ -14,32 +14,30 @@
             <div class="card-body">
                 <!-- Role Statistics -->
                 <div class="row mb-4">
-                    {% for role, count in role_counts.items %}
+                    {% for role_item in role_data %}
                     <div class="col-md-4 mb-3">
                         <div class="card border-0 bg-light">
                             <div class="card-body text-center">
-                                <h3 class="text-primary mb-1">{{ count }}</h3>
-                                <p class="mb-0 text-muted">{{ role|title }} Users</p>
-                                {% if role != 'SUPERADMIN' %}
-                                    {% for perm_role, permission in role_permissions.items %}
-                                        {% if perm_role == role %}
-                                            <small class="text-muted">
-                                                {% if role == 'ADMIN' %}
-                                                    {% if permission.can_generate_reports or permission.can_modify_species or permission.can_add_sites or permission.can_add_birds or permission.can_process_images or permission.can_access_weather or permission.can_access_analytics %}
-                                                        <span class="text-success">✅ Full Access</span>
-                                                    {% else %}
-                                                        <span class="text-warning">⚠️ Limited Access</span>
-                                                    {% endif %}
-                                                {% elif role == 'FIELD_WORKER' %}
-                                                    {% if permission.can_generate_reports or permission.can_modify_species or permission.can_add_sites or permission.can_add_birds or permission.can_process_images %}
-                                                        <span class="text-warning">⚠️ Modification Access</span>
-                                                    {% else %}
-                                                        <span class="text-info">👁️ View-Only</span>
-                                                    {% endif %}
-                                                {% endif %}
-                                            </small>
+                                <h3 class="text-primary mb-1">{{ role_item.count }}</h3>
+                                <p class="mb-0 text-muted">{{ role_item.role_display }} Users</p>
+                                {% if role_item.role != 'SUPERADMIN' %}
+                                    {% with permission=role_item.permission %}
+                                    <small class="text-muted">
+                                        {% if role_item.role == 'ADMIN' %}
+                                            {% if permission.can_generate_reports or permission.can_modify_species or permission.can_add_sites or permission.can_add_birds or permission.can_process_images or permission.can_access_weather or permission.can_access_analytics %}
+                                                <span class="text-success">✅ Full Access</span>
+                                            {% else %}
+                                                <span class="text-warning">⚠️ Limited Access</span>
+                                            {% endif %}
+                                        {% elif role_item.role == 'FIELD_WORKER' %}
+                                            {% if permission.can_generate_reports or permission.can_modify_species or permission.can_add_sites or permission.can_add_birds or permission.can_process_images %}
+                                                <span class="text-warning">⚠️ Modification Access</span>
+                                            {% else %}
+                                                <span class="text-info">👁️ View-Only</span>
+                                            {% endif %}
                                         {% endif %}
-                                    {% endfor %}
+                                    </small>
+                                    {% endwith %}
                                 {% else %}
                                     <small class="text-muted"><span class="text-danger">🔒 User Management Only</span></small>
                                 {% endif %}
@@ -51,25 +49,25 @@
 
                 <!-- Permission Matrix -->
                 <div class="row">
-                    {% for role, permission in role_permissions.items %}
+                    {% for role_item in role_data %}
                     <div class="col-md-4 mb-4">
                         <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-{{ role|lower }}">
+                            <div class="card-header bg-{{ role_item.role|lower }}">
                                 <h5 class="mb-0 text-white">
-                                    <i class="fas fa-shield-alt me-2"></i>{{ role|title }}
+                                    <i class="fas fa-shield-alt me-2"></i>{{ role_item.role_display }}
                                 </h5>
                             </div>
                             <div class="card-body">
-                                {% if role != 'SUPERADMIN' %}
+                                {% if role_item.role != 'SUPERADMIN' %}
                                 <form method="post">
                                     {% csrf_token %}
-                                    <input type="hidden" name="role" value="{{ role }}">
+                                    <input type="hidden" name="role" value="{{ role_item.role }}">
                                 {% endif %}
                                     
-                                    {% if role != 'SUPERADMIN' %}
+                                    {% if role_item.role != 'SUPERADMIN' %}
                                     <!-- Main System Features (Not for SUPERADMIN) -->
                                     
-                                    {% if role == 'FIELD_WORKER' %}
+                                    {% if role_item.role == 'FIELD_WORKER' %}
                                     <div class="alert alert-info mb-3">
                                         <i class="fas fa-info-circle me-2"></i>
                                         <strong>FIELD_WORKER:</strong> View-only access to main system features
@@ -78,56 +76,56 @@
                                     
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="can_generate_reports" 
-                                               id="reports_{{ role }}" {% if permission.can_generate_reports %}checked{% endif %}>
-                                        <label class="form-check-label" for="reports_{{ role }}">
+                                               id="reports_{{ role_item.role }}" {% if role_item.permission.can_generate_reports %}checked{% endif %}>
+                                        <label class="form-check-label" for="reports_{{ role_item.role }}">
                                             <i class="fas fa-chart-bar me-1"></i>Generate Reports
                                         </label>
                                     </div>
                                     
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="can_modify_species" 
-                                               id="species_{{ role }}" {% if permission.can_modify_species %}checked{% endif %}>
-                                        <label class="form-check-label" for="species_{{ role }}">
+                                               id="species_{{ role_item.role }}" {% if role_item.permission.can_modify_species %}checked{% endif %}>
+                                        <label class="form-check-label" for="species_{{ role_item.role }}">
                                             <i class="fas fa-paw me-1"></i>Modify Species Data
                                         </label>
                                     </div>
                                     
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="can_add_sites" 
-                                               id="sites_{{ role }}" {% if permission.can_add_sites %}checked{% endif %}>
-                                        <label class="form-check-label" for="sites_{{ role }}">
+                                               id="sites_{{ role_item.role }}" {% if role_item.permission.can_add_sites %}checked{% endif %}>
+                                        <label class="form-check-label" for="sites_{{ role_item.role }}">
                                             <i class="fas fa-map-marker-alt me-1"></i>Add Sites
                                         </label>
                                     </div>
                                     
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="can_add_birds" 
-                                               id="birds_{{ role }}" {% if permission.can_add_birds %}checked{% endif %}>
-                                        <label class="form-check-label" for="birds_{{ role }}">
+                                               id="birds_{{ role_item.role }}" {% if role_item.permission.can_add_birds %}checked{% endif %}>
+                                        <label class="form-check-label" for="birds_{{ role_item.role }}">
                                             <i class="fas fa-dove me-1"></i>Add Birds
                                         </label>
                                     </div>
                                     
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="can_process_images" 
-                                               id="images_{{ role }}" {% if permission.can_process_images %}checked{% endif %}>
-                                        <label class="form-check-label" for="images_{{ role }}">
+                                               id="images_{{ role_item.role }}" {% if role_item.permission.can_process_images %}checked{% endif %}>
+                                        <label class="form-check-label" for="images_{{ role_item.role }}">
                                             <i class="fas fa-camera me-1"></i>Process Images
                                         </label>
                                     </div>
                                     
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="can_access_weather" 
-                                               id="weather_{{ role }}" {% if permission.can_access_weather %}checked{% endif %}>
-                                        <label class="form-check-label" for="weather_{{ role }}">
+                                               id="weather_{{ role_item.role }}" {% if role_item.permission.can_access_weather %}checked{% endif %}>
+                                        <label class="form-check-label" for="weather_{{ role_item.role }}">
                                             <i class="fas fa-cloud-sun me-1"></i>Weather Access
                                         </label>
                                     </div>
                                     
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" name="can_access_analytics" 
-                                               id="analytics_{{ role }}" {% if permission.can_access_analytics %}checked{% endif %}>
-                                        <label class="form-check-label" for="analytics_{{ role }}">
+                                               id="analytics_{{ role_item.role }}" {% if role_item.permission.can_access_analytics %}checked{% endif %}>
+                                        <label class="form-check-label" for="analytics_{{ role_item.role }}">
                                             <i class="fas fa-chart-line me-1"></i>Analytics Access
                                         </label>
                                     </div>
