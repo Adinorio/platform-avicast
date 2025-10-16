@@ -211,11 +211,19 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                            {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                                            {% if user.first_name and user.last_name %}
+                                                {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                                            {% elif user.first_name %}
+                                                {{ user.first_name.0|upper }}
+                                            {% elif user.last_name %}
+                                                {{ user.last_name.0|upper }}
+                                            {% else %}
+                                                {{ user.employee_id.0|upper }}{{ user.employee_id.1|upper }}
+                                            {% endif %}
                                         </div>
                                         <div>
-                                            <h6 class="mb-0">{{ user.full_name }}</h6>
-                                            <small class="text-muted">{{ user.employee_id }} • {{ user.email }}</small>
+                                            <h6 class="mb-0">{{ user.get_full_name|default:"No Name Set" }}</h6>
+                                            <small class="text-muted">{{ user.employee_id }} • {{ user.email|default:"No Email" }}</small>
                                         </div>
                                     </div>
                                 </td>
