@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 import re
+import uuid
 
 # Create your models here.
 
@@ -435,3 +436,126 @@ class DataRequest(models.Model):
     @property
     def can_be_cancelled(self):
         return self.status == self.RequestStatus.PENDING
+
+
+class PasswordResetRequest(models.Model):
+    """Model for handling password reset requests"""
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending Approval"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Rejected"
+        COMPLETED = "COMPLETED", "Completed"
+        EXPIRED = "EXPIRED", "Expired"
+
+    class RequestType(models.TextChoices):
+        FORGOTTEN = "FORGOTTEN", "Forgotten Password"
+        ADMIN_RESET = "ADMIN_RESET", "Admin Reset"
+        SECURITY_RESET = "SECURITY_RESET", "Security Reset"
+
+    # Request details
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name="password_reset_requests")
+    request_type = models.CharField(max_length=20, choices=RequestType.choices, default=RequestType.FORGOTTEN)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    
+    # Request information
+    requested_at = models.DateTimeField(auto_now_add=True)
+    requested_by_ip = models.CharField(max_length=45, blank=True)
+    reason = models.TextField(blank=True, help_text="Reason for password reset request")
+    
+    # Approval information
+    approved_by = models.ForeignKey(
+        'User', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="approved_password_resets"
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approval_notes = models.TextField(blank=True)
+    
+    # Reset information
+    reset_token = models.CharField(max_length=100, blank=True, unique=True)
+    reset_token_expires = models.DateTimeField(null=True, blank=True)
+    reset_completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Security information
+    verification_questions = models.JSONField(default=list, blank=True)
+    verification_answers = models.JSONField(default=list, blank=True)
+    
+    class Meta:
+        ordering = ['-requested_at']
+        verbose_name = "Password Reset Request"
+        verbose_name_plural = "Password Reset Requests"
+
+    def __str__(self):
+        return f"Password Reset Request - {self.user.employee_id} ({self.status})"
+
+    def is_expired(self):
+        """Check if the reset request has expired"""
+        if self.reset_token_expires:
+            return timezone.now() > self.reset_token_expires
+        return False
+
+    def can_be_approved(self):
+        """Check if the request can be approved"""
+        return self.status == self.Status.PENDING and not self.is_expired()
+
+    def generate_reset_token(self):
+        """Generate a secure reset token"""
+        import secrets
+        self.reset_token = secrets.token_urlsafe(32)
+        self.reset_token_expires = timezone.now() + timezone.timedelta(hours=24)
+        self.save()
+
+    def approve(self, approved_by, notes=""):
+        """Approve the password reset request"""
+        if not self.can_be_approved():
+            return False
+        
+        self.status = self.Status.APPROVED
+        self.approved_by = approved_by
+        self.approved_at = timezone.now()
+        self.approval_notes = notes
+        self.generate_reset_token()
+        self.save()
+        return True
+
+    def reject(self, approved_by, notes=""):
+        """Reject the password reset request"""
+        self.status = self.Status.REJECTED
+        self.approved_by = approved_by
+        self.approved_at = timezone.now()
+        self.approval_notes = notes
+        self.save()
+
+    def complete_reset(self):
+        """Mark the reset as completed"""
+        self.status = self.Status.COMPLETED
+        self.reset_completed_at = timezone.now()
+        self.save()
+
+    def get_verification_questions(self):
+        """Get verification questions for the user"""
+        questions = [
+            "What is your Employee ID?",
+            "What is your full name?",
+            "What is your role in the organization?",
+            "When was your account created? (approximate date)",
+        ]
+        return questions[:2]  # Use first 2 questions for security
+
+    def verify_answers(self, answers):
+        """Verify the provided answers"""
+        if len(answers) != 2:
+            return False
+        
+        # Check Employee ID
+        if answers[0].strip().upper() != self.user.employee_id:
+            return False
+        
+        # Check full name (case insensitive)
+        if answers[1].strip().lower() != self.user.get_full_name().lower():
+            return False
+        
+        return True
