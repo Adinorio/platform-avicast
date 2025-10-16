@@ -1392,6 +1392,7 @@
             background: var(--sidebar-bg);
             z-index: 1000;
             overflow-y: auto;
+            overflow-x: hidden;
             transition: transform 0.3s ease;
         }
 
@@ -1403,6 +1404,7 @@
             padding: 1.5rem;
             border-bottom: 1px solid rgba(255,255,255,0.1);
             text-align: center;
+            overflow: hidden;
         }
 
         .sidebar-brand {
@@ -1424,6 +1426,7 @@
             background: rgba(255,255,255,0.1);
             border-radius: 0.5rem;
             color: white;
+            overflow: hidden;
         }
 
         .sidebar-nav {
@@ -1437,6 +1440,10 @@
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
             font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .sidebar-nav .nav-link:hover {
@@ -1539,6 +1546,26 @@
             /* Prevent any text wrapping */
             .navbar-mobile * {
                 white-space: nowrap !important;
+            }
+            
+            /* Mobile sidebar improvements */
+            .sidebar {
+                width: 280px;
+                max-width: 280px;
+                overflow-x: hidden !important;
+            }
+            
+            .sidebar-header,
+            .sidebar-nav,
+            .user-profile {
+                overflow-x: hidden !important;
+            }
+            
+            .sidebar-nav .nav-link {
+                max-width: 280px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         }
 
