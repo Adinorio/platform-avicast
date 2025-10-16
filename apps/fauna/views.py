@@ -11,8 +11,8 @@ from django.contrib import messages
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
 
-from .models import Species
-from .forms import SpeciesForm
+from .models import Species, BirdFamily
+from .forms import SpeciesForm, BirdFamilyForm
 from .services import SpeciesMatcher
 from apps.users.models import UserActivity
 
@@ -116,7 +116,7 @@ class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
         # Add family options for filter dropdown
         context["families"] = sorted(
-            Species.objects.filter(is_archived=False).exclude(family='').values_list('family', flat=True).distinct()
+            Species.objects.filter(is_archived=False).exclude(family__isnull=True).values_list('family__display_name', flat=True).distinct()
         )
 
         # Add smart matching info if there's a search query
@@ -521,3 +521,164 @@ class SpeciesSuggestionsView(LoginRequiredMixin, View):
             'query': query,
             'total': len(formatted_suggestions)
         })
+
+
+# Bird Family Management Views
+
+class BirdFamilyListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """List all bird families"""
+    model = BirdFamily
+    template_name = 'fauna/family_list.html'
+    context_object_name = 'families'
+    paginate_by = 20
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+
+    def get_queryset(self):
+        queryset = BirdFamily.objects.all()
+        
+        # Filter by category
+        category = self.request.GET.get('category')
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        # Filter by active status
+        is_active = self.request.GET.get('is_active')
+        if is_active == 'true':
+            queryset = queryset.filter(is_active=True)
+        elif is_active == 'false':
+            queryset = queryset.filter(is_active=False)
+        
+        # Search
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(display_name__icontains=search) |
+                Q(description__icontains=search) |
+                Q(scientific_name__icontains=search)
+            )
+        
+        return queryset.order_by('category', 'display_name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = BirdFamily.FamilyCategory.choices
+        context['current_category'] = self.request.GET.get('category', '')
+        context['current_search'] = self.request.GET.get('search', '')
+        context['current_is_active'] = self.request.GET.get('is_active', '')
+        
+        # Add usage statistics
+        families = context['families']
+        for family in families:
+            family.species_count = Species.objects.filter(family=family).count()
+            family.census_count = Species.objects.filter(family=family).count()
+        
+        return context
+
+
+class BirdFamilyDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    """View bird family details"""
+    model = BirdFamily
+    template_name = 'fauna/family_detail.html'
+    context_object_name = 'family'
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        family = self.get_object()
+        
+        # Get related species
+        context['species'] = Species.objects.filter(family=family).order_by('name')
+        context['species_count'] = context['species'].count()
+        
+        return context
+
+
+class BirdFamilyCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """Create new bird family"""
+    model = BirdFamily
+    form_class = BirdFamilyForm
+    template_name = 'fauna/family_form.html'
+    success_url = reverse_lazy('fauna:family_list')
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Bird family "{form.instance.display_name}" created successfully.')
+        
+        # Log activity
+        UserActivity.objects.create(
+            user=self.request.user,
+            action='CREATE',
+            resource_type='BIRD_FAMILY',
+            resource_name=form.instance.display_name,
+            details=f'Created bird family: {form.instance.name}'
+        )
+        
+        return super().form_valid(form)
+
+
+class BirdFamilyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Update bird family"""
+    model = BirdFamily
+    form_class = BirdFamilyForm
+    template_name = 'fauna/family_form.html'
+    success_url = reverse_lazy('fauna:family_list')
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Bird family "{form.instance.display_name}" updated successfully.')
+        
+        # Log activity
+        UserActivity.objects.create(
+            user=self.request.user,
+            action='UPDATE',
+            resource_type='BIRD_FAMILY',
+            resource_name=form.instance.display_name,
+            details=f'Updated bird family: {form.instance.name}'
+        )
+        
+        return super().form_valid(form)
+
+
+class BirdFamilyDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """Delete bird family"""
+    model = BirdFamily
+    template_name = 'fauna/family_confirm_delete.html'
+    success_url = reverse_lazy('fauna:family_list')
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+
+    def delete(self, request, *args, **kwargs):
+        family = self.get_object()
+        
+        # Check if family is being used
+        species_count = Species.objects.filter(family=family).count()
+        if species_count > 0:
+            messages.error(
+                request, 
+                f'Cannot delete "{family.display_name}" because it is being used by {species_count} species. '
+                f'Please reassign or delete those species first.'
+            )
+            return redirect('fauna:family_detail', pk=family.pk)
+        
+        messages.success(request, f'Bird family "{family.display_name}" deleted successfully.')
+        
+        # Log activity
+        UserActivity.objects.create(
+            user=request.user,
+            action='DELETE',
+            resource_type='BIRD_FAMILY',
+            resource_name=family.display_name,
+            details=f'Deleted bird family: {family.name}'
+        )
+        
+        return super().delete(request, *args, **kwargs)

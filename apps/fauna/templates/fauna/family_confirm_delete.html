@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete {{ family.display_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Confirm Deletion
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-warning"></i>
+                        <strong>Warning:</strong> This action cannot be undone!
+                    </div>
+
+                    <p>Are you sure you want to delete the bird family:</p>
+                    
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ family.display_name }}</h5>
+                            <p class="card-text">
+                                <strong>Internal Name:</strong> <code>{{ family.name }}</code><br>
+                                <strong>Category:</strong> {{ family.get_category_display }}<br>
+                                {% if family.scientific_name %}
+                                    <strong>Scientific Name:</strong> <em>{{ family.scientific_name }}</em><br>
+                                {% endif %}
+                                <strong>Status:</strong> 
+                                {% if family.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </p>
+                            {% if family.description %}
+                                <p class="card-text">
+                                    <strong>Description:</strong><br>
+                                    <small class="text-muted">{{ family.description }}</small>
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Usage Check -->
+                    {% with species_count=family.species.count %}
+                        {% if species_count > 0 %}
+                            <div class="alert alert-danger mt-3">
+                                <i class="fas fa-ban"></i>
+                                <strong>Cannot Delete:</strong> This family is currently being used by 
+                                <strong>{{ species_count }} species</strong>. You must reassign or delete 
+                                those species first before you can delete this family.
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'fauna:family_detail' family.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back to Family
+                                </a>
+                                <a href="{% url 'fauna:family_list' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-list"></i> Back to Family List
+                                </a>
+                            </div>
+                        {% else %}
+                            <p class="mt-3 text-muted">
+                                This family is not currently being used by any species.
+                            </p>
+
+                            <form method="post" class="mt-3">
+                                {% csrf_token %}
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'fauna:family_detail' family.pk %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash"></i> Yes, Delete Family
+                                    </button>
+                                </div>
+                            </form>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+
+            <!-- Help Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> What happens when you delete?</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> The family will be permanently removed from the system</li>
+                        <li><i class="fas fa-check text-success"></i> All family information and settings will be lost</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> <strong>Species using this family will need to be reassigned</strong></li>
+                        <li><i class="fas fa-ban text-danger"></i> This action cannot be undone</li>
+                    </ul>
+                    
+                    <div class="alert alert-info">
+                        <strong>Tip:</strong> Consider setting the family to "Inactive" instead of deleting it. 
+                        This will hide it from new selections while preserving existing data.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

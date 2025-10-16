@@ -225,7 +225,7 @@ class SpeciesMatcher:
         return False
     
     def _fuzzy_match(self, text1: str, text2: str) -> bool:
-        """Simple fuzzy matching based on word overlap"""
+        """Simple fuzzy matching based on word overlap - more strict to avoid false positives"""
         # Remove common words and normalize
         words1 = set(re.findall(r'\w+', text1))
         words2 = set(re.findall(r'\w+', text2))
@@ -237,21 +237,30 @@ class SpeciesMatcher:
         # Check if significant words overlap
         overlap = words1.intersection(words2)
         
-        # Require at least 2 overlapping words or 50% overlap
-        return len(overlap) >= 2 or (len(overlap) > 0 and len(overlap) / max(len(words1), len(words2)) >= 0.5)
+        # Require at least 2 overlapping words AND 60% overlap for fuzzy matching
+        # This prevents false positives like "Chinese Egret" matching "Great Egret"
+        if len(overlap) < 2:
+            return False
+        
+        overlap_ratio = len(overlap) / max(len(words1), len(words2))
+        return overlap_ratio >= 0.6
     
     def _partial_word_match(self, text1: str, text2: str) -> bool:
-        """Check for partial word matches"""
+        """Check for partial word matches - more strict to avoid false positives"""
         words1 = set(re.findall(r'\w+', text1))
         words2 = set(re.findall(r'\w+', text2))
         
-        # Check if any word in text2 is contained in any word in text1
-        for word2 in words2:
-            for word1 in words1:
-                if len(word2) >= 3 and (word2 in word1 or word1 in word2):
-                    return True
+        # Remove stop words
+        words1 = {w for w in words1 if w not in self.STOP_WORDS}
+        words2 = {w for w in words2 if w not in self.STOP_WORDS}
         
-        return False
+        # Only match if there's significant word overlap (at least 50%)
+        overlap = words1.intersection(words2)
+        if len(overlap) == 0:
+            return False
+        
+        overlap_ratio = len(overlap) / max(len(words1), len(words2))
+        return overlap_ratio >= 0.5
     
     def _match_with_parentheses(self, species_name: str, query: str) -> bool:
         """Check if query matches species name with parenthetical info"""
@@ -312,6 +321,7 @@ class SpeciesMatcher:
     def is_likely_same_species(self, name1: str, name2: str) -> bool:
         """
         Determine if two species names likely refer to the same species
+        - Made more strict to avoid false positives
         
         Args:
             name1: First species name
@@ -323,16 +333,20 @@ class SpeciesMatcher:
         norm1 = self._normalize_text(name1)
         norm2 = self._normalize_text(name2)
         
-        # Check various matching criteria
+        # Check various matching criteria - more strict
         if norm1 == norm2:
             return True
         
         if self._is_synonym(norm1, norm2):
             return True
         
-        if self._extract_common_name(norm1) == self._extract_common_name(norm2):
+        # Only consider common name match if names are very similar
+        common1 = self._extract_common_name(norm1)
+        common2 = self._extract_common_name(norm2)
+        if common1 == common2 and len(common1) > 10:  # Only for longer names
             return True
         
+        # More strict fuzzy matching
         if self._fuzzy_match(norm1, norm2):
             return True
         

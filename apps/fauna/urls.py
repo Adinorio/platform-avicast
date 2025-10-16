@@ -3,7 +3,9 @@ from django.urls import path
 from .views import (
     SpeciesListView, SpeciesDetailView, SpeciesCreateView,
     SpeciesUpdateView, SpeciesDeleteView, SpeciesArchivedListView,
-    SpeciesRestoreView, SpeciesSuggestionsView
+    SpeciesRestoreView, SpeciesSuggestionsView,
+    BirdFamilyListView, BirdFamilyDetailView, BirdFamilyCreateView,
+    BirdFamilyUpdateView, BirdFamilyDeleteView
 )
 
 app_name = "fauna"
@@ -19,4 +21,11 @@ urlpatterns = [
     
     # Smart Matching API
     path("api/species/suggestions/", SpeciesSuggestionsView.as_view(), name="species_suggestions"),
+    
+    # Bird Family Management
+    path("families/", BirdFamilyListView.as_view(), name="family_list"),
+    path("families/create/", BirdFamilyCreateView.as_view(), name="family_create"),
+    path("families/<uuid:pk>/", BirdFamilyDetailView.as_view(), name="family_detail"),
+    path("families/<uuid:pk>/edit/", BirdFamilyUpdateView.as_view(), name="family_edit"),
+    path("families/<uuid:pk>/delete/", BirdFamilyDeleteView.as_view(), name="family_delete"),
 ]

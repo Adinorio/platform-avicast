@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if object %}
+        Edit Bird Family
+    {% else %}
+        Add Bird Family
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">
+                                <i class="fas fa-layer-group"></i>
+                                {% if object %}
+                                    Edit Bird Family
+                                {% else %}
+                                    Add New Bird Family
+                                {% endif %}
+                            </h4>
+                            <p class="text-muted mb-0">
+                                {% if object %}
+                                    Update family information
+                                {% else %}
+                                    Create a new bird family for species classification
+                                {% endif %}
+                            </p>
+                        </div>
+                        <a href="{% url 'fauna:family_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Families
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        Family Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        Internal name used by the system (e.g., HERONS_AND_EGRETS)
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.display_name.id_for_label }}" class="form-label">
+                                        Display Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.display_name }}
+                                    {% if form.display_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.display_name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        User-friendly name shown in dropdowns (e.g., Herons and Egrets)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">
+                                        Category <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.category.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        Group this family belongs to
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.scientific_name.id_for_label }}" class="form-label">
+                                        Scientific Name
+                                    </label>
+                                    {{ form.scientific_name }}
+                                    {% if form.scientific_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.scientific_name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        Scientific family name (e.g., Ardeidae)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.description.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Optional description of this bird family
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active
+                                </label>
+                                {% if form.is_active.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.is_active.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Uncheck to hide this family from selection (but keep existing data)
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors.0 }}
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'fauna:family_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                {% if object %}
+                                    Update Family
+                                {% else %}
+                                    Create Family
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Family Categories</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><strong>Water Birds:</strong> Herons, Egrets, Ducks, Gulls, etc.</li>
+                                <li><strong>Land Birds:</strong> Pheasants, Pigeons, Cuckoos, etc.</li>
+                                <li><strong>Raptors:</strong> Eagles, Hawks, Owls, Falcons</li>
+                                <li><strong>Small Birds:</strong> Kingfishers, Woodpeckers, Hornbills</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><strong>Songbirds:</strong> Warblers, Thrushes, Finches, etc.</li>
+                                <li><strong>Scientific:</strong> Scientific family names (Ardeidae, etc.)</li>
+                                <li><strong>Other:</strong> Miscellaneous or uncategorized</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
