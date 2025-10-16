@@ -53,7 +53,7 @@ class Species(OptimizableImageMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True, help_text="Common name of the species")
     scientific_name = models.CharField(max_length=255, unique=True, help_text="Scientific name of the species")
-    family = models.ForeignKey('BirdFamily', on_delete=models.SET_NULL, null=True, blank=True, help_text="Bird family classification")
+    family = models.ForeignKey(BirdFamily, on_delete=models.SET_NULL, null=True, blank=True, help_text="Bird family classification")
     iucn_status = models.CharField(max_length=2, choices=IUCNStatus.choices, help_text="IUCN conservation status")
     description = models.TextField(blank=True, help_text="Additional description or notes about the species")
     image = models.ImageField(upload_to="species_images/", blank=True, null=True, help_text="Representative image of the species")

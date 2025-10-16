@@ -8,6 +8,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('analytics_new', '0002_generatedreport_output_format'),
+        ('locations', '0001_initial'),
+        ('fauna', '0001_initial'),
     ]
 
     operations = [
