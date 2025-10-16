@@ -112,6 +112,7 @@
                             <label for="severity" class="form-label">Severity</label>
                             <select name="severity" id="severity" class="form-select">
                                 <option value="">All Levels</option>
+                                <option value="LOW" {% if current_severity == 'LOW' %}selected{% endif %}>Low</option>
                                 <option value="MEDIUM" {% if current_severity == 'MEDIUM' %}selected{% endif %}>Medium</option>
                                 <option value="HIGH" {% if current_severity == 'HIGH' %}selected{% endif %}>High</option>
                                 <option value="CRITICAL" {% if current_severity == 'CRITICAL' %}selected{% endif %}>Critical</option>

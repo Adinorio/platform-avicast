@@ -253,17 +253,20 @@ class UserActivity(models.Model):
         DATA_EXPORTED = "DATA_EXPORTED", "Data Exported"
 
     class Severity(models.TextChoices):
+        LOW = "LOW", "Low"
+        MEDIUM = "MEDIUM", "Medium"
+        HIGH = "HIGH", "High"
+        CRITICAL = "CRITICAL", "Critical"
         INFO = "INFO", "Information"
         WARNING = "WARNING", "Warning"
         ERROR = "ERROR", "Error"
-        CRITICAL = "CRITICAL", "Critical"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="activities")
     activity_type = models.CharField(max_length=50, choices=ActivityType.choices)
     description = models.TextField()
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
-    severity = models.CharField(max_length=20, choices=Severity.choices, default=Severity.INFO)
+    severity = models.CharField(max_length=20, choices=Severity.choices, default=Severity.MEDIUM)
     metadata = models.JSONField(default=dict, blank=True)  # Store additional data
     timestamp = models.DateTimeField(auto_now_add=True)
 
