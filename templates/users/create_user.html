@@ -56,6 +56,11 @@
                     <form method="post" id="userCreationForm">
                         {% csrf_token %}
                         
+                        <!-- Employee ID will be auto-generated -->
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Employee ID:</strong> Will be automatically generated upon user creation.
+                        </div>
 
                         <!-- Name Fields -->
                         <div class="row">
@@ -238,6 +243,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Employee ID format validation
+    const employeeIdField = document.querySelector('input[name="employee_id"]');
+    if (employeeIdField) {
+        employeeIdField.addEventListener('input', function() {
+            const pattern = /^\d{2}-\d{4}-\d{3}$/;
+            if (this.value && !pattern.test(this.value)) {
+                this.setCustomValidity('Format: YY-MMDD-NNN (e.g., 25-0118-001)');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    }
 });
 </script>
 {% endblock %}
