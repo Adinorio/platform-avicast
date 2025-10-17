@@ -9,9 +9,11 @@ from django.utils import timezone
 # Removed Django admin dependency - using custom role-based permissions
 from apps.locations.models import Site
 from .models import FieldWorkSchedule, WeatherAlert, WeatherAPI, WeatherForecast
+from apps.common.permissions import permission_required
 
 
 @login_required
+@permission_required('can_access_weather')
 def dashboard(request):
     """Weather dashboard with forecasts and optimization"""
     # Get all active sites

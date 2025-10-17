@@ -15,9 +15,11 @@ from django.views.decorators.http import require_http_methods
 
 from .forms import SiteForm, CensusYearForm, CensusMonthForm, CensusForm, CensusObservationForm, BatchObservationForm
 from .models import Site, CensusYear, CensusMonth, Census, CensusObservation
+from apps.common.permissions import permission_required
 
 
 @login_required
+@permission_required('can_add_sites')
 def site_dashboard(request):
     """Main dashboard showing all sites as cards"""
     # Get view type parameter (card or list)
@@ -77,6 +79,7 @@ def site_dashboard(request):
 
 
 @login_required
+@permission_required('can_add_sites')
 def site_create(request):
     """Create a new site"""
     if request.method == "POST":
@@ -156,6 +159,7 @@ def site_detail(request, site_id):
 
 
 @login_required
+@permission_required('can_add_sites')
 def site_edit(request, site_id):
     """Edit an existing site"""
     site = get_object_or_404(Site, id=site_id)
@@ -592,6 +596,7 @@ def census_list(request, site_id, year, month):
 
 
 @login_required
+@permission_required('can_add_birds')
 def census_create(request, site_id, year, month):
     """Create a new census record"""
     site = get_object_or_404(Site, id=site_id)
@@ -684,6 +689,7 @@ def census_detail(request, site_id, year, month, census_id):
 
 
 @login_required
+@permission_required('can_add_birds')
 def census_edit(request, site_id, year, month, census_id):
     """Edit a census record"""
     site = get_object_or_404(Site, id=site_id)

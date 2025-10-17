@@ -12,10 +12,11 @@ from django.utils import timezone
 # Removed Django admin dependency - using custom role-based permissions
 from apps.locations.models import Site
 from .models import FieldWorkSchedule, WeatherAlert, WeatherForecast
+from apps.common.permissions import permission_required
 
 
 @login_required
-# Removed Django admin decorator - using custom role-based permissions
+@permission_required('can_access_weather')
 def alerts_view(request):
     """Weather alerts and warnings view"""
     # Get all alerts
@@ -44,7 +45,7 @@ def alerts_view(request):
 
 
 @login_required
-# Removed Django admin decorator - using custom role-based permissions
+@permission_required('can_access_weather')
 def forecast_view(request, site_id=None):
     """Weather forecast view for specific site or all sites"""
     if site_id:

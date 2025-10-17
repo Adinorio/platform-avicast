@@ -23,6 +23,7 @@ from django.views.generic import ListView
 
 from .forms import ImageUploadForm, ProcessingResultReviewForm, ProcessingResultOverrideForm, CensusAllocationForm
 from .models import ImageUpload, ProcessingResult, ProcessingBatch, ReviewDecision
+from apps.common.permissions import permission_required
 
 # Import census models for allocation functionality
 from apps.locations.models import Census, CensusYear, CensusMonth, Site
@@ -31,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
+@permission_required('can_process_images')
 def dashboard(request):
     """
     CAPTURE Stage: Main dashboard showing workflow overview
@@ -111,6 +113,7 @@ def dashboard(request):
 
 
 @login_required
+@permission_required('can_process_images')
 def upload_images(request):
     """
     CAPTURE Stage: Upload bird images for processing

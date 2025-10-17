@@ -14,9 +14,11 @@ from .models import (
     ReportConfiguration,
     PopulationTrend,
 )
+from apps.common.permissions import permission_required
 
 
 @login_required
+@permission_required('can_access_analytics')
 def dashboard_view(request):
     """Main analytics dashboard reading directly from operational data"""
 
@@ -82,6 +84,7 @@ def dashboard_view(request):
 
 
 @login_required
+@permission_required('can_access_analytics')
 def species_analytics_view(request):
     """Species-specific analytics reading from operational data"""
 
@@ -285,6 +288,7 @@ def census_records_view(request):
 
 
 @login_required
+@permission_required('can_generate_reports')
 def report_generator_view(request):
     """Report generation interface"""
 
