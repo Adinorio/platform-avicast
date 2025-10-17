@@ -38,25 +38,25 @@
                         <div class="col-md-3">
                             <div class="text-center">
                                 <h3 class="text-primary mb-0">{{ preview_data.sites|length }}</h3>
-                                <small class="text-muted">Sites</small>
+                                <small class="text-dark">Sites</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center">
                                 <h3 class="text-success mb-0">{{ preview_data.species|length }}</h3>
-                                <small class="text-muted">Total Species Found</small>
+                                <small class="text-dark">Total Species Found</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center">
-                                <h3 class="text-light mb-0">{{ preview_data.total_observations }}</h3>
-                                <small class="text-muted">Species with Monthly Data</small>
+                                <h3 class="text-info mb-0">{{ preview_data.total_observations }}</h3>
+                                <small class="text-dark">Species with Monthly Data</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center">
-                                <h3 class="text-light mb-0">{{ preview_data.total_birds|floatformat:0 }}</h3>
-                                <small class="text-muted">Total Birds (Sum of Monthly Totals)</small>
+                                <h3 class="text-warning mb-0">{{ preview_data.total_birds|floatformat:0 }}</h3>
+                                <small class="text-dark">Total Birds (Sum of Monthly Totals)</small>
                             </div>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                         <div class="col-md-3 col-sm-4 col-6 mb-3">
                             <div class="text-center p-3 bg-light rounded">
                                 <h4 class="text-success mb-1">{{ total|floatformat:0 }}</h4>
-                                <small class="text-muted">{{ month|title }}</small>
+                                <small class="text-dark">{{ month|title }}</small>
                             </div>
                         </div>
                         {% endif %}
@@ -135,8 +135,8 @@
                 <div class="card-body">
                     <ul class="list-unstyled">
                         {% for warning in preview_data.warnings %}
-                        <li class="text-light mb-1">
-                            <i class="fas fa-info-circle me-2"></i>{{ warning }}
+                        <li class="text-dark mb-1">
+                            <i class="fas fa-info-circle me-2 text-warning"></i>{{ warning }}
                         </li>
                         {% endfor %}
                     </ul>
@@ -377,7 +377,7 @@
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         {% for species in preview_data.absent_species %}
-                        <span class="badge bg-success text-dark">{{ species }}</span>
+                        <span class="badge bg-success text-white fw-bold">{{ species }}</span>
                         {% endfor %}
                     </div>
                 </div>
@@ -389,8 +389,8 @@
     <!-- Additional Info -->
     <div class="row">
         <div class="col-md-4 mb-4">
-            <div class="card border-primary">
-                <div class="card-header bg-dark text-white">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
                     <h6 class="mb-0">
                         <i class="fas fa-map-marker-alt me-2"></i>Sites ({{ preview_data.sites|length }})
                     </h6>
@@ -399,7 +399,7 @@
                     {% if preview_data.sites %}
                     <div class="d-flex flex-wrap gap-2">
                         {% for site in preview_data.sites %}
-                        <span class="badge bg-dark">{{ site }}</span>
+                        <span class="badge bg-success text-white fw-bold">{{ site }}</span>
                         {% endfor %}
                     </div>
                     {% else %}
@@ -420,7 +420,7 @@
                     {% if preview_data.months %}
                     <div class="d-flex flex-wrap gap-1">
                         {% for month in preview_data.months %}
-                        <span class="badge bg-info">{{ month }}</span>
+                        <span class="badge bg-info text-white fw-bold">{{ month }}</span>
                         {% endfor %}
                     </div>
                     {% else %}
@@ -432,7 +432,7 @@
 
         <div class="col-md-4 mb-4">
             <div class="card border-warning">
-                <div class="card-header bg-success text-dark">
+                <div class="card-header bg-success text-white">
                     <h6 class="mb-0">
                         <i class="fas fa-calendar-alt me-2"></i>Years
                     </h6>
@@ -441,7 +441,7 @@
                     {% if preview_data.years %}
                     <div class="d-flex flex-wrap gap-2">
                         {% for year in preview_data.years %}
-                        <span class="badge bg-success text-dark">{{ year }}</span>
+                        <span class="badge bg-success text-white fw-bold">{{ year }}</span>
                         {% endfor %}
                     </div>
                     {% else %}
@@ -479,16 +479,66 @@
                             </h5>
                         </div>
                         <div class="card-body">
+                            <style>
+                                /* Inline CSS to ensure it's applied */
+                                .import-label-visible {
+                                    color: #000000 !important;
+                                    font-weight: 600 !important;
+                                    margin-bottom: 0.5rem !important;
+                                    opacity: 1 !important;
+                                    font-size: 1rem !important;
+                                }
+                                
+                                .import-helper-visible {
+                                    color: #495057 !important;
+                                    font-weight: 500 !important;
+                                    margin-top: 0.25rem !important;
+                                    font-size: 0.875rem !important;
+                                }
+                                
+                                input[name*="_latitude"]::placeholder,
+                                input[name*="_longitude"]::placeholder {
+                                    color: #6c757d !important;
+                                    opacity: 1 !important;
+                                    font-weight: 500 !important;
+                                }
+                                
+                                /* Dark mode support using system theme detection */
+                                @media (prefers-color-scheme: dark) {
+                                    .import-label-visible {
+                                        color: #ffffff !important;
+                                        font-weight: 600 !important;
+                                    }
+                                    
+                                    .import-helper-visible {
+                                        color: #e9ecef !important;
+                                        font-weight: 500 !important;
+                                    }
+                                }
+                                
+                                /* Support for manual theme toggle */
+                                html[data-theme="dark"] .import-label-visible,
+                                body[data-theme="dark"] .import-label-visible {
+                                    color: #ffffff !important;
+                                    font-weight: 600 !important;
+                                }
+                                
+                                html[data-theme="dark"] .import-helper-visible,
+                                body[data-theme="dark"] .import-helper-visible {
+                                    color: #e9ecef !important;
+                                    font-weight: 500 !important;
+                                }
+                            </style>
                             <form method="post" action="{% url 'locations:confirm_import' %}">
                                 {% csrf_token %}
                                 
                                 <!-- Year Selection -->
                                 <div class="row mb-3">
                                     <div class="col-md-6">
-                                        <label for="import_year" class="form-label">
-                                            <i class="fas fa-calendar me-1"></i>Data Year
+                                        <label for="import_year" class="form-label import-label-visible">
+                                            <i class="fas fa-calendar me-1 text-primary"></i>Data Year
                                         </label>
-                                        <select class="form-select" id="import_year" name="import_year" required>
+                                        <select class="form-select border-2" id="import_year" name="import_year" required style="color: #000000 !important; background-color: #ffffff !important;">
                                             <option value="">Select the year for this data</option>
                                             <option value="2021" selected>2021</option>
                                             <option value="2022">2022</option>
@@ -496,7 +546,7 @@
                                             <option value="2024">2024</option>
                                             <option value="2025">2025</option>
                                         </select>
-                                        <div class="form-text">Select the year this census data was collected.</div>
+                                        <div class="form-text import-helper-visible">Select the year this census data was collected.</div>
                                     </div>
                                 </div>
                                 
@@ -510,17 +560,34 @@
                                             <strong>New Site: "{{ site }}"</strong> - Please provide coordinates
                                         </div>
                                     </div>
+                                    <!-- Combined Coordinates Input -->
+                                    <div class="col-12 mb-3">
+                                        <label for="site_{{ forloop.counter }}_coordinates" class="form-label import-label-visible">
+                                            <i class="fas fa-map-marker-alt me-1 text-primary"></i>Coordinates (Quick Paste)
+                                        </label>
+                                        <input type="text" class="form-control border-2" id="site_{{ forloop.counter }}_coordinates" 
+                                               placeholder="e.g., 10.9692, 123.2855 (paste latitude, longitude here)" 
+                                               style="color: #000000 !important; background-color: #ffffff !important;">
+                                        <div class="form-text import-helper-visible">Paste coordinates in "latitude, longitude" format to auto-fill the fields below</div>
+                                    </div>
+                                    
                                     <div class="col-md-6">
-                                        <label for="site_{{ forloop.counter }}_latitude" class="form-label">Latitude</label>
-                                        <input type="number" class="form-control" id="site_{{ forloop.counter }}_latitude" 
+                                        <label for="site_{{ forloop.counter }}_latitude" class="form-label import-label-visible">
+                                            <i class="fas fa-map-marker-alt me-1 text-success"></i>Latitude
+                                        </label>
+                                        <input type="number" class="form-control border-2" id="site_{{ forloop.counter }}_latitude" 
                                                name="site_{{ site }}_latitude" step="any" 
-                                               placeholder="e.g., 10.6407" required>
+                                               placeholder="e.g., 10.6407" required
+                                               style="color: #000000 !important; background-color: #ffffff !important;">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="site_{{ forloop.counter }}_longitude" class="form-label">Longitude</label>
-                                        <input type="number" class="form-control" id="site_{{ forloop.counter }}_longitude" 
+                                        <label for="site_{{ forloop.counter }}_longitude" class="form-label import-label-visible">
+                                            <i class="fas fa-map-marker-alt me-1 text-success"></i>Longitude
+                                        </label>
+                                        <input type="number" class="form-control border-2" id="site_{{ forloop.counter }}_longitude" 
                                                name="site_{{ site }}_longitude" step="any" 
-                                               placeholder="e.g., 122.9682" required>
+                                               placeholder="e.g., 122.9682" required
+                                               style="color: #000000 !important; background-color: #ffffff !important;">
                                     </div>
                                 </div>
                                 {% else %}
@@ -552,4 +619,164 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Import configuration form improvements for both light and dark modes */
+
+/* Form labels - always visible with high contrast */
+.import-label-visible {
+    color: #000000 !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.5rem !important;
+    opacity: 1 !important;
+    font-size: 1rem !important;
+}
+
+/* Form controls - consistent styling */
+.form-control.border-2, .form-select.border-2 {
+    border: 2px solid #ced4da !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
+
+.form-control.border-2:focus, .form-select.border-2:focus {
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.form-control.border-2::placeholder {
+    color: #6c757d !important;
+    opacity: 1 !important;
+    font-weight: 400 !important;
+}
+
+/* Helper text */
+.import-helper-visible {
+    color: #495057 !important;
+    font-weight: 500 !important;
+    margin-top: 0.25rem !important;
+    font-size: 0.875rem !important;
+}
+
+/* Ensure all form elements in import configuration are visible */
+#import_year, 
+input[name*="_latitude"], 
+input[name*="_longitude"] {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #ced4da !important;
+}
+
+#import_year:focus, 
+input[name*="_latitude"]:focus, 
+input[name*="_longitude"]:focus {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Improve placeholder text visibility */
+input[name*="_latitude"]::placeholder,
+input[name*="_longitude"]::placeholder {
+    color: #6c757d !important;
+    opacity: 1 !important;
+    font-weight: 500 !important;
+}
+
+/* Labels for form fields */
+label[for="import_year"],
+label[for*="_latitude"],
+label[for*="_longitude"] {
+    color: #000000 !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Dark mode adjustments - ensure labels remain visible */
+@media (prefers-color-scheme: dark) {
+    .import-label-visible {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+    
+    .import-helper-visible {
+        color: #e9ecef !important;
+        font-weight: 500 !important;
+    }
+}
+</style>
+
+<script>
+// Coordinate parsing functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all coordinate input fields
+    const coordinateInputs = document.querySelectorAll('input[id$="_coordinates"]');
+    
+    coordinateInputs.forEach(function(coordinateInput) {
+        coordinateInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            // Parse coordinates in format "latitude, longitude" or "lat,lng"
+            if (value.includes(',')) {
+                const parts = value.split(',').map(part => part.trim());
+                
+                if (parts.length === 2) {
+                    const lat = parseFloat(parts[0]);
+                    const lng = parseFloat(parts[1]);
+                    
+                    // Validate coordinates
+                    if (!isNaN(lat) && !isNaN(lng) && 
+                        lat >= -90 && lat <= 90 && 
+                        lng >= -180 && lng <= 180) {
+                        
+                        // Find corresponding latitude and longitude inputs
+                        const inputId = this.id;
+                        const siteNumber = inputId.match(/site_(\d+)_coordinates/)[1];
+                        
+                        const latInput = document.getElementById(`site_${siteNumber}_latitude`);
+                        const lngInput = document.getElementById(`site_${siteNumber}_longitude`);
+                        
+                        if (latInput && lngInput) {
+                            latInput.value = lat;
+                            lngInput.value = lng;
+                            
+                            // Add visual feedback
+                            this.style.borderColor = '#28a745';
+                            this.style.backgroundColor = '#f8fff9';
+                            
+                            // Clear feedback after 2 seconds
+                            setTimeout(() => {
+                                this.style.borderColor = '';
+                                this.style.backgroundColor = '';
+                            }, 2000);
+                        }
+                    } else {
+                        // Invalid coordinates
+                        this.style.borderColor = '#dc3545';
+                        this.style.backgroundColor = '#fff5f5';
+                        
+                        setTimeout(() => {
+                            this.style.borderColor = '';
+                            this.style.backgroundColor = '';
+                        }, 2000);
+                    }
+                }
+            }
+        });
+        
+        // Also handle paste events
+        coordinateInput.addEventListener('paste', function(e) {
+            setTimeout(() => {
+                this.dispatchEvent(new Event('input'));
+            }, 10);
+        });
+    });
+});
+</script>
 {% endblock %}
