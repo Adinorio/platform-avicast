@@ -118,14 +118,47 @@
     height: 200px;
   }
   
+  /* Mobile Bar Chart Optimizations */
   #speciesBarChart {
     max-height: 250px !important;
+  }
+  
+  /* Mobile Pie Chart Optimizations */
+  #speciesChart {
+    max-width: 180px !important;
+    max-height: 180px !important;
   }
   
   .species-legend .d-flex {
     padding: 6px 8px;
     font-size: 0.9rem;
     min-width: max-content; /* Prevent text wrapping on mobile */
+  }
+}
+
+/* Mobile-specific chart container adjustments */
+@media (max-width: 576px) {
+  /* Extra small screens - further optimize */
+  #speciesBarChart {
+    max-height: 200px !important;
+  }
+  
+  #speciesChart {
+    max-width: 150px !important;
+    max-height: 150px !important;
+  }
+  
+  .analytics-charts .col-lg-6:first-child .card,
+  .analytics-charts .col-lg-6:last-child .card {
+    height: 220px; /* Smaller height for very small screens */
+  }
+  
+  .analytics-charts .col-lg-6:first-child .card-body {
+    height: 170px;
+  }
+  
+  .species-legend {
+    height: 170px;
   }
 }
 </style>
@@ -446,6 +479,7 @@ const siteData = {
 document.addEventListener('DOMContentLoaded', function() {
     // Mobile-specific enhancements
     const isMobile = window.innerWidth <= 768;
+    const isSmallMobile = window.innerWidth <= 576;
     
     if (isMobile) {
         // Add mobile-specific classes
@@ -460,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Optimize chart containers for mobile
         const chartContainers = document.querySelectorAll('.analytics-charts .card-body');
         chartContainers.forEach(container => {
-            container.style.minHeight = '250px';
+            container.style.minHeight = isSmallMobile ? '170px' : '200px';
         });
     }
     // Full-Width Species Bar Chart
@@ -503,22 +537,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             },
-            scales: {
+                scales: {
                 x: {
                     title: {
                         display: true,
                         text: 'Species',
                         font: {
-                            size: 14,
+                            size: isMobile ? 12 : 14,
                             weight: 'bold'
                         }
                     },
                     ticks: {
-                        maxRotation: 45,
-                        minRotation: 0,
+                        maxRotation: isMobile ? 90 : 45,
+                        minRotation: isMobile ? 90 : 0,
                         font: {
-                            size: 12
-                        }
+                            size: isMobile ? 10 : 12
+                        },
+                        maxTicksLimit: isMobile ? 8 : 15
                     }
                 },
                 y: {
@@ -526,14 +561,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         display: true,
                         text: 'Number of Birds',
                         font: {
-                            size: 14,
+                            size: isMobile ? 12 : 14,
                             weight: 'bold'
                         }
                     },
                     beginAtZero: true,
                     ticks: {
                         font: {
-                            size: 12
+                            size: isMobile ? 10 : 12
                         }
                     }
                 }
@@ -554,13 +589,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     display: false // Hide legend since we'll show it separately
                 },
                 tooltip: {
+                    titleFont: {
+                        size: isMobile ? 12 : 14
+                    },
+                    bodyFont: {
+                        size: isMobile ? 11 : 13
+                    },
                     callbacks: {
                         label: function(context) {
                             const label = context.label || '';
                             const value = context.parsed;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = ((value / total) * 100).toFixed(1);
-                            return `${label}: ${value} birds (${percentage}%)`;
+                            return isMobile ? 
+                                `${label}: ${value} (${percentage}%)` : 
+                                `${label}: ${value} birds (${percentage}%)`;
                         }
                     }
                 }
