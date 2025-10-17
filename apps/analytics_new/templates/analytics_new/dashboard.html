@@ -185,6 +185,13 @@
     padding-bottom: 20px; /* Space for scroll indicator */
     width: 100% !important;
     max-width: 100% !important;
+    white-space: nowrap; /* Prevent content wrapping */
+  }
+  
+  /* Ensure the canvas doesn't get constrained by parent */
+  .row:first-of-type .col-12 .card-body canvas {
+    display: inline-block !important;
+    vertical-align: top !important;
   }
   
   /* Add scroll indicator ONLY for mobile */
@@ -596,11 +603,27 @@ document.addEventListener('DOMContentLoaded', function() {
     if (isMobile) {
         // Set canvas dimensions directly
         const canvas = document.getElementById('speciesBarChart');
+        const container = canvas.parentElement;
+        
+        // Force container to allow overflow
+        container.style.overflowX = 'auto';
+        container.style.overflowY = 'hidden';
+        container.style.width = '100%';
+        
+        // Set canvas dimensions
         canvas.width = 1200; // Even wider to ensure all labels fit
         canvas.height = 250;
         canvas.style.width = '1200px';
         canvas.style.height = '250px';
-        canvas.style.display = 'block';
+        canvas.style.display = 'inline-block';
+        canvas.style.minWidth = '1200px';
+        
+        console.log('Mobile bar chart setup:', {
+            canvasWidth: canvas.style.width,
+            canvasHeight: canvas.style.height,
+            containerWidth: container.style.width,
+            containerOverflow: container.style.overflowX
+        });
     }
     
     const speciesBarChart = new Chart(speciesBarCtx, {
@@ -696,15 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: isMobile, // Show legend on mobile, hide on desktop
-                    position: 'bottom',
-                    labels: {
-                        padding: 10,
-                        usePointStyle: true,
-                        font: {
-                            size: isMobile ? 10 : 12
-                        }
-                    }
+                    display: false // Hide legend - use separate legend section
                 },
                 tooltip: {
                     titleFont: {
@@ -736,12 +751,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (isMobile) {
         setTimeout(() => {
             const barChart = document.getElementById('speciesBarChart');
-            if (barChart) {
+            const container = barChart.parentElement;
+            
+            if (barChart && container) {
+                // Force dimensions
                 barChart.style.width = '1200px';
                 barChart.style.height = '250px';
-                console.log('Mobile bar chart dimensions forced:', barChart.style.width, barChart.style.height);
+                barChart.style.minWidth = '1200px';
+                barChart.style.display = 'inline-block';
+                
+                // Force container overflow
+                container.style.overflowX = 'auto';
+                container.style.overflowY = 'hidden';
+                container.style.whiteSpace = 'nowrap';
+                
+                console.log('Mobile bar chart dimensions forced:', {
+                    chartWidth: barChart.style.width,
+                    chartHeight: barChart.style.height,
+                    containerOverflow: container.style.overflowX,
+                    containerWhiteSpace: container.style.whiteSpace
+                });
+                
+                // Trigger a reflow
+                barChart.offsetHeight;
             }
-        }, 100);
+        }, 200);
     }
 
     // Site Performance Bar Chart
