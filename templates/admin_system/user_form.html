@@ -137,26 +137,14 @@
                     </div>
                     {% endif %}
                     
-                    {% if user and user.employee_id %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Employee ID:</strong> {{ user.employee_id }}
-                        <br><small>This ID cannot be changed and is used for login.</small>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-success">
-                        <i class="fas fa-magic me-2"></i>
-                        <strong>Auto-Generated Employee ID:</strong> The system will automatically generate an Employee ID in the format YY-MMDD-NNN (e.g., 25-0118-001) when you save this user.
-                    </div>
-                    {% endif %}
+                    <!-- Employee ID will be auto-generated -->
                     
                     <div class="d-flex justify-content-end gap-2">
                         <a href="{% url 'admin_system:user_management' %}" class="btn btn-secondary">
                             <i class="fas fa-times me-2"></i>Cancel
                         </a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>
-                            {% if user %}Update User{% else %}Create User{% endif %}
+                            <i class="fas fa-save me-2"></i>Add User
                         </button>
                     </div>
                 </form>
