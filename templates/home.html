@@ -20,7 +20,7 @@
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             <strong>Security Notice:</strong> You are using the default password. Please change it immediately for security reasons.
                         </div>
-                        <form method="post" action="{% url 'users:change_password' %}">
+                        <form method="post" action="{% url 'admin_system:password_change' %}">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label for="new_password" class="form-label">New Password</label>
@@ -94,19 +94,19 @@
                             <div class="text-center mt-4">
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <a href="{% url 'users:user_management_dashboard' %}" class="btn btn-primary btn-lg w-100">
+                                        <a href="{% url 'admin_system:admin_dashboard' %}" class="btn btn-primary btn-lg w-100">
                                             <i class="fas fa-tachometer-alt me-2"></i>User Management Dashboard
                                         </a>
                                     </div>
                                     <div class="col-md-6">
-                                        <a href="{% url 'users:user_management_list' %}" class="btn btn-outline-primary btn-lg w-100">
+                                        <a href="{% url 'admin_system:user_management' %}" class="btn btn-outline-primary btn-lg w-100">
                                             <i class="fas fa-users me-2"></i>Manage Users
                                         </a>
                                     </div>
                                 </div>
                                 <div class="row g-3 mt-2">
                                     <div class="col-md-6">
-                                        <a href="{% url 'users:system_logs' %}" class="btn btn-info btn-lg w-100">
+                                        <a href="{% url 'admin_system:admin_activities' %}" class="btn btn-info btn-lg w-100">
                                             <i class="fas fa-list-alt me-2"></i>System Logs
                                         </a>
                                     </div>

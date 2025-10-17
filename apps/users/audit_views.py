@@ -14,9 +14,9 @@ from .models import UserActivity, User
 
 @login_required
 def system_logs(request):
-    """View comprehensive system activity logs with monitoring dashboard
+    """Redirect to admin_system audit logs
     
-    Accessible by: ADMIN and SUPERADMIN only
+    Legacy endpoint - redirects to admin_system for better UX
     """
     # Check user permissions
     if not hasattr(request.user, 'role'):
@@ -27,73 +27,9 @@ def system_logs(request):
         messages.error(request, "Access denied. Admin privileges required to view system logs.")
         return redirect('locations:dashboard')
     
-    # Set appropriate redirect URL based on user role
-    if request.user.role == 'SUPERADMIN':
-        request._redirect_url = 'admin_system:admin_dashboard'
-    else:
-        request._redirect_url = 'locations:dashboard'
-
-    # Get filter parameters
-    activity_filter = request.GET.get("activity_type", "")
-    user_filter = request.GET.get("user", "")
-    date_filter = request.GET.get("date", "")
-    severity_filter = request.GET.get("severity", "")
-
-    # Base queryset
-    logs = UserActivity.objects.select_related("user").order_by("-timestamp")
-
-    # Apply filters
-    if activity_filter:
-        logs = logs.filter(activity_type=activity_filter)
-    if user_filter:
-        logs = logs.filter(user_id=user_filter)
-    if date_filter:
-        logs = logs.filter(timestamp__date=date_filter)
-    if severity_filter:
-        logs = logs.filter(severity=severity_filter)
-
-    # Get summary statistics
-    total_activities = UserActivity.objects.count()
-    species_activities = UserActivity.objects.filter(
-        activity_type__in=['SPECIES_ADDED', 'SPECIES_UPDATED', 'SPECIES_ARCHIVED']
-    ).count()
-    census_activities = UserActivity.objects.filter(
-        activity_type__in=['CENSUS_ADDED', 'CENSUS_UPDATED']
-    ).count()
-    image_activities = UserActivity.objects.filter(
-        activity_type__in=['IMAGE_PROCESSED']
-    ).count()
-
-    # Get all users for filter dropdown
-    users = User.objects.filter(is_active=True).order_by('employee_id')
-
-    # Pagination with "Show All" option
-    show_all = request.GET.get('show_all', '').strip()
-    if show_all.lower() == 'true':
-        page_obj = None
-        logs_list = list(logs)
-    else:
-        paginator = Paginator(logs, 20)
-        page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
-        logs_list = None
-
-    context = {
-        "page_obj": page_obj,
-        "logs_list": logs_list,
-        "show_all": show_all.lower() == 'true',
-        "total_activities": total_activities,
-        "species_activities": species_activities,
-        "census_activities": census_activities,
-        "image_activities": image_activities,
-        "users": users,
-        "current_activity": activity_filter,
-        "current_user": user_filter,
-        "current_date": date_filter,
-        "current_severity": severity_filter,
-    }
-
-    return render(request, "users/audit_logs.html", context)
+    # Redirect to admin_system audit logs
+    messages.info(request, "System logs have been moved to the Admin System for better management.")
+    return redirect('admin_system:admin_activities')
 
 
 @login_required
