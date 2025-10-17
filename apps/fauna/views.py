@@ -15,6 +15,7 @@ from .models import Species, BirdFamily
 from .forms import SpeciesForm, BirdFamilyForm
 from .services import SpeciesMatcher
 from apps.users.models import UserActivity
+from apps.common.permissions import has_permission
 
 
 class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -34,11 +35,8 @@ class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         if not user.is_authenticated:
             return False
 
-        if not hasattr(user, "role"):
-            return False
-
-        # Allow ADMIN and FIELD_WORKER roles
-        return user.role in ["ADMIN", "FIELD_WORKER"]
+        # Check if user has species modification permission
+        return has_permission(user, 'can_modify_species')
 
     def handle_no_permission(self):
         """Handle unauthorized access"""
@@ -146,10 +144,8 @@ class SpeciesDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         if not user.is_authenticated:
             return False
 
-        if not hasattr(user, "role"):
-            return False
-
-        return user.role in ["ADMIN", "FIELD_WORKER"]
+        # Check if user has species modification permission
+        return has_permission(user, 'can_modify_species')
 
     def handle_no_permission(self):
         """Handle unauthorized access"""
@@ -196,10 +192,8 @@ class SpeciesCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         if not user.is_authenticated:
             return False
 
-        if not hasattr(user, "role"):
-            return False
-
-        return user.role == "ADMIN"
+        # Check if user has species modification permission
+        return has_permission(user, 'can_modify_species')
 
     def handle_no_permission(self):
         """Handle unauthorized access"""
@@ -252,10 +246,8 @@ class SpeciesUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         if not user.is_authenticated:
             return False
 
-        if not hasattr(user, "role"):
-            return False
-
-        return user.role == "ADMIN"
+        # Check if user has species modification permission
+        return has_permission(user, 'can_modify_species')
 
     def handle_no_permission(self):
         """Handle unauthorized access"""
@@ -341,10 +333,8 @@ class SpeciesDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         if not user.is_authenticated:
             return False
 
-        if not hasattr(user, "role"):
-            return False
-
-        return user.role == "ADMIN"
+        # Check if user has species modification permission
+        return has_permission(user, 'can_modify_species')
 
     def handle_no_permission(self):
         """Handle unauthorized access"""
@@ -533,7 +523,10 @@ class BirdFamilyListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     paginate_by = 20
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        return has_permission(user, 'can_modify_species')
 
     def get_queryset(self):
         queryset = BirdFamily.objects.all()
@@ -585,7 +578,10 @@ class BirdFamilyDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     context_object_name = 'family'
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        return has_permission(user, 'can_modify_species')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -606,7 +602,10 @@ class BirdFamilyCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     success_url = reverse_lazy('fauna:family_list')
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        return has_permission(user, 'can_modify_species')
 
     def form_valid(self, form):
         messages.success(self.request, f'Bird family "{form.instance.display_name}" created successfully.')
@@ -631,7 +630,10 @@ class BirdFamilyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     success_url = reverse_lazy('fauna:family_list')
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        return has_permission(user, 'can_modify_species')
 
     def form_valid(self, form):
         messages.success(self.request, f'Bird family "{form.instance.display_name}" updated successfully.')
@@ -655,7 +657,10 @@ class BirdFamilyDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     success_url = reverse_lazy('fauna:family_list')
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SUPERADMIN']
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        return has_permission(user, 'can_modify_species')
 
     def delete(self, request, *args, **kwargs):
         family = self.get_object()

@@ -159,23 +159,38 @@ class User(AbstractUser):
         return self.account_status == self.AccountStatus.ACTIVE and not self.is_archived
 
     def can_access_feature(self, feature_name):
-        """Check if user can access specific features based on role"""
-        if self.role == self.Role.SUPERADMIN:
-            # Superadmin has access to everything
-            return True
-        elif self.role == self.Role.ADMIN:
-            # Admin has access to everything EXCEPT superadmin user management
-            if feature_name == "superadmin_user_management":
-                return False
-            return True
-        elif self.role == self.Role.FIELD_WORKER:
-            # Field workers have limited view access
-            return feature_name in [
-                "species_view",
-                "site_view",
-                "census_view",
-                "image_processing_view",
-            ]
+        """
+        Check if user can access specific features based on dynamic permissions
+        DEPRECATED: Use apps.common.permissions.has_permission() instead
+        """
+        # Import here to avoid circular imports
+        from apps.common.permissions import has_permission
+        
+        # Map feature names to permission names
+        feature_to_permission = {
+            "species_view": "can_modify_species",
+            "species_edit": "can_modify_species",
+            "species_add": "can_modify_species",
+            "site_view": "can_add_sites",
+            "site_edit": "can_add_sites",
+            "site_add": "can_add_sites",
+            "census_view": "can_add_birds",
+            "census_edit": "can_add_birds",
+            "census_add": "can_add_birds",
+            "image_processing_view": "can_process_images",
+            "image_processing_add": "can_process_images",
+            "analytics_view": "can_access_analytics",
+            "reports_generate": "can_generate_reports",
+            "weather_view": "can_access_weather",
+            "user_management": "can_manage_users",
+            "superadmin_user_management": "can_manage_users",
+        }
+        
+        permission_name = feature_to_permission.get(feature_name)
+        if permission_name:
+            return has_permission(self, permission_name)
+        
+        # Fallback for unknown features
         return False
 
     def can_manage_user(self, target_user):
