@@ -64,11 +64,20 @@
 }
 
 /* Pie Chart Container - Match Legend Height */
+.analytics-charts .col-lg-6:first-child .card {
+  height: 350px; /* Total card height including header */
+}
+
 .analytics-charts .col-lg-6:first-child .card-body {
   height: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Legend Container - Match Pie Chart Height */
+.analytics-charts .col-lg-6:last-child .card {
+  height: 350px; /* Total card height including header */
 }
 
 .species-legend .legend-color {
@@ -98,6 +107,11 @@
     overflow-x: auto; /* Enable horizontal scroll on mobile only */
     overflow-y: auto;
     padding: 0 5px;
+  }
+  
+  .analytics-charts .col-lg-6:first-child .card,
+  .analytics-charts .col-lg-6:last-child .card {
+    height: 250px; /* Total card height on mobile */
   }
   
   .analytics-charts .col-lg-6:first-child .card-body {
