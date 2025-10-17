@@ -63,6 +63,31 @@
   overflow-x: hidden; /* Prevent horizontal scroll on desktop */
 }
 
+/* Legend scroll container for mobile */
+.legend-scroll-container {
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+}
+
+.legend-item {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  min-width: 300px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.legend-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.legend-text {
+  flex-grow: 1;
+}
+
 /* Pie Chart Container - Match Legend Height */
 .analytics-charts .col-lg-6:first-child .card {
   height: 350px; /* Total card height including header */
@@ -107,7 +132,7 @@
     overflow-y: auto !important;
   }
   
-  .species-legend .d-flex {
+  .legend-item {
     min-width: auto !important; /* Allow natural width on desktop */
     white-space: normal !important; /* Allow text wrapping on desktop */
   }
@@ -177,23 +202,20 @@
   #speciesChart {
     width: 250px !important;
     height: 250px !important;
-    max-width: 250px !important;
-    max-height: 250px !important;
+    /* Remove max-width/max-height constraints that conflict with Chart.js */
   }
   
   /* Mobile Legend Optimizations - ONLY on mobile */
-  .species-legend .d-flex {
-    padding: 6px 8px;
-    font-size: 0.9rem;
-    min-width: 280px; /* Fixed width to prevent truncation */
-    white-space: nowrap; /* Prevent text wrapping */
-  }
-  
-  /* Ensure legend container can scroll horizontally ONLY on mobile */
   .species-legend {
     overflow-x: auto !important;
-    overflow-y: hidden !important;
+    overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .legend-item {
+    min-width: 320px; /* Wider on mobile for better readability */
+    padding: 6px 8px;
+    font-size: 0.9rem;
   }
 }
 
@@ -209,8 +231,7 @@
   #speciesChart {
     width: 200px !important;
     height: 200px !important;
-    max-width: 200px !important;
-    max-height: 200px !important;
+    /* Remove max-width/max-height constraints */
   }
   
   .analytics-charts .col-lg-6:first-child .card,
@@ -564,6 +585,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Full-Width Species Bar Chart
     const speciesBarCtx = document.getElementById('speciesBarChart').getContext('2d');
+    
+    // Set explicit canvas dimensions for mobile to enable proper scrolling
+    if (isMobile) {
+        speciesBarCtx.canvas.width = 1000; // Fixed width for mobile
+        speciesBarCtx.canvas.height = 250;
+    }
+    
     const speciesBarChart = new Chart(speciesBarCtx, {
         type: 'bar',
         data: {
@@ -580,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }]
         },
         options: {
-            responsive: true,
+            responsive: !isMobile, // Disable responsiveness on mobile
             maintainAspectRatio: false,
             plugins: {
                 legend: {
@@ -618,7 +646,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         font: {
                             size: isMobile ? 11 : 12
                         },
-                        maxTicksLimit: isMobile ? 15 : 15 // Show all ticks since we can scroll
+                        maxTicksLimit: isMobile ? chartData.speciesData.labels.length : 15, // Show all labels on mobile
+                        autoSkip: false, // Prevent Chart.js from skipping labels
+                        stepSize: 1 // Force every label to show
                     }
                 },
                 y: {
@@ -732,7 +762,7 @@ function generateSpeciesLegend(speciesData) {
         '#98D8C8'
     ];
     
-    let legendHTML = '<div style="display: flex; flex-direction: column; min-width: max-content;">';
+    let legendHTML = '<div class="legend-scroll-container">';
     
     speciesData.labels.forEach((label, index) => {
         const count = speciesData.data[index];
@@ -741,10 +771,10 @@ function generateSpeciesLegend(speciesData) {
         const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
         
         legendHTML += `
-            <div class="mb-2" style="min-width: 280px;">
+            <div class="legend-item">
                 <div class="d-flex align-items-center">
                     <div class="legend-color" style="background-color: ${color}; width: 16px; height: 16px; border-radius: 3px; margin-right: 10px; flex-shrink: 0;"></div>
-                    <div class="flex-grow-1">
+                    <div class="legend-text">
                         <strong>${label}</strong>
                         <br>
                         <small class="text-muted">${count} birds (${percentage}%)</small>
