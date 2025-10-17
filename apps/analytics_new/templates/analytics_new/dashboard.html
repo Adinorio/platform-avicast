@@ -58,8 +58,16 @@
 
 /* Species Legend Styling */
 .species-legend {
-  max-height: 300px;
+  height: 300px;
   overflow-y: auto;
+}
+
+/* Pie Chart Container - Match Legend Height */
+.analytics-charts .col-lg-6:first-child .card-body {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .species-legend .legend-color {
@@ -85,7 +93,11 @@
 /* Mobile Responsiveness for Charts */
 @media (max-width: 768px) {
   .species-legend {
-    max-height: 200px;
+    height: 200px;
+  }
+  
+  .analytics-charts .col-lg-6:first-child .card-body {
+    height: 200px;
   }
   
   #speciesBarChart {
