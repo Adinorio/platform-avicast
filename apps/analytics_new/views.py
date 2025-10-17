@@ -18,7 +18,6 @@ from apps.common.permissions import permission_required
 
 
 @login_required
-@permission_required('can_access_analytics')
 def dashboard_view(request):
     """Main analytics dashboard reading directly from operational data"""
 
