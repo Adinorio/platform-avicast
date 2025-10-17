@@ -610,6 +610,51 @@
     .info-tooltip:hover {
         opacity: 1;
     }
+    
+    /* Mobile styles for report action buttons */
+    @media (max-width: 768px) {
+        .analytics-report-actions {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+            width: 100% !important;
+        }
+        
+        .analytics-report-actions .btn {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: none !important;
+            padding: 1rem 1.5rem !important;
+            font-size: 1rem !important;
+            min-height: 60px !important;
+            border-radius: 0.5rem !important;
+            margin-bottom: 0 !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
+            line-height: 1.4 !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            word-wrap: break-word !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .analytics-report-actions .btn i {
+            font-size: 1.25rem !important;
+            margin-right: 1rem !important;
+            margin-bottom: 0 !important;
+            width: 24px !important;
+            text-align: center !important;
+        }
+        
+        .analytics-report-actions .btn:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -1026,11 +1071,8 @@
         <div class="col-12">
             <div class="card trend-card" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <a href="{% url 'analytics_new:dashboard' %}" class="action-btn btn btn-info">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                        </a>
-                        <div class="d-flex gap-2">
+                    <div class="analytics-report-actions-container">
+                        <div class="analytics-report-actions" role="group">
                             <button class="action-btn btn btn-success" onclick="window.print()">
                                 <i class="fas fa-print me-2"></i>Print Report
                             </button>

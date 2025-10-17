@@ -106,14 +106,14 @@
     <div class="row mt-4">
         <div class="col-12">
             <div class="card avic-card">
-                <div class="card-body text-center">
-                    <a href="{% url 'analytics_new:dashboard' %}" class="btn avic-btn-primary me-2">
+                <div class="card-body text-center d-flex flex-column gap-2">
+                    <a href="{% url 'analytics_new:dashboard' %}" class="btn avic-btn-primary">
                         <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
                     </a>
-                    <a href="{% url 'analytics_new:species_analytics' %}" class="btn btn-outline-primary me-2">
+                    <a href="{% url 'analytics_new:species_analytics' %}" class="btn avic-btn-secondary">
                         <i class="fas fa-paw me-2"></i>View Species Analytics
                     </a>
-                    <a href="{% url 'analytics_new:census_records' %}" class="btn btn-outline-primary">
+                    <a href="{% url 'analytics_new:census_records' %}" class="btn avic-btn-secondary">
                         <i class="fas fa-list me-2"></i>View Census Records
                     </a>
                 </div>
@@ -139,6 +139,7 @@
 }
 </style>
 {% endblock %}
+
 
 
 

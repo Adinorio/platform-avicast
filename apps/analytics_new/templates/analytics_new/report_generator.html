@@ -3,6 +3,60 @@
 
 {% block title %}Generate Reports - AVICAST{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/mobile-analytics.css' %}?v=1.1">
+<style>
+/* Force mobile button layout - separate stacked buttons */
+@media (max-width: 768px) {
+  /* Stack navigation buttons vertically */
+  .analytics-nav-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+  
+  /* Make each button full-width and separate */
+  .analytics-nav-buttons .btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 1rem 1.5rem !important;
+    font-size: 1rem !important;
+    min-height: 60px !important;
+    border-radius: 0.5rem !important;
+    margin-bottom: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    line-height: 1.4 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    word-wrap: break-word !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  /* Icon styling for stacked buttons */
+  .analytics-nav-buttons .btn i {
+    font-size: 1.25rem !important;
+    margin-right: 1rem !important;
+    margin-bottom: 0 !important;
+    width: 24px !important;
+    text-align: center !important;
+  }
+  
+  /* Button hover effects */
+  .analytics-nav-buttons .btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Breadcrumb -->
@@ -27,7 +81,7 @@
     </div>
 
     <!-- Report Configurations -->
-    <div class="row">
+    <div class="row analytics-report-form">
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom">
@@ -38,7 +92,7 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
-                        <div class="row">
+                        <div class="row analytics-report-configs">
                             {% for config in configurations %}
                             <div class="col-md-6 mb-3">
                                 <div class="card border">
@@ -68,7 +122,7 @@
                         </div>
 
                         {% if configurations %}
-                        <div class="d-grid mt-4">
+                        <div class="d-grid mt-4 analytics-report-actions">
                             <button type="submit" class="btn avic-btn-primary">
                                 <i class="fas fa-play me-2"></i>Generate Selected Report
                             </button>
@@ -118,11 +172,8 @@
     </div>
 
     <!-- Navigation -->
-    <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'analytics_new:dashboard' %}" class="btn btn-info">
-            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-        </a>
-        <div class="btn-group" role="group">
+    <div class="mt-4 analytics-nav-container">
+        <div class="analytics-nav-buttons" role="group">
             <a href="{% url 'analytics_new:species_analytics' %}" class="btn btn-primary">
                 <i class="fas fa-paw me-2"></i>Species Analytics
             </a>

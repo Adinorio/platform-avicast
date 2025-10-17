@@ -3,6 +3,61 @@
 
 {% block title %}Analytics Dashboard - AVICAST{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/mobile-analytics.css' %}?v=1.2">
+<style>
+/* Force mobile button layout - separate stacked buttons */
+@media (max-width: 768px) {
+  /* Stack navigation buttons vertically */
+  .analytics-nav-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    background-color: rgba(0, 255, 0, 0.1) !important; /* Debug: Green background */
+  }
+  
+  /* Make each button full-width and separate */
+  .analytics-nav-buttons .btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 1rem 1.5rem !important;
+    font-size: 1rem !important;
+    min-height: 60px !important;
+    border-radius: 0.5rem !important;
+    margin-bottom: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    line-height: 1.4 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    word-wrap: break-word !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  /* Icon styling for stacked buttons */
+  .analytics-nav-buttons .btn i {
+    font-size: 1.25rem !important;
+    margin-right: 1rem !important;
+    margin-bottom: 0 !important;
+    width: 24px !important;
+    text-align: center !important;
+  }
+  
+  /* Button hover effects */
+  .analytics-nav-buttons .btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
@@ -31,7 +86,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="row mb-4">
+    <div class="row mb-4 analytics-summary-cards">
         <div class="col-md-3 mb-3">
             <div class="card border-0 shadow-sm bg-primary text-white">
                 <div class="card-body text-center">
@@ -67,7 +122,7 @@
     </div>
 
     <!-- Charts Section -->
-    <div class="row mb-4">
+    <div class="row mb-4 analytics-charts">
         <!-- Species Distribution Chart -->
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-sm">
@@ -100,7 +155,7 @@
         </div>
         <div class="card-body p-0">
             {% if species_data %}
-            <div class="table-responsive">
+            <div class="table-responsive analytics-table-mobile">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
@@ -113,7 +168,7 @@
                     <tbody>
                         {% for species in species_data %}
                         <tr>
-                            <td>
+                            <td class="species-name-cell">
                                 <strong>{{ species.name|default:"Unknown Species" }}</strong>
                             </td>
                             <td class="fst-italic text-muted">
@@ -157,7 +212,7 @@
         </div>
         <div class="card-body p-0">
             {% if recent_census %}
-            <div class="table-responsive">
+            <div class="table-responsive analytics-table-mobile">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
@@ -170,7 +225,7 @@
                     <tbody>
                         {% for record in recent_census %}
                         <tr>
-                            <td>
+                            <td class="site-name-cell">
                                 <strong>{{ record.month.year.site.name }}</strong>
                             </td>
                             <td class="text-muted">
@@ -198,11 +253,8 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'locations:dashboard' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-        </a>
-        <div class="btn-group" role="group">
+    <div class="mt-4 analytics-nav-container">
+        <div class="analytics-nav-buttons" role="group">
             <a href="{% url 'analytics_new:annual_trends_report' %}" class="btn btn-warning">
                 <i class="fas fa-chart-line me-2"></i>Annual Trends
             </a>
@@ -302,6 +354,25 @@ const siteData = {
 
 // Initialize Charts
 document.addEventListener('DOMContentLoaded', function() {
+    // Mobile-specific enhancements
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // Add mobile-specific classes
+        document.body.classList.add('mobile-device');
+        
+        // Add touch-friendly scrolling to tables
+        const tables = document.querySelectorAll('.analytics-table-mobile');
+        tables.forEach(table => {
+            table.style.webkitOverflowScrolling = 'touch';
+        });
+        
+        // Optimize chart containers for mobile
+        const chartContainers = document.querySelectorAll('.analytics-charts .card-body');
+        chartContainers.forEach(container => {
+            container.style.minHeight = '250px';
+        });
+    }
     // Species Distribution Pie Chart
     const speciesCtx = document.getElementById('speciesChart').getContext('2d');
     new Chart(speciesCtx, {
