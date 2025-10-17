@@ -167,6 +167,20 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+# Axes configuration (modern settings)
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1  # 1 hour
+AXES_VERBOSE = True
+AXES_LOCKOUT_TEMPLATE = "users/lockout.html"
+AXES_LOCKOUT_URL = "/locked-out/"
+
+# Modern Axes settings (replaces deprecated ones)
+AXES_LOCKOUT_CALLABLE = "axes.lockout.database_lockout"
+
+# Fix for session_hash constraint issue - disable access logging
+AXES_ACCESS_LOG_ENABLE = False
+
 # Cache configuration for rate limiting (fallback to file-based cache)
 CACHES = {
     "default": {

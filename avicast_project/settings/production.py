@@ -86,15 +86,19 @@ RATELIMIT_RULES = {
     "general": "200/h",
 }
 
-# Login Attempts Tracking (django-axes)
+# Login Attempts Tracking (django-axes) - modern settings
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 5
-AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
 AXES_COOLOFF_TIME = 1  # 1 hour
-AXES_LOCK_OUT_BY_USER_OR_IP = True
+AXES_VERBOSE = True
 AXES_LOCKOUT_TEMPLATE = "users/lockout.html"
 AXES_LOCKOUT_URL = "/locked-out/"
-AXES_VERBOSE = True
+
+# Modern Axes settings (replaces deprecated ones)
+AXES_LOCKOUT_CALLABLE = "axes.lockout.database_lockout"
+
+# Fix for session_hash constraint issue - disable access logging
+AXES_ACCESS_LOG_ENABLE = False
 
 # CORS Settings (restrict to local network)
 CORS_ALLOWED_ORIGINS = [
