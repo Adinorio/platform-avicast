@@ -1976,7 +1976,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.namespace == 'admin_system' and request.resolver_match.url_name == 'admin_activities' %}active{% endif %}" href="{% url 'admin_system:admin_activities' %}">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'audit_logs' %}active{% endif %}" href="{% url 'users:audit_logs' %}">
                         <i class="fas fa-history me-2"></i> Activity Log
                     </a>
                 </li>
@@ -1986,7 +1986,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'admin_activities' %}active{% endif %}" href="{% url 'admin_system:admin_activities' %}">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'audit_logs' %}active{% endif %}" href="{% url 'users:audit_logs' %}">
                         <i class="fas fa-shield-alt me-2"></i> System Logs
                     </a>
                 </li>
@@ -2030,7 +2030,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin_system:admin_activities' %}">
+                    <a class="nav-link" href="{% url 'users:audit_logs' %}">
                         <i class="fas fa-shield-alt me-2"></i> System Monitoring
                     </a>
                 </li>

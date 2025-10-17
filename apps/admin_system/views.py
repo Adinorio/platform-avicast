@@ -351,55 +351,8 @@ def system_monitoring(request):
     return render(request, 'admin_system/system_monitoring.html', context)
 
 
-@login_required
-@user_passes_test(superadmin_required)
-def admin_activities(request):
-    """
-    View all admin activities for audit trail
-    """
-    activities = AdminActivity.objects.select_related('user').order_by('-timestamp')
-    
-    # Filter by action type
-    action_filter = request.GET.get('action', '')
-    if action_filter:
-        activities = activities.filter(action_type=action_filter)
-    
-    # Filter by user
-    user_filter = request.GET.get('user', '')
-    if user_filter:
-        activities = activities.filter(user__employee_id__icontains=user_filter)
-    
-    # Filter by date range
-    date_from = request.GET.get('date_from', '')
-    date_to = request.GET.get('date_to', '')
-    if date_from:
-        activities = activities.filter(timestamp__date__gte=date_from)
-    if date_to:
-        activities = activities.filter(timestamp__date__lte=date_to)
-    
-    # Pagination with "Show All" option
-    show_all = request.GET.get('show_all', '').strip()
-    if show_all.lower() == 'true':
-        page_obj = None
-        activities_list = list(activities)
-    else:
-        paginator = Paginator(activities, 50)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        activities_list = None
-    
-    context = {
-        'page_obj': page_obj,
-        'activities_list': activities_list,
-        'show_all': show_all.lower() == 'true',
-        'action_filter': action_filter,
-        'user_filter': user_filter,
-        'date_from': date_from,
-        'date_to': date_to,
-        'page_title': 'Admin Activities',
-    }
-    
-    return render(request, 'admin_system/admin_activities.html', context)
+# REMOVED: admin_activities view - duplicate functionality exists in users:audit_logs
+# The comprehensive System Monitoring & Audit Logs is available at users:audit_logs
 
 
 @login_required

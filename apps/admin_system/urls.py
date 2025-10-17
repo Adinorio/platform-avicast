@@ -22,7 +22,7 @@ urlpatterns = [
     
     # System Monitoring
     path('monitoring/', views.system_monitoring, name='system_monitoring'),
-    path('activities/', views.admin_activities, name='admin_activities'),
+    # REMOVED: activities/ - duplicate functionality exists in users:audit_logs
     
     # Data Export
     path('export/', views.export_data, name='export_data'),
