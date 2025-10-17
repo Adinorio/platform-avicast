@@ -95,9 +95,34 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-/* Bar Chart Styling */
+/* Bar Chart Styling - Desktop Version */
 #speciesBarChart {
   max-height: 400px !important;
+}
+
+/* Desktop Legend Styling - Ensure web version is not affected */
+@media (min-width: 769px) {
+  .species-legend {
+    overflow-x: hidden !important; /* No horizontal scroll on desktop */
+    overflow-y: auto !important;
+  }
+  
+  .species-legend .d-flex {
+    min-width: auto !important; /* Allow natural width on desktop */
+    white-space: normal !important; /* Allow text wrapping on desktop */
+  }
+  
+  /* Desktop Bar Chart - No horizontal scroll */
+  .row:first-of-type .col-12 .card-body {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+    padding-bottom: 0 !important; /* No space for scroll indicator */
+  }
+  
+  /* Remove scroll indicator on desktop */
+  .row:first-of-type .col-12 .card-body::after {
+    display: none !important;
+  }
 }
 
 /* Mobile Responsiveness for Charts */
@@ -118,22 +143,23 @@
     height: 200px;
   }
   
-  /* Mobile Bar Chart Optimizations */
+  /* Mobile Bar Chart Optimizations - ONLY on mobile */
   #speciesBarChart {
     max-height: 250px !important;
-    min-width: 600px !important; /* Enable horizontal scroll */
+    min-width: 800px !important; /* Larger min-width for better readability */
   }
   
-  /* Bar Chart Container - Enable horizontal scroll on mobile */
-  .analytics-charts .col-12 .card-body {
+  /* Bar Chart Container - Enable horizontal scroll ONLY on mobile */
+  .row:first-of-type .col-12 .card-body {
     overflow-x: auto !important;
     overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     position: relative;
+    padding-bottom: 20px; /* Space for scroll indicator */
   }
   
-  /* Add scroll indicator for mobile */
-  .analytics-charts .col-12 .card-body::after {
+  /* Add scroll indicator ONLY for mobile */
+  .row:first-of-type .col-12 .card-body::after {
     content: "← Swipe to see more species →";
     position: absolute;
     bottom: 5px;
@@ -147,15 +173,27 @@
     z-index: 10;
   }
   
-  /* Mobile Pie Chart - Keep full size */
+  /* Mobile Pie Chart - Make it larger ONLY on mobile */
   #speciesChart {
-    /* Remove size restrictions - keep full size */
+    width: 250px !important;
+    height: 250px !important;
+    max-width: 250px !important;
+    max-height: 250px !important;
   }
   
+  /* Mobile Legend Optimizations - ONLY on mobile */
   .species-legend .d-flex {
     padding: 6px 8px;
     font-size: 0.9rem;
-    min-width: max-content; /* Prevent text wrapping on mobile */
+    min-width: 280px; /* Fixed width to prevent truncation */
+    white-space: nowrap; /* Prevent text wrapping */
+  }
+  
+  /* Ensure legend container can scroll horizontally ONLY on mobile */
+  .species-legend {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 }
 
@@ -164,12 +202,15 @@
   /* Extra small screens - further optimize */
   #speciesBarChart {
     max-height: 200px !important;
-    min-width: 500px !important; /* Smaller min-width for very small screens */
+    min-width: 700px !important; /* Still large enough for readability */
   }
   
-  /* Pie chart stays full size even on small screens */
+  /* Pie chart on small screens */
   #speciesChart {
-    /* Keep full size - no restrictions */
+    width: 200px !important;
+    height: 200px !important;
+    max-width: 200px !important;
+    max-height: 200px !important;
   }
   
   .analytics-charts .col-lg-6:first-child .card,
@@ -572,12 +613,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     },
                     ticks: {
-                        maxRotation: isMobile ? 45 : 45,
-                        minRotation: isMobile ? 45 : 0,
+                        maxRotation: 0, // No rotation - labels will be horizontal
+                        minRotation: 0,
                         font: {
-                            size: isMobile ? 10 : 12
+                            size: isMobile ? 11 : 12
                         },
-                        maxTicksLimit: isMobile ? 12 : 15 // Show more ticks on mobile since we can scroll
+                        maxTicksLimit: isMobile ? 15 : 15 // Show all ticks since we can scroll
                     }
                 },
                 y: {
@@ -691,7 +732,7 @@ function generateSpeciesLegend(speciesData) {
         '#98D8C8'
     ];
     
-    let legendHTML = '<div class="row">';
+    let legendHTML = '<div style="display: flex; flex-direction: column; min-width: max-content;">';
     
     speciesData.labels.forEach((label, index) => {
         const count = speciesData.data[index];
@@ -700,9 +741,9 @@ function generateSpeciesLegend(speciesData) {
         const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
         
         legendHTML += `
-            <div class="col-12 mb-2">
+            <div class="mb-2" style="min-width: 280px;">
                 <div class="d-flex align-items-center">
-                    <div class="legend-color" style="background-color: ${color}; width: 16px; height: 16px; border-radius: 3px; margin-right: 10px;"></div>
+                    <div class="legend-color" style="background-color: ${color}; width: 16px; height: 16px; border-radius: 3px; margin-right: 10px; flex-shrink: 0;"></div>
                     <div class="flex-grow-1">
                         <strong>${label}</strong>
                         <br>
