@@ -22,7 +22,7 @@ class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """
     Display list of all non-archived species with search functionality
 
-    Accessible by: ADMIN, FIELD_WORKER
+    Accessible by: Users with can_modify_species permission
     """
     model = Species
     template_name = "fauna/species_list.html"
@@ -47,7 +47,15 @@ class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             return redirect("login")
 
         from django.shortcuts import render
-        return render(self.request, '403.html', {'message': 'Access denied. Insufficient permissions.'}, status=403)
+        from django.contrib import messages
+        
+        # Add a message for better user experience
+        messages.error(self.request, "You do not have permission to access species management. Contact your administrator to request access.")
+        
+        return render(self.request, '403.html', {
+            'message': 'Access denied. You do not have permission to access species management.',
+            'feature': 'Species Management'
+        }, status=403)
 
     def get_queryset(self):
         """Return filtered and ordered species with smart matching"""
