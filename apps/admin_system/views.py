@@ -668,10 +668,22 @@ def role_management(request):
     user_counts = User.objects.values('role').annotate(count=Count('id'))
     role_counts = {item['role']: item['count'] for item in user_counts}
     
+    # Create role data with counts for template
+    role_data = []
+    for role_choice in User.Role.choices:
+        role = role_choice[0]
+        role_data.append({
+            'role': role,
+            'role_display': role_choice[1],
+            'count': role_counts.get(role, 0),
+            'permission': role_permissions.get(role)
+        })
+    
     context = {
         'role_permissions': role_permissions,
         'role_counts': role_counts,
         'user_roles': User.Role.choices,
+        'role_data': role_data,
         'page_title': 'Role Permission Management',
     }
     
@@ -833,11 +845,32 @@ def user_permission_override(request, user_id):
             if hasattr(user_permission, key):
                 effective_permissions[key] = getattr(user_permission, key)
     
+    # Create permission comparison data for template
+    permission_comparison = []
+    permission_names = [
+        'can_generate_reports', 'can_modify_species', 'can_add_sites', 'can_add_birds',
+        'can_process_images', 'can_access_weather', 'can_access_analytics', 'can_manage_users'
+    ]
+    
+    for perm_name in permission_names:
+        role_perm = getattr(role_permission, perm_name, False) if role_permission else False
+        user_perm = getattr(user_permission, perm_name, None) if user_permission else None
+        effective_perm = effective_permissions.get(perm_name, False)
+        
+        permission_comparison.append({
+            'name': perm_name,
+            'display_name': perm_name.replace('_', ' ').title(),
+            'role_perm': role_perm,
+            'user_perm': user_perm,
+            'effective_perm': effective_perm,
+        })
+    
     context = {
         'user': user,
         'role_permission': role_permission,
         'user_permission': user_permission,
         'effective_permissions': effective_permissions,
+        'permission_comparison': permission_comparison,
         'page_title': f'Custom Permissions - {user.get_full_name()}',
     }
     return render(request, 'admin_system/user_permission_override.html', context)

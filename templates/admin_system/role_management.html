@@ -32,9 +32,9 @@
                         <label for="roleSelect" class="form-label">Select Role to Edit:</label>
                         <select class="form-select" id="roleSelect" onchange="loadRolePermissions()">
                             <option value="">Choose a role...</option>
-                            {% for role_choice in user_roles %}
-                            <option value="{{ role_choice.0 }}" data-count="{{ role_counts|default:0|lookup:role_choice.0 }}">
-                                {{ role_choice.1 }} ({{ role_counts|default:0|lookup:role_choice.0 }} users)
+                            {% for role_item in role_data %}
+                            <option value="{{ role_item.role }}" data-count="{{ role_item.count }}">
+                                {{ role_item.role_display }} ({{ role_item.count }} users)
                             </option>
                             {% endfor %}
                         </select>
@@ -48,8 +48,8 @@
                 </div>
 
                 <!-- Permission Forms -->
-                {% for role_choice in user_roles %}
-                {% with role=role_choice.0 role_display=role_choice.1 %}
+                {% for role_item in role_data %}
+                {% with role=role_item.role role_display=role_item.role_display permission=role_item.permission %}
                 <div class="role-form" id="form-{{ role }}" style="display: none;">
                     <form method="post">
                         {% csrf_token %}
@@ -59,11 +59,10 @@
                             <div class="card-header bg-secondary text-white">
                                 <h5 class="mb-0">
                                     <i class="fas fa-user-tag me-2"></i>{{ role_display }} Permissions
-                                    <span class="badge bg-light text-dark ms-2">{{ role_counts|default:0|lookup:role }} users</span>
+                                    <span class="badge bg-light text-dark ms-2">{{ role_item.count }} users</span>
                                 </h5>
                             </div>
                             <div class="card-body">
-                                {% with permission=role_permissions|lookup:role %}
                                 
                                 <!-- Main System Permissions -->
                                 <div class="row mb-4">

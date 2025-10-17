@@ -89,20 +89,19 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for perm_name, perm_value in effective_permissions.items %}
-                                    {% with role_perm=role_permission|lookup:perm_name user_perm=user_permission|lookup:perm_name %}
+                                    {% for perm in permission_comparison %}
                                     <tr>
-                                        <td><strong>{{ perm_name|title|replace:"_":" " }}</strong></td>
+                                        <td><strong>{{ perm.display_name }}</strong></td>
                                         <td class="text-center">
-                                            {% if role_perm %}
+                                            {% if perm.role_perm %}
                                                 <span class="badge bg-success">✅</span>
                                             {% else %}
                                                 <span class="badge bg-secondary">❌</span>
                                             {% endif %}
                                         </td>
                                         <td class="text-center">
-                                            {% if user_perm is not None %}
-                                                {% if user_perm %}
+                                            {% if perm.user_perm is not None %}
+                                                {% if perm.user_perm %}
                                                     <span class="badge bg-success">✅</span>
                                                 {% else %}
                                                     <span class="badge bg-secondary">❌</span>
@@ -112,14 +111,13 @@
                                             {% endif %}
                                         </td>
                                         <td class="text-center">
-                                            {% if perm_value %}
+                                            {% if perm.effective_perm %}
                                                 <span class="badge bg-success">✅</span>
                                             {% else %}
                                                 <span class="badge bg-secondary">❌</span>
                                             {% endif %}
                                         </td>
                                     </tr>
-                                    {% endwith %}
                                     {% endfor %}
                                 </tbody>
                             </table>
