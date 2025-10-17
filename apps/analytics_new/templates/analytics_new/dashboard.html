@@ -171,8 +171,9 @@
   /* Mobile Bar Chart Optimizations - ONLY on mobile */
   #speciesBarChart {
     max-height: 250px !important;
-    width: 1000px !important; /* Fixed width to force horizontal scroll */
-    min-width: 1000px !important;
+    width: 1200px !important; /* Wider to ensure all labels fit */
+    min-width: 1200px !important;
+    height: 250px !important;
   }
   
   /* Bar Chart Container - Enable horizontal scroll ONLY on mobile */
@@ -591,12 +592,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Full-Width Species Bar Chart
     const speciesBarCtx = document.getElementById('speciesBarChart').getContext('2d');
     
-    // Set explicit canvas dimensions for mobile to enable proper scrolling
+    // Alternative approach: Force canvas size and disable Chart.js auto-sizing
     if (isMobile) {
-        speciesBarCtx.canvas.width = 1000; // Fixed width for mobile
-        speciesBarCtx.canvas.height = 250;
-        speciesBarCtx.canvas.style.width = '1000px'; // Ensure CSS width matches
-        speciesBarCtx.canvas.style.height = '250px';
+        // Set canvas dimensions directly
+        const canvas = document.getElementById('speciesBarChart');
+        canvas.width = 1200; // Even wider to ensure all labels fit
+        canvas.height = 250;
+        canvas.style.width = '1200px';
+        canvas.style.height = '250px';
+        canvas.style.display = 'block';
     }
     
     const speciesBarChart = new Chart(speciesBarCtx, {
@@ -615,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }]
         },
         options: {
-            responsive: !isMobile, // Disable responsiveness on mobile
+            responsive: false, // Completely disable responsiveness
             maintainAspectRatio: false,
             plugins: {
                 legend: {
@@ -651,11 +655,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         maxRotation: 0, // No rotation - labels will be horizontal
                         minRotation: 0,
                         font: {
-                            size: isMobile ? 11 : 12
+                            size: isMobile ? 12 : 12
                         },
                         maxTicksLimit: isMobile ? chartData.speciesData.labels.length : 15, // Show all labels on mobile
                         autoSkip: false, // Prevent Chart.js from skipping labels
-                        stepSize: 1 // Force every label to show
+                        stepSize: 1, // Force every label to show
+                        callback: function(value, index, ticks) {
+                            // Force all labels to display without truncation
+                            return chartData.speciesData.labels[index] || '';
+                        }
                     }
                 },
                 y: {
@@ -688,7 +696,15 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false // Hide legend since we'll show it separately
+                    display: isMobile, // Show legend on mobile, hide on desktop
+                    position: 'bottom',
+                    labels: {
+                        padding: 10,
+                        usePointStyle: true,
+                        font: {
+                            size: isMobile ? 10 : 12
+                        }
+                    }
                 },
                 tooltip: {
                     titleFont: {
@@ -715,6 +731,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Generate Species Legend (bottom right)
     generateSpeciesLegend(chartData.speciesData);
+    
+    // Debug: Force layout recalculation for mobile
+    if (isMobile) {
+        setTimeout(() => {
+            const barChart = document.getElementById('speciesBarChart');
+            if (barChart) {
+                barChart.style.width = '1200px';
+                barChart.style.height = '250px';
+                console.log('Mobile bar chart dimensions forced:', barChart.style.width, barChart.style.height);
+            }
+        }, 100);
+    }
 
     // Site Performance Bar Chart
     const siteCtx = document.getElementById('siteChart').getContext('2d');
