@@ -135,6 +135,18 @@
   .legend-item {
     min-width: auto !important; /* Allow natural width on desktop */
     white-space: normal !important; /* Allow text wrapping on desktop */
+    padding: 8px 12px !important; /* Restore desktop padding */
+    margin-bottom: 8px !important; /* Restore desktop margin */
+    font-size: 1rem !important; /* Restore desktop font size */
+    line-height: 1.4 !important; /* Restore desktop line height */
+  }
+  
+  .legend-item .legend-text {
+    font-size: 1rem !important; /* Restore desktop font size */
+  }
+  
+  .legend-item .legend-text small {
+    font-size: 0.875rem !important; /* Restore desktop small text size */
   }
   
   /* Desktop Bar Chart - No horizontal scroll */
@@ -237,14 +249,26 @@
   .species-legend {
     height: 350px; /* Match pie chart card body height */
     overflow-x: auto !important;
-    overflow-y: auto !important;
+    overflow-y: hidden !important; /* Hide vertical scroll */
     -webkit-overflow-scrolling: touch !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
   .legend-item {
     min-width: 320px; /* Wider on mobile for better readability */
-    padding: 6px 8px;
-    font-size: 0.9rem;
+    padding: 4px 8px; /* Reduced padding to fit more items */
+    margin-bottom: 4px; /* Reduced margin */
+    font-size: 0.85rem; /* Slightly smaller font */
+    line-height: 1.2; /* Tighter line height */
+  }
+  
+  .legend-item .legend-text {
+    font-size: 0.85rem;
+  }
+  
+  .legend-item .legend-text small {
+    font-size: 0.75rem; /* Smaller text for counts */
   }
 }
 
@@ -275,6 +299,18 @@
   
   .species-legend {
     height: 300px;
+    overflow-y: hidden !important; /* Hide vertical scroll on small screens too */
+  }
+  
+  .legend-item {
+    padding: 3px 6px; /* Even smaller padding on small screens */
+    margin-bottom: 3px;
+    font-size: 0.8rem;
+    line-height: 1.1;
+  }
+  
+  .legend-item .legend-text small {
+    font-size: 0.7rem;
   }
 }
 </style>
@@ -908,7 +944,7 @@ function generateSpeciesLegend(speciesData) {
         legendHTML += `
             <div class="legend-item">
                 <div class="d-flex align-items-center">
-                    <div class="legend-color" style="background-color: ${color}; width: 16px; height: 16px; border-radius: 3px; margin-right: 10px; flex-shrink: 0;"></div>
+                    <div class="legend-color" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 3px; margin-right: 8px; flex-shrink: 0;"></div>
                     <div class="legend-text">
                         <strong>${label}</strong>
                         <br>
