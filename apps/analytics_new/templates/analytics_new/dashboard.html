@@ -989,12 +989,12 @@ function generateSpeciesLegend(speciesData) {
         
         legendHTML += `
             <div class="legend-item" title="${label} - ${count} birds (${percentage}%)">
-                <div class="d-flex align-items-start">
+                <div class="d-flex align-items-start" style="width: 100%; overflow: hidden;">
                     <div class="legend-color" style="background-color: ${color}; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; flex-shrink: 0; margin-top: 2px;"></div>
-                    <div class="legend-text" style="flex: 1; min-width: 0; word-break: break-word;">
-                        <strong style="word-break: break-word;">${label}</strong>
+                    <div class="legend-text" style="flex: 1; min-width: 0; overflow: hidden; word-break: break-word;">
+                        <strong style="word-break: break-word; overflow: hidden;">${label}</strong>
                         <br>
-                        <small class="text-muted">${count} birds (${percentage}%)</small>
+                        <small class="text-muted" style="word-break: break-word; overflow: hidden;">${count} birds (${percentage}%)</small>
                     </div>
                 </div>
             </div>
