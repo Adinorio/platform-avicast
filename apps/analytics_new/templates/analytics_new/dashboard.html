@@ -60,6 +60,7 @@
 .species-legend {
   height: 300px;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scroll on desktop */
 }
 
 /* Pie Chart Container - Match Legend Height */
@@ -94,6 +95,9 @@
 @media (max-width: 768px) {
   .species-legend {
     height: 200px;
+    overflow-x: auto; /* Enable horizontal scroll on mobile only */
+    overflow-y: auto;
+    padding: 0 5px;
   }
   
   .analytics-charts .col-lg-6:first-child .card-body {
@@ -102,6 +106,12 @@
   
   #speciesBarChart {
     max-height: 250px !important;
+  }
+  
+  .species-legend .d-flex {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+    min-width: max-content; /* Prevent text wrapping on mobile */
   }
 }
 </style>
