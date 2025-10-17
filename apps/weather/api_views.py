@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 # Removed Django admin dependency - using custom role-based permissions
-# from apps.locations.models import Site  # Temporarily disabled during revamp
+from apps.locations.models import Site
 from .models import FieldWorkSchedule, WeatherForecast
 from .weather_service import get_field_work_optimizer, get_weather_service
 
@@ -105,8 +105,7 @@ def fetch_weather(request):
         site_id = data.get("site_id")
         api_source = data.get("api_source", "METEO")
 
-        # site = get_object_or_404(Site, id=site_id)  # Temporarily disabled during revamp
-        return JsonResponse({"error": "Site management is being updated"}, status=503)
+        site = get_object_or_404(Site, id=site_id)
 
         # Get coordinates
         if not site.coordinates:
@@ -189,8 +188,7 @@ def optimize_field_work(request):
         planned_date = data.get("planned_date")
         planned_time = data.get("planned_time")
 
-        # site = get_object_or_404(Site, id=site_id)  # Temporarily disabled during revamp
-        return JsonResponse({"error": "Site management is being updated"}, status=503)
+        site = get_object_or_404(Site, id=site_id)
 
         # Parse date and time
         planned_date = datetime.strptime(planned_date, "%Y-%m-%d").date()
@@ -224,8 +222,8 @@ def best_days(request):
         site_id = data.get("site_id")
         period_days = int(data.get("days", 30))
 
-        # site = get_object_or_404(Site, id=site_id)  # Temporarily disabled during revamp
-        return JsonResponse({"error": "Site management is being updated"}, status=503)
+        site = get_object_or_404(Site, id=site_id)
+        
         if not site.coordinates:
             return JsonResponse({"error": "Site coordinates not available"}, status=400)
 
@@ -329,8 +327,7 @@ def daily_summary(request):
         site_id = data.get("site_id")
         days = int(data.get("days", 7))  # Default to 7 days
 
-        # site = get_object_or_404(Site, id=site_id)  # Temporarily disabled during revamp
-        return JsonResponse({"error": "Site management is being updated"}, status=503)
+        site = get_object_or_404(Site, id=site_id)
         
         # Get forecasts for the site
         forecasts = WeatherForecast.objects.filter(
@@ -440,8 +437,7 @@ def create_schedule(request):
     try:
         data = json.loads(request.body)
 
-        # site = get_object_or_404(Site, id=data["site_id"])  # Temporarily disabled during revamp
-        return JsonResponse({"error": "Site management is being updated"}, status=503)
+        site = get_object_or_404(Site, id=data["site_id"])
 
         # Create schedule
         schedule = FieldWorkSchedule.objects.create(
