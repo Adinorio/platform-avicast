@@ -196,7 +196,7 @@
   
   /* Add scroll indicator ONLY for mobile */
   .row:first-of-type .col-12 .card-body::after {
-    content: "← Swipe to see more species →";
+    content: "← Swipe to see more data →";
     position: absolute;
     bottom: 5px;
     right: 10px;
@@ -209,16 +209,32 @@
     z-index: 10;
   }
   
-  /* Mobile Pie Chart - Make it smaller for mobile */
+  /* Mobile Pie Chart - Make card larger to fit chart better */
+  .analytics-charts .col-lg-6:first-child .card {
+    height: 400px; /* Larger card height for mobile */
+  }
+  
+  .analytics-charts .col-lg-6:first-child .card-body {
+    height: 350px; /* Larger card body for mobile */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
   #speciesChart {
-    width: 180px !important;
-    height: 180px !important;
-    max-width: 180px !important;
-    max-height: 180px !important;
+    width: 280px !important; /* Larger pie chart for mobile */
+    height: 280px !important;
+    max-width: 280px !important;
+    max-height: 280px !important;
   }
   
   /* Mobile Legend Optimizations - ONLY on mobile */
+  .analytics-charts .col-lg-6:last-child .card {
+    height: 400px; /* Match pie chart card height */
+  }
+  
   .species-legend {
+    height: 350px; /* Match pie chart card body height */
     overflow-x: auto !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
@@ -239,25 +255,25 @@
     min-width: 700px !important; /* Still large enough for readability */
   }
   
-  /* Pie chart on small screens - even smaller */
-  #speciesChart {
-    width: 150px !important;
-    height: 150px !important;
-    max-width: 150px !important;
-    max-height: 150px !important;
-  }
-  
+  /* Pie chart on small screens - larger cards */
   .analytics-charts .col-lg-6:first-child .card,
   .analytics-charts .col-lg-6:last-child .card {
-    height: 220px; /* Smaller height for very small screens */
+    height: 350px; /* Larger height for very small screens */
   }
   
   .analytics-charts .col-lg-6:first-child .card-body {
-    height: 170px;
+    height: 300px;
+  }
+  
+  #speciesChart {
+    width: 220px !important; /* Reasonable size for small screens */
+    height: 220px !important;
+    max-width: 220px !important;
+    max-height: 220px !important;
   }
   
   .species-legend {
-    height: 170px;
+    height: 300px;
   }
 }
 </style>
@@ -675,17 +691,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     },
                     ticks: {
-                        maxRotation: 0, // No rotation - labels will be horizontal
+                        display: isMobile ? false : true, // Hide labels on mobile, show on desktop
+                        maxRotation: 0,
                         minRotation: 0,
                         font: {
                             size: isMobile ? 12 : 12
                         },
-                        maxTicksLimit: isMobile ? chartData.speciesData.labels.length : 15, // Show all labels on mobile
-                        autoSkip: false, // Prevent Chart.js from skipping labels
-                        stepSize: 1, // Force every label to show
+                        maxTicksLimit: isMobile ? chartData.speciesData.labels.length : 15,
+                        autoSkip: false,
+                        stepSize: 1,
                         callback: function(value, index, ticks) {
-                            // Force all labels to display without truncation
-                            return chartData.speciesData.labels[index] || '';
+                            // Show labels on desktop, hide on mobile
+                            return isMobile ? '' : (chartData.speciesData.labels[index] || '');
                         }
                     }
                 },
