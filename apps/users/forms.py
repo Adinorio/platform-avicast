@@ -93,14 +93,8 @@ class UserUpdateForm(forms.ModelForm):
     
     class Meta:
         model = User
-        fields = ['employee_id', 'first_name', 'last_name', 'email', 'role', 'account_status']
+        fields = ['first_name', 'last_name', 'email', 'role', 'account_status']
         widgets = {
-            'employee_id': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '25-0118-001',
-                'pattern': r'\d{2}-\d{4}-\d{3}',
-                'title': 'Format: YY-MMDD-NNN (e.g., 25-0118-001)'
-            }),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
@@ -115,22 +109,6 @@ class UserUpdateForm(forms.ModelForm):
         self.fields['email'].required = True
         self.fields['role'].required = True
 
-    def clean_employee_id(self):
-        employee_id = self.cleaned_data.get('employee_id')
-        if not employee_id:
-            raise ValidationError("Employee ID is required.")
-        
-        # Validate format
-        import re
-        pattern = r'^\d{2}-\d{4}-\d{3}$'
-        if not re.match(pattern, employee_id):
-            raise ValidationError("Employee ID must be in format YY-MMDD-NNN (e.g., 25-0118-001)")
-        
-        # Check if employee_id already exists (excluding current user)
-        if User.objects.filter(employee_id=employee_id).exclude(id=self.instance.id).exists():
-            raise ValidationError("A user with this Employee ID already exists.")
-        
-        return employee_id
 
     def clean_email(self):
         email = self.cleaned_data.get('email')

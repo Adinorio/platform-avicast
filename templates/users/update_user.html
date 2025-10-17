@@ -56,23 +56,16 @@
                     <form method="post" id="userUpdateForm">
                         {% csrf_token %}
                         
-                        <!-- Employee ID -->
+                        <!-- Employee ID Display (Read-only) -->
                         <div class="mb-3">
-                            <label for="{{ form.employee_id.id_for_label }}" class="form-label">
+                            <label class="form-label">
                                 <i class="fas fa-id-card me-1 text-primary"></i>
-                                {{ form.employee_id.label }}
+                                Employee ID
                             </label>
-                            {{ form.employee_id }}
-                            {% if form.employee_id.help_text %}
-                                <div class="form-text">{{ form.employee_id.help_text }}</div>
-                            {% endif %}
-                            {% if form.employee_id.errors %}
-                                <div class="text-danger small mt-1">
-                                    {% for error in form.employee_id.errors %}
-                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                            <div class="form-control-plaintext bg-light p-2 border rounded">
+                                <strong>{{ user.employee_id }}</strong>
+                            </div>
+                            <div class="form-text">This ID cannot be changed and is used for login.</div>
                         </div>
 
                         <!-- Name Fields -->
@@ -203,18 +196,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Employee ID format validation
-    const employeeIdField = document.querySelector('input[name="employee_id"]');
-    if (employeeIdField) {
-        employeeIdField.addEventListener('input', function() {
-            const pattern = /^\d{2}-\d{4}-\d{3}$/;
-            if (this.value && !pattern.test(this.value)) {
-                this.setCustomValidity('Format: YY-MMDD-NNN (e.g., 25-0118-001)');
-            } else {
-                this.setCustomValidity('');
-            }
-        });
-    }
 });
 </script>
 {% endblock %}
