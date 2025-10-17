@@ -243,11 +243,11 @@
   
   /* Mobile Legend Optimizations - ONLY on mobile */
   .analytics-charts .col-lg-6:last-child .card {
-    height: 400px; /* Match pie chart card height */
+    height: 450px; /* Slightly taller for legend */
   }
   
   .species-legend {
-    height: 350px; /* Match pie chart card body height */
+    height: 400px; /* Slightly taller for legend */
     overflow-x: auto !important;
     overflow-y: hidden !important; /* Hide vertical scroll */
     -webkit-overflow-scrolling: touch !important;
@@ -257,18 +257,22 @@
   
   .legend-item {
     min-width: 320px; /* Wider on mobile for better readability */
-    padding: 4px 8px; /* Reduced padding to fit more items */
-    margin-bottom: 4px; /* Reduced margin */
-    font-size: 0.85rem; /* Slightly smaller font */
-    line-height: 1.2; /* Tighter line height */
+    padding: 2px 6px; /* Much smaller padding */
+    margin-bottom: 1px; /* Minimal margin */
+    font-size: 0.8rem; /* Smaller font */
+    line-height: 1.1; /* Very tight line height */
   }
   
   .legend-item .legend-text {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
   
   .legend-item .legend-text small {
-    font-size: 0.75rem; /* Smaller text for counts */
+    font-size: 0.7rem; /* Much smaller text for counts */
+  }
+  
+  .legend-item .legend-text strong {
+    font-size: 0.8rem; /* Smaller bold text */
   }
 }
 
@@ -283,11 +287,11 @@
   /* Pie chart on small screens - larger cards */
   .analytics-charts .col-lg-6:first-child .card,
   .analytics-charts .col-lg-6:last-child .card {
-    height: 350px; /* Larger height for very small screens */
+    height: 380px; /* Larger height for very small screens */
   }
   
   .analytics-charts .col-lg-6:first-child .card-body {
-    height: 300px;
+    height: 330px;
   }
   
   #speciesChart {
@@ -298,19 +302,27 @@
   }
   
   .species-legend {
-    height: 300px;
+    height: 330px;
     overflow-y: hidden !important; /* Hide vertical scroll on small screens too */
   }
   
   .legend-item {
-    padding: 3px 6px; /* Even smaller padding on small screens */
-    margin-bottom: 3px;
-    font-size: 0.8rem;
-    line-height: 1.1;
+    padding: 1px 4px; /* Minimal padding on small screens */
+    margin-bottom: 0px; /* No margin */
+    font-size: 0.75rem;
+    line-height: 1.0;
+  }
+  
+  .legend-item .legend-text {
+    font-size: 0.75rem;
   }
   
   .legend-item .legend-text small {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+  }
+  
+  .legend-item .legend-text strong {
+    font-size: 0.75rem;
   }
 }
 </style>
@@ -944,7 +956,7 @@ function generateSpeciesLegend(speciesData) {
         legendHTML += `
             <div class="legend-item">
                 <div class="d-flex align-items-center">
-                    <div class="legend-color" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 3px; margin-right: 8px; flex-shrink: 0;"></div>
+                    <div class="legend-color" style="background-color: ${color}; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; flex-shrink: 0;"></div>
                     <div class="legend-text">
                         <strong>${label}</strong>
                         <br>
