@@ -21,7 +21,7 @@ from apps.fauna.models import Species
 from apps.locations.models import Site, Census
 from apps.image_processing.models import ImageUpload, ProcessingResult
 from apps.users.models import UserActivity
-from .models import AdminActivity, SystemConfiguration, AdminNotification, RolePermission
+from .models import AdminActivity, SystemConfiguration, AdminNotification, RolePermission, UserPermission
 from .forms import UserCreateForm, UserEditForm, UserPasswordChangeForm
 
 User = get_user_model()
@@ -591,6 +591,256 @@ def roles_assignments(request):
         'role_data': role_data,
     }
     return render(request, 'admin_system/roles_assignments.html', context)
+
+
+@login_required
+@user_passes_test(admin_required)
+def role_management(request):
+    """
+    Manage role permissions - edit permissions for each role
+    """
+    # Get or create role permissions
+    role_permissions = {}
+    for role_choice in User.Role.choices:
+        role = role_choice[0]
+        permission, created = RolePermission.objects.get_or_create(role=role)
+        role_permissions[role] = permission
+    
+    if request.method == 'POST':
+        role = request.POST.get('role')
+        permission = role_permissions.get(role)
+        
+        if permission:
+            # Store old permissions for comparison
+            old_permissions = {
+                'can_generate_reports': permission.can_generate_reports,
+                'can_modify_species': permission.can_modify_species,
+                'can_add_sites': permission.can_add_sites,
+                'can_add_birds': permission.can_add_birds,
+                'can_process_images': permission.can_process_images,
+                'can_access_weather': permission.can_access_weather,
+                'can_access_analytics': permission.can_access_analytics,
+                'can_manage_users': permission.can_manage_users,
+            }
+            
+            # Update permissions
+            permission.can_generate_reports = 'can_generate_reports' in request.POST
+            permission.can_modify_species = 'can_modify_species' in request.POST
+            permission.can_add_sites = 'can_add_sites' in request.POST
+            permission.can_add_birds = 'can_add_birds' in request.POST
+            permission.can_process_images = 'can_process_images' in request.POST
+            permission.can_access_weather = 'can_access_weather' in request.POST
+            permission.can_access_analytics = 'can_access_analytics' in request.POST
+            
+            # SUPERADMIN always has User Management enabled
+            if role == 'SUPERADMIN':
+                permission.can_manage_users = True
+            else:
+                permission.can_manage_users = 'can_manage_users' in request.POST
+            
+            # Count active users with this role
+            active_users = User.objects.filter(role=role, is_active=True).count()
+            
+            permission.save()
+            
+            messages.success(request, f"✅ {role} permissions updated successfully! This affects {active_users} active user(s).")
+            
+            # Log the activity
+            log_admin_activity(
+                request.user, 'UPDATE', 
+                f'Updated {role} role permissions',
+                'RolePermission', str(permission.id),
+                {'old_permissions': old_permissions, 'new_permissions': {
+                    'can_generate_reports': permission.can_generate_reports,
+                    'can_modify_species': permission.can_modify_species,
+                    'can_add_sites': permission.can_add_sites,
+                    'can_add_birds': permission.can_add_birds,
+                    'can_process_images': permission.can_process_images,
+                    'can_access_weather': permission.can_access_weather,
+                    'can_access_analytics': permission.can_access_analytics,
+                    'can_manage_users': permission.can_manage_users,
+                }}
+            )
+        
+        return redirect('admin_system:role_management')
+    
+    # Get user counts by role
+    user_counts = User.objects.values('role').annotate(count=Count('id'))
+    role_counts = {item['role']: item['count'] for item in user_counts}
+    
+    context = {
+        'role_permissions': role_permissions,
+        'role_counts': role_counts,
+        'user_roles': User.Role.choices,
+        'page_title': 'Role Permission Management',
+    }
+    
+    return render(request, 'admin_system/role_management.html', context)
+
+
+@login_required
+@user_passes_test(admin_required)
+def user_role_assignment(request):
+    """
+    Assign roles to users with search, filtering, and bulk operations
+    """
+    users = User.objects.filter(is_active=True).order_by('employee_id')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        users = users.filter(
+            Q(employee_id__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    
+    # Filter by role
+    role_filter = request.GET.get('role', '')
+    if role_filter:
+        users = users.filter(role=role_filter)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'assign_bulk':
+            user_ids = request.POST.getlist('user_ids')
+            new_role = request.POST.get('new_role')
+            
+            if user_ids and new_role:
+                updated_count = 0
+                for user_id in user_ids:
+                    try:
+                        user = User.objects.get(id=user_id)
+                        old_role = user.role
+                        user.role = new_role
+                        user.save()
+                        updated_count += 1
+                        
+                        log_admin_activity(
+                            request.user, 'UPDATE', 
+                            f'Assigned role to {user.get_full_name()}: {old_role} → {new_role}',
+                            'User', str(user.id)
+                        )
+                    except User.DoesNotExist:
+                        continue
+                
+                messages.success(request, f"✅ Successfully assigned {new_role} role to {updated_count} user(s)!")
+            else:
+                messages.error(request, "❌ No users selected or no role chosen.")
+        
+        elif action == 'assign_individual':
+            user_id = request.POST.get('user_id')
+            new_role = request.POST.get('new_role')
+            
+            try:
+                user = User.objects.get(id=user_id)
+                old_role = user.role
+                user.role = new_role
+                user.save()
+                
+                messages.success(request, f"✅ Role assigned to {user.get_full_name()}: {old_role} → {new_role}")
+                log_admin_activity(
+                    request.user, 'UPDATE', 
+                    f'Assigned role to {user.get_full_name()}: {old_role} → {new_role}',
+                    'User', str(user.id)
+                )
+            except User.DoesNotExist:
+                messages.error(request, "❌ User not found.")
+            except Exception as e:
+                messages.error(request, f"❌ Error assigning role: {str(e)}")
+        
+        return redirect('admin_system:user_role_assignment')
+    
+    # Pagination
+    paginator = Paginator(users, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'user_roles': User.Role.choices,
+        'search_query': search_query,
+        'role_filter': role_filter,
+        'page_title': 'User Role Assignment',
+    }
+    return render(request, 'admin_system/user_role_assignment.html', context)
+
+
+@login_required
+@user_passes_test(admin_required)
+def user_permission_override(request, user_id):
+    """
+    Override permissions for individual users
+    """
+    user = get_object_or_404(User, id=user_id)
+    
+    # Get user's role permissions
+    try:
+        role_permission = RolePermission.objects.get(role=user.role)
+    except RolePermission.DoesNotExist:
+        role_permission = None
+    
+    if request.method == 'POST':
+        # Get or create user permission override
+        user_permission, created = UserPermission.objects.get_or_create(user=user)
+        
+        # Update individual permissions
+        user_permission.can_generate_reports = request.POST.get('can_generate_reports') == 'on'
+        user_permission.can_modify_species = request.POST.get('can_modify_species') == 'on'
+        user_permission.can_add_sites = request.POST.get('can_add_sites') == 'on'
+        user_permission.can_add_birds = request.POST.get('can_add_birds') == 'on'
+        user_permission.can_process_images = request.POST.get('can_process_images') == 'on'
+        user_permission.can_access_weather = request.POST.get('can_access_weather') == 'on'
+        user_permission.can_access_analytics = request.POST.get('can_access_analytics') == 'on'
+        user_permission.can_manage_users = request.POST.get('can_manage_users') == 'on'
+        
+        user_permission.save()
+        
+        messages.success(request, f"✅ Custom permissions updated for {user.get_full_name()}")
+        log_admin_activity(
+            request.user, 'UPDATE', 
+            f'Updated custom permissions for {user.get_full_name()}',
+            'UserPermission', str(user_permission.id)
+        )
+        
+        return redirect('admin_system:user_permission_override', user_id=user_id)
+    
+    # Get user's current permissions (role + overrides)
+    try:
+        user_permission = UserPermission.objects.get(user=user)
+    except UserPermission.DoesNotExist:
+        user_permission = None
+    
+    # Calculate effective permissions for display
+    effective_permissions = {}
+    if role_permission:
+        effective_permissions = {
+            'can_generate_reports': role_permission.can_generate_reports,
+            'can_modify_species': role_permission.can_modify_species,
+            'can_add_sites': role_permission.can_add_sites,
+            'can_add_birds': role_permission.can_add_birds,
+            'can_process_images': role_permission.can_process_images,
+            'can_access_weather': role_permission.can_access_weather,
+            'can_access_analytics': role_permission.can_access_analytics,
+            'can_manage_users': role_permission.can_manage_users,
+        }
+    
+    # Apply user-specific overrides if they exist
+    if user_permission:
+        for key in effective_permissions:
+            if hasattr(user_permission, key):
+                effective_permissions[key] = getattr(user_permission, key)
+    
+    context = {
+        'user': user,
+        'role_permission': role_permission,
+        'user_permission': user_permission,
+        'effective_permissions': effective_permissions,
+        'page_title': f'Custom Permissions - {user.get_full_name()}',
+    }
+    return render(request, 'admin_system/user_permission_override.html', context)
 
 
 @login_required

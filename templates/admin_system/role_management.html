@@ -1,0 +1,234 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>Role Permission Management
+                </h4>
+                <p class="mb-0 opacity-75">Configure permissions for each role</p>
+            </div>
+            <div class="card-body">
+                <!-- Navigation -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item">
+                                    <a href="{% url 'admin_system:roles_assignments' %}">Roles & Assignments</a>
+                                </li>
+                                <li class="breadcrumb-item active">Role Management</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Role Selection -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="roleSelect" class="form-label">Select Role to Edit:</label>
+                        <select class="form-select" id="roleSelect" onchange="loadRolePermissions()">
+                            <option value="">Choose a role...</option>
+                            {% for role_choice in user_roles %}
+                            <option value="{{ role_choice.0 }}" data-count="{{ role_counts|default:0|lookup:role_choice.0 }}">
+                                {{ role_choice.1 }} ({{ role_counts|default:0|lookup:role_choice.0 }} users)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> Changes affect all users with the selected role.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permission Forms -->
+                {% for role_choice in user_roles %}
+                {% with role=role_choice.0 role_display=role_choice.1 %}
+                <div class="role-form" id="form-{{ role }}" style="display: none;">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="role" value="{{ role }}">
+                        
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-user-tag me-2"></i>{{ role_display }} Permissions
+                                    <span class="badge bg-light text-dark ms-2">{{ role_counts|default:0|lookup:role }} users</span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% with permission=role_permissions|lookup:role %}
+                                
+                                <!-- Main System Permissions -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="text-primary mb-3">
+                                            <i class="fas fa-desktop me-2"></i>Main System Access
+                                        </h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="can_generate_reports" 
+                                                   id="{{ role }}_reports" {% if permission.can_generate_reports %}checked{% endif %}>
+                                            <label class="form-check-label" for="{{ role }}_reports">
+                                                <strong>Generate Reports</strong>
+                                                <small class="text-muted d-block">Create and export analytical reports</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="can_modify_species" 
+                                                   id="{{ role }}_species" {% if permission.can_modify_species %}checked{% endif %}>
+                                            <label class="form-check-label" for="{{ role }}_species">
+                                                <strong>Modify Species</strong>
+                                                <small class="text-muted d-block">Add, edit, and archive species data</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="can_add_sites" 
+                                                   id="{{ role }}_sites" {% if permission.can_add_sites %}checked{% endif %}>
+                                            <label class="form-check-label" for="{{ role }}_sites">
+                                                <strong>Add Sites</strong>
+                                                <small class="text-muted d-block">Create and manage observation sites</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="can_add_birds" 
+                                                   id="{{ role }}_birds" {% if permission.can_add_birds %}checked{% endif %}>
+                                            <label class="form-check-label" for="{{ role }}_birds">
+                                                <strong>Add Birds</strong>
+                                                <small class="text-muted d-block">Record bird observations and census data</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Advanced Features -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="text-success mb-3">
+                                            <i class="fas fa-cogs me-2"></i>Advanced Features
+                                        </h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="can_process_images" 
+                                                   id="{{ role }}_images" {% if permission.can_process_images %}checked{% endif %}>
+                                            <label class="form-check-label" for="{{ role }}_images">
+                                                <strong>Process Images</strong>
+                                                <small class="text-muted d-block">Upload and process bird images with AI</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="can_access_weather" 
+                                                   id="{{ role }}_weather" {% if permission.can_access_weather %}checked{% endif %}>
+                                            <label class="form-check-label" for="{{ role }}_weather">
+                                                <strong>Access Weather</strong>
+                                                <small class="text-muted d-block">View weather data and forecasts</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="can_access_analytics" 
+                                                   id="{{ role }}_analytics" {% if permission.can_access_analytics %}checked{% endif %}>
+                                            <label class="form-check-label" for="{{ role }}_analytics">
+                                                <strong>Access Analytics</strong>
+                                                <small class="text-muted d-block">View charts and data analysis</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="can_manage_users" 
+                                                   id="{{ role }}_users" {% if permission.can_manage_users %}checked{% endif %}
+                                                   {% if role == 'SUPERADMIN' %}disabled{% endif %}>
+                                            <label class="form-check-label" for="{{ role }}_users">
+                                                <strong>Manage Users</strong>
+                                                <small class="text-muted d-block">Create, edit, and manage user accounts</small>
+                                                {% if role == 'SUPERADMIN' %}
+                                                    <small class="text-warning d-block">Always enabled for SUPERADMIN</small>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Role-specific warnings -->
+                                {% if role == 'ADMIN' %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>ADMIN Role:</strong> Typically has full system access but no user management privileges.
+                                </div>
+                                {% elif role == 'FIELD_WORKER' %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>FIELD_WORKER Role:</strong> Typically has view-only access with limited modification capabilities.
+                                </div>
+                                {% elif role == 'SUPERADMIN' %}
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-shield-alt me-2"></i>
+                                    <strong>SUPERADMIN Role:</strong> Has exclusive access to admin system and user management.
+                                </div>
+                                {% endif %}
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'admin_system:roles_assignments' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Overview
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Update {{ role_display }} Permissions
+                                    </button>
+                                </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadRolePermissions() {
+    const roleSelect = document.getElementById('roleSelect');
+    const selectedRole = roleSelect.value;
+    
+    // Hide all forms
+    document.querySelectorAll('.role-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    
+    // Show selected form
+    if (selectedRole) {
+        document.getElementById('form-' + selectedRole).style.display = 'block';
+    }
+}
+
+// Auto-select first role on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('roleSelect');
+    if (roleSelect.options.length > 1) {
+        roleSelect.selectedIndex = 1;
+        loadRolePermissions();
+    }
+});
+</script>
+{% endblock %}

@@ -18,6 +18,9 @@ urlpatterns = [
     path('users/<int:user_id>/credentials/', views.user_credentials, name='user_credentials'),
     path('users/<int:user_id>/edit/', views.user_edit, name='user_edit'),
     path('roles/', views.roles_assignments, name='roles_assignments'),
+    path('roles/management/', views.role_management, name='role_management'),
+    path('roles/assignment/', views.user_role_assignment, name='user_role_assignment'),
+    path('roles/user/<int:user_id>/permissions/', views.user_permission_override, name='user_permission_override'),
     path('users/bulk-action/', views.bulk_user_action, name='bulk_user_action'),
     
     # System Monitoring

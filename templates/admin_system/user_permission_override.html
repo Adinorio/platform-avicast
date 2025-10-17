@@ -1,0 +1,266 @@
+{% extends "admin_system/base.html" %}
+{% load static %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-cog me-2"></i>Custom Permissions - {{ user.get_full_name }}
+                </h4>
+                <p class="mb-0 opacity-75">Override role permissions for this specific user</p>
+            </div>
+            <div class="card-body">
+                <!-- Navigation -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item">
+                                    <a href="{% url 'admin_system:roles_assignments' %}">Roles & Assignments</a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a href="{% url 'admin_system:user_role_assignment' %}">User Role Assignment</a>
+                                </li>
+                                <li class="breadcrumb-item active">{{ user.get_full_name }}</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- User Information -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">User Information</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Employee ID:</strong> <code>{{ user.employee_id }}</code><br>
+                                        <strong>Full Name:</strong> {{ user.get_full_name }}<br>
+                                        <strong>Email:</strong> {{ user.email|default:"Not provided" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Current Role:</strong> 
+                                        <span class="badge 
+                                            {% if user.role == 'SUPERADMIN' %}bg-danger
+                                            {% elif user.role == 'ADMIN' %}bg-warning
+                                            {% else %}bg-info{% endif %}">
+                                            {{ user.get_role_display }}
+                                        </span><br>
+                                        <strong>Status:</strong> 
+                                        <span class="badge {% if user.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span><br>
+                                        <strong>Last Login:</strong> {{ user.last_login|date:"M d, Y H:i"|default:"Never" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                <h6>Permission Override</h6>
+                                <small>
+                                    Custom permissions override role permissions for this user only.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Effective Permissions -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">
+                            <i class="fas fa-eye me-2"></i>Current Effective Permissions
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>Permission</th>
+                                        <th>Role Permission</th>
+                                        <th>Custom Override</th>
+                                        <th>Effective</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for perm_name, perm_value in effective_permissions.items %}
+                                    {% with role_perm=role_permission|lookup:perm_name user_perm=user_permission|lookup:perm_name %}
+                                    <tr>
+                                        <td><strong>{{ perm_name|title|replace:"_":" " }}</strong></td>
+                                        <td class="text-center">
+                                            {% if role_perm %}
+                                                <span class="badge bg-success">✅</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">❌</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if user_perm is not None %}
+                                                {% if user_perm %}
+                                                    <span class="badge bg-success">✅</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">❌</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if perm_value %}
+                                                <span class="badge bg-success">✅</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">❌</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Permission Form -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-edit me-2"></i>Set Custom Permissions
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    
+                                    <!-- Main System Permissions -->
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <h6 class="text-primary mb-3">
+                                                <i class="fas fa-desktop me-2"></i>Main System Access
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="can_generate_reports" 
+                                                       id="can_generate_reports" {% if user_permission.can_generate_reports %}checked{% endif %}>
+                                                <label class="form-check-label" for="can_generate_reports">
+                                                    <strong>Generate Reports</strong>
+                                                    <small class="text-muted d-block">Create and export analytical reports</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="can_modify_species" 
+                                                       id="can_modify_species" {% if user_permission.can_modify_species %}checked{% endif %}>
+                                                <label class="form-check-label" for="can_modify_species">
+                                                    <strong>Modify Species</strong>
+                                                    <small class="text-muted d-block">Add, edit, and archive species data</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="can_add_sites" 
+                                                       id="can_add_sites" {% if user_permission.can_add_sites %}checked{% endif %}>
+                                                <label class="form-check-label" for="can_add_sites">
+                                                    <strong>Add Sites</strong>
+                                                    <small class="text-muted d-block">Create and manage observation sites</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="can_add_birds" 
+                                                       id="can_add_birds" {% if user_permission.can_add_birds %}checked{% endif %}>
+                                                <label class="form-check-label" for="can_add_birds">
+                                                    <strong>Add Birds</strong>
+                                                    <small class="text-muted d-block">Record bird observations and census data</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Advanced Features -->
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <h6 class="text-success mb-3">
+                                                <i class="fas fa-cogs me-2"></i>Advanced Features
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="can_process_images" 
+                                                       id="can_process_images" {% if user_permission.can_process_images %}checked{% endif %}>
+                                                <label class="form-check-label" for="can_process_images">
+                                                    <strong>Process Images</strong>
+                                                    <small class="text-muted d-block">Upload and process bird images with AI</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="can_access_weather" 
+                                                       id="can_access_weather" {% if user_permission.can_access_weather %}checked{% endif %}>
+                                                <label class="form-check-label" for="can_access_weather">
+                                                    <strong>Access Weather</strong>
+                                                    <small class="text-muted d-block">View weather data and forecasts</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="can_access_analytics" 
+                                                       id="can_access_analytics" {% if user_permission.can_access_analytics %}checked{% endif %}>
+                                                <label class="form-check-label" for="can_access_analytics">
+                                                    <strong>Access Analytics</strong>
+                                                    <small class="text-muted d-block">View charts and data analysis</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="can_manage_users" 
+                                                       id="can_manage_users" {% if user_permission.can_manage_users %}checked{% endif %}>
+                                                <label class="form-check-label" for="can_manage_users">
+                                                    <strong>Manage Users</strong>
+                                                    <small class="text-muted d-block">Create, edit, and manage user accounts</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'admin_system:user_role_assignment' %}" class="btn btn-secondary">
+                                            <i class="fas fa-arrow-left me-2"></i>Back to User Assignment
+                                        </a>
+                                        <div>
+                                            {% if user_permission %}
+                                            <a href="{% url 'admin_system:user_permission_override' user.id %}" class="btn btn-warning me-2">
+                                                <i class="fas fa-undo me-2"></i>Reset to Role Defaults
+                                            </a>
+                                            {% endif %}
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-2"></i>Save Custom Permissions
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

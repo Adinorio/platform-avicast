@@ -180,3 +180,29 @@ class AdminNotification(models.Model):
         if self.expires_at:
             return timezone.now() > self.expires_at
         return False
+
+
+class UserPermission(models.Model):
+    """Model to override permissions for individual users"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='permission_override')
+    
+    # Feature permissions - these override role permissions
+    can_generate_reports = models.BooleanField(default=None, null=True, blank=True)
+    can_modify_species = models.BooleanField(default=None, null=True, blank=True)
+    can_add_sites = models.BooleanField(default=None, null=True, blank=True)
+    can_add_birds = models.BooleanField(default=None, null=True, blank=True)
+    can_process_images = models.BooleanField(default=None, null=True, blank=True)
+    can_access_weather = models.BooleanField(default=None, null=True, blank=True)
+    can_access_analytics = models.BooleanField(default=None, null=True, blank=True)
+    can_manage_users = models.BooleanField(default=None, null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_permission_overrides')
+    
+    class Meta:
+        verbose_name = "User Permission Override"
+        verbose_name_plural = "User Permission Overrides"
+    
+    def __str__(self):
+        return f"{self.user.get_full_name()} Permission Override"
