@@ -121,12 +121,35 @@
   /* Mobile Bar Chart Optimizations */
   #speciesBarChart {
     max-height: 250px !important;
+    min-width: 600px !important; /* Enable horizontal scroll */
   }
   
-  /* Mobile Pie Chart Optimizations */
+  /* Bar Chart Container - Enable horizontal scroll on mobile */
+  .analytics-charts .col-12 .card-body {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    position: relative;
+  }
+  
+  /* Add scroll indicator for mobile */
+  .analytics-charts .col-12 .card-body::after {
+    content: "← Swipe to see more species →";
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  /* Mobile Pie Chart - Keep full size */
   #speciesChart {
-    max-width: 180px !important;
-    max-height: 180px !important;
+    /* Remove size restrictions - keep full size */
   }
   
   .species-legend .d-flex {
@@ -141,11 +164,12 @@
   /* Extra small screens - further optimize */
   #speciesBarChart {
     max-height: 200px !important;
+    min-width: 500px !important; /* Smaller min-width for very small screens */
   }
   
+  /* Pie chart stays full size even on small screens */
   #speciesChart {
-    max-width: 150px !important;
-    max-height: 150px !important;
+    /* Keep full size - no restrictions */
   }
   
   .analytics-charts .col-lg-6:first-child .card,
@@ -548,12 +572,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     },
                     ticks: {
-                        maxRotation: isMobile ? 90 : 45,
-                        minRotation: isMobile ? 90 : 0,
+                        maxRotation: isMobile ? 45 : 45,
+                        minRotation: isMobile ? 45 : 0,
                         font: {
                             size: isMobile ? 10 : 12
                         },
-                        maxTicksLimit: isMobile ? 8 : 15
+                        maxTicksLimit: isMobile ? 12 : 15 // Show more ticks on mobile since we can scroll
                     }
                 },
                 y: {
