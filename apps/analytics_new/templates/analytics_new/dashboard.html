@@ -192,11 +192,12 @@
   .row:first-of-type .col-12 .card-body canvas {
     display: inline-block !important;
     vertical-align: top !important;
+    cursor: pointer !important; /* Show it's tappable */
   }
   
   /* Add scroll indicator ONLY for mobile */
   .row:first-of-type .col-12 .card-body::after {
-    content: "← Swipe to see more data →";
+    content: "← Swipe to see more • Tap bars for details →";
     position: absolute;
     bottom: 5px;
     right: 10px;
@@ -660,22 +661,51 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             responsive: false, // Completely disable responsiveness
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            onHover: function(event, activeElements) {
+                // Ensure cursor changes on hover
+                event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+            },
             plugins: {
                 legend: {
                     display: false
                 },
                 tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false,
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleColor: '#fff',
                     bodyColor: '#fff',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1,
+                    cornerRadius: 6,
+                    displayColors: false,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 12,
                     callbacks: {
                         title: function(context) {
-                            return `Species: ${context[0].label}`;
+                            const dataIndex = context[0].dataIndex;
+                            const speciesName = chartData.speciesData.labels[dataIndex];
+                            return `Species: ${speciesName}`;
                         },
                         label: function(context) {
-                            return `Bird Count: ${context.parsed.y}`;
+                            return `Bird Count: ${context.parsed.y.toLocaleString()}`;
+                        },
+                        afterBody: function(context) {
+                            const dataIndex = context[0].dataIndex;
+                            const total = chartData.speciesData.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context[0].parsed.y / total) * 100).toFixed(1);
+                            return `Percentage: ${percentage}%`;
                         }
                     }
                 }
@@ -725,6 +755,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Add click event handler for mobile tap interaction
+    if (isMobile) {
+        const canvas = document.getElementById('speciesBarChart');
+        canvas.addEventListener('click', function(event) {
+            const points = speciesBarChart.getElementsAtEventForMode(event, 'index', { intersect: false });
+            if (points.length > 0) {
+                const firstPoint = points[0];
+                const dataIndex = firstPoint.index;
+                const speciesName = chartData.speciesData.labels[dataIndex];
+                const birdCount = chartData.speciesData.data[dataIndex];
+                const total = chartData.speciesData.data.reduce((a, b) => a + b, 0);
+                const percentage = ((birdCount / total) * 100).toFixed(1);
+                
+                // Show alert with species details (mobile-friendly)
+                alert(`Species: ${speciesName}\nBird Count: ${birdCount.toLocaleString()}\nPercentage: ${percentage}%`);
+            }
+        });
+    }
 
     // Species Distribution Pie Chart (bottom left)
     const speciesCtx = document.getElementById('speciesChart').getContext('2d');
