@@ -69,7 +69,7 @@ def has_permission(user, permission_name):
     return effective_permissions.get(permission_name, False)
 
 
-def permission_required(permission_name, redirect_url='home', message=None):
+def permission_required(permission_name, redirect_url='home', message=None, show_403_page=True):
     """
     Decorator to require a specific permission
     """
@@ -82,8 +82,34 @@ def permission_required(permission_name, redirect_url='home', message=None):
             
             if not has_permission(request.user, permission_name):
                 error_message = message or f"You do not have permission to access this feature."
-                messages.error(request, error_message)
-                return redirect(redirect_url)
+                
+                if show_403_page:
+                    # Show detailed 403 error page like fauna views
+                    messages.error(request, f"{error_message} Contact your administrator to request access.")
+                    from django.shortcuts import render
+                    
+                    # Map permission names to feature names for better error messages
+                    feature_map = {
+                        'can_add_sites': 'Sites Management',
+                        'can_add_birds': 'Census Management', 
+                        'can_access_analytics': 'Analytics Dashboard',
+                        'can_process_images': 'Image Processing',
+                        'can_access_weather': 'Weather Dashboard',
+                        'can_modify_species': 'Species Management',
+                        'can_generate_reports': 'Report Generation',
+                        'can_manage_users': 'User Management',
+                    }
+                    
+                    feature_name = feature_map.get(permission_name, 'this feature')
+                    
+                    return render(request, '403.html', {
+                        'message': f'Access denied. You do not have permission to access {feature_name.lower()}.',
+                        'feature': feature_name
+                    }, status=403)
+                else:
+                    # Use simple redirect with message (original behavior)
+                    messages.error(request, error_message)
+                    return redirect(redirect_url)
             
             return view_func(request, *args, **kwargs)
         return wrapper
