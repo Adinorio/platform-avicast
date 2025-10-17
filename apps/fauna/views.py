@@ -71,14 +71,14 @@ class SpeciesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 queryset = queryset.filter(
                     Q(name__icontains=search_query) |
                     Q(scientific_name__icontains=search_query) |
-                    Q(family__icontains=search_query) |
+                    Q(family__display_name__icontains=search_query) |
                     Q(description__icontains=search_query)
                 )
 
         # Apply family filter if provided
         family_filter = self.request.GET.get('family', '').strip()
         if family_filter:
-            queryset = queryset.filter(family__iexact=family_filter)
+            queryset = queryset.filter(family__display_name__iexact=family_filter)
 
         # Apply IUCN status filter if provided
         iucn_filter = self.request.GET.get('iucn_status', '').strip()

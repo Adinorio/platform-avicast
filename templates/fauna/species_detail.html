@@ -43,7 +43,7 @@
                                     <h1 class="mb-1">{{ species.name }}</h1>
                                     <p class="text-muted mb-2 fst-italic">{{ species.scientific_name }}</p>
                                     {% if species.family %}
-                                        <span class="badge bg-secondary">{{ species.family }}</span>
+                                        <span class="badge bg-secondary">{{ species.family.display_name }}</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -85,7 +85,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small">FAMILY</label>
-                                <div>{{ species.family|default:"Not specified" }}</div>
+                                <div>{{ species.family.display_name|default:"Not specified" }}</div>
                             </div>
                         </div>
                         <div class="col-md-6">

@@ -236,7 +236,7 @@
                                 {{ species.scientific_name|default:"-" }}
                             </td>
                             <td>
-                                <span class="badge bg-secondary">{{ species.family|default:"-" }}</span>
+                                <span class="badge bg-secondary">{{ species.family.display_name|default:"-" }}</span>
                             </td>
                             <td class="text-center">
                                 {% if species.iucn_status == 'CR' %}
