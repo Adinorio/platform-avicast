@@ -215,9 +215,9 @@
     cursor: pointer !important; /* Show it's tappable */
   }
   
-  /* Add scroll indicator ONLY for mobile */
+  /* Add scroll indicator for mobile */
   .row:first-of-type .col-12 .card-body::after {
-    content: "← Swipe to see more • Tap bars for details →";
+    content: "← Swipe to see more • Click bars for details →";
     position: absolute;
     bottom: 5px;
     right: 10px;
@@ -788,21 +788,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     },
                     ticks: {
-                        display: isMobile ? false : true, // Hide labels on mobile, show on desktop
-                        maxRotation: isMobile ? 0 : 45, // No rotation on mobile, 45° on desktop
+                        display: false, // Hide labels on BOTH mobile and desktop - clean appearance
+                        maxRotation: 0,
                         minRotation: 0,
                         font: {
-                            size: isMobile ? 12 : 11 // Smaller font on desktop to fit better
+                            size: 12
                         },
-                        maxTicksLimit: isMobile ? chartData.speciesData.labels.length : 10, // Fewer ticks on desktop
-                        autoSkip: isMobile ? false : true, // Allow skipping on desktop
+                        maxTicksLimit: chartData.speciesData.labels.length,
+                        autoSkip: false,
                         stepSize: 1,
                         callback: function(value, index, ticks) {
-                            // Show labels on desktop, hide on mobile
-                            if (isMobile) return '';
-                            const label = chartData.speciesData.labels[index] || '';
-                            // Truncate long labels on desktop
-                            return label.length > 20 ? label.substring(0, 17) + '...' : label;
+                            // Hide labels on both mobile and desktop
+                            return '';
                         }
                     }
                 },
@@ -826,24 +823,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Add click event handler for mobile tap interaction
-    if (isMobile) {
-        const canvas = document.getElementById('speciesBarChart');
-        canvas.addEventListener('click', function(event) {
-            const points = speciesBarChart.getElementsAtEventForMode(event, 'index', { intersect: false });
-            if (points.length > 0) {
-                const firstPoint = points[0];
-                const dataIndex = firstPoint.index;
-                const speciesName = chartData.speciesData.labels[dataIndex];
-                const birdCount = chartData.speciesData.data[dataIndex];
-                const total = chartData.speciesData.data.reduce((a, b) => a + b, 0);
-                const percentage = ((birdCount / total) * 100).toFixed(1);
-                
-                // Show alert with species details (mobile-friendly)
-                alert(`Species: ${speciesName}\nBird Count: ${birdCount.toLocaleString()}\nPercentage: ${percentage}%`);
-            }
-        });
-    }
+    // Add click event handler for both mobile and desktop interaction
+    const canvas = document.getElementById('speciesBarChart');
+    canvas.addEventListener('click', function(event) {
+        const points = speciesBarChart.getElementsAtEventForMode(event, 'index', { intersect: false });
+        if (points.length > 0) {
+            const firstPoint = points[0];
+            const dataIndex = firstPoint.index;
+            const speciesName = chartData.speciesData.labels[dataIndex];
+            const birdCount = chartData.speciesData.data[dataIndex];
+            const total = chartData.speciesData.data.reduce((a, b) => a + b, 0);
+            const percentage = ((birdCount / total) * 100).toFixed(1);
+            
+            // Show alert with species details (works on both mobile and desktop)
+            alert(`Species: ${speciesName}\nBird Count: ${birdCount.toLocaleString()}\nPercentage: ${percentage}%`);
+        }
+    });
 
     // Species Distribution Pie Chart (bottom left)
     const speciesCtx = document.getElementById('speciesChart').getContext('2d');
