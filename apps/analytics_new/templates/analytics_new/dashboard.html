@@ -171,7 +171,8 @@
   /* Mobile Bar Chart Optimizations - ONLY on mobile */
   #speciesBarChart {
     max-height: 250px !important;
-    min-width: 800px !important; /* Larger min-width for better readability */
+    width: 1000px !important; /* Fixed width to force horizontal scroll */
+    min-width: 1000px !important;
   }
   
   /* Bar Chart Container - Enable horizontal scroll ONLY on mobile */
@@ -181,6 +182,8 @@
     -webkit-overflow-scrolling: touch !important;
     position: relative;
     padding-bottom: 20px; /* Space for scroll indicator */
+    width: 100% !important;
+    max-width: 100% !important;
   }
   
   /* Add scroll indicator ONLY for mobile */
@@ -198,11 +201,12 @@
     z-index: 10;
   }
   
-  /* Mobile Pie Chart - Make it larger ONLY on mobile */
+  /* Mobile Pie Chart - Make it smaller for mobile */
   #speciesChart {
-    width: 250px !important;
-    height: 250px !important;
-    /* Remove max-width/max-height constraints that conflict with Chart.js */
+    width: 180px !important;
+    height: 180px !important;
+    max-width: 180px !important;
+    max-height: 180px !important;
   }
   
   /* Mobile Legend Optimizations - ONLY on mobile */
@@ -227,11 +231,12 @@
     min-width: 700px !important; /* Still large enough for readability */
   }
   
-  /* Pie chart on small screens */
+  /* Pie chart on small screens - even smaller */
   #speciesChart {
-    width: 200px !important;
-    height: 200px !important;
-    /* Remove max-width/max-height constraints */
+    width: 150px !important;
+    height: 150px !important;
+    max-width: 150px !important;
+    max-height: 150px !important;
   }
   
   .analytics-charts .col-lg-6:first-child .card,
@@ -590,6 +595,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (isMobile) {
         speciesBarCtx.canvas.width = 1000; // Fixed width for mobile
         speciesBarCtx.canvas.height = 250;
+        speciesBarCtx.canvas.style.width = '1000px'; // Ensure CSS width matches
+        speciesBarCtx.canvas.style.height = '250px';
     }
     
     const speciesBarChart = new Chart(speciesBarCtx, {
