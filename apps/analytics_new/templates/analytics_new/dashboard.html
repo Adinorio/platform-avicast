@@ -63,13 +63,16 @@
   overflow-x: hidden; /* Prevent horizontal scroll on desktop */
   padding: 10px;
   box-sizing: border-box; /* Include padding in height calculation */
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Legend scroll container for mobile */
 .legend-scroll-container {
   display: flex;
   flex-direction: column;
-  min-width: max-content;
+  width: 100%;
+  max-width: 100%;
 }
 
 .legend-item {
@@ -266,6 +269,8 @@
     padding: 10px !important;
     margin: 0 !important;
     box-sizing: border-box !important; /* Include padding in height */
+    width: 100% !important;
+    max-width: 100% !important;
   }
   
   .legend-item {
@@ -283,6 +288,12 @@
   
   .legend-item .legend-text {
     font-size: 0.8rem;
+  }
+  
+  .legend-scroll-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   
   .legend-item .legend-text small {
