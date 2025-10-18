@@ -14,7 +14,7 @@ from django.db.models import Q
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 
-from apps.fauna.models import Species
+from apps.fauna.models import Species, BirdFamily
 from apps.locations.models import Site, CensusYear, CensusMonth, Census, CensusObservation
 
 
@@ -768,13 +768,50 @@ class CensusExcelHandler:
                     Q(scientific_name__iexact=species_name)
                 ).first()
 
+                # If species exists but has no family, try to assign one
+                if species and not species.family and family_name:
+                    try:
+                        bird_family, created = BirdFamily.objects.get_or_create(
+                            name__iexact=family_name,
+                            defaults={
+                                'name': family_name,
+                                'display_name': family_name.title(),
+                                'category': 'WATER_BIRDS',  # Default category
+                                'is_active': True
+                            }
+                        )
+                        species.family = bird_family
+                        species.save(update_fields=['family'])
+                        if created:
+                            results['info_messages'].append(f"Created new family '{family_name}' and linked to existing species '{species_name}'")
+                        else:
+                            results['info_messages'].append(f"Linked existing family '{family_name}' to species '{species_name}'")
+                    except Exception as e:
+                        results['errors'].append(f"Row {row_num}: Could not link family '{family_name}' to species '{species_name}': {str(e)}")
+
                 # If species not found, create it automatically (for data import)
                 if not species:
                     try:
+                        # Find or create BirdFamily for this species
+                        bird_family = None
+                        if family_name:
+                            bird_family, created = BirdFamily.objects.get_or_create(
+                                name__iexact=family_name,
+                                defaults={
+                                    'name': family_name,
+                                    'display_name': family_name.title(),
+                                    'category': 'WATER_BIRDS',  # Default category
+                                    'is_active': True
+                                }
+                            )
+                            if created:
+                                results['info_messages'].append(f"Created new family '{family_name}'")
+                        
                         # Try to create species automatically for import
                         species = Species.objects.create(
                             name=species_name,
                             scientific_name=species_name,  # Use same as common name if not specified
+                            family=bird_family,  # Link to BirdFamily
                             iucn_status='LC'  # Default to Least Concern
                         )
                         results['created_species'] = results.get('created_species', 0) + 1
