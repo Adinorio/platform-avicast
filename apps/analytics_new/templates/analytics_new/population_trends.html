@@ -60,7 +60,7 @@
                             <div class="progress mt-1">
                                 <div class="progress-bar bg-{% if trend.confidence_level > 0.8 %}success{% elif trend.confidence_level > 0.6 %}warning{% else %}danger{% endif %}"
                                      role="progressbar"
-                                     style="width: {{ trend.confidence_level|floatformat:0 }}%">
+                                     style="--progress-width: {{ trend.confidence_level|floatformat:0 }}%; width: var(--progress-width);">
                                 </div>
                             </div>
                         </div>
