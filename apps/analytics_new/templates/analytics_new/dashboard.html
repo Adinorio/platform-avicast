@@ -65,24 +65,55 @@
   justify-content: center;
 }
 
-/* Legend Container - Match Pie Chart Height */
-.analytics-charts .col-lg-6:last-child .card {
-  height: 350px; /* Total card height including header */
+/* Match Both Card Heights */
+.analytics-charts .col-lg-6 .card {
+  height: 400px; /* Same height for both pie chart and legend cards */
 }
 
-.species-legend .legend-color {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.species-legend-simple {
+  height: 330px; /* Fill more of the card body space */
+  overflow-y: auto;
+  padding: 10px 0;
 }
 
-.species-legend .d-flex {
+.legend-row {
+  display: flex;
+  align-items: center;
   padding: 8px 12px;
-  border-radius: 6px;
+  margin-bottom: 6px;
+  border-radius: 4px;
   transition: background-color 0.2s ease;
 }
 
-.species-legend .d-flex:hover {
+.legend-row:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 12px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.legend-name {
+  flex-grow: 1;
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.legend-count {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+  background-color: #f8f9fa;
+  padding: 2px 8px;
+  border-radius: 12px;
+  min-width: 40px;
+  text-align: center;
 }
 
 /* Bar Chart Styling - Desktop Version */
@@ -142,13 +173,39 @@
     padding: 0 5px;
   }
   
-  .analytics-charts .col-lg-6:first-child .card,
-  .analytics-charts .col-lg-6:last-child .card {
-    height: 250px; /* Total card height on mobile */
+  .analytics-charts .col-lg-6 .card {
+    height: 300px; /* Same height for both cards on mobile */
   }
   
   .analytics-charts .col-lg-6:first-child .card-body {
-    height: 200px;
+    height: 250px;
+  }
+  
+  .species-legend-simple {
+    height: 230px; /* Fill more space on mobile */
+    overflow-y: auto;
+    padding: 5px 0;
+  }
+  
+  .legend-row {
+    padding: 6px 8px;
+    margin-bottom: 4px;
+  }
+  
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    margin-right: 8px;
+  }
+  
+  .legend-name {
+    font-size: 0.85rem;
+  }
+  
+  .legend-count {
+    font-size: 0.8rem;
+    padding: 1px 6px;
+    min-width: 35px;
   }
   
   /* Mobile Bar Chart Optimizations - ONLY on mobile */
@@ -224,9 +281,8 @@
   }
   
   /* Pie chart on small screens - larger cards */
-  .analytics-charts .col-lg-6:first-child .card,
-  .analytics-charts .col-lg-6:last-child .card {
-    height: 380px; /* Larger height for very small screens */
+  .analytics-charts .col-lg-6 .card {
+    height: 380px; /* Same height for both cards on small screens */
   }
   
   .analytics-charts .col-lg-6:first-child .card-body {
@@ -240,35 +296,31 @@
     max-height: 220px !important;
   }
   
-  .species-legend {
-    height: 330px;
-    overflow-x: auto !important;
-    overflow-y: auto !important; /* Allow vertical scroll on small screens */
-    padding: 3px !important;
-    border: 1px solid #e9ecef; /* Add border to see boundaries */
+  .species-legend-simple {
+    height: 310px; /* Fill more space on small screens */
+    overflow-y: auto;
+    padding: 3px 0;
   }
   
-  .legend-item {
-    min-width: 250px; /* Even smaller width for small screens */
-    padding: 2px 4px; /* Minimal padding on small screens */
-    margin-bottom: 1px; /* Tiny margin */
-    font-size: 0.7rem;
-    line-height: 1.1;
-    white-space: nowrap; /* Prevent text wrapping */
-    overflow: hidden; /* Hide overflow text */
-    text-overflow: ellipsis; /* Show ... for truncated text */
+  .legend-row {
+    padding: 4px 6px;
+    margin-bottom: 3px;
   }
   
-  .legend-item .legend-text {
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+  }
+  
+  .legend-name {
+    font-size: 0.8rem;
+  }
+  
+  .legend-count {
     font-size: 0.75rem;
-  }
-  
-  .legend-item .legend-text small {
-    font-size: 0.65rem;
-  }
-  
-  .legend-item .legend-text strong {
-    font-size: 0.75rem;
+    padding: 1px 4px;
+    min-width: 30px;
   }
 }
 </style>
@@ -362,6 +414,26 @@
                 </div>
                 <div class="card-body">
                     <canvas id="speciesChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Species Legend -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Species Legend</h5>
+                </div>
+                <div class="card-body">
+                    <div class="species-legend-simple">
+                        {% for species in species_data %}
+                        <div class="legend-row">
+                            <span class="legend-dot" data-color="{{ forloop.counter0 }}"></span>
+                            <span class="legend-name">{{ species.name|default:"Unknown Species" }}</span>
+                            <span class="legend-count">{{ species.count|default:"0" }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -534,21 +606,24 @@
 const chartDataElement = document.getElementById('dashboard-chart-data');
 const chartData = JSON.parse(chartDataElement.textContent);
 
+// Define colors for species
+const speciesColors = [
+    '#FF6384',
+    '#36A2EB',
+    '#FFCE56',
+    '#4BC0C0',
+    '#9966FF',
+    '#FF9F40',
+    '#FF6384',
+    '#C9CBCF'
+];
+
 // Species Distribution Chart Data
 const speciesData = {
     labels: chartData.speciesData.labels,
     datasets: [{
         data: chartData.speciesData.data,
-        backgroundColor: [
-            '#FF6384',
-            '#36A2EB',
-            '#FFCE56',
-            '#4BC0C0',
-            '#9966FF',
-            '#FF9F40',
-            '#FF6384',
-            '#C9CBCF'
-        ],
+        backgroundColor: speciesColors,
         borderWidth: 2,
         borderColor: '#fff'
     }]
@@ -786,6 +861,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+        }
+    });
+
+    // Update legend colors to match chart colors
+    const legendDots = document.querySelectorAll('.legend-dot');
+    legendDots.forEach((dot, index) => {
+        if (speciesColors[index]) {
+            dot.style.backgroundColor = speciesColors[index];
         }
     });
 
