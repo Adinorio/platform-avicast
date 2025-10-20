@@ -121,6 +121,57 @@
                         </small>
                     </div>
 
+                    <!-- Review Information -->
+                    {% if image.processing_result and image.processing_result.review_decision != 'PENDING' %}
+                        <div class="alert alert-light alert-sm p-2 mb-2">
+                            <div class="row g-1">
+                                <div class="col-12">
+                                    <small class="text-muted">
+                                        <strong>Reviewed:</strong> {{ image.processing_result.get_review_decision_display }}
+                                        {% if image.processing_result.reviewed_by %}
+                                            by {{ image.processing_result.reviewed_by.get_full_name|default:image.processing_result.reviewed_by.username }}
+                                        {% endif %}
+                                        {% if image.processing_result.reviewed_at %}
+                                            on {{ image.processing_result.reviewed_at|date:"M j, Y" }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% if image.processing_result.review_notes %}
+                                    <div class="col-12">
+                                        <small class="text-muted">
+                                            <strong>Notes:</strong> 
+                                            <span style="
+                                                display: inline-block;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                                white-space: nowrap;
+                                                max-width: 200px;
+                                            " title="{{ image.processing_result.review_notes }}">
+                                                {{ image.processing_result.review_notes|truncatechars:60 }}
+                                            </span>
+                                        </small>
+                                    </div>
+                                {% endif %}
+                                {% if image.processing_result.override_reason %}
+                                    <div class="col-12">
+                                        <small class="text-info">
+                                            <strong>Override:</strong> 
+                                            <span style="
+                                                display: inline-block;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                                white-space: nowrap;
+                                                max-width: 200px;
+                                            " title="{{ image.processing_result.override_reason }}">
+                                                {{ image.processing_result.override_reason|truncatechars:60 }}
+                                            </span>
+                                        </small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <!-- Action Buttons -->
                     <div class="btn-group-vertical w-100" role="group">
                         {% if image.upload_status == 'CAPTURED' %}
