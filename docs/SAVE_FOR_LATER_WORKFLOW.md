@@ -26,7 +26,7 @@ AVICAST's GTD-based workflow allows users to **defer decisions at every stage**,
 **Location**: `/image-processing/process/`
 
 **Options Available**:
-1. **Clarify with AI** (Yellow button) - Process image now with AI detection
+1. **Identify** (Yellow button) - Process image now with AI detection
 2. **Process Later** (Gray button) - Skip this image for now ✨ NEW!
 
 **"Process Later" Behavior**:
@@ -205,7 +205,7 @@ Use the List view: `/image-processing/list/?stage=captured`
 ### **Database Status Flow**
 ```
 CAPTURED → [Process Later: stays CAPTURED]
-CAPTURED → [Clarify with AI] → ORGANIZED
+CAPTURED → [Identify] → ORGANIZED
 ORGANIZED → [Review Later: stays PENDING] 
 ORGANIZED → [Approve/Reject] → REFLECTED
 REFLECTED → [Skip Allocation: stays REFLECTED]

@@ -9,9 +9,9 @@ Based on the verification results, your **99.46% accuracy Chinese Egret model** 
 ## 📊 **VERIFICATION RESULTS SUMMARY**
 
 ### ✅ **Model Files Status:**
-- 🏆 **PyTorch Model**: `models/chinese_egret_v1/chinese_egret_best.pt` (21.5 MB) ✅ LOADED
-- 🚀 **ONNX Model**: `models/chinese_egret_v1/chinese_egret_best.onnx` (42.7 MB) ✅ AVAILABLE
-- 📄 **Model Info**: `models/chinese_egret_v1/model_info.json` ✅ LOADED
+- 🏆 **PyTorch Model**: `models/egret_500_model/chinese_egret_best.pt` (21.5 MB) ✅ LOADED
+- 🚀 **ONNX Model**: `models/egret_500_model/chinese_egret_best.onnx` (42.7 MB) ✅ AVAILABLE
+- 📄 **Model Info**: `models/egret_500_model/model_info.json` ✅ LOADED
 
 ### ✅ **Service Integration Status:**
 - 📋 **Available Models**: `['YOLO_V5', 'YOLO_V8', 'YOLO_V9', 'CHINESE_EGRET_V1']`
@@ -21,7 +21,7 @@ Based on the verification results, your **99.46% accuracy Chinese Egret model** 
 
 ### ✅ **Log Evidence:**
 ```
-🏆 Loading Chinese Egret Specialist model from: C:\Users\User\Documents\Github\platform-avicast\models\chinese_egret_v1\chinese_egret_best.pt
+🏆 Loading Chinese Egret Specialist model from: C:\Users\User\Documents\Github\platform-avicast\models\egret_500_model\chinese_egret_best.pt
 🎯 Performance: 99.5% mAP, 75 FPS
 ✅ CHINESE_EGRET_V1 model loaded successfully
 Processing image with CHINESE_EGRET_V1

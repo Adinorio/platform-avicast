@@ -133,7 +133,7 @@ class ProcessingResult(models.Model):
 
     # AI detection results (Clarify stage) - Enhanced for multi-species support
     detected_species = models.CharField(
-        max_length=50,
+        max_length=200,  # Increased to accommodate multiple species
         choices=EgretSpecies.choices,
         help_text="Primary AI-identified egret species (highest confidence)"
     )
@@ -197,22 +197,29 @@ class ProcessingResult(models.Model):
     overridden_count = models.PositiveIntegerField(null=True, blank=True)
     override_reason = models.TextField(blank=True)
 
-    # Allocation (Engage stage) - Disabled
-    # allocated_to_site = models.ForeignKey(  # Disabled - allocation not needed
-    #     "locations.Site",
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name="allocated_images"
-    # )
-    # allocated_to_census = models.ForeignKey(  # Disabled - allocation not needed
-    #     "locations.CensusObservation",
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name="allocated_images"
-    # )
-    # allocated_at = models.DateTimeField(null=True, blank=True)  # Disabled - allocation not needed
+    # Allocation (Engage stage)
+    allocated_to_site = models.ForeignKey(
+        "locations.Site",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="allocated_results"
+    )
+    allocated_to_census = models.ForeignKey(
+        "locations.Census",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="allocated_results"
+    )
+    allocated_at = models.DateTimeField(null=True, blank=True)
+    allocated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="allocated_results"
+    )
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -268,18 +275,19 @@ class ProcessingResult(models.Model):
 
         self.save()
 
-    def allocate_to_census(self, site, census_observation):
-        """Allocate approved result to census data (Engage stage) - Disabled"""
-        # Allocation functionality disabled - just update image status
-        # self.allocated_to_site = site
-        # self.allocated_to_census = census_observation
-        # self.allocated_at = timezone.now()
+    def allocate_to_census(self, site, census, allocated_by=None):
+        """Allocate approved result to census data (Engage stage)"""
+        self.allocated_to_site = site
+        self.allocated_to_census = census
+        self.allocated_at = timezone.now()
+        if allocated_by:
+            self.allocated_by = allocated_by
 
         # Move image from REFLECTED to ENGAGED status (census record created)
         self.image_upload.upload_status = ProcessingStatus.ENGAGED
         self.image_upload.save(update_fields=["upload_status"])
 
-        # self.save(update_fields=["allocated_to_site", "allocated_to_census", "allocated_at"])
+        self.save(update_fields=["allocated_to_site", "allocated_to_census", "allocated_at", "allocated_by"])
 
     @property
     def final_species(self):

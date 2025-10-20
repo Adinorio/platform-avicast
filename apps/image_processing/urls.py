@@ -8,7 +8,7 @@ CAPTURE → CLARIFY → ORGANIZE → REFLECT → ENGAGE
 from django.urls import path
 from .views import (
     dashboard, upload_images, process_images, start_processing,
-    review_results, allocate_results, ImageListView, model_selection, benchmark_models, image_with_bbox, cache_reset,
+    review_results, review_history, allocate_results, delete_result, delete_allocation, ImageListView, model_selection, benchmark_models, image_with_bbox, cache_reset,
     get_years_for_site, get_months_for_site_year
 )
 
@@ -29,10 +29,14 @@ urlpatterns = [
 
     # REFLECT Stage - Review AI results
     path("review/", review_results, name="review"),
+    path("review/delete-result/<uuid:result_id>/", delete_result, name="delete_result_review"),
+    path("review-history/", review_history, name="review_history"),
     path("image-with-bbox/<uuid:result_id>/", image_with_bbox, name="image_with_bbox"),
 
     # ENGAGE Stage - Allocate to census data
     path("allocate/", allocate_results, name="allocate"),
+    path("allocate/delete-result/<uuid:result_id>/", delete_result, name="delete_result"),
+    path("allocate/delete/<uuid:result_id>/", delete_allocation, name="delete_allocation"),
     path("allocate/site/<uuid:site_id>/years/", get_years_for_site, name="get_years_for_site"),
     path("allocate/site/<uuid:site_id>/year/<int:year>/months/", get_months_for_site_year, name="get_months_for_site_year"),
 

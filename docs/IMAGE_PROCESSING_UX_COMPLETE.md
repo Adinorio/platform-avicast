@@ -24,7 +24,7 @@ This document summarizes the complete user experience design for AVICAST's AI-po
 
 ✅ **CLARIFY** (Process with AI)
 - Image grid view (thumbnails)
-- "Clarify with AI" processing button
+- "Identify" processing button
 - **"Process Later" button** (NEW! - Save for later)
 - Real-time processing feedback
 - AI model integration (egret_500_model)

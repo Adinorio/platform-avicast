@@ -33,19 +33,32 @@
     {% if ready_results %}
     <!-- Results Ready for Allocation -->
     <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="text-primary mb-0">
+                    <i class="fas fa-tasks me-2"></i>Ready for Allocation
+                    <small class="text-muted ms-2">(Most recent first)</small>
+                </h5>
+                <span class="badge bg-primary">{{ ready_results|length }} result{{ ready_results|length|pluralize }}</span>
+            </div>
+            <hr class="text-primary">
+        </div>
+        
         {% for result in ready_results %}
         <div class="col-12 mb-4">
             <div class="card border-0 shadow-sm">
-                <div class="row g-0">
+                <div class="row g-3">
                     <div class="col-lg-3">
                         {% if result.image_upload.image_file %}
                             <img src="{{ result.image_upload.image_file.url }}"
-                                 class="img-fluid rounded-start h-100 object-fit-cover"
+                                 class="img-fluid rounded-start"
                                  alt="{{ result.image_upload.title }}"
-                                 style="min-height: 250px;">
+                                 style="width: 100%; height: 300px; object-fit: cover; object-position: center; cursor: pointer;"
+                                 onclick="openImageModal('{{ result.image_upload.image_file.url }}', '{{ result.image_upload.title }}', '{{ result.id }}')"
+                                 title="Click to view full size">
                         {% else %}
-                            <div class="d-flex align-items-center justify-content-center bg-light rounded-start h-100"
-                                 style="min-height: 250px;">
+                            <div class="d-flex align-items-center justify-content-center bg-light rounded-start"
+                                 style="width: 100%; height: 300px;">
                                 <div class="text-center text-muted">
                                     <i class="fas fa-image fa-3x mb-3"></i>
                                     <p>No image available</p>
@@ -75,17 +88,35 @@
                                             <i class="fas fa-check-circle me-1"></i>Final Classification
                                         </h6>
                                         <div class="row g-3">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <p class="mb-1"><strong>Species:</strong> {{ result.get_final_species_display }}</p>
                                                 <p class="mb-1"><strong>Count:</strong> {{ result.final_count }}</p>
+                                                {% if result.review_decision == 'OVERRIDDEN' %}
+                                                    <small class="text-info">
+                                                        <i class="fas fa-edit me-1"></i>Overridden from {{ result.detected_species }}
+                                                    </small>
+                                                {% endif %}
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <p class="mb-1"><strong>AI Confidence:</strong> {{ result.confidence_score|floatformat:1 }}%</p>
-                                                <p class="mb-0"><strong>Reviewed by:</strong> {{ result.reviewed_by.get_full_name }}</p>
+                                                <p class="mb-1"><strong>Reviewed by:</strong> {{ result.reviewed_by.get_full_name|default:result.reviewed_by.username }}</p>
+                                                <p class="mb-0"><strong>Reviewed at:</strong> {{ result.reviewed_at|date:"M j, Y g:i A" }}</p>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
+                                                <p class="mb-1"><strong>Decision:</strong> 
+                                                    <span class="badge {% if result.review_decision == 'APPROVED' %}bg-success{% else %}bg-info{% endif %}">
+                                                        {{ result.get_review_decision_display }}
+                                                    </span>
+                                                </p>
                                                 {% if result.review_notes %}
-                                                    <p class="mb-0"><strong>Notes:</strong> {{ result.review_notes }}</p>
+                                                    <p class="mb-0"><strong>Review Notes:</strong></p>
+                                                    <small class="text-muted">{{ result.review_notes }}</small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-3">
+                                                {% if result.override_reason %}
+                                                    <p class="mb-1"><strong>Override Reason:</strong></p>
+                                                    <small class="text-muted">{{ result.override_reason }}</small>
                                                 {% endif %}
                                             </div>
                                         </div>
@@ -137,32 +168,17 @@
 
 
                                     <div class="col-12">
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-check-circle me-2"></i>Allocate to Census
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary ms-2" onclick="skipAllocation({{ result.id }})">
-                                            <i class="fas fa-clock me-1"></i>Allocate Later
-                                        </button>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-check-circle me-2"></i>Allocate to Census
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="confirmDeleteResult('{{ result.id }}', '{{ result.image_upload.title }}')">
+                                                <i class="fas fa-trash me-1"></i>Delete Result
+                                            </button>
+                                        </div>
                                     </div>
                                 </form>
-                            </div>
-                            {% else %}
-                            <!-- Already Allocated -->
-                            <div class="border rounded p-3 bg-success-subtle">
-                                <h6 class="fw-bold text-success mb-2">
-                                    <i class="fas fa-check-circle me-1"></i>Already Allocated
-                                </h6>
-                                <div class="row g-2">
-                                    <div class="col-md-6">
-                                        <p class="mb-1"><strong>Site:</strong> {{ result.allocated_to_site.name }}</p>
-                                        <p class="mb-0"><strong>Date:</strong> {{ result.allocated_at|date:"M j, Y g:i A" }}</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        {% if result.allocated_to_census %}
-                                            <p class="mb-0"><strong>Census ID:</strong> {{ result.allocated_to_census.id }}</p>
-                                        {% endif %}
-                                    </div>
-                                </div>
                             </div>
                             {% endif %}
                         </div>
@@ -229,12 +245,154 @@
     </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="imageModalTitle">
+                    <i class="fas fa-image me-2"></i>Image Preview
+                </h5>
+                <div class="btn-group me-2" role="group">
+                    <button type="button" class="btn btn-outline-light btn-sm" id="modalOriginalBtn"
+                            onclick="switchModalImage('original')">
+                        <i class="fas fa-image"></i> Original
+                    </button>
+                    <button type="button" class="btn btn-outline-light btn-sm active" id="modalBboxBtn"
+                            onclick="switchModalImage('bbox')">
+                        <i class="fas fa-search-plus"></i> With Boxes
+                    </button>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0 d-flex justify-content-center align-items-center" style="min-height: 70vh; background-color: #f8f9fa;">
+                <img id="modalImage" 
+                     class="img-fluid" 
+                     style="max-width: 100%; max-height: 70vh; object-fit: contain;"
+                     alt="Preview">
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between w-100">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Click outside the image or press ESC to close
+                        </small>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Result Confirmation Modal -->
+<div class="modal fade" id="deleteResultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Result
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Are you sure you want to delete this result entirely?</strong></p>
+                <p class="mb-2">Image: <span id="deleteResultImageTitle" class="fw-bold"></span></p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This will permanently delete:
+                    <ul class="mb-0 mt-2">
+                        <li>The image and all processing data</li>
+                        <li>AI detection results</li>
+                        <li>Review decisions and notes</li>
+                        <li>Any associated census data (if allocated)</li>
+                    </ul>
+                </div>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteResultForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Delete Result
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script>
-function skipAllocation(resultId) {
-    // In a real implementation, this would mark the result for later allocation
-    // For now, just show a message
-    alert('Allocation skipped. You can allocate this result later from the dashboard.');
+// Global variables for modal image switching
+let currentModalResultId = null;
+let currentModalOriginalUrl = null;
+let currentModalBboxUrl = null;
+
+// Open image preview modal
+function openImageModal(imageUrl, imageTitle, resultId) {
+    // Set global variables
+    currentModalResultId = resultId;
+    currentModalOriginalUrl = imageUrl;
+    currentModalBboxUrl = `/image-processing/image-with-bbox/${resultId}/?t=${Date.now()}`;
+    
+    // Update modal title
+    document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-image me-2"></i>${imageTitle}`;
+    
+    // Set initial image (bounding box view by default)
+    const modalImage = document.getElementById('modalImage');
+    modalImage.src = currentModalBboxUrl;
+    
+    // Update button states
+    document.getElementById('modalOriginalBtn').classList.remove('active');
+    document.getElementById('modalBboxBtn').classList.add('active');
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    modal.show();
 }
+
+// Switch between original and bounding box view in modal
+function switchModalImage(viewType) {
+    const modalImage = document.getElementById('modalImage');
+    const originalBtn = document.getElementById('modalOriginalBtn');
+    const bboxBtn = document.getElementById('modalBboxBtn');
+    
+    if (viewType === 'original') {
+        modalImage.src = currentModalOriginalUrl;
+        originalBtn.classList.add('active');
+        bboxBtn.classList.remove('active');
+        originalBtn.className = originalBtn.className.replace('btn-secondary', 'btn-primary');
+        bboxBtn.className = bboxBtn.className.replace('btn-primary', 'btn-secondary');
+    } else {
+        modalImage.src = currentModalBboxUrl;
+        bboxBtn.classList.add('active');
+        originalBtn.classList.remove('active');
+        bboxBtn.className = bboxBtn.className.replace('btn-secondary', 'btn-primary');
+        originalBtn.className = originalBtn.className.replace('btn-secondary', 'btn-primary');
+    }
+}
+
+// Handle delete result confirmation
+function confirmDeleteResult(resultId, imageTitle) {
+    // Set the image title in the modal
+    document.getElementById('deleteResultImageTitle').textContent = imageTitle;
+    
+    // Set the form action
+    const form = document.getElementById('deleteResultForm');
+    form.action = `/image-processing/allocate/delete-result/${resultId}/`;
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteResultModal'));
+    modal.show();
+}
+
 
 // Handle site selection changes
 async function updateSiteSelection(siteId, resultId) {

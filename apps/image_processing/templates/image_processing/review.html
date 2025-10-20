@@ -70,24 +70,27 @@
         {% for result in pending_results %}
         <div class="col-12 mb-4">
             <div class="card border-0 shadow-sm">
-                <div class="row g-0">
+                <div class="row g-3">
                     <div class="col-lg-4">
                         {% if result.image_upload.image_file %}
                             <div class="position-relative">
-                                <img src="/image-processing/image-with-bbox/{{ result.id }}/?t={{ result.created_at|date:'U' }}"
-                                     class="img-fluid rounded-start h-100 object-fit-cover"
+                                <img src="{{ result.image_upload.image_file.url }}"
+                                     class="img-fluid rounded-start"
                                      alt="{{ result.image_upload.title }}"
-                                     style="min-height: 300px;"
+                                     style="width: 100%; height: 400px; object-fit: contain; object-position: center; background-color: #f8f9fa; cursor: pointer;"
                                      id="review-image-{{ result.id }}"
-                                     data-original-url="{{ result.image_upload.image_file.url }}">
+                                     data-original-url="{{ result.image_upload.image_file.url }}"
+                                     data-bbox-url="/image-processing/image-with-bbox/{{ result.id }}/?t={{ result.created_at|date:'U' }}"
+                                     onclick="openImageModal('{{ result.image_upload.image_file.url }}', '{{ result.image_upload.title }}', '{{ result.id }}')"
+                                     title="Click to view full size">
                                 <div class="position-absolute top-0 end-0 m-2">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-outline-light btn-sm active"
+                                    <div class="btn-group btn-group-sm shadow" role="group" style="box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;">
+                                        <button type="button" class="btn btn-primary btn-sm active"
                                                 onclick="toggleBoundingBox('{{ result.id }}', 'bbox')"
                                                 title="Show with bounding box">
                                             <i class="fas fa-search-plus"></i> Box
                                         </button>
-                                        <button type="button" class="btn btn-outline-light btn-sm"
+                                        <button type="button" class="btn btn-secondary btn-sm"
                                                 onclick="toggleBoundingBox('{{ result.id }}', 'original')"
                                                 title="Show original image">
                                             <i class="fas fa-image"></i> Original
@@ -96,8 +99,8 @@
                                 </div>
                             </div>
                         {% else %}
-                            <div class="d-flex align-items-center justify-content-center bg-light rounded-start h-100"
-                                 style="min-height: 300px;">
+                            <div class="d-flex align-items-center justify-content-center bg-light rounded-start"
+                                 style="width: 100%; height: 400px;">
                                 <div class="text-center text-muted">
                                     <i class="fas fa-image fa-3x mb-3"></i>
                                     <p>No image available</p>
@@ -118,6 +121,39 @@
                                     {{ result.get_review_decision_display }}
                                 </span>
                             </div>
+                            
+                            <!-- Review Information Display -->
+                            {% if result.review_decision != 'PENDING' %}
+                                <div class="alert alert-info mb-3">
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-clipboard-check me-1"></i>Review Information
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Reviewed by:</strong> {{ result.reviewed_by.get_full_name|default:result.reviewed_by.username }}</p>
+                                            <p class="mb-0"><strong>Reviewed at:</strong> {{ result.reviewed_at|date:"M j, Y g:i A" }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            {% if result.review_decision == 'OVERRIDDEN' %}
+                                                <p class="mb-1"><strong>Original Species:</strong> {{ result.detected_species }}</p>
+                                                <p class="mb-1"><strong>Corrected Species:</strong> {{ result.overridden_species }}</p>
+                                                <p class="mb-0"><strong>Corrected Count:</strong> {{ result.overridden_count }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if result.review_notes %}
+                                        <hr>
+                                        <p class="mb-0"><strong>Review Notes:</strong></p>
+                                        <p class="mb-0">{{ result.review_notes }}</p>
+                                    {% endif %}
+                                    {% if result.override_reason %}
+                                        <hr>
+                                        <p class="mb-0"><strong>Override Reason:</strong></p>
+                                        <p class="mb-0">{{ result.override_reason }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            </div>
 
                             <!-- AI Results -->
                             <div class="row mb-3">
@@ -126,7 +162,7 @@
                                         <h6 class="fw-bold text-info mb-2">
                                             <i class="fas fa-robot me-1"></i>AI Detection
                                         </h6>
-                                        <p class="mb-1"><strong>Species:</strong> {{ result.get_detected_species_display }}</p>
+                                        <p class="mb-1"><strong>Species:</strong> {{ result.detected_species }}</p>
                                         <p class="mb-1"><strong>Count:</strong> {{ result.total_detections }}</p>
                                         <p class="mb-1"><strong>Confidence:</strong> {{ result.confidence_score|floatformat:1 }}%</p>
                                         <p class="mb-0"><strong>Model:</strong> {{ result.ai_model_used }}</p>
@@ -201,11 +237,12 @@
                                             <i class="fas fa-edit me-1"></i>Override
                                         </button>
                                     </div>
+                                </div>
+                                <div class="row mt-2">
                                     <div class="col-md-3">
-                                        <button class="btn btn-outline-secondary w-100 review-btn"
-                                                data-result-id="{{ result.id }}"
-                                                data-action="skip">
-                                            <i class="fas fa-clock me-1"></i>Review Later
+                                        <button class="btn btn-outline-danger w-100"
+                                                onclick="confirmDeleteResult('{{ result.id }}', '{{ result.image_upload.title }}')">
+                                            <i class="fas fa-trash me-1"></i>Delete Result
                                         </button>
                                     </div>
                                 </div>
@@ -328,17 +365,184 @@
     </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="imageModalTitle">
+                    <i class="fas fa-image me-2"></i>Image Preview
+                </h5>
+                <div class="btn-group me-2 shadow" role="group" style="box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="modalOriginalBtn"
+                            onclick="switchModalImage('original')">
+                        <i class="fas fa-image"></i> Original
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm active" id="modalBboxBtn"
+                            onclick="switchModalImage('bbox')">
+                        <i class="fas fa-search-plus"></i> With Boxes
+                    </button>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0 d-flex justify-content-center align-items-center" style="min-height: 70vh; background-color: #f8f9fa;">
+                <img id="modalImage" 
+                     class="img-fluid" 
+                     style="max-width: 100%; max-height: 70vh; object-fit: contain;"
+                     alt="Preview">
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between w-100">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Click outside the image or press ESC to close
+                        </small>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Result Confirmation Modal -->
+<div class="modal fade" id="deleteResultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Result
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Are you sure you want to delete this result entirely?</strong></p>
+                <p class="mb-2">Image: <span id="deleteResultImageTitle" class="fw-bold"></span></p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This will permanently delete:
+                    <ul class="mb-0 mt-2">
+                        <li>The image and all processing data</li>
+                        <li>AI detection results</li>
+                        <li>Review decisions and notes</li>
+                        <li>Any associated census data (if allocated)</li>
+                    </ul>
+                </div>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteResultForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Delete Result
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// Global variables for modal image switching
+let currentModalResultId = null;
+let currentModalOriginalUrl = null;
+let currentModalBboxUrl = null;
+
+// Open image preview modal
+function openImageModal(imageUrl, imageTitle, resultId) {
+    // Set global variables
+    currentModalResultId = resultId;
+    currentModalOriginalUrl = imageUrl;
+    currentModalBboxUrl = `/image-processing/image-with-bbox/${resultId}/?t=${Date.now()}`;
+    
+    // Update modal title
+    document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-image me-2"></i>${imageTitle}`;
+    
+    // Set initial image (bounding box view by default)
+    const modalImage = document.getElementById('modalImage');
+    modalImage.src = currentModalBboxUrl;
+    
+    // Update button states
+    document.getElementById('modalOriginalBtn').classList.remove('active');
+    document.getElementById('modalBboxBtn').classList.add('active');
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    modal.show();
+}
+
+// Switch between original and bounding box view in modal
+function switchModalImage(viewType) {
+    const modalImage = document.getElementById('modalImage');
+    const originalBtn = document.getElementById('modalOriginalBtn');
+    const bboxBtn = document.getElementById('modalBboxBtn');
+    
+    if (viewType === 'original') {
+        modalImage.src = currentModalOriginalUrl;
+        originalBtn.classList.add('active');
+        bboxBtn.classList.remove('active');
+        originalBtn.className = originalBtn.className.replace('btn-secondary', 'btn-primary');
+        bboxBtn.className = bboxBtn.className.replace('btn-primary', 'btn-secondary');
+    } else {
+        modalImage.src = currentModalBboxUrl;
+        bboxBtn.classList.add('active');
+        originalBtn.classList.remove('active');
+        bboxBtn.className = bboxBtn.className.replace('btn-secondary', 'btn-primary');
+        originalBtn.className = originalBtn.className.replace('btn-secondary', 'btn-primary');
+    }
+}
+
+// Handle delete result confirmation
+function confirmDeleteResult(resultId, imageTitle) {
+    // Set the image title in the modal
+    document.getElementById('deleteResultImageTitle').textContent = imageTitle;
+    
+    // Set the form action
+    const form = document.getElementById('deleteResultForm');
+    form.action = `/image-processing/review/delete-result/${resultId}/`;
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteResultModal'));
+    modal.show();
+}
+
 function toggleBoundingBox(resultId, viewType) {
     const imgElement = document.getElementById(`review-image-${resultId}`);
     const originalUrl = imgElement.dataset.originalUrl;
+    const bboxUrl = imgElement.dataset.bboxUrl;
 
     if (viewType === 'original') {
-        // Show original image
+        // Show original image with proper aspect ratio
         imgElement.src = originalUrl + '?t=' + Date.now();
+        imgElement.style.objectFit = 'contain';
+        imgElement.style.backgroundColor = '#f8f9fa';
+        
+        // Update button states
+        const bboxBtn = document.querySelector(`button[onclick="toggleBoundingBox('${resultId}', 'bbox')"]`);
+        const originalBtn = document.querySelector(`button[onclick="toggleBoundingBox('${resultId}', 'original')"]`);
+        bboxBtn.classList.remove('active');
+        originalBtn.classList.add('active');
+        bboxBtn.className = bboxBtn.className.replace('btn-primary', 'btn-secondary');
+        originalBtn.className = originalBtn.className.replace('btn-secondary', 'btn-primary');
     } else {
-        // Show image with bounding box (default view)
-        imgElement.src = '/image-processing/image-with-bbox/' + resultId + '/?t=' + Date.now();
+        // Show image with bounding boxes
+        imgElement.src = bboxUrl || '/image-processing/image-with-bbox/' + resultId + '/?t=' + Date.now();
+        imgElement.style.objectFit = 'contain';
+        imgElement.style.backgroundColor = '#f8f9fa';
+        
+        // Update button states
+        const bboxBtn = document.querySelector(`button[onclick="toggleBoundingBox('${resultId}', 'bbox')"]`);
+        const originalBtn = document.querySelector(`button[onclick="toggleBoundingBox('${resultId}', 'original')"]`);
+        originalBtn.classList.remove('active');
+        bboxBtn.classList.add('active');
+        originalBtn.className = originalBtn.className.replace('btn-primary', 'btn-secondary');
+        bboxBtn.className = bboxBtn.className.replace('btn-secondary', 'btn-primary');
     }
 }
 

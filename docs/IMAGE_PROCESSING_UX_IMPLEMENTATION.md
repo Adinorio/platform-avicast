@@ -191,7 +191,7 @@ uploadInput.addEventListener('change', (e) => {
     </p>
     <div class="card-actions">
       <button class="btn btn-primary process-btn" data-image-id="uuid">
-        <i class="fas fa-search"></i> Clarify with AI
+        <i class="fas fa-search"></i> Identify
       </button>
       <button class="btn btn-secondary skip-btn" onclick="skipProcessing('uuid')">
         <i class="fas fa-clock"></i> Process Later

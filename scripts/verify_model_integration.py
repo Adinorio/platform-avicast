@@ -26,7 +26,7 @@ def verify_model_files():
     print("=" * 60)
 
     models_dir = project_root / "models"
-    chinese_egret_dir = models_dir / "chinese_egret_v1"
+    chinese_egret_dir = models_dir / "egret_500_model"
 
     # Check model files
     model_files = [

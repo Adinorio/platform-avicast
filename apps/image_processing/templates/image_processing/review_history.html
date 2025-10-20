@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+
+{% block title %}Review History - AVICAST{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'image_processing:dashboard' %}">Image Processing</a>
+            </li>
+            <li class="breadcrumb-item active">Review History</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="fas fa-history text-info me-2"></i>
+                        Review History
+                    </h2>
+                    <p class="text-muted">View all review decisions, notes, and override reasons</p>
+                </div>
+                <div>
+                    <a href="{% url 'image_processing:review' %}" class="btn btn-primary">
+                        <i class="fas fa-brain me-1"></i>Active Reviews
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if reviewed_results %}
+    <!-- Review History List -->
+    <div class="row">
+        {% for result in reviewed_results %}
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="row g-3">
+                    <div class="col-lg-3">
+                        {% if result.image_upload.image_file %}
+                            <img src="{{ result.image_upload.image_file.url }}"
+                                 class="img-fluid rounded-start"
+                                 alt="{{ result.image_upload.title }}"
+                                 style="width: 100%; height: 300px; object-fit: cover; object-position: center; cursor: pointer;"
+                                 onclick="openImageModal('{{ result.image_upload.image_file.url }}', '{{ result.image_upload.title }}', '{{ result.id }}')"
+                                 title="Click to view full size">
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center bg-light rounded-start"
+                                 style="width: 100%; height: 300px;">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-image fa-3x mb-3"></i>
+                                    <p>No image available</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-lg-9">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title">{{ result.image_upload.title }}</h5>
+                                    {% if result.image_upload.site_hint %}
+                                        <p class="text-muted mb-2">{{ result.image_upload.site_hint }}</p>
+                                    {% endif %}
+                                </div>
+                                <span class="badge fs-6 {% if result.review_decision == 'APPROVED' %}bg-success{% elif result.review_decision == 'REJECTED' %}bg-danger{% else %}bg-info{% endif %}">
+                                    {{ result.get_review_decision_display }}
+                                </span>
+                            </div>
+
+                            <!-- Review Information -->
+                            <div class="alert alert-light mb-3">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-clipboard-check me-1"></i>Review Details
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Reviewed by:</strong> {{ result.reviewed_by.get_full_name|default:result.reviewed_by.username }}</p>
+                                        <p class="mb-1"><strong>Reviewed at:</strong> {{ result.reviewed_at|date:"M j, Y g:i A" }}</p>
+                                        <p class="mb-0"><strong>Decision:</strong> {{ result.get_review_decision_display }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Final Species:</strong> {{ result.get_final_species_display }}</p>
+                                        <p class="mb-1"><strong>Final Count:</strong> {{ result.final_count }}</p>
+                                        <p class="mb-0"><strong>AI Confidence:</strong> {{ result.confidence_score|floatformat:1 }}%</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI Results -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3 bg-light">
+                                        <h6 class="fw-bold mb-2">
+                                            <i class="fas fa-robot me-1"></i>AI Detection
+                                        </h6>
+                                        <p class="mb-1"><strong>Species:</strong> {{ result.detected_species }}</p>
+                                        <p class="mb-1"><strong>Count:</strong> {{ result.total_detections }}</p>
+                                        <p class="mb-0"><strong>Confidence:</strong> {{ result.confidence_score|floatformat:1 }}%</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3 bg-light">
+                                        <h6 class="fw-bold mb-2">
+                                            <i class="fas fa-check-circle me-1"></i>Final Result
+                                        </h6>
+                                        <p class="mb-1"><strong>Species:</strong> {{ result.get_final_species_display }}</p>
+                                        <p class="mb-1"><strong>Count:</strong> {{ result.final_count }}</p>
+                                        {% if result.review_decision == 'OVERRIDDEN' %}
+                                            <small class="text-info">
+                                                <i class="fas fa-edit me-1"></i>Overridden from AI result
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3 bg-light">
+                                        <h6 class="fw-bold mb-2">
+                                            <i class="fas fa-cog me-1"></i>Processing Info
+                                        </h6>
+                                        <p class="mb-1"><strong>Model:</strong> {{ result.ai_model_used }}</p>
+                                        <p class="mb-1"><strong>Device:</strong> {{ result.processing_device }}</p>
+                                        {% if result.inference_time %}
+                                            <p class="mb-0"><strong>Time:</strong> {{ result.inference_time }}s</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Allocation Status (only show if allocated) -->
+                            {% if result.image_upload.upload_status == 'ENGAGED' %}
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="border rounded p-3 bg-primary-subtle">
+                                        <h6 class="fw-bold text-primary mb-2">
+                                            <i class="fas fa-map-marker-alt me-1"></i>Allocation Status
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p class="mb-1"><strong>Status:</strong> 
+                                                    <span class="badge bg-primary">Allocated to Census</span>
+                                                </p>
+                                                <p class="mb-1"><strong>Site:</strong> {{ result.allocated_to_site.name }}</p>
+                                                <p class="mb-0"><strong>Allocated at:</strong> {{ result.allocated_at|date:"M j, Y g:i A" }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                {% if result.allocated_to_census %}
+                                                    <p class="mb-1"><strong>Census ID:</strong> {{ result.allocated_to_census.id }}</p>
+                                                    <p class="mb-1"><strong>Census Date:</strong> {{ result.allocated_to_census.census_date|date:"M j, Y" }}</p>
+                                                    <p class="mb-0"><strong>Allocated by:</strong> {{ result.allocated_by.get_full_name|default:result.allocated_by.username }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Review Notes and Override Reason -->
+                            <div class="row">
+                                {% if result.review_notes %}
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 bg-success-subtle">
+                                        <h6 class="fw-bold text-success mb-2">
+                                            <i class="fas fa-sticky-note me-1"></i>Review Notes
+                                        </h6>
+                                        <p class="mb-0">{{ result.review_notes }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if result.override_reason %}
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 bg-info-subtle">
+                                        <h6 class="fw-bold text-info mb-2">
+                                            <i class="fas fa-edit me-1"></i>Override Reason
+                                        </h6>
+                                        <p class="mb-0">{{ result.override_reason }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if not result.review_notes and not result.override_reason %}
+                                <div class="col-12">
+                                    <div class="border rounded p-3 bg-light">
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            No review notes available. This result was processed before the notes functionality was added.
+                                        </p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- All Detections (if available) -->
+                            {% if result.all_detections %}
+                            <div class="mt-3">
+                                <h6 class="fw-bold mb-2">
+                                    <i class="fas fa-search me-1"></i>All Detections
+                                </h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Species</th>
+                                                <th>Confidence</th>
+                                                <th>Bounding Box</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for detection in result.all_detections %}
+                                            <tr>
+                                                <td>{{ detection.species }}</td>
+                                                <td>{{ detection.confidence|floatformat:3 }}</td>
+                                                <td>{{ detection.bounding_box.x }}, {{ detection.bounding_box.y }} ({{ detection.bounding_box.width }}x{{ detection.bounding_box.height }})</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- No Reviews Yet -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted">No Reviews Yet</h4>
+                    <p class="text-muted mb-4">No images have been reviewed yet. Process some images first, then review them.</p>
+                    <a href="{% url 'image_processing:process' %}" class="btn btn-primary">
+                        <i class="fas fa-cog me-1"></i>Process Images
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="imageModalTitle">
+                    <i class="fas fa-image me-2"></i>Image Preview
+                </h5>
+                <div class="btn-group me-2" role="group">
+                    <button type="button" class="btn btn-outline-light btn-sm" id="modalOriginalBtn"
+                            onclick="switchModalImage('original')">
+                        <i class="fas fa-image"></i> Original
+                    </button>
+                    <button type="button" class="btn btn-outline-light btn-sm active" id="modalBboxBtn"
+                            onclick="switchModalImage('bbox')">
+                        <i class="fas fa-search-plus"></i> With Boxes
+                    </button>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0 d-flex justify-content-center align-items-center" style="min-height: 70vh; background-color: #f8f9fa;">
+                <img id="modalImage" 
+                     class="img-fluid" 
+                     style="max-width: 100%; max-height: 70vh; object-fit: contain;"
+                     alt="Preview">
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between w-100">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Click outside the image or press ESC to close
+                        </small>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables for modal image switching
+let currentModalResultId = null;
+let currentModalOriginalUrl = null;
+let currentModalBboxUrl = null;
+
+// Open image preview modal
+function openImageModal(imageUrl, imageTitle, resultId) {
+    // Set global variables
+    currentModalResultId = resultId;
+    currentModalOriginalUrl = imageUrl;
+    currentModalBboxUrl = `/image-processing/image-with-bbox/${resultId}/?t=${Date.now()}`;
+    
+    // Update modal title
+    document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-image me-2"></i>${imageTitle}`;
+    
+    // Set initial image (bounding box view by default)
+    const modalImage = document.getElementById('modalImage');
+    modalImage.src = currentModalBboxUrl;
+    
+    // Update button states
+    document.getElementById('modalOriginalBtn').classList.remove('active');
+    document.getElementById('modalBboxBtn').classList.add('active');
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    modal.show();
+}
+
+// Switch between original and bounding box view in modal
+function switchModalImage(viewType) {
+    const modalImage = document.getElementById('modalImage');
+    const originalBtn = document.getElementById('modalOriginalBtn');
+    const bboxBtn = document.getElementById('modalBboxBtn');
+    
+    if (viewType === 'original') {
+        modalImage.src = currentModalOriginalUrl;
+        originalBtn.classList.add('active');
+        bboxBtn.classList.remove('active');
+        originalBtn.className = originalBtn.className.replace('btn-secondary', 'btn-primary');
+        bboxBtn.className = bboxBtn.className.replace('btn-primary', 'btn-secondary');
+    } else {
+        modalImage.src = currentModalBboxUrl;
+        bboxBtn.classList.add('active');
+        originalBtn.classList.remove('active');
+        bboxBtn.className = bboxBtn.className.replace('btn-secondary', 'btn-primary');
+        originalBtn.className = originalBtn.className.replace('btn-secondary', 'btn-primary');
+    }
+}
+</script>
+{% endblock %}

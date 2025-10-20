@@ -291,10 +291,23 @@ def process_image_with_ai(image_upload):
             
         logger.info(f"All detections data: {len(all_detections_data)} items")
         
+        # Create multi-species summary for detected_species field
+        species_counts = {}
+        for detection in all_detections_data:
+            species = detection["species"]
+            species_counts[species] = species_counts.get(species, 0) + 1
+        
+        # Create a summary string showing all detected species
+        if species_counts:
+            species_summary = ", ".join([f"{count} {species}" for species, count in species_counts.items()])
+            detected_species_summary = species_summary
+        else:
+            detected_species_summary = "UNKNOWN"
+        
         # Create processing result from detection data
         result = ProcessingResult.objects.create(
             image_upload=image_upload,
-            detected_species=detection_result["primary_species"] or "UNKNOWN",
+            detected_species=detected_species_summary,
             confidence_score=detection_result["primary_confidence"],
             bounding_box=all_bboxes if all_bboxes else [{"x": 0, "y": 0, "width": 0, "height": 0}],
             total_detections=detection_result["total_detections"],
@@ -364,30 +377,41 @@ def image_with_bbox(request, result_id):
                             width=1
                         )
 
-                    # Add label for each detection
-                    if idx == 0:  # Primary detection
-                        label_text = f"{result.get_detected_species_display()} ({result.confidence_score:.1%})"
-                    else:  # Additional detections
-                        label_text = f"{result.get_detected_species_display()} #{idx + 1}"
+                    # Add label for each detection using all_detections data
+                    if result.all_detections and idx < len(result.all_detections):
+                        detection = result.all_detections[idx]
+                        species = detection.get("species", "Unknown")
+                        confidence = detection.get("confidence", 0)
+                        label_text = f"{species} ({confidence:.1%})"
+                    else:
+                        # Fallback to old method
+                        label_text = f"{result.detected_species} #{idx + 1}"
 
-                    # Draw semi-transparent background for text
+                    # Draw background for text with better contrast
                     try:
                         from PIL import ImageFont
-                        font = ImageFont.load_default()
+                        # Try to load a larger font for better readability
+                        try:
+                            font = ImageFont.truetype("arial.ttf", 16)
+                        except:
+                            try:
+                                font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", 16)
+                            except:
+                                font = ImageFont.load_default()
                     except:
                         font = None
 
                     # Get text size for background rectangle
                     if font:
-                        text_bbox = draw.textbbox((x, y - 30), label_text, font=font)
+                        text_bbox = draw.textbbox((x, y - 35), label_text, font=font)
                     else:
-                        text_bbox = [x, y - 30, x + len(label_text) * 12, y - 10]  # Approximate
+                        text_bbox = [x, y - 35, x + len(label_text) * 10, y - 15]  # Approximate
 
-                    # Draw background rectangle
-                    draw.rectangle(text_bbox, fill=(255, 0, 0))
+                    # Draw background rectangle with better contrast
+                    draw.rectangle(text_bbox, fill=(0, 0, 0, 180))  # Semi-transparent black
 
-                    # Draw text in white
-                    draw.text((x, y - 30), label_text, fill=(255, 255, 255), font=font)
+                    # Draw text in white with outline for better readability
+                    draw.text((x, y - 35), label_text, fill=(255, 255, 255), font=font)
         else:
             # Single bounding box (legacy format)
             bbox = result.bounding_box
@@ -554,22 +578,151 @@ def cache_reset(request):
 
 
 @login_required
+def review_history(request):
+    """
+    View detailed review history for all processed images
+    """
+    # Get all processed results with review information
+    if request.user.role in ['SUPERADMIN', 'ADMIN']:
+        reviewed_results = ProcessingResult.objects.filter(
+            review_decision__in=['APPROVED', 'REJECTED', 'OVERRIDDEN']
+        ).select_related('image_upload', 'reviewed_by').order_by("-reviewed_at")
+    else:
+        reviewed_results = ProcessingResult.objects.filter(
+            image_upload__uploaded_by=request.user,
+            review_decision__in=['APPROVED', 'REJECTED', 'OVERRIDDEN']
+        ).select_related('image_upload', 'reviewed_by').order_by("-reviewed_at")
+
+    context = {
+        "title": "Review History",
+        "reviewed_results": reviewed_results,
+        "stage": "reflect",
+    }
+    
+    return render(request, "image_processing/review_history.html", context)
+
+
+@login_required
+def delete_result(request, result_id):
+    """
+    Delete a processing result entirely (remove from system)
+    """
+    if request.method != "POST":
+        return JsonResponse({'error': 'Only POST requests allowed'}, status=405)
+    
+    result = get_object_or_404(ProcessingResult, id=result_id)
+    
+    # Check permissions
+    if request.user.role not in ['SUPERADMIN', 'ADMIN'] and result.image_upload.uploaded_by != request.user:
+        messages.error(request, "❌ You don't have permission to delete this result.")
+        return redirect("image_processing:allocate")
+    
+    try:
+        # If result is allocated, delete associated census data first
+        if result.image_upload.upload_status == 'ENGAGED':
+            # Delete associated census observations
+            from apps.locations.models import CensusObservation
+            deleted_observations = CensusObservation.objects.filter(
+                census__result=result
+            ).delete()
+            
+            # Delete associated census records
+            from apps.locations.models import Census
+            deleted_census = Census.objects.filter(result=result).delete()
+        
+        # Delete the image upload (this will cascade to delete the processing result)
+        image_title = result.image_upload.title
+        result.image_upload.delete()
+        
+        messages.success(
+            request,
+            f"✅ Successfully deleted '{image_title}' and all associated data."
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to delete result {result_id}: {e}")
+        messages.error(
+            request,
+            f"❌ Failed to delete result: {str(e)}"
+        )
+    
+    return redirect("image_processing:allocate")
+
+
+@login_required
+def delete_allocation(request, result_id):
+    """
+    Delete an allocated result (remove from census data)
+    """
+    if request.method != "POST":
+        return JsonResponse({'error': 'Only POST requests allowed'}, status=405)
+    
+    result = get_object_or_404(ProcessingResult, id=result_id)
+    
+    # Check permissions
+    if request.user.role not in ['SUPERADMIN', 'ADMIN'] and result.image_upload.uploaded_by != request.user:
+        messages.error(request, "❌ You don't have permission to delete this allocation.")
+        return redirect("image_processing:allocate")
+    
+    try:
+        # Check if result is actually allocated
+        if result.image_upload.upload_status != 'ENGAGED':
+            messages.warning(request, f"⚠️ '{result.image_upload.title}' is not allocated.")
+            return redirect("image_processing:allocate")
+        
+        # Delete associated census observations
+        from apps.locations.models import CensusObservation
+        deleted_observations = CensusObservation.objects.filter(
+            census__result=result
+        ).delete()
+        
+        # Delete associated census records
+        from apps.locations.models import Census
+        deleted_census = Census.objects.filter(result=result).delete()
+        
+        # Reset the result status
+        result.image_upload.upload_status = 'REFLECTED'
+        result.image_upload.save()
+        
+        # Clear allocation fields
+        result.allocated_to_site = None
+        result.allocated_to_census = None
+        result.allocated_at = None
+        result.save()
+        
+        messages.success(
+            request,
+            f"✅ Successfully deleted allocation for '{result.image_upload.title}'. "
+            f"Removed {deleted_observations[0]} observations and {deleted_census[0]} census records."
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to delete allocation for {result.image_upload.title}: {e}")
+        messages.error(
+            request,
+            f"❌ Failed to delete allocation for '{result.image_upload.title}': {str(e)}"
+        )
+    
+    return redirect("image_processing:allocate")
+
+
+@login_required
 def allocate_results(request):
     """
     ENGAGE Stage: Allocate approved results to census data
     """
-    # Get results ready for allocation (exclude already allocated ones)
+    # Get results ready for allocation (only unallocated results)
     if request.user.role in ['SUPERADMIN', 'ADMIN']:
         ready_results = ProcessingResult.objects.filter(
             review_decision__in=[ReviewDecision.APPROVED, ReviewDecision.OVERRIDDEN],
             image_upload__upload_status__in=['REFLECTED', 'ORGANIZED']  # Only show unallocated results
-        ).order_by("created_at")
+        ).order_by("-created_at")  # Most recent first
     else:
         ready_results = ProcessingResult.objects.filter(
             image_upload__uploaded_by=request.user,
             review_decision__in=[ReviewDecision.APPROVED, ReviewDecision.OVERRIDDEN],
             image_upload__upload_status__in=['REFLECTED', 'ORGANIZED']  # Only show unallocated results
-        ).order_by("created_at")
+        ).order_by("-created_at")  # Most recent first
 
     if request.method == "POST":
         print("DEBUG: Allocation POST request received")
@@ -638,23 +791,51 @@ def allocate_results(request):
 
                     # Validate that the species exists in the fauna management system
                     try:
-                        # Try to find the species by name or scientific name
+                        # Try to find the species by name or scientific name with flexible matching
                         species = Species.objects.get(
+                            models.Q(name__icontains=species_name) |
+                            models.Q(scientific_name__icontains=species_name) |
                             models.Q(name__iexact=species_name) |
                             models.Q(scientific_name__iexact=species_name)
                         )
                         validated_species_name = species.name
                         print(f"DEBUG: Found species in database - {validated_species_name}")
                     except Species.DoesNotExist:
-                        # If species doesn't exist in database, show error
-                        messages.error(
-                            request,
-                            f"❌ Species '{species_name}' is not registered in the fauna management system. Please add it first."
-                        )
-                        return redirect("image_processing:allocate")
+                        # Try more flexible matching for common names
+                        try:
+                            # Handle common name variations
+                            if "chinese egret" in species_name.lower():
+                                species = Species.objects.filter(name__icontains="CHINESE").filter(name__icontains="EGRET").first()
+                                if not species:
+                                    species = Species.objects.filter(name__icontains="CHINESE").first()
+                            elif "little egret" in species_name.lower():
+                                species = Species.objects.filter(name__icontains="LITTLE EGRET").first()
+                            elif "great egret" in species_name.lower():
+                                species = Species.objects.filter(name__icontains="GREAT EGRET").first()
+                            elif "intermediate egret" in species_name.lower():
+                                species = Species.objects.filter(name__icontains="INTERMEDIATE EGRET").first()
+                            elif "cattle egret" in species_name.lower():
+                                species = Species.objects.filter(name__icontains="CATTLE EGRET").first()
+                            else:
+                                raise Species.DoesNotExist
+                            
+                            if species:
+                                validated_species_name = species.name
+                                print(f"DEBUG: Found species via flexible matching - {validated_species_name}")
+                            else:
+                                raise Species.DoesNotExist
+                        except Species.DoesNotExist:
+                            # If species doesn't exist in database, show error
+                            messages.error(
+                                request,
+                                f"❌ Species '{species_name}' is not registered in the fauna management system. Please add it first."
+                            )
+                            return redirect("image_processing:allocate")
                     except Species.MultipleObjectsReturned:
                         # If multiple species match, use the first one
                         species = Species.objects.filter(
+                            models.Q(name__icontains=species_name) |
+                            models.Q(scientific_name__icontains=species_name) |
                             models.Q(name__iexact=species_name) |
                             models.Q(scientific_name__iexact=species_name)
                         ).first()
@@ -675,21 +856,48 @@ def allocate_results(request):
 
                 if primary_species:
                     try:
-                        # Try to find the species by name or scientific name
+                        # Try to find the species by name or scientific name with flexible matching
                         species = Species.objects.get(
+                            models.Q(name__icontains=primary_species) |
+                            models.Q(scientific_name__icontains=primary_species) |
                             models.Q(name__iexact=primary_species) |
                             models.Q(scientific_name__iexact=primary_species)
                         )
                         validated_species_name = species.name
                         print(f"DEBUG: Found species in database - {validated_species_name}")
                     except Species.DoesNotExist:
-                        messages.error(
-                            request,
-                            f"❌ Species '{primary_species}' is not registered in the fauna management system. Please add it first."
-                        )
-                        return redirect("image_processing:allocate")
+                        # Try more flexible matching for common names
+                        try:
+                            if "chinese egret" in primary_species.lower():
+                                species = Species.objects.filter(name__icontains="CHINESE").filter(name__icontains="EGRET").first()
+                                if not species:
+                                    species = Species.objects.filter(name__icontains="CHINESE").first()
+                            elif "little egret" in primary_species.lower():
+                                species = Species.objects.filter(name__icontains="LITTLE EGRET").first()
+                            elif "great egret" in primary_species.lower():
+                                species = Species.objects.filter(name__icontains="GREAT EGRET").first()
+                            elif "intermediate egret" in primary_species.lower():
+                                species = Species.objects.filter(name__icontains="INTERMEDIATE EGRET").first()
+                            elif "cattle egret" in primary_species.lower():
+                                species = Species.objects.filter(name__icontains="CATTLE EGRET").first()
+                            else:
+                                raise Species.DoesNotExist
+                            
+                            if species:
+                                validated_species_name = species.name
+                                print(f"DEBUG: Found species via flexible matching - {validated_species_name}")
+                            else:
+                                raise Species.DoesNotExist
+                        except Species.DoesNotExist:
+                            messages.error(
+                                request,
+                                f"❌ Species '{primary_species}' is not registered in the fauna management system. Please add it first."
+                            )
+                            return redirect("image_processing:allocate")
                     except Species.MultipleObjectsReturned:
                         species = Species.objects.filter(
+                            models.Q(name__icontains=primary_species) |
+                            models.Q(scientific_name__icontains=primary_species) |
                             models.Q(name__iexact=primary_species) |
                             models.Q(scientific_name__iexact=primary_species)
                         ).first()
@@ -751,8 +959,7 @@ def allocate_results(request):
             # )
 
             # Update processing result status to show it's been allocated
-            result.image_upload.upload_status = 'ENGAGED'
-            result.image_upload.save(update_fields=['upload_status'])
+            result.allocate_to_census(site=site, census=census, allocated_by=request.user)
 
             # Log the allocation activity
             UserActivity.log_activity(
@@ -778,9 +985,16 @@ def allocate_results(request):
                 }
             )
 
+            # Create success message with species details
+            species_details = []
+            for species_name, count in species_counts.items():
+                species_details.append(f"{count} {species_name}")
+            
+            species_summary = ", ".join(species_details)
+            
             messages.success(
                 request,
-                f"✅ Successfully allocated '{result.image_upload.title}' ({result.final_count} birds) to census record at {site.name} - {census_year.year} {census_month.get_month_display()}"
+                f"✅ Successfully allocated '{result.image_upload.title}' ({species_summary}) to census record at {site.name} - {census_year.year} {census_month.get_month_display()}"
             )
 
             return redirect("image_processing:allocate")
@@ -942,7 +1156,7 @@ def model_selection(request):
                     })
     
     # Get current active model (you might store this in settings or database)
-    current_model = getattr(settings, 'ACTIVE_BIRD_MODEL', 'chinese_egret_v1')
+    current_model = getattr(settings, 'ACTIVE_BIRD_MODEL', 'egret_500_model')
     
     context = {
         "title": "Model Management",
@@ -961,12 +1175,12 @@ def benchmark_models(request):
     # Get model performance data (this would come from your benchmarking system)
     model_performance = [
         {
-            'name': 'chinese_egret_v1',
-            'accuracy': 0.94,
-            'precision': 0.92,
-            'recall': 0.89,
-            'f1_score': 0.90,
-            'inference_time': 0.15,
+            'name': 'egret_500_model',
+            'accuracy': 0.6828,
+            'precision': 0.6791,
+            'recall': 0.6099,
+            'f1_score': 0.6428,
+            'inference_time': 0.0134,
             'status': 'active'
         },
         {
