@@ -51,7 +51,7 @@ chinese_egret_pipeline/
 │   ├── prepare_chinese_egret_data.py #   Data preprocessing
 │   └── prepare_and_organize_dataset.py # Complete data pipeline
 └── 🏃 runs/                        # ✅ TRAINING OUTPUTS
-    └── train/chinese_egret_v1/      #     Trained model artifacts
+    └── train/egret_500_model/      #     Trained model artifacts
         └── weights/
             ├── best.pt              #     🏆 BEST MODEL (PyTorch)
             └── best.onnx            #     🚀 ONNX EXPORT (Deployment)
@@ -72,7 +72,7 @@ chinese_egret_pipeline/
 - ✅ **GPU Optimization:** Full RTX 3050 utilization
 - ✅ **Hyperparameter Tuning:** Optimized for 4GB VRAM
 - ✅ **50 Epochs Training:** Complete convergence achieved
-- ✅ **Best Model Saved:** `runs/train/chinese_egret_v1/weights/best.pt`
+- ✅ **Best Model Saved:** `runs/train/egret_500_model/weights/best.pt`
 
 ### 🧪 **3. MODEL VALIDATION**
 - ✅ **Comprehensive Testing:** Full test suite on 117 images
@@ -99,22 +99,22 @@ chinese_egret_pipeline/
 ### 🏃 **Run Inference (Production Ready!):**
 ```bash
 cd chinese_egret_pipeline
-python run_pipeline.py inference --model runs/train/chinese_egret_v1/weights/best.pt --source path/to/images --save-images
+python run_pipeline.py inference --model runs/train/egret_500_model/weights/best.pt --source path/to/images --save-images
 ```
 
 ### 📊 **Validate Model Performance:**
 ```bash
-python run_pipeline.py validate --model runs/train/chinese_egret_v1/weights/best.pt
+python run_pipeline.py validate --model runs/train/egret_500_model/weights/best.pt
 ```
 
 ### 📦 **Export for Deployment:**
 ```bash
-python run_pipeline.py export --model runs/train/chinese_egret_v1/weights/best.pt --formats onnx tensorrt
+python run_pipeline.py export --model runs/train/egret_500_model/weights/best.pt --formats onnx tensorrt
 ```
 
 ### 📈 **Monitor Training (Future Training):**
 ```bash
-python run_pipeline.py monitor --log-dir runs/train/chinese_egret_v1
+python run_pipeline.py monitor --log-dir runs/train/egret_500_model
 ```
 
 ---

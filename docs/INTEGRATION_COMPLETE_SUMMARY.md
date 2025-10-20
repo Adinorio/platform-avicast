@@ -9,9 +9,9 @@ Your new **99.46% accuracy Chinese Egret detection model** has been successfully
 ## 📋 **Integration Checklist - All Complete!**
 
 ### ✅ **Model Files Deployed**
-- 🏆 `models/chinese_egret_v1/chinese_egret_best.pt` (22.5 MB) - Main PyTorch model
-- 🚀 `models/chinese_egret_v1/chinese_egret_best.onnx` (44.7 MB) - ONNX deployment format
-- 📄 `models/chinese_egret_v1/model_info.json` (2.5 KB) - Model metadata
+- 🏆 `models/egret_500_model/chinese_egret_best.pt` (22.5 MB) - Main PyTorch model
+- 🚀 `models/egret_500_model/chinese_egret_best.onnx` (44.7 MB) - ONNX deployment format
+- 📄 `models/egret_500_model/model_info.json` (2.5 KB) - Model metadata
 
 ### ✅ **Code Integration Complete**
 - 🔧 **Bird Detection Service** - Updated with Chinese Egret model support

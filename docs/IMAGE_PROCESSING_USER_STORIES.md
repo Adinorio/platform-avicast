@@ -124,7 +124,7 @@ So that I can decide which ones to process immediately.
 Acceptance Criteria:
 ✅ Grid view shows image thumbnails (200x200px)
 ✅ Image title, upload time, file size displayed
-✅ Two action buttons: "Clarify with AI" + "Process Later"
+✅ Two action buttons: "Identify" + "Process Later"
 ✅ Images sorted by upload date (newest first)
 ✅ Visual indicator for processing status (badges)
 ✅ ADMIN/SUPERADMIN see all users' images
@@ -404,7 +404,7 @@ UX Requirements:
 8. Success notification: "25 images uploaded successfully"
 9. Maria clicks "Process Images" from dashboard
 10. Reviews grid of 25 thumbnails
-11. Clicks "Clarify with AI" on first 20 clear images
+11. Clicks "Identify" on first 20 clear images
 12. Clicks "Process Later" on 5 blurry images
 13. Watches progress bar as each image processes
 14. After 3 minutes, all 20 images processed (status: ORGANIZED)
@@ -611,7 +611,7 @@ Border Radius: 0.375rem (6px)
     <h6 class="card-title">Image Title</h6>
     <p class="meta">2.5 MB • 5 min ago</p>
     <div class="actions">
-      <button class="btn-primary">Clarify with AI</button>
+      <button class="btn-primary">Identify</button>
       <button class="btn-secondary">Process Later</button>
     </div>
   </div>

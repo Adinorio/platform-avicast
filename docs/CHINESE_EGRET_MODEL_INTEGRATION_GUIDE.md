@@ -18,7 +18,7 @@ Your new Chinese Egret detection model (99.46% accuracy) has been successfully i
 
 #### 1. **Model Files Location:**
 ```
-models/chinese_egret_v1/
+models/egret_500_model/
 ├── chinese_egret_best.pt        # Main PyTorch model (21.5MB)
 ├── chinese_egret_best.onnx      # ONNX deployment version (42.7MB)
 └── model_info.json              # Detailed model information
@@ -187,7 +187,7 @@ RECOMMENDED_SETTINGS = {
 ## 🛠️ **Troubleshooting**
 
 ### **If Model Not Appearing:**
-1. Check model files are in `models/chinese_egret_v1/`
+1. Check model files are in `models/egret_500_model/`
 2. Restart the Django application
 3. Check logs for loading errors
 4. Verify CUDA/GPU availability for optimal performance

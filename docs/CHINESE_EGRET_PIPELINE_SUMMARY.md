@@ -37,7 +37,7 @@ python run_pipeline.py setup
 python run_pipeline.py train --model-size s --epochs 100
 
 # Monitor training progress (in another terminal)
-python run_pipeline.py monitor --log-dir training/runs/chinese_egret_v1 --mode live
+python run_pipeline.py monitor --log-dir training/runs/egret_500_model --mode live
 ```
 
 ## 🎯 **What's Changed**
@@ -103,12 +103,12 @@ python run_pipeline.py train --model-size m --epochs 150 --batch-size 8
 ### **3. Monitor Progress**
 ```bash
 # Real-time monitoring
-python run_pipeline.py monitor --log-dir training/runs/chinese_egret_v1 --mode live
+python run_pipeline.py monitor --log-dir training/runs/egret_500_model --mode live
 ```
 
 ### **4. Validate Results**
 ```bash
-python run_pipeline.py validate --model training/runs/chinese_egret_v1/weights/best.pt
+python run_pipeline.py validate --model training/runs/egret_500_model/weights/best.pt
 ```
 
 ### **5. Export for Deployment**
