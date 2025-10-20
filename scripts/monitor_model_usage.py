@@ -94,7 +94,7 @@ def print_final_report(stats):
     print("\n🔧 TROUBLESHOOTING:")
     print("   1. Run: python verify_model_integration.py")
     print("   2. Check: python manage.py verify_chinese_egret_model --switch-to-chinese-egret")
-    print("   3. Verify model files exist in: models/chinese_egret_v1/")
+    print("   3. Verify model files exist in: models/egret_500_model/")
     print("   4. Restart Django application if needed")
 
     print("\n💡 HOW TO FORCE CHINESE EGRET MODEL:")

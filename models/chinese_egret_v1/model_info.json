@@ -6,12 +6,12 @@
   "description": "Ultra high-performance YOLOv8 model specifically trained for Chinese Egret detection with exceptional accuracy",
 
   "performance_metrics": {
-    "mAP@0.5": 99.46,
-    "mAP@0.5-0.95": 80.06,
-    "precision": 97.35,
-    "recall": 99.12,
-    "f1_score": 98.23,
-    "fitness": 82.00
+    "mAP@0.5": 68.28,
+    "mAP@0.5-0.95": 39.72,
+    "precision": 67.91,
+    "recall": 60.99,
+    "f1_score": 64.28,
+    "fitness": 68.28
   },
 
   "speed_metrics": {

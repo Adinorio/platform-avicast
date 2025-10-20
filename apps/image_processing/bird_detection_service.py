@@ -25,7 +25,7 @@ class BirdDetectionService:
     Service class for bird detection using YOLO models
     """
 
-    def __init__(self, model_path: Optional[str] = None, confidence_threshold: float = 0.3):
+    def __init__(self, model_path: Optional[str] = None, confidence_threshold: float = 0.25):
         """
         Initialize the optimized bird detection service
 
@@ -50,10 +50,10 @@ class BirdDetectionService:
         }
 
         # Performance optimization settings
-        self.enable_half_precision = True  # Use FP16 for faster inference
-        self.enable_model_warmup = True    # Warm up model for better performance
-        self.max_batch_size = 4            # Process multiple images together
-        self.image_size = (640, 640)       # Optimal input size
+        self.enable_half_precision = False  # Disable FP16 to avoid dtype issues
+        self.enable_model_warmup = True     # Warm up model for better performance
+        self.max_batch_size = 4             # Process multiple images together
+        self.image_size = (640, 640)        # Optimal input size
 
         self._load_model()
 
@@ -101,12 +101,12 @@ class BirdDetectionService:
         if model_path and Path(model_path).exists():
             return model_path
 
-        # Default to the custom egret model
+        # Default to the egret_500_model (newer model)
         default_model = Path(settings.BASE_DIR) / "egret_500_model" / "weights" / "best.pt"
         if default_model.exists():
             return str(default_model)
 
-        # Fallback to any available model
+        # Fallback to any available model in models directory
         models_dir = Path(settings.BASE_DIR) / "models"
         if models_dir.exists():
             for model_file in models_dir.rglob("*.pt"):
@@ -134,7 +134,7 @@ class BirdDetectionService:
                 # Enable CUDA optimizations
                 torch.cuda.empty_cache()
 
-            # Enable half precision for faster inference (if supported)
+            # Disable half precision to avoid dtype issues
             if self.enable_half_precision and self.device.startswith('cuda'):
                 try:
                     # Check if model supports half precision
@@ -145,6 +145,8 @@ class BirdDetectionService:
                         logger.warning("Model does not support half precision")
                 except Exception as e:
                     logger.warning(f"Half precision not available: {e}")
+            else:
+                logger.info("Using full precision (FP32) for better accuracy")
 
             # Warm up model for better performance
             if self.enable_model_warmup:
@@ -345,7 +347,7 @@ class BirdDetectionService:
 
         return transformed_detections
 
-    def _apply_nms(self, detections: List[Dict], iou_threshold: float = 0.3) -> List[Dict]:
+    def _apply_nms(self, detections: List[Dict], iou_threshold: float = 0.45) -> List[Dict]:
         """
         Apply Non-Maximum Suppression to remove overlapping bounding boxes
 
